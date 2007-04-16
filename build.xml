@@ -1,0 +1,98 @@
+<project default="build" name="btm">
+
+    <property name="dir.src" value="src"/>
+    <property name="dir.doc.src" value="doc"/>
+    <property name="dir.dist" value="dist"/>
+    <property name="dir.doc.dest" value="${dir.dist}/doc"/>
+    <property name="dir.doc.api" value="${dir.dist}/doc/api"/>
+    <property name="dir.classes" value="${dir.dist}/classes"/>
+    <property name="dir.lib" value="lib"/>
+    <property name="jar.version" value="1.0-beta4"/>
+    <property name="jar.file" value="${dir.dist}/btm-${jar.version}.jar"/>
+
+    <path id="javac.classpath">
+        <fileset dir="${dir.lib}" includes="*.jar" />
+    </path>
+
+    <path id="app.classpath">
+        <pathelement location="${dir.classes}" />
+        <path refid="javac.classpath" />
+    </path>
+
+    <target name="all" depends="dist"/>
+
+    <target name="dist" depends="clean,build,doc">
+        <property name="destination" value="${dir.dist}/btm-dist-${jar.version}"/>
+
+        <copy file="${jar.file}" todir="${destination}"/>
+        <copy file="license.txt" todir="${destination}"/>
+        <copy file="release-notes-${jar.version}.txt" tofile="${destination}/release-notes.txt"/>
+        <copy todir="${destination}">
+            <fileset dir="${basedir}">
+                <include name="lib/**/*"/>
+                <exclude name="lib/**/.svn"/>
+                <exclude name="lib/**/log4j-1.2.13.jar"/>
+                <exclude name="lib/**/slf4j-log4j12.jar"/>
+            </fileset>
+        </copy>
+        <copy todir="${destination}">
+            <fileset dir="${basedir}">
+                <include name="src/**/*"/>
+                <exclude name="src/**/.svn"/>
+            </fileset>
+        </copy>
+        <copy todir="${destination}">
+            <fileset dir="${basedir}">
+                <include name="test/**/*"/>
+                <exclude name="test/**/.svn"/>
+            </fileset>
+        </copy>
+        <copy todir="${destination}">
+            <fileset dir="${dir.dist}">
+                <include name="doc/**/*"/>
+            </fileset>
+        </copy>
+
+        <delete file="btm-dist-${jar.version}.zip"/>
+        <zip basedir="${dir.dist}" file="btm-dist-${jar.version}.zip">
+            <include name="btm-dist-${jar.version}/**/*"/>
+        </zip>
+    </target>
+
+    <target name="build">
+        <mkdir dir="${dir.classes}" />
+        <javac srcdir="${dir.src}" destdir="${dir.classes}" fork="true" debug="true" classpathref="javac.classpath" />
+
+        <delete file="${jar.file}" failonerror="true" />
+        <jar basedir="${dir.classes}" file="${jar.file}">
+            <manifest>
+                <attribute name="Implementation-Version" value="${jar.version}" />
+            </manifest>
+            <include name="**/*"/>
+        </jar>
+
+<!--
+        <copy todir="C:/Java/projects/svn/jtatest/lib" flatten="true">
+            <fileset dir="${basedir}" includes="${jar.file}"/>
+        </copy>
+-->
+    </target>
+
+    <target name="clean">
+        <delete dir="${dir.dist}" failonerror="true" includeemptydirs="true" />
+        <delete file="${jar.file}" failonerror="true" />
+    </target>
+
+    <target name="doc">
+        <copy todir="${dir.doc.dest}">
+            <fileset dir="${dir.doc.src}" includes="**/*"/>
+        </copy>
+        <javadoc destdir="${dir.doc.api}" overview="${dir.src}/overview.html" classpathref="javac.classpath">
+            <packageset dir="${dir.src}" defaultexcludes="yes">
+                <include name="*/**" />
+            </packageset>
+        </javadoc>
+    </target>
+
+
+</project>
