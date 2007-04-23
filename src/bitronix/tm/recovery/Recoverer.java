@@ -2,10 +2,7 @@ package bitronix.tm.recovery;
 
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.internal.Decoder;
-import bitronix.tm.internal.XAResourceHolderState;
-import bitronix.tm.internal.Uid;
-import bitronix.tm.internal.BitronixRuntimeException;
+import bitronix.tm.internal.*;
 import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.resource.ResourceLoader;
 import bitronix.tm.resource.common.XAResourceProducer;
@@ -63,13 +60,18 @@ import java.util.*;
  * @see ResourceLoader
  * @author lorban
  */
-public class Recoverer implements Runnable {
+public class Recoverer implements Runnable, RecovererMBean {
 
     private final static Logger log = LoggerFactory.getLogger(Recoverer.class);
 
     private Map registeredResources = new HashMap();
     private Map recoveredXidSets = new HashMap();
     private Exception completionException;
+
+
+    public Recoverer() {
+        ManagementRegistrar.register("bitronix.tm:type=Recoverer", this);
+    }
 
     /**
      * Run the recovery process. This method is automatically called by the transaction manager, you should never
