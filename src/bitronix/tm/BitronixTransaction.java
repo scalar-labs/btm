@@ -239,9 +239,6 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
             if (status == Status.STATUS_ACTIVE)
                 ManagementRegistrar.register("bitronix.tm:type=Transaction,Gtrid=" + resourceManager.getGtrid(), this);
-            if (status == Status.STATUS_ROLLEDBACK || status == Status.STATUS_COMMITTED)
-                ManagementRegistrar.unregister("bitronix.tm:type=Transaction,Gtrid=" + resourceManager.getGtrid());
-
         } catch (IOException ex) {
             // if we cannot log, the TM must stop managing TX until the problem is fixed
             throw new BitronixSystemException("error logging status", ex);
@@ -299,7 +296,9 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
                 setStatus(Status.STATUS_MARKED_ROLLBACK);
                 return;
             }
-        } // for
+        }
+
+        ManagementRegistrar.unregister("bitronix.tm:type=Transaction,Gtrid=" + resourceManager.getGtrid());
     }
 
     private void fireAfterCompletionEvent() {
