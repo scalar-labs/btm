@@ -1,21 +1,19 @@
 package bitronix.tm.twopc;
 
+import bitronix.tm.BitronixTransaction;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.internal.*;
+import bitronix.tm.twopc.executor.Executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-
-import bitronix.tm.BitronixTransaction;
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.twopc.executor.Executor;
-import bitronix.tm.internal.*;
-
+import javax.transaction.HeuristicMixedException;
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.xa.Xid;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
+import java.util.*;
 
 /**
  * Phase 1 Prepare logic holder.
@@ -146,7 +144,7 @@ public class Preparer {
                 throw new BitronixHeuristicMixedException("resource " + holder.getUniqueName() + " unilaterally finished transaction branch when asked to prepare, global state of this transaction is now unknown", xaException);
 
             default:
-                throw new BitronixRollbackException("transaction failed during emulated prepare, error=" + Decoder.decodeXAExceptionErrorCode(xaException), xaException);
+                throw new BitronixRollbackException("transaction failed during prepare, error=" + Decoder.decodeXAExceptionErrorCode(xaException), xaException);
         }
     }
 
