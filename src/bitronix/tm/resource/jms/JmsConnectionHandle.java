@@ -1,13 +1,10 @@
 package bitronix.tm.resource.jms;
 
 import bitronix.tm.resource.common.XAResourceHolder;
-import bitronix.tm.resource.common.StateChangeListener;
-import bitronix.tm.resource.common.XAStatefulHolder;
-
-import javax.jms.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.jms.*;
 
 /**
  * Disposable Connection handle.
@@ -15,7 +12,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author lorban
  */
-public class JmsConnectionHandle implements Connection, StateChangeListener {
+public class JmsConnectionHandle implements Connection {
 
     private final static Logger log = LoggerFactory.getLogger(JmsConnectionHandle.class);
 
@@ -38,13 +35,11 @@ public class JmsConnectionHandle implements Connection, StateChangeListener {
     }
 
     public Session createSession(boolean transacted, int acknowledgeMode) throws JMSException {
-        DualSessionWrapper sessionHandle = getNotAccessibleSession();
+        DualSessionWrapper sessionHandle = pooledConnection.getNotAccessibleSession();
 
         if (sessionHandle == null) {
             if (log.isDebugEnabled()) log.debug("no session handle found in NOT_ACCESSIBLE state, creating new session");
-            sessionHandle = new DualSessionWrapper(pooledConnection, transacted, acknowledgeMode);
-            sessionHandle.addStateChangeEventListener(this);
-            pooledConnection.sessions.add(sessionHandle);
+            sessionHandle = pooledConnection.createDualSessionWrapper(pooledConnection, transacted, acknowledgeMode);
         }
         else {
             if (log.isDebugEnabled()) log.debug("found session handle in NOT_ACCESSIBLE state, recycling it: " + sessionHandle);
@@ -54,32 +49,12 @@ public class JmsConnectionHandle implements Connection, StateChangeListener {
         return sessionHandle;
     }
 
-    private DualSessionWrapper getNotAccessibleSession() {
-        synchronized (pooledConnection.sessions) {
-            if (log.isDebugEnabled()) log.debug(pooledConnection.sessions.size() + " session(s) open from " + pooledConnection);
-            for (int i = 0; i < pooledConnection.sessions.size(); i++) {
-                DualSessionWrapper sessionHandle = (DualSessionWrapper) pooledConnection.sessions.get(i);
-                if (sessionHandle.getState() == XAResourceHolder.STATE_NOT_ACCESSIBLE)
-                    return sessionHandle;
-            }
-            return null;
-        }
-    }
-
     public void close() throws JMSException {
         if (xaConnection == null)
             return;
 
         xaConnection = null;
         pooledConnection.release();
-    }
-
-    // DualSessionWrapper state change listener
-    public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
-        if (newState == XAResourceHolder.STATE_CLOSED) {
-            pooledConnection.sessions.remove(source);
-            if (log.isDebugEnabled()) log.debug("DualSessionWrapper has been closed, " + pooledConnection.sessions.size() + " session(s) left open in pooled connection");
-        }
     }
 
     public String toString() {

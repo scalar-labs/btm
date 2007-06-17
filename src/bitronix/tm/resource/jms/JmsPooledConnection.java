@@ -1,24 +1,25 @@
 package bitronix.tm.resource.jms;
 
-import bitronix.tm.resource.common.*;
-import bitronix.tm.internal.Decoder;
-import bitronix.tm.internal.BitronixSystemException;
-import bitronix.tm.internal.ManagementRegistrar;
 import bitronix.tm.BitronixXid;
-
-import javax.jms.*;
-
-import java.util.*;
-
+import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.internal.Decoder;
+import bitronix.tm.internal.ManagementRegistrar;
+import bitronix.tm.resource.common.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.jms.JMSException;
+import javax.jms.TemporaryQueue;
+import javax.jms.XAConnection;
+import javax.jms.XASession;
+import java.util.*;
 
 /**
  * Implementation of a JMS pooled connection wrapping vendor's {@link XAConnection} implementation.
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban
- * TODO: how can the JMS connection be tested ?
+ * TODO: how can the JMS connection be properly tested ?
  */
 public class JmsPooledConnection extends AbstractXAStatefulHolder implements StateChangeListener, JmsPooledConnectionMBean {
 
@@ -27,9 +28,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Sta
     private XAConnection xaConnection;
     private ConnectionFactoryBean bean;
     private PoolingConnectionFactory poolingConnectionFactory;
-
-    //TODO: direct access to this variable should be dropped
-    protected final List sessions = Collections.synchronizedList(new ArrayList());
+    private final List sessions = Collections.synchronizedList(new ArrayList());
 
     /* management */
     private String jmxName;
@@ -93,10 +92,11 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Sta
     }
 
     protected void release() throws JMSException {
-        //TODO: check that all sessions were closed or else close them
-        if (log.isDebugEnabled()) log.debug("releasing to pool " + this);
+        // sessions cleanup
+        closePendingSessions();
 
         // requeuing
+        if (log.isDebugEnabled()) log.debug("releasing to pool " + this);
         try {
             TransactionContextHelper.requeue(this, bean);
         } catch (BitronixSystemException ex) {
@@ -104,7 +104,18 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Sta
         }
 
         if (log.isDebugEnabled()) log.debug("released to pool " + this);
+    }
 
+    private void closePendingSessions() {
+        for (int i = 0; i < sessions.size(); i++) {
+            DualSessionWrapper dualSessionWrapper = (DualSessionWrapper) sessions.get(i);
+            if (log.isDebugEnabled()) log.debug("closing pending session " + dualSessionWrapper);
+            try {
+                dualSessionWrapper.close();
+            } catch (JMSException ex) {
+                log.warn("error closing pending session " + dualSessionWrapper, ex);
+            }
+        }
     }
 
     public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
@@ -115,6 +126,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Sta
             acquisitionDate = new Date();
         }
         if (newState == STATE_CLOSED) {
+            sessions.remove(source);
             ManagementRegistrar.unregister(jmxName);
         }
     }
@@ -144,5 +156,23 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Sta
             }
         }
         return result;
+    }
+
+    protected DualSessionWrapper createDualSessionWrapper(JmsPooledConnection pooledConnection, boolean transacted, int acknowledgeMode) {
+        DualSessionWrapper sessionHandle = new DualSessionWrapper(pooledConnection, transacted, acknowledgeMode);
+        sessions.add(sessionHandle);
+        return sessionHandle;
+    }
+
+    protected DualSessionWrapper getNotAccessibleSession() {
+        synchronized (sessions) {
+            if (log.isDebugEnabled()) log.debug(sessions.size() + " session(s) open from " + this);
+            for (int i = 0; i < sessions.size(); i++) {
+                DualSessionWrapper sessionHandle = (DualSessionWrapper) sessions.get(i);
+                if (sessionHandle.getState() == XAResourceHolder.STATE_NOT_ACCESSIBLE)
+                    return sessionHandle;
+            }
+            return null;
+        }
     }
 }
