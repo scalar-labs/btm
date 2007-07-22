@@ -249,7 +249,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @see Runtime#addShutdownHook(Thread)
      * @see Configuration#getGracefulShutdownInterval()
      */
-    public void shutdown() {
+    public synchronized void shutdown() {
         if (isShuttingDown()) {
             if (log.isDebugEnabled()) log.debug("Transaction Manager is already shutting down or has shutdown");
             return;
