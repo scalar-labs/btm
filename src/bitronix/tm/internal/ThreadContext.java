@@ -58,8 +58,15 @@ public class ThreadContext {
      * @param timeout the new default timeout value in seconds.
      */
     public void setTimeout(int timeout) {
-        if (log.isDebugEnabled()) log.debug("changing default timeout of thread context to " + timeout + "s");
-        this.timeout = timeout;
+        if (timeout == 0) {
+            int defaultValue = TransactionManagerServices.getConfiguration().getDefaultTransactionTimeout();
+            if (log.isDebugEnabled()) log.debug("resetting default timeout of thread context to default value of " + defaultValue + "s");
+            this.timeout = defaultValue;
+        }
+        else {    
+            if (log.isDebugEnabled()) log.debug("changing default timeout of thread context to " + timeout + "s");
+            this.timeout = timeout;
+        }
     }
 
     /**

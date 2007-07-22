@@ -205,12 +205,6 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         return resourceManager;
     }
 
-    public void setTimeout(Date date) throws IllegalStateException {
-         if (isDone())
-            throw new IllegalStateException("transaction is done, cannot set a timeout anymore");
-        TransactionManagerServices.getTaskScheduler().scheduleTransactionTimeout(this, date);
-    }
-
     public void timeout() {
         this.timeout = true;
     }

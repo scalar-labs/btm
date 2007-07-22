@@ -83,7 +83,6 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             throw new NotSupportedException("nested transactions not supported");
         currentTx = createTransaction();
 
-        setTransactionTimeout(getCurrentContext().getTimeout());
         currentTx.setActive();
     }
 
@@ -135,14 +134,9 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     }
 
     public void setTransactionTimeout(int seconds) throws SystemException {
-        if (seconds < 1)
-            throw new BitronixSystemException("cannot set a timeout to less than 1 second in the future (was: " + seconds + "s)");
-        BitronixTransaction currentTx = getCurrentTransaction();
-        if (log.isDebugEnabled()) log.debug("changing transaction timeout on " + this);
-        if (currentTx == null)
-            getCurrentContext().setTimeout(seconds);
-        else
-            currentTx.setTimeout(new Date(System.currentTimeMillis() + (seconds * 1000L)));
+        if (seconds < 0)
+            throw new BitronixSystemException("cannot set a timeout to less than 0 second (was: " + seconds + "s)");
+        getCurrentContext().setTimeout(seconds);
     }
 
     public Transaction suspend() throws SystemException {
@@ -202,7 +196,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
     /**
      * Return all existing transactions.
-     * @return a set of BitronixTransaction objects.
+     * @return a map of BitronixTransaction objects using Uid as key and BitronixTransaction as value.
      */
     public Map getInFlightTransactions() {
         synchronized (inFlightTransactions) {
@@ -359,13 +353,15 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      */
     private BitronixTransaction createTransaction() {
         BitronixTransaction transaction = new BitronixTransaction();
+        Date timeoutDate = new Date(System.currentTimeMillis() + (getCurrentContext().getTimeout() * 1000L));
+        TransactionManagerServices.getTaskScheduler().scheduleTransactionTimeout(transaction, timeoutDate);
         getCurrentContext().setTransaction(transaction);
         inFlightTransactions.put(transaction.getResourceManager().getGtrid(), transaction);
         return transaction;
     }
 
     /**
-     *
+     * Unlink the transaction from the current thread's context.
      * @param unregisterTransaction true if you want to get rid of this transaction, false if you want to save it for
      *        later and just unlink it from the current context
      */
@@ -382,8 +378,8 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     }
 
     /**
-     * Set a new context on the current thread.
-     * @param context the context to set.
+     * Bind a new context on the current thread.
+     * @param context the context to bind.
      */
     private void setCurrentContext(ThreadContext context) {
         if (log.isDebugEnabled()) log.debug("changing current thread context to " + context);
@@ -395,7 +391,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     }
 
     /**
-     * Get the context attached to the current thread.
+     * Get the context attached to the current thread. If there is no current context, a new one is created.
      * @return the context.
      */
     private ThreadContext getCurrentContext() {
