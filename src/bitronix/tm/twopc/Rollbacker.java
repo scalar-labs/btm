@@ -32,8 +32,9 @@ public class Rollbacker {
     }
 
     /**
-     * Rollback the current XA transaction. TransactionTimeoutException won't be thrown while changing status but rather
-     * by some extra logic that will manually throw the exception after doing as much cleanup as possible.
+     * Rollback the current XA transaction. {@link bitronix.tm.internal.TransactionTimeoutException} won't be thrown
+     * while changing status but rather by some extra logic that will manually throw the exception after doing as much
+     * cleanup as possible.
      *
      * @param transaction the transaction to rollback.
      */
@@ -67,7 +68,7 @@ public class Rollbacker {
         }
 
         // check rollback jobs return code
-        List heuristicExceptions = new ArrayList();
+        List exceptions = new ArrayList();
         boolean hazard = false;
         for (int i = 0; i < jobs.size(); i++) {
             RollbackJob job = (RollbackJob) jobs.get(i);
@@ -78,26 +79,28 @@ public class Rollbacker {
             if (xaException != null) {
                 if (xaException.errorCode == XAException.XA_HEURHAZ)
                     hazard = true;
-                heuristicExceptions.add(xaException);
+                exceptions.add(xaException);
                 log.error("transaction failed during rollback, error=" + Decoder.decodeXAExceptionErrorCode(xaException), xaException);
             }
             if (runtimeException != null) {
+                exceptions.add(xaException);
                 log.error("transaction failed during rollback", runtimeException);
             }
             if (transactionTimeoutException != null) {
+                exceptions.add(xaException);
                 if (log.isDebugEnabled()) log.debug("ignored transaction timeout during rollback of " + job.getResource());
             }
         }
 
-        // status can be marked as ROLLEDBACK anyway for journal consistency, heuristic errors cannot be fixed and should only be reported
-        transaction.setStatus(Status.STATUS_ROLLEDBACK);
-
-        if (heuristicExceptions.size() > 0) {
-            if (!hazard && heuristicExceptions.size() == resourceManager.size())
+        if (exceptions.size() > 0) {
+            if (!hazard && exceptions.size() == resourceManager.size()) {
                 throw new BitronixHeuristicCommitException("all " + resourceManager.size() + " resources improperly heuristically committed");
+            }
             else
-                throw new BitronixHeuristicMixedException(heuristicExceptions.size() + " resource(s) out of " + resourceManager.size() + " improperly heuristically committed" + (hazard ? " (or maybe not)" : ""));
+                throw new BitronixHeuristicMixedException(exceptions.size() + " resource(s) out of " + resourceManager.size() + " improperly heuristically committed" + (hazard ? " (or maybe not)" : ""));
         }
+        else
+            transaction.setStatus(Status.STATUS_ROLLEDBACK);
     }
 
     private static void rollbackResource(BitronixTransaction transaction, XAResourceHolderState resourceHolder) throws XAException, TransactionTimeoutException {
