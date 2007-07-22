@@ -163,8 +163,8 @@ public class Phase1FailureTest extends TestCase {
 
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 
-        tm.begin();
         tm.setTransactionTimeout(1); // TX must timeout
+        tm.begin();
 
         Connection connection1 = poolingDataSource1.getConnection();
         MockXAConnection mockXAConnection1 = (MockXAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(((JdbcConnectionHandle) connection1).getPooledConnection());
