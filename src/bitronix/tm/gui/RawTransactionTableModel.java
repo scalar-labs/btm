@@ -1,15 +1,15 @@
 package bitronix.tm.gui;
 
 import bitronix.tm.internal.Decoder;
-import bitronix.tm.internal.UidGenerator;
 import bitronix.tm.journal.TransactionLogRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.event.TableModelListener;
 import java.io.File;
 import java.util.Date;
-
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * <p></p>
@@ -19,7 +19,10 @@ import org.slf4j.Logger;
  */
 public class RawTransactionTableModel extends TransactionTableModel {
 
+    private List displayedRows;
+
     private final static Logger log = LoggerFactory.getLogger(RawTransactionTableModel.class);
+    public static final int GTRID_COL = 7;
 
     public RawTransactionTableModel(File filename) {
         try {
@@ -27,6 +30,7 @@ public class RawTransactionTableModel extends TransactionTableModel {
         } catch (Exception ex) {
             log.error("corrupted log file", ex);
         }
+        displayedRows = new ArrayList(tLogs);
     }
 
     public int getColumnCount() {
@@ -34,7 +38,7 @@ public class RawTransactionTableModel extends TransactionTableModel {
     }
 
     public int getRowCount() {
-        return tLogs.size();
+        return displayedRows.size();
     }
 
     public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -46,7 +50,7 @@ public class RawTransactionTableModel extends TransactionTableModel {
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
-        TransactionLogRecord tlog = (TransactionLogRecord) tLogs.get(rowIndex);
+        TransactionLogRecord tlog = (TransactionLogRecord) displayedRows.get(rowIndex);
         switch (columnIndex) {
             case 0:
                 return Decoder.decodeStatus(tlog.getStatus());
@@ -106,6 +110,21 @@ public class RawTransactionTableModel extends TransactionTableModel {
     }
 
     public TransactionLogRecord getRow(int row) {
-        return (TransactionLogRecord) tLogs.get(row);
+        return (TransactionLogRecord) displayedRows.get(row);
+    }
+
+    public void filterByGtrid(String gtrid) {
+        if (gtrid == null) {
+            displayedRows = new ArrayList(tLogs);
+        }
+        else {
+            List newDis = new ArrayList();
+            for (int i = 0; i < displayedRows.size(); i++) {
+                TransactionLogRecord transactionLogRecord = (TransactionLogRecord) displayedRows.get(i);
+                if (transactionLogRecord.getGtrid().toString().equals(gtrid))
+                    newDis.add(transactionLogRecord);
+            }
+            displayedRows = newDis;
+        }
     }
 }

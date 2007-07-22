@@ -5,6 +5,8 @@ import bitronix.tm.Configuration;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.internal.Uid;
 import bitronix.tm.journal.TransactionLogRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -12,15 +14,14 @@ import javax.transaction.Status;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 
 /**
  * <p></p>
@@ -52,8 +53,10 @@ public class Console extends JFrame {
 
         JMenu findMenu = new JMenu("Find");
         menuBar.add(findMenu);
-        JMenuItem bySequenceItem = new JMenuItem("By sequence");
+        JMenuItem bySequenceItem = new JMenuItem("First by sequence");
+        JMenuItem byGtridItem = new JMenuItem("First by GTRID");
         findMenu.add(bySequenceItem);
+        findMenu.add(byGtridItem);
 
         JMenu analysisMenu = new JMenu("Analysis");
         menuBar.add(analysisMenu);
@@ -73,6 +76,33 @@ public class Console extends JFrame {
         rawViewTransactionsTable.setDefaultRenderer(String.class, new TransactionTableCellRenderer());
         rawViewTransactionsTable.setModel(new RawTransactionTableModel(getActiveLogFile(configuration)));
         rawViewTransactionsTable.addMouseListener(new TransactionTableMouseListener(this, rawViewTransactionsTable));
+
+        final JPopupMenu rawViewTransactionsTablePopupMenu = new JPopupMenu();
+        final JCheckBoxMenuItem filterByGtridItem = new JCheckBoxMenuItem("Filter by GTRID");
+        filterByGtridItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                filterByGtrid(filterByGtridItem.isSelected());
+            }
+        });
+        rawViewTransactionsTablePopupMenu.add(filterByGtridItem);
+        rawViewTransactionsTable.addMouseListener(new MouseListener() {
+            public void mouseClicked(MouseEvent e) {
+            }
+            public void mouseEntered(MouseEvent e) {
+            }
+            public void mouseExited(MouseEvent e) {
+            }
+            public void mousePressed(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    rawViewTransactionsTablePopupMenu.show(e.getComponent(), e.getX(), e.getY());
+                    int row = rawViewTransactionsTable.rowAtPoint(new Point(e.getX(), e.getY()));
+                    selectTableRow(rawViewTransactionsTable, row);
+                }
+            }
+            public void mouseReleased(MouseEvent e) {
+                mousePressed(e);
+            }
+        });
 
         tabbedPane.add("Pending logs", pendingTransactionsTableScrollpane);
         tabbedPane.add("Raw logs", rawTransactionsTableScrollpane);
@@ -107,6 +137,12 @@ public class Console extends JFrame {
         bySequenceItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 findBySequence();
+            }
+        });
+
+        byGtridItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                findByGtrid();
             }
         });
 
@@ -298,6 +334,31 @@ public class Console extends JFrame {
         }
     }
 
+    private void findByGtrid() {
+        String gtrid = JOptionPane.showInputDialog(this, "Enter GTRID to search for");
+
+        if (tabbedPane.getSelectedComponent() == pendingTransactionsTableScrollpane) {
+            TransactionTableModel transactionTableModel = (TransactionTableModel) pendingViewTransactionsTable.getModel();
+            selectTLogMatchingGtrid(transactionTableModel, gtrid, pendingViewTransactionsTable);
+        } else {
+            TransactionTableModel transactionTableModel = (TransactionTableModel) rawViewTransactionsTable.getModel();
+            selectTLogMatchingGtrid(transactionTableModel, gtrid, rawViewTransactionsTable);
+        }
+    }
+
+    private void filterByGtrid(boolean filter) {
+        RawTransactionTableModel model = (RawTransactionTableModel) rawViewTransactionsTable.getModel();
+        if (filter) {
+            int selectedRow = rawViewTransactionsTable.getSelectedRow();
+            String gtrid = (String) model.getValueAt(selectedRow, RawTransactionTableModel.GTRID_COL);
+            model.filterByGtrid(gtrid);
+        }
+        else {
+            model.filterByGtrid(null);
+        }
+        rawViewTransactionsTable.repaint();
+    }
+
     private void selectTLogMatchingSequence(TransactionTableModel transactionTableModel, int sequenceNumber, JTable table) {
         int startIndex = table.getSelectedRow() + 1;
 
@@ -323,7 +384,35 @@ public class Console extends JFrame {
         JOptionPane.showMessageDialog(this, "Not found", "Find by sequence", JOptionPane.INFORMATION_MESSAGE);
     }
 
+    private void selectTLogMatchingGtrid(TransactionTableModel transactionTableModel, String gtrid, JTable table) {
+        int startIndex = table.getSelectedRow() + 1;
+
+        for (int i = startIndex; i < transactionTableModel.getRowCount(); i++) {
+            TransactionLogRecord tlog = transactionTableModel.getRow(i);
+            if (tlog.getGtrid().toString().equals(gtrid)) {
+                selectTableRow(table, i);
+                return;
+            }
+        }
+
+        // if it is not found, search starting back at the beginning of the list up to where we previously started
+        if (startIndex > 0) {
+            for (int i = 0; i < startIndex; i++) {
+                TransactionLogRecord tlog = transactionTableModel.getRow(i);
+                if (tlog.getGtrid().toString().equals(gtrid)) {
+                    selectTableRow(table, i);
+                    return;
+                }
+            }
+        }
+
+        JOptionPane.showMessageDialog(this, "Not found", "Find by GTRID", JOptionPane.INFORMATION_MESSAGE);
+    }
+
     private void selectTableRow(JTable table, int rowNum) {
+        if (rowNum == -1)
+            return;
+
         // select the row
         table.setRowSelectionInterval(rowNum, rowNum);
 
