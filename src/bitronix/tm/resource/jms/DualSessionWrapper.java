@@ -1,18 +1,18 @@
 package bitronix.tm.resource.jms;
 
-import bitronix.tm.resource.common.*;
-import bitronix.tm.internal.BitronixSystemException;
 import bitronix.tm.BitronixTransaction;
 import bitronix.tm.TransactionManagerServices;
-
-import javax.jms.*;
-import javax.transaction.xa.XAResource;
-import javax.transaction.SystemException;
-import java.io.Serializable;
-import java.util.*;
-
+import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.internal.Decoder;
+import bitronix.tm.resource.common.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.jms.*;
+import javax.transaction.SystemException;
+import javax.transaction.xa.XAResource;
+import java.io.Serializable;
+import java.util.*;
 
 /**
  * JMS Session wrapper that will send calls to either a XASession or to a non-XA Session depending on the calling
@@ -99,7 +99,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
     }
 
     public String toString() {
-        return "a DualSessionWrapper of " + pooledConnection;
+        return "a DualSessionWrapper in state " + Decoder.decodeXAStatefulHolderState(getState()) + " of " + pooledConnection;
     }
 
 

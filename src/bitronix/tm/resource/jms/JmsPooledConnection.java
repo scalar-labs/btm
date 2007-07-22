@@ -103,13 +103,18 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     }
 
     private void closePendingSessions() {
-        for (int i = 0; i < sessions.size(); i++) {
-            DualSessionWrapper dualSessionWrapper = (DualSessionWrapper) sessions.get(i);
-            try {
-                if (log.isDebugEnabled()) log.debug("trying to close pending session " + dualSessionWrapper);
-                dualSessionWrapper.close();
-            } catch (JMSException ex) {
-                log.warn("error closing pending session " + dualSessionWrapper, ex);
+        synchronized (sessions) {
+            for (int i = 0; i < sessions.size(); i++) {
+                DualSessionWrapper dualSessionWrapper = (DualSessionWrapper) sessions.get(i);
+                if (dualSessionWrapper.getState() != STATE_ACCESSIBLE)
+                    continue;
+
+                try {
+                    if (log.isDebugEnabled()) log.debug("trying to close pending session " + dualSessionWrapper);
+                    dualSessionWrapper.close();
+                } catch (JMSException ex) {
+                    log.warn("error closing pending session " + dualSessionWrapper, ex);
+                }
             }
         }
     }
@@ -145,7 +150,8 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
 
     public String toString() {
         return "a JmsPooledConnection of pool " + bean.getUniqueName() + " in state " +
-                Decoder.decodeXAStatefulHolderState(getState()) + " with underlying connection " + xaConnection;
+                Decoder.decodeXAStatefulHolderState(getState()) + " with underlying connection " + xaConnection +
+                " with " + sessions.size() + " opened session(s)";
     }
 
     /* management */
