@@ -109,6 +109,9 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Sta
     private void closePendingSessions() {
         for (int i = 0; i < sessions.size(); i++) {
             DualSessionWrapper dualSessionWrapper = (DualSessionWrapper) sessions.get(i);
+            if (dualSessionWrapper.getState() != STATE_ACCESSIBLE)
+                continue;
+
             if (log.isDebugEnabled()) log.debug("closing pending session " + dualSessionWrapper);
             try {
                 dualSessionWrapper.close();
@@ -121,12 +124,12 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Sta
     public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
         if (newState == STATE_IN_POOL) {
             if (log.isDebugEnabled()) log.debug("requeued JMS connection of " + poolingConnectionFactory);
+            sessions.clear();
         }
         if (oldState == STATE_IN_POOL && newState == STATE_ACCESSIBLE) {
             acquisitionDate = new Date();
         }
         if (newState == STATE_CLOSED) {
-            sessions.remove(source);
             ManagementRegistrar.unregister(jmxName);
         }
     }
