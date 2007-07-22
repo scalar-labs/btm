@@ -2,7 +2,7 @@
 <project version="4" relativePaths="false">
   <component name="AntConfiguration">
     <defaultAnt bundledAnt="true" />
-    <buildFile url="file://$PROJECT_DIR$/trunk/build.xml">
+    <buildFile url="file://$PROJECT_DIR$/build.xml">
       <additionalClassPath />
       <antReference projectDefault="true" />
       <customJdkName value="" />
@@ -315,7 +315,7 @@
       <module fileurl="file://$PROJECT_DIR$/btm.iml" filepath="$PROJECT_DIR$/btm.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="false" project-jdk-name="java version &quot;1.4.2_07&quot;" />
+  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="false" project-jdk-name="1.4.2" project-jdk-type="JavaSDK" />
   <component name="ProjectRunConfigurationManager" />
   <component name="RmicSettings">
     <option name="IS_EANABLED" value="false" />
@@ -333,7 +333,39 @@
       </value>
     </option>
   </component>
-  <component name="libraryTable" />
+  <component name="libraryTable">
+    <library name="jdbc drivers">
+      <CLASSES>
+        <root url="jar://C:/Java/jdbcDrivers/derbyclient.jar!/" />
+        <root url="jar://C:/Java/jdbcDrivers/fsjclient.jar!/" />
+        <root url="jar://C:/Java/jdbcDrivers/ifxjdbc.jar!/" />
+        <root url="jar://C:/Java/jdbcDrivers/ifxjdbcx.jar!/" />
+        <root url="jar://C:/Java/jdbcDrivers/iijdbc.jar!/" />
+        <root url="jar://C:/Java/jdbcDrivers/jaybird-full-2.0.1.jar!/" />
+        <root url="jar://C:/Java/jdbcDrivers/jconn3.jar!/" />
+        <root url="jar://C:/Java/jdbcDrivers/jtds-1.2.jar!/" />
+        <root url="jar://C:/Java/jdbcDrivers/mysql-connector-java-5.0.0-beta-bin.jar!/" />
+        <root url="jar://C:/Java/jdbcDrivers/ojdbc14.jar!/" />
+        <root url="jar://C:/Java/jdbcDrivers/pbembedded55ev.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="manta">
+      <CLASSES>
+        <root url="jar://C:/Java/mantaray_2.0.1_bin/manta.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+    <library name="apache-activemq-4.1-incubator-SNAPSHOT">
+      <CLASSES>
+        <root url="jar://C:/Java/apache-activemq-4.1-incubator-SNAPSHOT/apache-activemq-4.1-incubator-SNAPSHOT.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+  </component>
   <component name="uidesigner-configuration">
     <option name="INSTRUMENT_CLASSES" value="true" />
     <option name="COPY_FORMS_RUNTIME_TO_OUTPUT" value="true" />

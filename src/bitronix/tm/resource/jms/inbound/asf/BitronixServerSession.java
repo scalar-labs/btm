@@ -1,14 +1,16 @@
 package bitronix.tm.resource.jms.inbound.asf;
 
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.resource.common.TransactionContextHelper;
+import bitronix.tm.resource.jms.DualSessionWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jms.*;
-import javax.transaction.*;
-
-import bitronix.tm.resource.common.TransactionContextHelper;
-import bitronix.tm.resource.jms.DualSessionWrapper;
-import bitronix.tm.TransactionManagerServices;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
 
 /**
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
@@ -60,10 +62,10 @@ public class BitronixServerSession implements ServerSession, MessageListener {
      * @throws JMSException
      */
     private void enlistResource() throws JMSException {
-        if (session.getBean().getAutomaticEnlistingEnabled()) {
+        if (session.getPoolingConnectionFactory().getAutomaticEnlistingEnabled()) {
             try {
                 session.getSession(); // -> needs to be called to init the XAResource
-                TransactionContextHelper.enlistInCurrentTransaction(session, session.getBean());
+                TransactionContextHelper.enlistInCurrentTransaction(session, session.getPoolingConnectionFactory());
             } catch (SystemException ex) {
                 throw (JMSException) new JMSException("error enlisting " + session).initCause(ex);
             } catch (RollbackException ex) {
@@ -73,10 +75,10 @@ public class BitronixServerSession implements ServerSession, MessageListener {
     }
 
     private void delistResource() throws JMSException {
-        if (session.getBean().getAutomaticEnlistingEnabled()) {
+        if (session.getPoolingConnectionFactory().getAutomaticEnlistingEnabled()) {
             // delisting
             try {
-                TransactionContextHelper.delistFromCurrentTransaction(session, session.getBean());
+                TransactionContextHelper.delistFromCurrentTransaction(session, session.getPoolingConnectionFactory());
             } catch (SystemException ex) {
                 throw (JMSException) new JMSException("cannot delist resource " + session).initCause(ex);
             }

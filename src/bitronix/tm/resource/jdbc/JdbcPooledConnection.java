@@ -29,14 +29,12 @@ import java.util.Date;
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban
- * TODO: fire connectionErrorOccurred events
  */
 public class JdbcPooledConnection extends AbstractXAResourceHolder implements PooledConnection, StateChangeListener, JdbcPooledConnectionMBean {
 
     private final static Logger log = LoggerFactory.getLogger(JdbcPooledConnection.class);
 
     private List connectionEventListeners = new ArrayList();
-    private DataSourceBean bean;
     private XAConnection xaConnection;
     private XAResource xaResource;
     private PoolingDataSource poolingDataSource;
@@ -50,26 +48,24 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
     private Date acquisitionDate;
 
 
-    public JdbcPooledConnection(PoolingDataSource poolingDataSource, XAConnection xaConnection, DataSourceBean bean) throws SQLException {
+    public JdbcPooledConnection(PoolingDataSource poolingDataSource, XAConnection xaConnection) throws SQLException {
         this.poolingDataSource = poolingDataSource;
         this.xaConnection = xaConnection;
         this.xaResource = xaConnection.getXAResource();
-        this.bean = bean;
         addStateChangeEventListener(this);
 
-        if (bean.getClassName().equals(LrcXADataSource.class.getName())) {
-            if (log.isDebugEnabled()) log.debug("emulating XA for resource " + bean.getUniqueName());
+        if (poolingDataSource.getClassName().equals(LrcXADataSource.class.getName())) {
+            if (log.isDebugEnabled()) log.debug("emulating XA for resource " + poolingDataSource.getUniqueName());
             emulateXa = true;
         }
 
-        this.jmxName = "bitronix.tm:type=JdbcPooledConnection,UniqueName=" + bean.getUniqueName() + ",Id=" + bean.incCreatedResourcesCounter();
+        this.jmxName = "bitronix.tm:type=JdbcPooledConnection,UniqueName=" + poolingDataSource.getUniqueName() + ",Id=" + poolingDataSource.incCreatedResourcesCounter();
         ManagementRegistrar.register(jmxName, this);
     }
 
     public void close() throws SQLException {
         setState(STATE_CLOSED);
         xaConnection.close();
-        fireCloseEvent();
     }
 
     public RecoveryXAResourceHolder createRecoveryXAResourceHolder() {
@@ -86,7 +82,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
     }
 
     private void testConnection(Connection connection) throws SQLException {
-        String query = bean.getTestQuery();
+        String query = poolingDataSource.getTestQuery();
         if (query == null) {
             if (log.isDebugEnabled()) log.debug("no query to test connection of " + this + ", skipping test");
             return;
@@ -107,14 +103,14 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
 
         // delisting
         try {
-            TransactionContextHelper.delistFromCurrentTransaction(this, bean);
+            TransactionContextHelper.delistFromCurrentTransaction(this, poolingDataSource);
         } catch (SystemException ex) {
             throw (SQLException) new SQLException("error delisting " + this).initCause(ex);
         }
 
         // requeuing
         try {
-            TransactionContextHelper.requeue(this, bean);
+            TransactionContextHelper.requeue(this, poolingDataSource);
         } catch (BitronixSystemException ex) {
             throw (SQLException) new SQLException("error requeueing " + this).initCause(ex);
         }
@@ -150,8 +146,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
         connectionEventListeners.remove(listener);
     }
 
-    public ResourceBean getBean() {
-        return bean;
+    public PoolingDataSource getPoolingDataSource() {
+        return poolingDataSource;
     }
 
     public List getXAResourceHolders() {
@@ -171,8 +167,10 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
                 if (!connectionHandleClosed)
                     connection.close();
             } catch (SQLException ex) {
+                //TODO: fire connectionErrorOccurred events
                 log.warn("error closing connection " + connection, ex);
             }
+            fireCloseEvent();
         }
         if (oldState == STATE_IN_POOL && newState == STATE_ACCESSIBLE) {
             acquisitionDate = new Date();
@@ -187,14 +185,15 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
     }
 
     public String toString() {
-        return "a JdbcPooledConnection from datasource " + bean.getUniqueName() + " in state " + Decoder.decodeXAStatefulHolderState(getState()) + " wrapping " + xaConnection;
+        return "a JdbcPooledConnection from datasource " + poolingDataSource.getUniqueName() + " in state " + Decoder.decodeXAStatefulHolderState(getState()) + " wrapping " + xaConnection;
     }
 
     private void fireCloseEvent() {
         if (log.isDebugEnabled()) log.debug("notifying " + connectionEventListeners.size() + " connectionEventListener(s) about closing of " + this);
+        ConnectionEvent event = new ConnectionEvent(this);
         for (int i = 0; i < connectionEventListeners.size(); i++) {
             ConnectionEventListener connectionEventListener = (ConnectionEventListener) connectionEventListeners.get(i);
-            connectionEventListener.connectionClosed(new ConnectionEvent(this));
+            connectionEventListener.connectionClosed(event);
         }
     }
 

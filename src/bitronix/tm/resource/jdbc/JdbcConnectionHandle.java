@@ -45,9 +45,9 @@ public class JdbcConnectionHandle implements Connection {
      * @throws SQLException
      */
     private void enlistResource() throws SQLException {
-        if (jdbcPooledConnection.getBean().getAutomaticEnlistingEnabled()) {
+        if (jdbcPooledConnection.getPoolingDataSource().getAutomaticEnlistingEnabled()) {
             try {
-                TransactionContextHelper.enlistInCurrentTransaction(jdbcPooledConnection, jdbcPooledConnection.getBean());
+                TransactionContextHelper.enlistInCurrentTransaction(jdbcPooledConnection, jdbcPooledConnection.getPoolingDataSource());
             } catch (SystemException ex) {
                 throw (SQLException) new SQLException("error enlisting " + this).initCause(ex);
             } catch (RollbackException ex) {

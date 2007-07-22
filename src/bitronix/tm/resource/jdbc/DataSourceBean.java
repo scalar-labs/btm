@@ -1,8 +1,11 @@
 package bitronix.tm.resource.jdbc;
 
-import bitronix.tm.resource.common.XAResourceProducer;
-import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.resource.ResourceConfigurationException;
+import bitronix.tm.resource.common.ResourceBean;
+import bitronix.tm.resource.common.XAResourceProducer;
+import bitronix.tm.internal.PropertyUtils;
+
+import java.util.Map;
 
 /**
  * Javabean container for all the properties of a {@link bitronix.tm.resource.jdbc.PoolingDataSource} as configured in the resources
@@ -11,6 +14,7 @@ import bitronix.tm.resource.ResourceConfigurationException;
  *
  * @see bitronix.tm.resource.ResourceLoader
  * @author lorban
+ * @deprecated This class' functionality has been included in {@link bitronix.tm.resource.jdbc.PoolingDataSource}.
  */
 public class DataSourceBean extends ResourceBean {
 
@@ -35,7 +39,11 @@ public class DataSourceBean extends ResourceBean {
 
     public XAResourceProducer createResource() {
         try {
-            return new PoolingDataSource(this);
+            PoolingDataSource pds = new PoolingDataSource();
+            Map properties = PropertyUtils.getProperties(this);
+            PropertyUtils.setProperties(pds, properties);
+            pds.init();
+            return pds;
         }
         catch (Exception ex) {
             throw new ResourceConfigurationException("cannot create JDBC datasource named " + getUniqueName(), ex);
@@ -48,5 +56,4 @@ public class DataSourceBean extends ResourceBean {
     public String toString() {
         return "a DataSourceBean with " + (getConfigurationName() != null ? "configured name " + getConfigurationName() + ", " : "") + "unique name " + getUniqueName() + " and class " + getClassName();
     }
-
 }

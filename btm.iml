@@ -6,6 +6,8 @@
     <exclude-output />
     <exclude-exploded />
     <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/dist" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -46,7 +48,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="junit" level="application" />
     <orderEntry type="library" name="mysql-connector-java-5.0" level="application" />
     <orderEntry type="library" name="jConnect 6" level="application" />
     <orderEntry type="library" name="derbyclient" level="application" />
@@ -56,45 +57,14 @@
     <orderEntry type="library" name="ingres jdbc" level="application" />
     <orderEntry type="library" name="Informix 10" level="application" />
     <orderEntry type="library" name="swiftmq" level="application" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../../incubator-activemq-4.0.1/lib/mx4j-2.1.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../../incubator-activemq-4.0.1/lib/optional/mx4j-remote-2.1.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="Mantaray 2.0.1" level="application" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../../hsqldb_1_8_0_1/lib/hsqldb.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../../pointbase55/lib/pbembedded55ev.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="ActiveMQ 4 SNAP" level="application" />
     <orderEntry type="library" name="oracle JDBC" level="application" />
+    <orderEntry type="library" name="junit-4.3.1" level="application" />
+    <orderEntry type="library" name="junit" level="application" />
+    <orderEntry type="library" name="jdbc drivers" level="project" />
+    <orderEntry type="library" name="manta" level="project" />
+    <orderEntry type="library" name="apache-activemq-4.1-incubator-SNAPSHOT" level="project" />
     <orderEntryProperties />
   </component>
 </module>

@@ -16,14 +16,13 @@ import java.util.*;
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban
- * TODO: how can the JMS connection be tested ?
+ * TODO: how can the JMS connection properly be tested ?
  */
 public class JmsPooledConnection extends AbstractXAStatefulHolder implements JmsPooledConnectionMBean {
 
     private final static Logger log = LoggerFactory.getLogger(JmsPooledConnection.class);
 
     private XAConnection xaConnection;
-    private ConnectionFactoryBean bean;
     private PoolingConnectionFactory poolingConnectionFactory;
     private final List sessions = Collections.synchronizedList(new ArrayList());
 
@@ -31,12 +30,11 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     private String jmxName;
     private Date acquisitionDate;
 
-    protected JmsPooledConnection(PoolingConnectionFactory poolingConnectionFactory, XAConnection connection, ConnectionFactoryBean bean) {
+    protected JmsPooledConnection(PoolingConnectionFactory poolingConnectionFactory, XAConnection connection) {
         this.poolingConnectionFactory = poolingConnectionFactory;
         this.xaConnection = connection;
-        this.bean = bean;
         addStateChangeEventListener(new JmsPooledConnectionStateChangeListener());
-        this.jmxName = "bitronix.tm:type=JmsPooledConnection,UniqueName=" + bean.getUniqueName() + ",Id=" + bean.incCreatedResourcesCounter();
+        this.jmxName = "bitronix.tm:type=JmsPooledConnection,UniqueName=" + poolingConnectionFactory.getUniqueName() + ",Id=" + poolingConnectionFactory.incCreatedResourcesCounter();
         ManagementRegistrar.register(jmxName, this);
     }
 
@@ -44,8 +42,8 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
         return xaConnection;
     }
 
-    public ConnectionFactoryBean getBean() {
-        return bean;
+    public PoolingConnectionFactory getPoolingConnectionFactory() {
+        return poolingConnectionFactory;
     }
 
     public synchronized RecoveryXAResourceHolder createRecoveryXAResourceHolder() throws JMSException {
@@ -75,17 +73,19 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     }
 
     private void testXAConnection() throws JMSException {
-        boolean testConnection = bean.getTestConnections();
-         if (!testConnection) {
+        if (!poolingConnectionFactory.getTestConnections()) {
             if (log.isDebugEnabled()) log.debug("not testing connection of " + this);
             return;
         }
 
         if (log.isDebugEnabled()) log.debug("testing connection of " + this);
         XASession xaSession = xaConnection.createXASession();
-        TemporaryQueue tq = xaSession.createTemporaryQueue();
-        tq.delete();
-        xaSession.close();
+        try {
+            TemporaryQueue tq = xaSession.createTemporaryQueue();
+            tq.delete();
+        } finally {
+            xaSession.close();
+        }
     }
 
     protected void release() throws JMSException {
@@ -94,7 +94,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
 
         // requeuing
         try {
-            TransactionContextHelper.requeue(this, bean);
+            TransactionContextHelper.requeue(this, poolingConnectionFactory);
         } catch (BitronixSystemException ex) {
             throw (JMSException) new JMSException("error requeueing " + this).initCause(ex);
         }
@@ -149,7 +149,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     }
 
     public String toString() {
-        return "a JmsPooledConnection of pool " + bean.getUniqueName() + " in state " +
+        return "a JmsPooledConnection of pool " + poolingConnectionFactory.getUniqueName() + " in state " +
                 Decoder.decodeXAStatefulHolderState(getState()) + " with underlying connection " + xaConnection +
                 " with " + sessions.size() + " opened session(s)";
     }

@@ -56,50 +56,6 @@ public class PropertyUtils {
     }
 
     /**
-     * Get a direct or indirect property (dotted property: prop1.prop2.prop3) on the target object.
-     * @param target the target object from which to get the property.
-     * @param propertyName the name of the property to get.
-     * @return the value of the specified property.
-     * @throws IllegalAccessException
-     * @throws java.lang.reflect.InvocationTargetException
-     */
-    public static Object getProperty(Object target, String propertyName) throws IllegalAccessException, InvocationTargetException {
-        String[] propertyNames = propertyName.split("\\.");
-        Object currentTarget = target;
-        for (int i = 0; i < propertyNames.length; i++) {
-            String name = propertyNames[i];
-            Object result = callGetter(currentTarget, name);
-            if (result == null && i < propertyNames.length -1)
-                throw new PropertyException("cannot get property '" + propertyName + "' - '" + name + "' is null");
-            currentTarget = result;
-        }
-
-        return currentTarget;
-    }
-
-
-    /**
-     * Set a direct property on the target object. Conversions from propertyValue to the proper destination type
-     * are performed whenever possible.
-     * @param target the target object on which to set the property.
-     * @param propertyName the name of the property to set.
-     * @param propertyValue the value of the property to set.
-     * @throws IllegalAccessException
-     * @throws java.lang.reflect.InvocationTargetException
-     */
-    private static void setDirectProperty(Object target, String propertyName, Object propertyValue) throws IllegalAccessException, InvocationTargetException {
-        Method setter = getSetter(target, propertyName);
-        Class parameterType = setter.getParameterTypes()[0];
-        if (propertyValue != null) {
-            Object transformedPropertyValue = transform(propertyValue, parameterType);
-            setter.invoke(target, new Object[] {transformedPropertyValue});
-        }
-        else {
-            setter.invoke(target, new Object[] {null});
-        }
-    }
-
-    /**
      * Build a map of direct javabeans properties of the target object.
      * @param target the target object from which to get properties names.
      * @return a Map of String with properties names as key and their values
@@ -129,6 +85,66 @@ public class PropertyUtils {
         return properties;
     }
 
+    /**
+     * Get a direct or indirect property (dotted property: prop1.prop2.prop3) on the target object.
+     * @param target the target object from which to get the property.
+     * @param propertyName the name of the property to get.
+     * @return the value of the specified property.
+     * @throws IllegalAccessException
+     * @throws java.lang.reflect.InvocationTargetException
+     */
+    public static Object getProperty(Object target, String propertyName) throws IllegalAccessException, InvocationTargetException {
+        String[] propertyNames = propertyName.split("\\.");
+        Object currentTarget = target;
+        for (int i = 0; i < propertyNames.length; i++) {
+            String name = propertyNames[i];
+            Object result = callGetter(currentTarget, name);
+            if (result == null && i < propertyNames.length -1)
+                throw new PropertyException("cannot get property '" + propertyName + "' - '" + name + "' is null");
+            currentTarget = result;
+        }
+
+        return currentTarget;
+    }
+
+    /**
+     * Set a map of properties on the target object.
+     * @param target the target object on which to set the properties.
+     * @param properties a map of String/Object pairs.
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     */
+    public static void setProperties(Object target, Map properties) throws IllegalAccessException, InvocationTargetException {
+        Iterator it = properties.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry entry = (Map.Entry) it.next();
+            String name = (String) entry.getKey();
+            Object value = entry.getValue();
+            setProperty(target, name, value);
+        }
+    }
+
+    /**
+     * Set a direct property on the target object. Conversions from propertyValue to the proper destination type
+     * are performed whenever possible.
+     * @param target the target object on which to set the property.
+     * @param propertyName the name of the property to set.
+     * @param propertyValue the value of the property to set.
+     * @throws IllegalAccessException
+     * @throws java.lang.reflect.InvocationTargetException
+     */
+    private static void setDirectProperty(Object target, String propertyName, Object propertyValue) throws IllegalAccessException, InvocationTargetException {
+        Method setter = getSetter(target, propertyName);
+        Class parameterType = setter.getParameterTypes()[0];
+        if (propertyValue != null) {
+            Object transformedPropertyValue = transform(propertyValue, parameterType);
+            setter.invoke(target, new Object[] {transformedPropertyValue});
+        }
+        else {
+            setter.invoke(target, new Object[] {null});
+        }
+    }
+
     private static Map getNestedProperties(String prefix, Properties properties) {
         Map result = new HashMap();
         Iterator it = properties.entrySet().iterator();
@@ -143,6 +159,9 @@ public class PropertyUtils {
 
     private static Object transform(Object value, Class destinationClass) {
         if (value.getClass() == destinationClass)
+            return value;
+
+        if (value.getClass() == int.class || value.getClass() == Integer.class || value.getClass() == boolean.class || value.getClass() == Boolean.class)
             return value;
 
         if ((destinationClass == int.class || destinationClass == Integer.class)  &&  value.getClass() == String.class) {
@@ -203,6 +222,5 @@ public class PropertyUtils {
         }
         throw new PropertyException("no property '" + propertyName + "' in class '" + target.getClass().getName() + "'");
     }
-
 
 }

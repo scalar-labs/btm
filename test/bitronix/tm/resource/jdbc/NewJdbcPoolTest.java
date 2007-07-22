@@ -40,7 +40,7 @@ public class NewJdbcPoolTest extends TestCase {
         dsb.setUniqueName("pds");
         dsb.setPoolSize(POOL_SIZE);
 
-        pds = new PoolingDataSource(dsb);
+        pds = (PoolingDataSource) dsb.createResource();
     }
 
     protected void tearDown() throws Exception {

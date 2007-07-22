@@ -2,50 +2,75 @@ package bitronix.tm.resource.jms;
 
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.recovery.RecoveryException;
-import bitronix.tm.resource.*;
+import bitronix.tm.resource.ResourceFactory;
+import bitronix.tm.resource.ResourceRegistrar;
+import bitronix.tm.resource.ResourceConfigurationException;
 import bitronix.tm.resource.common.*;
 import bitronix.tm.resource.jms.inbound.asf.BitronixServerSessionPool;
-
-import javax.jms.*;
-import javax.naming.Reference;
-import javax.naming.NamingException;
-import javax.naming.StringRefAddr;
-import javax.transaction.xa.XAResource;
-import java.util.Properties;
-import java.util.List;
-import java.io.IOException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
+import javax.jms.XAConnectionFactory;
+import javax.naming.NamingException;
+import javax.naming.Reference;
+import javax.naming.StringRefAddr;
+import javax.transaction.xa.XAResource;
+import java.io.IOException;
+import java.util.List;
+import java.util.Properties;
+
 /**
  * Implementation of a JMS {@link ConnectionFactory} wrapping vendor's {@link XAConnectionFactory} implementation.
- * <p>Objects of this class are created by {@link ConnectionFactoryBean} instances.</p>
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban
  */
-public class PoolingConnectionFactory implements ConnectionFactory, XAResourceProducer {
+public class PoolingConnectionFactory  extends ResourceBean implements ConnectionFactory, XAResourceProducer {
 
     private final static Logger log = LoggerFactory.getLogger(PoolingConnectionFactory.class);
 
-    private ConnectionFactoryBean bean;
     private transient XAPool pool;
     private transient JmsPooledConnection recoveryPooledConnection;
     private transient RecoveryXAResourceHolder recoveryXAResourceHolder;
-    private transient BitronixServerSessionPool serverSessionPool;
+    private transient BitronixServerSessionPool ssPool;
+    
+    private Properties serverSessionPool = new Properties();
+    private boolean cacheProducersConsumers = true;
+    private boolean testConnections = false;
 
-    public PoolingConnectionFactory(ConnectionFactoryBean connectionFactoryBean) throws Exception {
-        this.bean = connectionFactoryBean;
 
-        Properties serverSessionPool = connectionFactoryBean.getServerSessionPool();
+    public PoolingConnectionFactory() {
+    }
+
+
+    /**
+     * Initialize the pool by creating the initial amount of connections.
+     */
+    public void init() {
+        try {
+            buildXAPool();
+            buildServerSessionPool();
+        }
+        catch (Exception ex) {
+            throw new ResourceConfigurationException("cannot create JMS connection factory named " + getUniqueName(), ex);
+        }
+    }
+
+    private void buildServerSessionPool() throws ClassNotFoundException, JMSException {
+        if (ssPool != null)
+            return;
+
+        Properties serverSessionPool = getServerSessionPool();
         if (serverSessionPool.size() > 0) {
-            bean.setPoolSize(bean.getPoolSize() + 1);
-            if (log.isDebugEnabled()) log.debug("configuring server session pool, increasing connection pool size by 1 to " + bean.getPoolSize());
+            setPoolSize(getPoolSize() + 1);
+            if (log.isDebugEnabled()) log.debug("configuring server session pool, increasing connection pool size by 1 to " + getPoolSize());
         }
 
         int inboundPoolSize = 0;
-        String poolSizeString = connectionFactoryBean.getServerSessionPool().getProperty("poolSize");
+        String poolSizeString = getServerSessionPool().getProperty("poolSize");
         if (poolSizeString != null)
             inboundPoolSize = Integer.parseInt(poolSizeString);
 
@@ -53,20 +78,57 @@ public class PoolingConnectionFactory implements ConnectionFactory, XAResourcePr
             String listenerClassName = serverSessionPool.getProperty("listenerClassName");
             if (log.isDebugEnabled()) log.debug("configuring server session pool, listenerClassName=" + listenerClassName);
             Class clazz = Thread.currentThread().getContextClassLoader().loadClass(listenerClassName);
-            this.serverSessionPool = new BitronixServerSessionPool(this, clazz, inboundPoolSize);
+            this.ssPool = new BitronixServerSessionPool(this, clazz, inboundPoolSize);
         }
-
-        buildXAPool();
     }
 
+    /**
+     * @deprecated superceded by init().
+     * @return this.
+     */
+    public XAResourceProducer createResource() {
+        init();
+        return this;
+    }
+
+    public Properties getServerSessionPool() {
+        return serverSessionPool;
+    }
+
+    public void setServerSessionPool(Properties serverSessionPool) {
+        this.serverSessionPool = serverSessionPool;
+    }
+
+    public boolean getCacheProducersConsumers() {
+        return cacheProducersConsumers;
+    }
+
+    public void setCacheProducersConsumers(boolean cacheProducersConsumers) {
+        this.cacheProducersConsumers = cacheProducersConsumers;
+    }
+
+    public boolean getTestConnections() {
+        return testConnections;
+    }
+
+    public void setTestConnections(boolean testConnections) {
+        this.testConnections = testConnections;
+    }
+
+
     private void buildXAPool() throws Exception {
-        pool = new XAPool(this, bean);
+        if (pool != null)
+            return;
+
+        if (log.isDebugEnabled()) log.debug("building JMS XA pool for " + getUniqueName() + " with " + getPoolSize() + " connection(s)");
+        pool = new XAPool(this, this);
         ResourceRegistrar.register(this);
     }
 
 
     public Connection createConnection() throws JMSException {
         try {
+            init();
             return (Connection) pool.getConnectionHandle();
         } catch (Exception ex) {
             throw (JMSException) new JMSException("unable to get a connection from pool of " + this).initCause(ex);
@@ -79,24 +141,21 @@ public class PoolingConnectionFactory implements ConnectionFactory, XAResourcePr
     }
 
     public String toString() {
-        return "a PoolingConnectionFactory with uniqueName " + bean.getUniqueName() + " and " + pool;
+        return "a PoolingConnectionFactory with uniqueName " + getUniqueName() + " and " + pool;
     }
 
 
     /* RecoverableResourceProducer implementation */
 
-    public String getUniqueName() {
-        return bean.getUniqueName();
-    }
-
     public XAResourceHolderState startRecovery() {
         try {
+            init();
             if (recoveryPooledConnection == null) {
                 JmsConnectionHandle connectionHandle = (JmsConnectionHandle) pool.getConnectionHandle(false);
                 recoveryPooledConnection = connectionHandle.getPooledConnection();
                 recoveryXAResourceHolder = recoveryPooledConnection.createRecoveryXAResourceHolder();
             }
-            return new XAResourceHolderState(recoveryXAResourceHolder, recoveryPooledConnection.getBean());
+            return new XAResourceHolderState(recoveryXAResourceHolder, recoveryPooledConnection.getPoolingConnectionFactory());
         } catch (Exception ex) {
             throw new RecoveryException("error starting recovery", ex);
         }
@@ -125,14 +184,14 @@ public class PoolingConnectionFactory implements ConnectionFactory, XAResourcePr
         pool.close();
         pool = null;
 
-        if (serverSessionPool != null) {
+        if (ssPool != null) {
             try {
-                if (log.isDebugEnabled()) log.debug("closing " + serverSessionPool);
-                serverSessionPool.close();
+                if (log.isDebugEnabled()) log.debug("closing " + ssPool);
+                ssPool.close();
             } catch (JMSException ex) {
                 log.error("error closing server session pool", ex);
             }
-            serverSessionPool = null;
+            ssPool = null;
         }
 
         ResourceRegistrar.unregister(this);
@@ -140,7 +199,7 @@ public class PoolingConnectionFactory implements ConnectionFactory, XAResourcePr
 
     public XAStatefulHolder createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
         XAConnectionFactory xaConnectionFactory = (XAConnectionFactory) xaFactory;
-        return new JmsPooledConnection(this, xaConnectionFactory.createXAConnection(), (ConnectionFactoryBean) bean);
+        return new JmsPooledConnection(this, xaConnectionFactory.createXAConnection());
     }
 
     public XAResourceHolder findXAResourceHolder(XAResource xaResource) {
@@ -162,7 +221,7 @@ public class PoolingConnectionFactory implements ConnectionFactory, XAResourcePr
         if (log.isDebugEnabled()) log.debug("creating new JNDI reference of " + this);
         return new Reference(
                 PoolingConnectionFactory.class.getName(),
-                new StringRefAddr("uniqueName", bean.getUniqueName()),
+                new StringRefAddr("uniqueName", getUniqueName()),
                 ResourceFactory.class.getName(),
                 null);
     }

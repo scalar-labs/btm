@@ -1,13 +1,12 @@
 package bitronix.tm.resource.jms;
 
+import bitronix.tm.mock.resource.jms.MockXAConnectionFactory;
 import junit.framework.TestCase;
 
-import java.io.ObjectOutputStream;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
-import java.io.FileInputStream;
-
-import bitronix.tm.mock.resource.jms.MockXAConnectionFactory;
+import java.io.ObjectOutputStream;
 
 /**
  * <p></p>
@@ -27,7 +26,7 @@ public class JmsPoolTest extends TestCase {
         cfb.setUniqueName("pcf");
         cfb.setPoolSize(POOL_SIZE);
 
-        pcf = new PoolingConnectionFactory(cfb);
+        pcf = (PoolingConnectionFactory) cfb.createResource();
     }
 
     

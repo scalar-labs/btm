@@ -18,490 +18,269 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/journal/DiskForceBatcherThread.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\RawTransactionTableModel.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\XAResourceForgetEvent.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jdbc\lrc\LrcConnectionHandle.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\inbound\asf\package.html" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\executor" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\recovery\RecovererTest.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/Configuration.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jdbc\JdbcConnectionHandle.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\inbound\asf" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\MysqlTest.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/twopc/Preparer.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/common/XAStatefulHolder.java" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\RecoveryXAResourceHolder.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\ConfigurationTest.java" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/resource/jms/MessageConsumerWrapper.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/resource/jms/MessageConsumerWrapper.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\CorruptedTransactionLogException.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\MessageProducerConsumerKey.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\internal\PropertyUtilsTest.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\recovery\Recoverer.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/drivers/IngresTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/JmsConnectionHandle.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/common/StateChangeListener.java" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\ConnectionCloseEvent.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\internal" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\overview.html" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/lib" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/BitronixRollbackException.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/resource/jms/ConnectionFactoryBean.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/resource/jms/ConnectionFactoryBean.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\inbound\simple\package.html" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource/jdbc/MockPreparedStatement.java" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\MockJournal.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/twopc/executor/package.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource/jdbc/MockStatement.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource" />
+      <change type="DELETED" beforePath="$APPLICATION_HOME_DIR$/bin/log4j.dtd" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\TransactionLogCursor.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\UidGenerator.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\FbTest.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\TransactionTableCellRenderer.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\StateChangeListener.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/resource/jdbc" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/ConfigurationTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource/jms/MockXAConnection.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/JmsPooledConnection.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/JdbcPooledConnection.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/JdbcPooledConnection.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jms\MockXAConnectionFactory.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\package.html" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/common/package.html" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/resource/jms/MessageProducerWrapper.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/resource/jms/MessageProducerWrapper.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\Uid.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/inbound/simple" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/gui/TransactionTableModel.java" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\Preparer.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\MessageProducerWrapper.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/BitronixRuntimeException.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\AbstractMockJmsTest.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/MessageProducerWrapper.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\lib\log4j-1.2.13.jar" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/twopc" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\package.html" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/internal/UidGeneratorTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/BitronixSystemException.java" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/test" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\timer\TaskException.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/lib/geronimo-spec-jta-1.0.1B-rc4.jar" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/common/XAResourceProducer.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/recovery" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\XAResourceEndEvent.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/timer/TaskException.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\release-notes-alpha4.txt" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/twopc/executor/SyncExecutor.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/ResourceFactory.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/drivers/FirstsqlTest.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\journal" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\MockXAResource.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\JdbcOnlyTest.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\JndiXAConnectionFactory.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/release-notes-alpha7.txt" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\lib\slf4j-log4j12.jar" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/gui/TransactionTableCellRenderer.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/release-notes-alpha3.txt" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\BitronixSystemException.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\EventRecorder.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource/jms" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\executor\package.html" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/lib" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/NewJdbcWrongUsageMockTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/internal/PropertyUtilsTest.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\twopc" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\TransactionLogAppender.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\recovery\RecoveryException.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/XAResourceManager.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/XAResourceEndEvent.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/gui/DuplicatedGtridTableModel.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jms" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\inbound\asf\BitronixServerSessionPool.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/package.html" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\XAResourceProducer.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\release-notes-alpha3.txt" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\release-notes-alpha5.txt" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/timer/RecoveryTask.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\SuspendResumeJdbcTest.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\XAPool.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\release-notes-1.0-beta2.txt" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\DiskJournal.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/recovery/RecovererTest.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jdbc\MockPreparedStatement.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\recovery" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/lib/log4j-1.2.13.jar" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/inbound/asf/BitronixServerSessionPool.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\ResourceBean.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\JournalLogEvent.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\inbound\simple" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/twopc/package.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/inbound/asf" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/recovery" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/timer" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\twopc\Phase1FailureTest.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/NewJdbcProperUsageMockTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource/MockXAResource.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\TransactionTableModel.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/BitronixHeuristicMixedException.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\JmsPooledConnectionMBean.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/package.html" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\ThreadContext.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\BitronixXid.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/MessageProducerConsumerKey.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jdbc/PoolingDataSource.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\executor\Executor.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\ConnectionFactoryBean.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\PendingTransactionTableModel.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/journal/TransactionLogAppender.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/twopc/executor/Executor.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\resource\ResourceLoaderTest.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\release-notes-alpha7.txt" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/Event.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jms\MockMessageProducer.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\lib\geronimo-spec-jta-1.0.1B-rc4.jar" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\ResourcesPanel.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/log4j.xml" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\DiskForceBatcherThread.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\bitronix-res.properties" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/ConnectionDequeuedEvent.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/PropertyException.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/twopc/Rollbacker.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/SuspendResumeJdbcTest.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\AmqTest.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/ResourceLoader.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/gui/TransactionLogHeaderPanel.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/drivers/SwiftmqTest.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\ConnectionQueuedEvent.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/journal/DiskForceWaitQueue.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/gui/Console.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/gui/PendingTransactionTableModel.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\timer\RecoveryTask.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/drivers/DerbyTest.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\BitronixHeuristicRollbackException.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/gui/ResourcesPanel.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jdbc/JdbcPooledConnectionMBean.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\ResourceFactory.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/drivers/OracleTest.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\BitronixTransaction.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jdbc/DataSourceBean.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/recovery/Recoverer.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\XAResourceCommitEvent.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/ConnectionFactoryBean.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/DualSessionWrapper.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/BitronixHeuristicRollbackException.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\PoolingConnectionFactory.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\Encoder.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/BitronixTransactionManagerFactory.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\executor\BackportConcurrentExecutor.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\DuplicatedGtridTableModel.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/journal/DiskForceTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/JournalLogEvent.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\OracleTest.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\MantarayTest.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\AbstractXAResourceHolder.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\ResourcesTreeModel.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/resource/jms/SimpleMessageListener.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jdbc" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\PropertyException.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jdbc/lrc/LrcConnectionHandle.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/release-notes-1.0-beta4.txt" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\Journal.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\TransactionLogDialog.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\TransactionTableMouseListener.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\recovery\package.html" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\BitronixHeuristicMixedException.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\Event.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/JmsProperUsageMockTest.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\PointbaseTest.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/common/AbstractXAResourceHolder.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\XAResourceHolderState.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/XAEvent.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\JmsProperUsageMockTest.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\HsqldbTest.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jms\MockXAConnection.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/ConnectionQueuedEvent.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\NewJdbcProperUsageMockTest.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\TransactionLogHeaderPanel.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\timer\TaskScheduler.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/doc" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\timer" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\DeferredReleaseSynchronization.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/PropertyUtils.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/drivers/HsqldbTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/build.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource/jdbc/MockConnection.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\ResourceLoader.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/Chrono.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\internal\UidGeneratorTest.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\timer\Task.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/recovery/RecoveryException.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\DiskForceWaitQueue.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/recovery/DanglingTransaction.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\TransactionTimeoutException.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/inbound/simple/BitronixSimpleInboundPool.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/package.html" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\resource\jms" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/common/RecoveryXAResourceHolder.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/release-notes-alpha4.txt" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\lib\slf4j-jdk14.jar" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/drivers/AmqTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/journal/TransactionLogCursor.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/gui/TransactionTableMouseListener.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/NewJdbcStrangeUsageMockTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\Rollbacker.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\package.html" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\TransactionManagerServices.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/BitronixHeuristicCommitException.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\NewJdbcWrongUsageMockTest.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/common/TransactionContextHelper.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\DualSessionWrapper.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jms\MockXASession.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/journal/DiskJournal.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/ConnectionCloseEvent.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix-default-config.properties" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\timer\TransactionTimeoutTask.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\RawTransactionTableModel.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\XAResourceForgetEvent.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jdbc/lrc/LrcXADataSource.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jdbc\lrc\LrcConnectionHandle.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\executor" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jdbc\JdbcConnectionHandle.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/BitronixTransactionMBean.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/resource/jdbc/NewJdbcPoolTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/common/XAPool.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/InitializationException.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/twopc" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/BitronixTransaction.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\ConfigurationTest.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\CorruptedTransactionLogException.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\MessageProducerConsumerKey.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\recovery\Recoverer.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/common" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/JndiXAConnectionFactory.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\TransactionLogCursor.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/BitronixUserTransactionFactory.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\FbTest.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\UidGenerator.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/XAResourceCommitEvent.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/twopc/executor" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\TransactionTableCellRenderer.java" afterPath="" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jms\MockXAConnectionFactory.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/NewJdbcSuspendResumeMockTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/lib/slf4j-log4j12.jar" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\Chrono.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\package.html" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\AbstractMockJmsTest.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\XAEvent.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/drivers/FbTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/drivers/XATestSuite.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource/jms/MockXASession.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix-default-config.properties" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource/MockJournal.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\lib\log4j-1.2.13.jar" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\release-notes-1.0-beta4.txt" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/recovery/package.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\package.html" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\journal\DiskForceTest.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/release-notes-alpha6.txt" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/lib/slf4j-jdk14.jar" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\ResourceRegistrar.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/gui/TransactionLogDialog.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\timer\TaskException.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\BitronixXAException.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/BitronixTransactionManager.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/bitronix-res.properties" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/Encoder.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test/bitronix/tm/mock/NewJdbcStrangeUsageMockTest.java" afterPath="$PROJECT_DIR$/test/bitronix/tm/mock/NewJdbcStrangeUsageMockTest.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\XAResourceEndEvent.java" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test/bitronix/tm/mock/NewJdbcWrongUsageMockTest.java" afterPath="$PROJECT_DIR$/test/bitronix/tm/mock/NewJdbcWrongUsageMockTest.java" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\JmsConnectionHandle.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/XAResourceRollbackEvent.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\release-notes-alpha4.txt" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jdbc\MockXADataSource.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\ManagementRegistrar.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\package.html" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/twopc/executor/SimpleAsyncExecutor.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\journal" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/JdbcConnectionHandle.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/JdbcConnectionHandle.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\MockXAResource.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\JmsPooledConnection.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/BitronixXid.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource/jms/MockMessageProducer.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/EventsIterator.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/ResourceConfigurationException.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\JdbcOnlyTest.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\JndiXAConnectionFactory.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\XAResourceHolder.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jdbc/package.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/license.txt" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\lib\slf4j-log4j12.jar" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\Configuration.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jdbc" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/timer/TransactionTimeoutTask.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/XAResourceHolderState.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/internal" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\BitronixSystemException.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\EventRecorder.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\executor\package.html" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\package.html" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/XAResourceForgetEvent.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/timer/TaskScheduler.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/gui/ResourcesTreeModel.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\BitronixTransactionManager.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/common/XAResourceHolder.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/DataSourceBean.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/DataSourceBean.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\twopc" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\TransactionLogAppender.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\recovery\DanglingTransaction.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource/jdbc/MockXADataSource.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\recovery\RecoveryException.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\DerbyTest.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\SybaseTest.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jdbc\DataSourceBean.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jdbc\MockStatement.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jdbc/lrc/LrcXAConnection.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/gui/package.html" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jms" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\ResourceConfigurationException.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jms\MockMessageConsumer.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/twopc/Phase1FailureTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/common/DeferredReleaseSynchronization.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/resource/jms" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\TransactionContextHelper.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\inbound\asf\BitronixServerSessionPool.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\XAResourceProducer.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\release-notes-alpha3.txt" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/drivers/PointbaseTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/BitronixXAException.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/package.html" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\TransactionContextHelper.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\release-notes-alpha5.txt" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\XAResourceStartEvent.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\SuspendResumeJdbcTest.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\release-notes-1.0-beta2.txt" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\XAPool.java" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/BitronixTransactionManager.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/BitronixTransactionManager.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\DiskJournal.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jdbc\MockPreparedStatement.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\XAResourceRollbackEvent.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jdbc\lrc\LrcXADataSource.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\recovery" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jdbc\MockXAConnection.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/UidGenerator.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/lib/geronimo-spec-jms-1.1-rc4.jar" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\ResourceBean.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\JournalLogEvent.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\inbound\simple" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\release-notes-alpha6.txt" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/journal" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jdbc\lrc" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\twopc\Phase1FailureTest.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\TransactionLogRecord.java" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/resource/ResourceLoader.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/resource/ResourceLoader.java" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\BitronixTransactionManagerFactory.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/journal/TransactionLogRecord.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/twopc/executor/BackportConcurrentExecutor.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/resource/ResourceLoaderTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/TransactionTimeoutException.java" />
-      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\MessageConsumerWrapper.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\TransactionTableModel.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jdbc\lrc\LrcXAResource.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/log4j.dtd" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/release-notes-alpha5.txt" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\MessageConsumerWrapper.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\inbound\simple\BitronixSimpleInboundPool.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\JmsPooledConnectionMBean.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jdbc\JdbcPooledConnection.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/Decoder.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/JmsOnlyTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/inbound/asf/BitronixServerSession.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/drivers/MantarayTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource/jms/MockMessageConsumer.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jdbc/lrc/package.html" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\ThreadContext.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\BitronixXid.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\executor\Executor.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\resource\jms\JmsPoolTest.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/release-notes-1.0-beta3.txt" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource/jdbc" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/AbstractMockJmsTest.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\ConnectionFactoryBean.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\PendingTransactionTableModel.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\package.html" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/Uid.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/journal" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/gui/RawTransactionTableModel.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/recovery/Recoverer.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/recovery/Recoverer.java" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\BitronixRollbackException.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/XAResourceStartEvent.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test/bitronix/tm/mock/NewJdbcSuspendResumeMockTest.java" afterPath="$PROJECT_DIR$/test/bitronix/tm/mock/NewJdbcSuspendResumeMockTest.java" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\recovery" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\doc\bitronix.html" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/ThreadContext.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\resource\ResourceLoaderTest.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\release-notes-alpha7.txt" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\XAResourceManager.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/drivers" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test/bitronix/tm/resource/jms/JmsPoolTest.java" afterPath="$PROJECT_DIR$/test/bitronix/tm/resource/jms/JmsPoolTest.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jms\MockMessageProducer.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\lib\geronimo-spec-jta-1.0.1B-rc4.jar" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\release-notes-1.0-beta3.txt" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/XAConnectionCloseEvent.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\ResourcesPanel.java" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test/bitronix/tm/resource/jdbc/NewJdbcPoolTest.java" afterPath="$PROJECT_DIR$/test/bitronix/tm/resource/jdbc/NewJdbcPoolTest.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/build.xml" afterPath="$PROJECT_DIR$/build.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/resource/jms/PoolingConnectionFactory.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/resource/jms/PoolingConnectionFactory.java" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\NewJdbcSuspendResumeMockTest.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/inbound" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/AbstractMockJdbcTest.java" />
-      <change type="DELETED" beforePath="$APPLICATION_HOME_DIR$/bin/log4j.dtd" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/resource" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\DiskForceBatcherThread.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\bitronix-res.properties" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jdbc\JdbcPooledConnectionMBean.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/twopc/Committer.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\AmqTest.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\ConnectionQueuedEvent.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\timer\RecoveryTask.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\BitronixHeuristicRollbackException.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\FirstsqlTest.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\executor\SyncExecutor.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\license.txt" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\EventsIterator.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\ResourceFactory.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\BitronixTransaction.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\Committer.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\twopc\Phase2FailureTest.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/ResourceRegistrar.java" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\IfxTest.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/timer/package.html" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\XAResourceCommitEvent.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jdbc\package.html" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\executor\ConcurrentExecutor.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\lib\geronimo-spec-jms-1.1-rc4.jar" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/JdbcOnlyTest.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\PoolingConnectionFactory.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\Encoder.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jdbc" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\XAResourcePrepareEvent.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\resource\jms\SimpleMessageListener.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\MockXid.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\BitronixTransactionMBean.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/journal/Journal.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\executor\BackportConcurrentExecutor.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\BitronixUserTransactionFactory.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\DuplicatedGtridTableModel.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\XAStatefulHolder.java" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/PoolingDataSource.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/PoolingDataSource.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\OracleTest.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\MantarayTest.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\NewJdbcStrangeUsageMockTest.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jdbc/JdbcPooledConnection.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/release-notes-1.0-beta2.txt" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/common/AbstractXAStatefulHolder.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/timer/Task.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jdbc/JdbcConnectionHandle.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\AbstractXAResourceHolder.java" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/resource/jms/inbound/asf/BitronixServerSession.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/resource/jms/inbound/asf/BitronixServerSession.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\ResourcesTreeModel.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\PropertyException.java" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/resource/jms/DualSessionWrapper.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/resource/jms/DualSessionWrapper.java" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\AbstractMockJdbcTest.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jdbc\lrc\LrcXAConnection.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\JmsOnlyTest.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/twopc/Phase2FailureTest.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\Journal.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\build.xml" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/drivers/IfxTest.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\TransactionLogDialog.java" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/resource/jms/JmsPooledConnection.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/resource/jms/JmsPooledConnection.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\TransactionTableMouseListener.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\executor\SimpleAsyncExecutor.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/journal/TransactionLogHeader.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/journal/CorruptedTransactionLogException.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\recovery\package.html" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\BitronixRuntimeException.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/EventRecorder.java" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\log4j.xml" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/twopc/executor/ConcurrentExecutor.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/events/XAResourcePrepareEvent.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\BitronixHeuristicMixedException.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\Event.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\resource\jdbc\NewJdbcPoolTest.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource/MockXid.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/btm.ipr" afterPath="$PROJECT_DIR$/btm.ipr" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\PointbaseTest.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\XAResourceHolderState.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\HsqldbTest.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\JmsProperUsageMockTest.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\XAConnectionCloseEvent.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource/jms/MockXAConnectionFactory.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/MessageConsumerWrapper.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jms\MockXAConnection.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\resource\jdbc" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/mock/resource/jdbc/MockXAConnection.java" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jdbc\lrc\package.html" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/journal/package.html" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\NewJdbcProperUsageMockTest.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jdbc\MockConnection.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/resource/jms/JmsPoolTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/TransactionManagerServices.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/doc/bitronix.html" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\TransactionLogHeaderPanel.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\timer\TaskScheduler.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\XATestSuite.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/PoolingConnectionFactory.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/inbound/simple/package.html" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\timer" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/btm.iml" afterPath="$PROJECT_DIR$/btm.iml" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\DeferredReleaseSynchronization.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\timer\package.html" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\TransactionLogHeader.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\inbound" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/JmsPooledConnectionMBean.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jms/inbound/asf/package.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/drivers/MysqlTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/release-notes-beta1.txt" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\ResourceLoader.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\gui\Console.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\inbound\asf\BitronixServerSession.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/internal/ManagementRegistrar.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\internal\UidGeneratorTest.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\timer\Task.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\DiskForceWaitQueue.java" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/btm.iws" afterPath="$PROJECT_DIR$/btm.iws" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\PropertyUtils.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/gui" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\TransactionTimeoutException.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\resource\jms" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\BitronixHeuristicCommitException.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\IngresTest.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\lib\slf4j-jdk14.jar" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\resource" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jdbc\PoolingDataSource.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\AbstractXAStatefulHolder.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/test/bitronix/tm/drivers/SybaseTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jdbc/lrc/LrcXAResource.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/internal/PropertyUtils.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/internal/PropertyUtils.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\twopc\Rollbacker.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\InitializationException.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/common/ResourceBean.java" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\drivers\SwiftmqTest.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\journal\package.html" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\TransactionManagerServices.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal\Decoder.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\NewJdbcWrongUsageMockTest.java" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\internal" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\jms\DualSessionWrapper.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\resource\common\package.html" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/overview.html" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\resource\jms\MockXASession.java" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix\tm\mock\events\ConnectionDequeuedEvent.java" afterPath="" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/trunk/src/bitronix/tm/resource/jdbc/lrc" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test/bitronix/tm/mock/NewJdbcProperUsageMockTest.java" afterPath="$PROJECT_DIR$/test/bitronix/tm/mock/NewJdbcProperUsageMockTest.java" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\test\bitronix-default-config.properties" afterPath="" />
       <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\release-notes-beta1.txt" afterPath="" />
+      <change type="DELETED" beforePath="C:\Java\projects\svn\btm\btm\src\bitronix\tm\timer\TransactionTimeoutTask.java" afterPath="" />
     </list>
-    <list name="unversioned" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/btm.iml" afterPath="$PROJECT_DIR$/btm.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/btm.iws" afterPath="$PROJECT_DIR$/btm.iws" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/btm.ipr" afterPath="$PROJECT_DIR$/btm.ipr" />
-    </list>
+    <list name="unversioned" comment="" />
   </component>
   <component name="ChangeListSynchronizer" />
-  <component name="ChangesViewManager" flattened_view="true" />
+  <component name="ChangesViewManager" flattened_view="false" />
   <component name="CheckinPanelState" />
   <component name="Commander">
     <leftPanel />
@@ -513,7 +292,7 @@
     <option name="AUTO_SHOW_ERRORS_IN_EDITOR" value="true" />
     <option name="CLOSE_MESSAGE_VIEW_IF_SUCCESS" value="true" />
     <option name="COMPILE_DEPENDENT_FILES" value="false" />
-    <option name="CLEAR_OUTPUT_DIRECTORY" value="false" />
+    <option name="CLEAR_OUTPUT_DIRECTORY" value="true" />
     <option name="ASSERT_NOT_NULL" value="true" />
   </component>
   <component name="CoverageDataManager" />
@@ -569,6 +348,21 @@
     <disable_hints />
   </component>
   <component name="DebuggerManager">
+    <line_breakpoints>
+      <breakpoint url="file://$PROJECT_DIR$/src/bitronix/tm/twopc/Rollbacker.java" line="109" class="bitronix.tm.twopc.Rollbacker" package="bitronix.tm.twopc">
+        <option name="ENABLED" value="true" />
+        <option name="SUSPEND_POLICY" value="SuspendAll" />
+        <option name="LOG_ENABLED" value="false" />
+        <option name="LOG_EXPRESSION_ENABLED" value="false" />
+        <option name="COUNT_FILTER_ENABLED" value="false" />
+        <option name="COUNT_FILTER" value="0" />
+        <option name="CONDITION_ENABLED" value="false" />
+        <option name="CLASS_FILTERS_ENABLED" value="false" />
+        <option name="INSTANCE_FILTERS_ENABLED" value="false" />
+        <option name="CONDITION" value="" />
+        <option name="LOG_MESSAGE" value="" />
+      </breakpoint>
+    </line_breakpoints>
     <breakpoint_any>
       <breakpoint>
         <option name="NOTIFY_CAUGHT" value="true" />
@@ -652,7 +446,35 @@
     <option name="myCurrentFavoritesList" value="btm" />
   </component>
   <component name="FileEditorManager">
-    <leaf />
+    <leaf>
+      <file leaf-file-name="PoolingDataSource.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/PoolingDataSource.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="156" column="30" selection-start="5293" selection-end="5293" vertical-scroll-proportion="0.3755924">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="JdbcPooledConnection.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/JdbcPooledConnection.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="156" column="5" selection-start="5897" selection-end="5897" vertical-scroll-proportion="0.30156815">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="JdbcConnectionHandle.java" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/JdbcConnectionHandle.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="71" column="60" selection-start="2560" selection-end="2560" vertical-scroll-proportion="0.2870929">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
   </component>
   <component name="FindManager">
     <FindUsagesManager>
@@ -773,7 +595,7 @@
           <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
         </PATH_ELEMENT>
         <PATH_ELEMENT>
-          <option name="myItemId" value="PsiDirectory:C:\Java\projects\svn\btm\btm" />
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk" />
           <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
         </PATH_ELEMENT>
       </PATH>
@@ -787,11 +609,129 @@
           <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
         </PATH_ELEMENT>
         <PATH_ELEMENT>
-          <option name="myItemId" value="PsiDirectory:C:\Java\projects\svn\btm\btm" />
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk" />
           <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
         </PATH_ELEMENT>
         <PATH_ELEMENT>
-          <option name="myItemId" value="PsiDirectory:C:\Java\projects\svn\btm\btm\trunk" />
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk\test" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+      </PATH>
+      <PATH>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="btm.ipr" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="btm" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk\test" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk\test\bitronix\tm" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+      </PATH>
+      <PATH>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="btm.ipr" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="btm" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk\src" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+      </PATH>
+      <PATH>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="btm.ipr" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="btm" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk\src" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk\src\bitronix\tm" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+      </PATH>
+      <PATH>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="btm.ipr" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="btm" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk\src" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk\src\bitronix\tm" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk\src\bitronix\tm\resource" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+      </PATH>
+      <PATH>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="btm.ipr" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="btm" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk\src" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk\src\bitronix\tm" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk\src\bitronix\tm\resource" />
+          <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+        </PATH_ELEMENT>
+        <PATH_ELEMENT>
+          <option name="myItemId" value="PsiDirectory:D:\java\projects\btm\trunk\src\bitronix\tm\resource\jms" />
           <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
         </PATH_ELEMENT>
       </PATH>
@@ -808,7 +748,7 @@
       <showLibraryContents />
       <hideEmptyPackages />
       <abbreviatePackageNames />
-      <showStructure Favorites="false" ProjectPane="false" Scope="false" J2EEPane="false" PackagesPane="false" />
+      <showStructure Scope="false" ProjectPane="false" J2EEPane="false" PackagesPane="false" Favorites="false" />
       <autoscrollToSource />
       <autoscrollFromSource />
       <sortByType />
@@ -871,21 +811,22 @@
     </key>
   </component>
   <component name="RestoreUpdateTree" />
-  <component name="RunManager" selected="JUnit.bitronix.tm.mock in btm">
-    <tempConfiguration default="false" name="bitronix.tm.mock in btm" type="JUnit" factoryName="JUnit" enabled="false" merge="false">
+  <component name="RunManager" selected="JUnit.JmsPoolTest">
+    <tempConfiguration default="false" name="JmsPoolTest" type="JUnit" factoryName="JUnit" enabled="false" merge="false">
+      <pattern value="bitronix.tm.resource.jms.*" />
       <module name="btm" />
       <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
       <option name="ALTERNATIVE_JRE_PATH" />
-      <option name="PACKAGE_NAME" value="bitronix.tm.mock" />
-      <option name="MAIN_CLASS_NAME" />
+      <option name="PACKAGE_NAME" value="bitronix.tm.resource.jms" />
+      <option name="MAIN_CLASS_NAME" value="bitronix.tm.resource.jms.JmsPoolTest" />
       <option name="METHOD_NAME" />
-      <option name="TEST_OBJECT" value="package" />
+      <option name="TEST_OBJECT" value="class" />
       <option name="VM_PARAMETERS" />
       <option name="PARAMETERS" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="ADDITIONAL_CLASS_PATH" />
       <option name="TEST_SEARCH_SCOPE">
-        <value defaultName="singleModule" />
+        <value defaultName="wholeProject" />
       </option>
       <RunnerSettings RunnerId="Run" />
       <ConfigurationWrapper RunnerId="Run" />
@@ -912,37 +853,6 @@
         <option name="Make" value="true" />
       </method>
     </configuration>
-    <configuration default="true" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Remote">
-      <option name="WORKING_DIRECTORY" />
-      <option name="HOST" value="localhost" />
-      <option name="PORT" value="8080" />
-      <option name="LOCAL" value="false" />
-      <option name="OPEN_IN_BROWSER" value="true" />
-      <option name="OPEN_IN_BROWSER_URL" value="/" />
-      <option name="COMMON_VM_ARGUMENTS" value="" />
-      <option name="DEPLOY_TOMCAT_MANAGER" value="false" />
-      <option name="BASE_DIRECTORY_NAME" value="" />
-      <predefined_log_file id="TOMCAT_LOCALHOST_LOG_ID" enabled="true" />
-    </configuration>
-    <configuration default="true" type="Applet" factoryName="Applet">
-      <module name="" />
-      <option name="MAIN_CLASS_NAME" />
-      <option name="HTML_FILE_NAME" />
-      <option name="HTML_USED" value="false" />
-      <option name="WIDTH" value="400" />
-      <option name="HEIGHT" value="300" />
-      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
-      <option name="VM_PARAMETERS" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
-    </configuration>
-    <configuration default="true" type="Remote" factoryName="Remote">
-      <option name="USE_SOCKET_TRANSPORT" value="true" />
-      <option name="SERVER_MODE" value="false" />
-      <option name="SHMEM_ADDRESS" value="javadebug" />
-      <option name="HOST" value="localhost" />
-      <option name="PORT" value="5005" />
-    </configuration>
     <configuration default="true" type="Application" factoryName="Application" enabled="false" merge="false">
       <option name="MAIN_CLASS_NAME" />
       <option name="VM_PARAMETERS" />
@@ -955,6 +865,37 @@
       <method>
         <option name="Make" value="true" />
       </method>
+    </configuration>
+    <configuration default="true" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Remote">
+      <option name="WORKING_DIRECTORY" />
+      <option name="HOST" value="localhost" />
+      <option name="PORT" value="8080" />
+      <option name="LOCAL" value="false" />
+      <option name="OPEN_IN_BROWSER" value="true" />
+      <option name="OPEN_IN_BROWSER_URL" value="/" />
+      <option name="COMMON_VM_ARGUMENTS" value="" />
+      <option name="DEPLOY_TOMCAT_MANAGER" value="false" />
+      <option name="BASE_DIRECTORY_NAME" value="" />
+      <predefined_log_file id="TOMCAT_LOCALHOST_LOG_ID" enabled="true" />
+    </configuration>
+    <configuration default="true" type="Remote" factoryName="Remote">
+      <option name="USE_SOCKET_TRANSPORT" value="true" />
+      <option name="SERVER_MODE" value="false" />
+      <option name="SHMEM_ADDRESS" value="javadebug" />
+      <option name="HOST" value="localhost" />
+      <option name="PORT" value="5005" />
+    </configuration>
+    <configuration default="true" type="Applet" factoryName="Applet">
+      <module name="" />
+      <option name="MAIN_CLASS_NAME" />
+      <option name="HTML_FILE_NAME" />
+      <option name="HTML_USED" value="false" />
+      <option name="WIDTH" value="400" />
+      <option name="HEIGHT" value="300" />
+      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
+      <option name="VM_PARAMETERS" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" />
     </configuration>
     <configuration default="false" name="Console" type="Application" factoryName="Application" enabled="false" merge="false">
       <option name="MAIN_CLASS_NAME" value="bitronix.tm.gui.Console" />
@@ -1107,76 +1048,6 @@
           <option name="myItemId" value="" />
           <option name="myItemType" value="" />
         </PATH_ELEMENT>
-        <PATH_ELEMENT USER_OBJECT="C:\Java\projects\svn\btm\head">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
-      </PATH>
-      <PATH>
-        <PATH_ELEMENT USER_OBJECT="Root">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
-        <PATH_ELEMENT USER_OBJECT="btm">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
-        <PATH_ELEMENT USER_OBJECT="C:\Java\projects\svn\btm\head">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
-        <PATH_ELEMENT USER_OBJECT="src">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
-      </PATH>
-      <PATH>
-        <PATH_ELEMENT USER_OBJECT="Root">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
-        <PATH_ELEMENT USER_OBJECT="btm">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
-        <PATH_ELEMENT USER_OBJECT="C:\Java\projects\svn\btm\head">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
-        <PATH_ELEMENT USER_OBJECT="src">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
-        <PATH_ELEMENT USER_OBJECT="bitronix/tm">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
-      </PATH>
-      <PATH>
-        <PATH_ELEMENT USER_OBJECT="Root">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
-        <PATH_ELEMENT USER_OBJECT="btm">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
-        <PATH_ELEMENT USER_OBJECT="C:\Java\projects\svn\btm\head">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
-        <PATH_ELEMENT USER_OBJECT="src">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
-        <PATH_ELEMENT USER_OBJECT="bitronix/tm">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
-        <PATH_ELEMENT USER_OBJECT="resource">
-          <option name="myItemId" value="" />
-          <option name="myItemType" value="" />
-        </PATH_ELEMENT>
       </PATH>
     </subPane>
   </component>
@@ -1234,7 +1105,7 @@
     <option name="UPDATE_RUN_STATUS" value="false" />
     <option name="UPDATE_RECURSIVELY" value="true" />
     <option name="MERGE_DRY_RUN" value="false" />
-    <configuration useDefault="true">C:\Documents and Settings\ludo\Application Data\Subversion</configuration>
+    <configuration useDefault="true">D:\Documents and Settings\ludo\Application Data\Subversion</configuration>
     <remoteStatus />
     <upgradeMode>none</upgradeMode>
   </component>
@@ -1273,13 +1144,13 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-4" y="-4" width="1288" height="1001" extended-state="6" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" order="3" />
       <window_info id="CVS" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" order="8" />
       <window_info id="IDEtalk" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" order="3" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.31314287" order="7" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.3049473" order="0" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3049473" order="0" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32114285" order="1" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24979724" order="1" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32685715" order="12" />
@@ -1287,12 +1158,12 @@
       <window_info id="Module Dependencies" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" order="3" />
       <window_info id="Dependency Viewer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" order="9" />
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" order="3" />
-      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24979724" order="1" />
-      <window_info id="Changes" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32914287" order="8" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.07542579" order="1" />
+      <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.328" order="8" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.27771428" order="2" x="24" y="20" width="1218" height="922" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24939272" order="2" />
       <window_info id="File View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" order="4" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" order="4" x="22" y="244" width="980" height="251" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" order="4" x="22" y="64" width="1235" height="884" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" order="0" />
       <window_info id="IDEtalk Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" order="8" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32854864" order="11" />
@@ -1318,7 +1189,7 @@
     <option name="PERFORM_COMMIT_IN_BACKGROUND" value="false" />
     <option name="PUT_FOCUS_INTO_COMMENT" value="false" />
     <option name="FORCE_NON_EMPTY_COMMENT" value="false" />
-    <option name="LAST_COMMIT_MESSAGE" value="removed useless test" />
+    <option name="LAST_COMMIT_MESSAGE" value="implemented filtering by GTRID" />
     <option name="SAVE_LAST_COMMIT_MESSAGE" value="true" />
     <option name="CHECKIN_DIALOG_SPLITTER_PROPORTION" value="0.8" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="false" />
@@ -1331,9 +1202,6 @@
     <option name="UPDATE_GROUP_BY_PACKAGES" value="false" />
     <option name="SHOW_FILE_HISTORY_AS_TREE" value="false" />
     <option name="FILE_HISTORY_SPLITTER_PROPORTION" value="0.6" />
-    <MESSAGE value="added JNDI server support for javax.naming.spi.ObjectFactory + UserTransaction support for javax.naming.Referenceable" />
-    <MESSAGE value="added JNDI server test" />
-    <MESSAGE value="added capability to override an appserver's JNDI server with this one" />
     <MESSAGE value="improved web console" />
     <MESSAGE value="implemented proper datasources binding from config in web console" />
     <MESSAGE value="datasources can now be edited from web console" />
@@ -1341,6 +1209,9 @@
     <MESSAGE value="alpha 6 release notes" />
     <MESSAGE value="beta 1 release notes" />
     <MESSAGE value="removed useless test" />
+    <MESSAGE value="improved logs" />
+    <MESSAGE value="improved javadoc" />
+    <MESSAGE value="implemented filtering by GTRID" />
   </component>
   <component name="VssConfiguration">
     <option name="CLIENT_PATH" value="" />
@@ -1360,7 +1231,6 @@
       <option name="RECURSIVE" value="false" />
     </CheckinOptions>
     <AddOptions>
-      <option name="COMMENT" value="" />
       <option name="STORE_ONLY_LATEST_VERSION" value="false" />
       <option name="CHECK_OUT_IMMEDIATELY" value="false" />
       <option name="FILE_TYPE" value="0" />
@@ -1376,16 +1246,23 @@
       <option name="ANSWER_NEGATIVELY" value="false" />
       <option name="ANSWER_POSITIVELY" value="false" />
       <option name="RECURSIVE" value="false" />
+      <option name="VERSION" />
     </GetOptions>
+    <VssConfigurableExcludedFilesTag />
   </component>
   <component name="antWorkspaceConfiguration">
     <option name="IS_AUTOSCROLL_TO_SOURCE" value="false" />
     <option name="FILTER_TARGETS" value="false" />
-    <buildFile url="file://$PROJECT_DIR$/trunk/build.xml">
+    <buildFile url="file://$PROJECT_DIR$/build.xml">
       <antCommandLine value="" />
       <runInBackground value="true" />
       <targetFilters>
         <filter targetName="all" isVisible="false" />
+        <filter targetName="build" isVisible="false" />
+        <filter targetName="clean" isVisible="false" />
+        <filter targetName="dist" isVisible="false" />
+        <filter targetName="doc" isVisible="false" />
+        <filter targetName="test" isVisible="false" />
       </targetFilters>
       <treeView value="true" />
       <verbose value="true" />
@@ -1397,118 +1274,115 @@
   </component>
   <component name="com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectRootMasterDetailsConfigurable" proportions="0.2" version="1">
     <option name="myPlainMode" value="false" />
-    <option name="myLastEditedConfigurable" value="btm" />
+    <option name="myLastEditedConfigurable" value="apache-activemq-4.1-incubator-SNAPSHOT" />
   </component>
   <component name="com.intellij.profile.ui.ErrorOptionsConfigurable" proportions="" version="1">
     <option name="myLastEditedConfigurable" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="jar://C:/j2sdk1.4.2_07/src.zip!/java/lang/Throwable.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jms/MessageConsumerWrapper.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="458" column="16" selection-start="19466" selection-end="19466" vertical-scroll-proportion="0.030805686">
+        <state line="23" column="144" selection-start="810" selection-end="810" vertical-scroll-proportion="0.3292978">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trunk/src/bitronix/tm/twopc/executor/Executor.java">
+    <entry file="file://$PROJECT_DIR$/test/bitronix/tm/resource/jms/JmsPoolTest.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="17" column="18" selection-start="482" selection-end="482" vertical-scroll-proportion="0.3329384">
+        <state line="17" column="0" selection-start="387" selection-end="387" vertical-scroll-proportion="0.22156398">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trunk/src/bitronix/tm/internal/BitronixHeuristicCommitException.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jms/MessageProducerWrapper.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="19" column="2" selection-start="553" selection-end="553" vertical-scroll-proportion="0.58093524">
+        <state line="23" column="144" selection-start="806" selection-end="806" vertical-scroll-proportion="-0.16113745">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trunk/src/bitronix/tm/twopc/Rollbacker.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/common/TransactionContextHelper.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="55" column="9" selection-start="1912" selection-end="1912" vertical-scroll-proportion="0.3389626">
+        <state line="71" column="23" selection-start="3615" selection-end="3615" vertical-scroll-proportion="0.3256936">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trunk/src/bitronix/tm/twopc/Preparer.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jms/JmsConnectionHandle.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="105" column="9" selection-start="4157" selection-end="4157" vertical-scroll-proportion="0.20506634">
+        <state line="10" column="13" selection-start="174" selection-end="174" vertical-scroll-proportion="0.20506634">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trunk/src/bitronix/tm/twopc/Committer.java">
+    <entry file="jar://C:/j2sdk1.4.2_07/src.zip!/javax/sql/PooledConnection.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="66" column="56" selection-start="2643" selection-end="2645" vertical-scroll-proportion="0.5741858">
+        <state line="93" column="41" selection-start="4169" selection-end="4192" vertical-scroll-proportion="0.55450237">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trunk/src/bitronix/tm/BitronixTransaction.java">
+    <entry file="jar://C:/j2sdk1.4.2_07/src.zip!/javax/sql/ConnectionEvent.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="22" column="13" selection-start="560" selection-end="560" vertical-scroll-proportion="-3.7599518">
+        <state line="35" column="9" selection-start="1117" selection-end="1117" vertical-scroll-proportion="-0.027251184">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trunk/src/bitronix/tm/internal/Uid.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jms/ConnectionFactoryBean.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="10" column="19" selection-start="237" selection-end="237" vertical-scroll-proportion="-0.2890995">
+        <state line="19" column="13" selection-start="707" selection-end="707" vertical-scroll-proportion="0.26658624">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trunk/src/bitronix/tm/internal/UidGenerator.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/common/XAPool.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="16" column="13" selection-start="794" selection-end="794" vertical-scroll-proportion="0.15922798">
+        <state line="32" column="30" selection-start="1163" selection-end="1163" vertical-scroll-proportion="0.27623641">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trunk/src/bitronix/tm/internal/XAResourceHolderState.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jms/PoolingConnectionFactory.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="23" column="13" selection-start="868" selection-end="868" vertical-scroll-proportion="-0.04028436">
+        <state line="123" column="22" selection-start="4226" selection-end="4226" vertical-scroll-proportion="0.4336493">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trunk/src/bitronix/tm/resource/common/XAStatefulHolder.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jms/JmsPooledConnection.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="24" column="69" selection-start="701" selection-end="704" vertical-scroll-proportion="0.48341233">
+        <state line="75" column="8" selection-start="2749" selection-end="2749" vertical-scroll-proportion="0.020506635">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trunk/src/bitronix/tm/internal/XAResourceManager.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jms/DualSessionWrapper.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="62" column="51" selection-start="2900" selection-end="2900" vertical-scroll-proportion="0.33293125">
+        <state line="48" column="41" selection-start="1679" selection-end="1679" vertical-scroll-proportion="0.5174909">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trunk/src/bitronix/tm/resource/common/XAResourceHolder.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/PoolingDataSource.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="13" column="49" selection-start="386" selection-end="386" vertical-scroll-proportion="0.22557297">
+        <state line="156" column="30" selection-start="5293" selection-end="5293" vertical-scroll-proportion="0.3755924">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trunk/test/bitronix-default-config.properties">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/JdbcPooledConnection.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="7" column="43" selection-start="271" selection-end="313" vertical-scroll-proportion="0.14099526">
+        <state line="156" column="5" selection-start="5897" selection-end="5897" vertical-scroll-proportion="0.30156815">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/trunk/src/overview.html">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/JdbcConnectionHandle.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+        <state line="71" column="60" selection-start="2560" selection-end="2560" vertical-scroll-proportion="0.2870929">
           <folding />
         </state>
-      </provider>
-      <provider editor-type-id="HtmlPreview">
-        <state />
       </provider>
     </entry>
   </component>

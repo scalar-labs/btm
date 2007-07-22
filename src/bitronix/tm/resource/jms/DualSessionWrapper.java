@@ -46,8 +46,8 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         addStateChangeEventListener(this);
     }
 
-    public ResourceBean getBean() {
-        return pooledConnection.getBean();
+    public PoolingConnectionFactory getPoolingConnectionFactory() {
+        return pooledConnection.getPoolingConnectionFactory();
     }
 
     public Session getSession() throws JMSException {
@@ -115,14 +115,14 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
         // delisting
         try {
-            TransactionContextHelper.delistFromCurrentTransaction(this, pooledConnection.getBean());
+            TransactionContextHelper.delistFromCurrentTransaction(this, pooledConnection.getPoolingConnectionFactory());
         } catch (SystemException ex) {
             throw (JMSException) new JMSException("cannot delist resource " + xaResourceHolderState).initCause(ex);
         }
 
         // requeuing
         try {
-            TransactionContextHelper.requeue(this,  pooledConnection.getBean());
+            TransactionContextHelper.requeue(this,  pooledConnection.getPoolingConnectionFactory());
         } catch (BitronixSystemException ex) {
             throw (JMSException) new JMSException("cannot delist resource " + xaResourceHolderState).initCause(ex);
         }
@@ -195,9 +195,9 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         MessageProducerWrapper messageProducer = (MessageProducerWrapper) messageProducers.get(key);
         if (messageProducer == null) {
             if (log.isDebugEnabled()) log.debug("found no producer based on " + key + ", creating it");
-            messageProducer = new MessageProducerWrapper(getSession().createProducer(destination), this, pooledConnection.getBean());
+            messageProducer = new MessageProducerWrapper(getSession().createProducer(destination), this, pooledConnection.getPoolingConnectionFactory());
 
-            if (pooledConnection.getBean().getCacheProducersConsumers()) {
+            if (pooledConnection.getPoolingConnectionFactory().getCacheProducersConsumers()) {
                 if (log.isDebugEnabled()) log.debug("caching producer via key " + key);
                 messageProducers.put(key, messageProducer);
             }
@@ -212,9 +212,9 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         MessageConsumerWrapper messageConsumer = (MessageConsumerWrapper) messageConsumers.get(key);
         if (messageConsumer == null) {
             if (log.isDebugEnabled()) log.debug("found no consumer based on " + key + ", creating it");
-            messageConsumer = new MessageConsumerWrapper(getSession().createConsumer(destination), this, pooledConnection.getBean());
+            messageConsumer = new MessageConsumerWrapper(getSession().createConsumer(destination), this, pooledConnection.getPoolingConnectionFactory());
 
-            if (pooledConnection.getBean().getCacheProducersConsumers()) {
+            if (pooledConnection.getPoolingConnectionFactory().getCacheProducersConsumers()) {
                 if (log.isDebugEnabled()) log.debug("caching consumer via key " + key);
                 messageConsumers.put(key, messageConsumer);
             }
@@ -229,9 +229,9 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         MessageConsumerWrapper messageConsumer = (MessageConsumerWrapper) messageConsumers.get(key);
         if (messageConsumer == null) {
             if (log.isDebugEnabled()) log.debug("found no consumer based on " + key + ", creating it");
-            messageConsumer = new MessageConsumerWrapper(getSession().createConsumer(destination, messageSelector), this, pooledConnection.getBean());
+            messageConsumer = new MessageConsumerWrapper(getSession().createConsumer(destination, messageSelector), this, pooledConnection.getPoolingConnectionFactory());
 
-            if (pooledConnection.getBean().getCacheProducersConsumers()) {
+            if (pooledConnection.getPoolingConnectionFactory().getCacheProducersConsumers()) {
                 if (log.isDebugEnabled()) log.debug("caching consumer via key " + key);
                 messageConsumers.put(key, messageConsumer);
             }
@@ -246,9 +246,9 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         MessageConsumerWrapper messageConsumer = (MessageConsumerWrapper) messageConsumers.get(key);
         if (messageConsumer == null) {
             if (log.isDebugEnabled()) log.debug("found no consumer based on " + key + ", creating it");
-            messageConsumer = new MessageConsumerWrapper(getSession().createConsumer(destination, messageSelector, noLocal), this, pooledConnection.getBean());
+            messageConsumer = new MessageConsumerWrapper(getSession().createConsumer(destination, messageSelector, noLocal), this, pooledConnection.getPoolingConnectionFactory());
 
-            if (pooledConnection.getBean().getCacheProducersConsumers()) {
+            if (pooledConnection.getPoolingConnectionFactory().getCacheProducersConsumers()) {
                 if (log.isDebugEnabled()) log.debug("caching consumer via key " + key);
                 messageConsumers.put(key, messageConsumer);
             }

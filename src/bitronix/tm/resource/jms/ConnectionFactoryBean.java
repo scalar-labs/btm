@@ -1,9 +1,11 @@
 package bitronix.tm.resource.jms;
 
-import bitronix.tm.resource.common.XAResourceProducer;
-import bitronix.tm.resource.common.ResourceBean;
+import bitronix.tm.internal.PropertyUtils;
 import bitronix.tm.resource.ResourceConfigurationException;
+import bitronix.tm.resource.common.ResourceBean;
+import bitronix.tm.resource.common.XAResourceProducer;
 
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -13,6 +15,7 @@ import java.util.Properties;
  *
  * @see bitronix.tm.resource.ResourceLoader
  * @author lorban
+ * @deprecated This class' functionality has been included in {@link bitronix.tm.resource.jms.PoolingConnectionFactory}.
  */
 public class ConnectionFactoryBean extends ResourceBean {
 
@@ -22,7 +25,11 @@ public class ConnectionFactoryBean extends ResourceBean {
 
     public XAResourceProducer createResource() {
         try {
-            return new PoolingConnectionFactory(this);
+            PoolingConnectionFactory pcf = new PoolingConnectionFactory();
+            Map properties = PropertyUtils.getProperties(this);
+            PropertyUtils.setProperties(pcf, properties);
+            pcf.init();
+            return pcf;
         }
         catch (Exception ex) {
             throw new ResourceConfigurationException("cannot create JMS connection factory named " + getUniqueName(), ex);

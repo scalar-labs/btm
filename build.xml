@@ -7,7 +7,7 @@
     <property name="dir.doc.api" value="${dir.dist}/doc/api"/>
     <property name="dir.classes" value="${dir.dist}/classes"/>
     <property name="dir.lib" value="lib"/>
-    <property name="jar.version" value="1.0-beta4"/>
+    <property name="jar.version" value="1.0"/>
     <property name="jar.file" value="${dir.dist}/btm-${jar.version}.jar"/>
 
     <path id="javac.classpath">

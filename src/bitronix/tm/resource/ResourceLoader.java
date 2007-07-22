@@ -3,18 +3,16 @@ package bitronix.tm.resource;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.internal.InitializationException;
 import bitronix.tm.internal.PropertyUtils;
-import bitronix.tm.resource.jdbc.DataSourceBean;
-import bitronix.tm.resource.jms.ConnectionFactoryBean;
-import bitronix.tm.resource.common.XAResourceProducer;
 import bitronix.tm.resource.common.ResourceBean;
-import org.slf4j.LoggerFactory;
+import bitronix.tm.resource.common.XAResourceProducer;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.jms.XAConnectionFactory;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.XADataSource;
-import javax.jms.XAConnectionFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -35,6 +33,8 @@ import java.util.*;
 public class ResourceLoader {
 
     private final static Logger log = LoggerFactory.getLogger(ResourceLoader.class);
+    private final static String JDBC_RESOUCE_CLASSNAME = "bitronix.tm.resource.jdbc.PoolingDataSource";
+    private final static String JMS_RESOUCE_CLASSNAME = "bitronix.tm.resource.jms.PoolingConnectionFactory";
 
     private boolean bindJndi;
     private Map resourcesByConfiguredName;
@@ -129,15 +129,21 @@ public class ResourceLoader {
      * @param xaResourceClassName an XA resource class name.
      * @return a ResourceBean implementation.
      * @throws ClassNotFoundException
+     * @throws IllegalAccessException
+     * @throws InstantiationException
      */
-    private static ResourceBean instanciate(String xaResourceClassName) throws ClassNotFoundException {
+    private static ResourceBean instanciate(String xaResourceClassName) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         Class clazz = Thread.currentThread().getContextClassLoader().loadClass(xaResourceClassName);
 
+        // resource classes are instanciated via reflection so that there is no hard class binding between this internal
+        // transaction manager service and 3rd party libraries like the JMS ones.
+        // This allows using the TM with a 100% JDBC application without requiring JMS libraries.
+
         if (XADataSource.class.isAssignableFrom(clazz)) {
-            return new DataSourceBean();
+            return (ResourceBean) Thread.currentThread().getContextClassLoader().loadClass(JDBC_RESOUCE_CLASSNAME).newInstance();
         }
         else if (XAConnectionFactory.class.isAssignableFrom(clazz)) {
-            return new ConnectionFactoryBean();
+            return (ResourceBean) Thread.currentThread().getContextClassLoader().loadClass(JMS_RESOUCE_CLASSNAME).newInstance();
         }
         else
             return null;
@@ -284,7 +290,7 @@ public class ResourceLoader {
      * @return a {@link ResourceBean}.
      * @throws ClassNotFoundException
      */
-    private ResourceBean createBean(String configuredName, List propertyPairs) throws ClassNotFoundException {
+    private ResourceBean createBean(String configuredName, List propertyPairs) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         for (int i = 0; i < propertyPairs.size(); i++) {
             PropertyPair propertyPair = (PropertyPair) propertyPairs.get(i);
             if (propertyPair.getName().equals("className")) {

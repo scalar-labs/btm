@@ -2,7 +2,10 @@ package bitronix.tm.resource.jms;
 
 import bitronix.tm.resource.common.TransactionContextHelper;
 
-import javax.jms.*;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 
@@ -16,12 +19,12 @@ public class MessageConsumerWrapper implements MessageConsumer {
 
     private MessageConsumer messageConsumer;
     private DualSessionWrapper session;
-    private ConnectionFactoryBean bean;
+    private PoolingConnectionFactory poolingConnectionFactory;
 
-    public MessageConsumerWrapper(MessageConsumer messageConsumer, DualSessionWrapper session, ConnectionFactoryBean bean) {
+    public MessageConsumerWrapper(MessageConsumer messageConsumer, DualSessionWrapper session, PoolingConnectionFactory poolingConnectionFactory) {
         this.messageConsumer = messageConsumer;
         this.session = session;
-        this.bean = bean;
+        this.poolingConnectionFactory = poolingConnectionFactory;
     }
 
     private MessageConsumer getMessageConsumer() {
@@ -34,9 +37,9 @@ public class MessageConsumerWrapper implements MessageConsumer {
      * @throws javax.jms.JMSException
      */
     private void enlistResource() throws JMSException {
-        if (bean.getAutomaticEnlistingEnabled()) {
+        if (poolingConnectionFactory.getAutomaticEnlistingEnabled()) {
             try {
-                TransactionContextHelper.enlistInCurrentTransaction(session, bean);
+                TransactionContextHelper.enlistInCurrentTransaction(session, poolingConnectionFactory);
             } catch (SystemException ex) {
                 throw (JMSException) new JMSException("error enlisting " + this).initCause(ex);
             } catch (RollbackException ex) {

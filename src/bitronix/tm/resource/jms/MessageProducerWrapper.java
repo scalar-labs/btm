@@ -2,10 +2,10 @@ package bitronix.tm.resource.jms;
 
 import bitronix.tm.resource.common.TransactionContextHelper;
 
-import javax.jms.MessageProducer;
-import javax.jms.JMSException;
 import javax.jms.Destination;
+import javax.jms.JMSException;
 import javax.jms.Message;
+import javax.jms.MessageProducer;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 
@@ -19,12 +19,12 @@ public class MessageProducerWrapper implements MessageProducer {
 
     private MessageProducer messageProducer;
     private DualSessionWrapper session;
-    private ConnectionFactoryBean bean;
+    private PoolingConnectionFactory poolingConnectionFactory;
 
-    public MessageProducerWrapper(MessageProducer messageProducer, DualSessionWrapper session, ConnectionFactoryBean bean) {
+    public MessageProducerWrapper(MessageProducer messageProducer, DualSessionWrapper session, PoolingConnectionFactory poolingConnectionFactory) {
         this.messageProducer = messageProducer;
         this.session = session;
-        this.bean = bean;
+        this.poolingConnectionFactory = poolingConnectionFactory;
     }
 
     private MessageProducer getMessageProducer() {
@@ -37,9 +37,9 @@ public class MessageProducerWrapper implements MessageProducer {
      * @throws JMSException
      */
     private void enlistResource() throws JMSException {
-        if (bean.getAutomaticEnlistingEnabled()) {
+        if (poolingConnectionFactory.getAutomaticEnlistingEnabled()) {
             try {
-                TransactionContextHelper.enlistInCurrentTransaction(session, bean);
+                TransactionContextHelper.enlistInCurrentTransaction(session, poolingConnectionFactory);
             } catch (SystemException ex) {
                 throw (JMSException) new JMSException("error enlisting " + this).initCause(ex);
             } catch (RollbackException ex) {
