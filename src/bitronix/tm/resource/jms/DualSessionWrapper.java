@@ -59,16 +59,16 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
             throw new JMSException("session handle is closed");
 
         if (forceXa) {
-            if (log.isDebugEnabled()) log.debug("picking XA session (forced)");
+            if (log.isDebugEnabled()) log.debug("choosing XA session (forced)");
             return createXASession();
         }
         else {
             BitronixTransaction currentTransaction = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
             if (currentTransaction != null) {
-                if (log.isDebugEnabled()) log.debug("picking XA session");
+                if (log.isDebugEnabled()) log.debug("choosing XA session");
                 return createXASession();
             }
-            if (log.isDebugEnabled()) log.debug("picking non-XA session");
+            if (log.isDebugEnabled()) log.debug("choosing non-XA session");
             return createNonXASession();
         }
     }
