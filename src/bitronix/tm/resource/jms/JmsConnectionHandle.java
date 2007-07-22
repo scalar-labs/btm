@@ -1,9 +1,5 @@
 package bitronix.tm.resource.jms;
 
-import bitronix.tm.resource.common.XAResourceHolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.jms.*;
 
 /**
@@ -13,8 +9,6 @@ import javax.jms.*;
  * @author lorban
  */
 public class JmsConnectionHandle implements Connection {
-
-    private final static Logger log = LoggerFactory.getLogger(JmsConnectionHandle.class);
 
     private XAConnection xaConnection;
     private JmsPooledConnection pooledConnection;
@@ -35,18 +29,7 @@ public class JmsConnectionHandle implements Connection {
     }
 
     public Session createSession(boolean transacted, int acknowledgeMode) throws JMSException {
-        DualSessionWrapper sessionHandle = pooledConnection.getNotAccessibleSession();
-
-        if (sessionHandle == null) {
-            if (log.isDebugEnabled()) log.debug("no session handle found in NOT_ACCESSIBLE state, creating new session");
-            sessionHandle = pooledConnection.createDualSessionWrapper(pooledConnection, transacted, acknowledgeMode);
-        }
-        else {
-            if (log.isDebugEnabled()) log.debug("found session handle in NOT_ACCESSIBLE state, recycling it: " + sessionHandle);
-            sessionHandle.setState(XAResourceHolder.STATE_ACCESSIBLE);
-        }
-
-        return sessionHandle;
+        return pooledConnection.createSession(transacted, acknowledgeMode);
     }
 
     public void close() throws JMSException {
