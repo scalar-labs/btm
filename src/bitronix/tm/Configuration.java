@@ -413,7 +413,7 @@ public class Configuration {
             try {
                 serverIdArray = serverId.substring(0, Math.min(serverId.length(), UidGenerator.MAX_SERVER_ID_LENGTH)).getBytes("US-ASCII");
             } catch (Exception ex) {
-                log.warn("cannot get this JVM unique ID. Make sure it is configured and you only use ASCII characters. Will use IP address instead (unsafe!).");
+                log.warn("cannot get this JVM unique ID. Make sure it is configured and you only use ASCII characters. Will use IP address instead (unsafe for production usage!).");
                 try {
                     serverIdArray = InetAddress.getLocalHost().getHostAddress().getBytes("US-ASCII");
                 } catch (Exception ex2) {
