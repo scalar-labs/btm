@@ -124,7 +124,7 @@ public class Recoverer implements Runnable, RecovererMBean {
         if (registeredResources.containsKey(producer.getUniqueName()))
             throw new IllegalArgumentException("resource with uniqueName '" + producer.getUniqueName() + "' has already been registered");
 
-        if (log.isDebugEnabled()) log.debug("registering in recovery " + producer);
+        if (log.isDebugEnabled()) log.debug("registering in recoverer " + producer);
         registeredResources.put(producer.getUniqueName(), producer);
 
         if (TransactionManagerServices.isTransactionManagerRunning()) {
@@ -146,7 +146,7 @@ public class Recoverer implements Runnable, RecovererMBean {
         if (!registeredResources.containsKey(producer.getUniqueName()))
             throw new IllegalArgumentException("resource with uniqueName '" + producer.getUniqueName() + "' has not been registered");
 
-        if (log.isDebugEnabled()) log.debug("unregistering from recovery " + producer);
+        if (log.isDebugEnabled()) log.debug("unregistering from recoverer " + producer);
         registeredResources.remove(producer.getUniqueName());
     }
 
