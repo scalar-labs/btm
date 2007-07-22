@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Container for all BTM services.
- * <p>The different services available are: TransactionManager, Configuration, Journal, TaskScheduler, ResourceLoader
- * and Recoverer. They are used in all places of the TM.</p>
+ * <p>The different services available are: TransactionManager, Configuration, Journal, TaskScheduler, ResourceLoader,
+ * Recoverer and Executor. They are used in all places of the TM.</p>
  * <p>A shutdown hook is registered when this class is loaded. This hook will perform graceful shutdown.</p>
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
@@ -32,7 +32,7 @@ public class TransactionManagerServices {
 
     /**
      * Create an initialized transaction manager.
-     * @return the global initialized transaction manager.
+     * @return the transaction manager.
      */
     public synchronized static BitronixTransactionManager getTransactionManager() {
         if (transactionManager == null)
@@ -73,8 +73,8 @@ public class TransactionManagerServices {
     }
 
     /**
-     * Create the resource binder.
-     * @return the resource binder
+     * Create the resource loader.
+     * @return the resource loader.
      */
     public synchronized static ResourceLoader getResourceLoader() {
         if (resourceLoader == null) {
@@ -122,7 +122,8 @@ public class TransactionManagerServices {
     }
 
     /**
-     * @return true if the transaction manager has been started.
+     * Check if the transaction manager has started.
+     * @return true if the transaction manager has started.
      */
     public static boolean isTransactionManagerRunning() {
         return transactionManager != null;
