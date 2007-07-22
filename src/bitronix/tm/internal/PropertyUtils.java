@@ -20,9 +20,9 @@ public class PropertyUtils {
      * Set a direct or indirect property (dotted property: prop1.prop2.prop3) on the target object. This method tries
      * to be smart in the way that intermediate properties currently set to null are set if it is possible to create
      * and set an object. Conversions from propertyValue to the proper destination type are performed when possible.
-     * @param target
-     * @param propertyName
-     * @param propertyValue
+     * @param target the target object on which to set the property.
+     * @param propertyName the name of the property to set.
+     * @param propertyValue the value of the property to set.
      * @throws IllegalAccessException
      * @throws PropertyException
      * @throws java.lang.reflect.InvocationTargetException
@@ -57,8 +57,8 @@ public class PropertyUtils {
 
     /**
      * Get a direct or indirect property (dotted property: prop1.prop2.prop3) on the target object.
-     * @param target
-     * @param propertyName
+     * @param target the target object from which to get the property.
+     * @param propertyName the name of the property to get.
      * @return the value of the specified property.
      * @throws IllegalAccessException
      * @throws java.lang.reflect.InvocationTargetException
@@ -81,9 +81,9 @@ public class PropertyUtils {
     /**
      * Set a direct property on the target object. Conversions from propertyValue to the proper destination type
      * are performed whenever possible.
-     * @param target
-     * @param propertyName
-     * @param propertyValue
+     * @param target the target object on which to set the property.
+     * @param propertyName the name of the property to set.
+     * @param propertyValue the value of the property to set.
      * @throws IllegalAccessException
      * @throws java.lang.reflect.InvocationTargetException
      */
@@ -100,10 +100,8 @@ public class PropertyUtils {
     }
 
     /**
-     * Build a map of direct or indirect javabeans properties (dotted property: prop1.prop2) of the target object. This
-     * method tries to be smart in the way that properties of type {@link java.util.Properties} are also iterated and returned using the
-     * dotted notation.
-     * @param target
+     * Build a map of direct javabeans properties of the target object.
+     * @param target the target object from which to get properties names.
      * @return a Map of String with properties names as key and their values
      * @throws IllegalAccessException
      * @throws java.lang.reflect.InvocationTargetException
