@@ -125,8 +125,18 @@ public class TransactionManagerServices {
      * Check if the transaction manager has started.
      * @return true if the transaction manager has started.
      */
-    public static boolean isTransactionManagerRunning() {
+    public synchronized static boolean isTransactionManagerRunning() {
         return transactionManager != null;
+    }
+
+    static synchronized void clear() {
+        transactionManager = null;
+        configuration = null;
+        journal = null;
+        taskScheduler = null;
+        resourceLoader = null;
+        recoverer = null;
+        executor = null;
     }
 
     static {

@@ -32,7 +32,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
     private final static ThreadLocal threadLocalContexts = new ThreadLocal();
     private final static Map inFlightTransactions = Collections.synchronizedMap(new HashMap());
-    private boolean shuttingDown = false;
+    private boolean shuttingDown;
 
     /**
      * Create the BitronixTransactionManager. Open the journal, load resources and start the recovery process
@@ -41,6 +41,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      */
     protected BitronixTransactionManager() {
         try {
+            shuttingDown = false;
             logVersion();
             Configuration configuration = TransactionManagerServices.getConfiguration();
             configuration.buildServerIdArray(); // first call to initialize the ServerId
@@ -292,7 +293,11 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             String name = (String) it.next();
             XAResourceProducer producer = ResourceRegistrar.get(name);
             if (log.isDebugEnabled()) log.debug("closing " + name + " - " + producer);
-            producer.close();
+            try {
+                producer.close();
+            } catch (Exception ex) {
+                log.warn("error closing resource " + producer, ex);
+            }
         }
 
         Executor executor = TransactionManagerServices.getExecutor();
@@ -316,6 +321,9 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         } catch (IOException ex) {
             log.error("error shutting down disk journal. Transaction log integrity could be compromised !", ex);
         }
+
+        // clear references
+        TransactionManagerServices.clear();
 
         if (log.isDebugEnabled()) log.debug("shutdown ran successfully");
     }
