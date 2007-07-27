@@ -12,7 +12,6 @@ import java.io.Serializable;
  */
 public abstract class ResourceBean implements Serializable {
 
-    private String configurationName;
     private String className;
     private String uniqueName;
     private boolean automaticEnlistingEnabled = true;
@@ -29,15 +28,6 @@ public abstract class ResourceBean implements Serializable {
      * Initialize all properties with their default values.
      */
     protected ResourceBean() {
-    }
-
-    /**
-     * Specify the block name used in the configuration file. It can be null when the bean is not created by the
-     * Resource Loader.
-     * @param configurationName the block name used in the configuration file.
-     */
-    public void setConfigurationName(String configurationName) {
-        this.configurationName = configurationName;
     }
 
     /**

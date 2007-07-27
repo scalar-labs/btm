@@ -60,12 +60,12 @@ public class RestartTest extends TestCase {
     }
 
     public void testRestartWithLoader() throws Exception {
-        TransactionManagerServices.getConfiguration().setResourceConfigurationFilename("test/" + getClass().getName().replace('.', '/') + ".properties");
-
         for (int i=0; i<3 ;i++) {
+            TransactionManagerServices.getConfiguration().setResourceConfigurationFilename("test/" + getClass().getName().replace('.', '/') + ".properties");
             BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+            assertEquals("at loop iteration #" + (i+1), 1, ResourceRegistrar.getResourcesUniqueNames().size());
             tm.shutdown();
-            assertEquals(0, ResourceRegistrar.getResourcesUniqueNames().size());
+            assertEquals("at loop iteration #" + (i+1), 0, ResourceRegistrar.getResourcesUniqueNames().size());
         }
     }
 

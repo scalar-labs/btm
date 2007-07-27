@@ -280,7 +280,7 @@ public class ResourceLoader implements Service {
     }
 
     /**
-     * Create a populated, uninitialized {@link XAResourceProducer} instance depending on the className value.
+     * Create an unpopulated, uninitialized {@link XAResourceProducer} instance depending on the className value.
      * @param configuredName the properties configured name.
      * @param propertyPairs a list of {@link PropertyPair}s.
      * @return a {@link XAResourceProducer}.
