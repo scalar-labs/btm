@@ -13,17 +13,26 @@ import junit.framework.TestCase;
  */
 public class RestartTest extends TestCase {
 
-    public void testRestart() throws Exception {
+    public void testRestartWithoutLoader() throws Exception {
         for (int i=0; i<3 ;i++) {
             PoolingDataSource pds = new PoolingDataSource();
             pds.setClassName(MockXADataSource.class.getName());
             pds.setUniqueName("ds");
             pds.setPoolSize(1);
             pds.init();
-            
+
+            try {
+                TransactionManagerServices.getRecoverer().registerResource(pds);
+                fail("expected IllegalArgumentException");
+            } catch (IllegalArgumentException ex) {
+                assertEquals("resource with uniqueName 'ds' has already been registered", ex.getMessage());
+            }
+
             BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
             tm.shutdown();
-            assertEquals(0, ResourceRegistrar.getResourcesUniqueNames().size());
+            assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
+
+            pds.close();
         }
     }
 

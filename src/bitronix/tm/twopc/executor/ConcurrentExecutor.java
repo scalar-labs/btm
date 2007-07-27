@@ -1,12 +1,11 @@
 package bitronix.tm.twopc.executor;
 
+import bitronix.tm.internal.BitronixRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
-
-import bitronix.tm.internal.BitronixRuntimeException;
+import java.lang.reflect.Method;
 
 /**
  * Abstraction of the <code>java.util.concurrent</code> JDK 1.5+ implementation.
@@ -115,7 +114,7 @@ public class ConcurrentExecutor implements Executor {
         return usable;
     }
 
-    public void shutdown() {
+    public synchronized void shutdown() {
         if (!isUsable())
             throw new BitronixRuntimeException("concurrent executor is disabled because there is no valid executor implementation");
         try {

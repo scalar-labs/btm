@@ -1,13 +1,8 @@
 package bitronix.tm;
 
 import bitronix.tm.internal.*;
-import bitronix.tm.resource.ResourceRegistrar;
-import bitronix.tm.resource.common.XAResourceProducer;
-import bitronix.tm.timer.TaskScheduler;
-import bitronix.tm.journal.Journal;
-import bitronix.tm.twopc.executor.Executor;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.naming.NamingException;
 import javax.naming.Reference;
@@ -16,9 +11,9 @@ import javax.transaction.*;
 import javax.transaction.xa.XAException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
 import java.util.jar.Manifest;
-import java.net.URL;
 
 /**
  * Implementation of {@link TransactionManager} and {@link UserTransaction}.
@@ -26,7 +21,7 @@ import java.net.URL;
  *
  * @author lorban
  */
-public class BitronixTransactionManager implements TransactionManager, UserTransaction, Referenceable {
+public class BitronixTransactionManager implements TransactionManager, UserTransaction, Referenceable, Service {
 
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionManager.class);
 
@@ -286,41 +281,23 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             if (log.isDebugEnabled()) log.debug("all transactions finished, resuming shutdown");
         }
 
-        Set names = ResourceRegistrar.getResourcesUniqueNames();
-        if (log.isDebugEnabled()) log.debug("closing all " + names.size() + " resource(s)");
-        Iterator it = names.iterator();
-        while (it.hasNext()) {
-            String name = (String) it.next();
-            XAResourceProducer producer = ResourceRegistrar.get(name);
-            if (log.isDebugEnabled()) log.debug("closing " + name + " - " + producer);
-            try {
-                producer.close();
-            } catch (Exception ex) {
-                log.warn("error closing resource " + producer, ex);
-            }
-        }
+        if (log.isDebugEnabled()) log.debug("shutting down resource loader");
+        TransactionManagerServices.getResourceLoader().shutdown();
 
-        Executor executor = TransactionManagerServices.getExecutor();
         if (log.isDebugEnabled()) log.debug("shutting down executor");
-        executor.shutdown();
+        TransactionManagerServices.getExecutor().shutdown();
 
-        TaskScheduler taskScheduler = TransactionManagerServices.getTaskScheduler();
-        long gracefulShutdownTime = TransactionManagerServices.getConfiguration().getGracefulShutdownInterval() * 1000;
-        try {
-            if (log.isDebugEnabled()) log.debug("shutting down scheduler, graceful interval: " + gracefulShutdownTime + "ms");
-            taskScheduler.setActive(false);
-            taskScheduler.join(gracefulShutdownTime);
-        } catch (InterruptedException ex) {
-            log.error("could not stop the timer service within " + TransactionManagerServices.getConfiguration().getGracefulShutdownInterval() + "s");
-        }
+        if (log.isDebugEnabled()) log.debug("shutting task scheduler");
+        TransactionManagerServices.getTaskScheduler().shutdown();
 
-        Journal journal = TransactionManagerServices.getJournal();
-        try {
-            if (log.isDebugEnabled()) log.debug("closing disk journal");
-            journal.close();
-        } catch (IOException ex) {
-            log.error("error shutting down disk journal. Transaction log integrity could be compromised !", ex);
-        }
+        if (log.isDebugEnabled()) log.debug("shutting down disk journal");
+        TransactionManagerServices.getJournal().shutdown();
+
+        if (log.isDebugEnabled()) log.debug("shutting down recoverer");
+        TransactionManagerServices.getRecoverer().shutdown();
+
+        if (log.isDebugEnabled()) log.debug("shutting down configuration");
+        TransactionManagerServices.getConfiguration().shutdown();
 
         // clear references
         TransactionManagerServices.clear();

@@ -3,6 +3,7 @@ package bitronix.tm.resource;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.internal.InitializationException;
 import bitronix.tm.internal.PropertyUtils;
+import bitronix.tm.internal.Service;
 import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.resource.common.XAResourceProducer;
 import org.slf4j.Logger;
@@ -30,7 +31,7 @@ import java.util.*;
  *
  * @author lorban
  */
-public class ResourceLoader {
+public class ResourceLoader implements Service {
 
     private final static Logger log = LoggerFactory.getLogger(ResourceLoader.class);
     private final static String JDBC_RESOUCE_CLASSNAME = "bitronix.tm.resource.jdbc.PoolingDataSource";
@@ -118,6 +119,25 @@ public class ResourceLoader {
             if (log.isDebugEnabled()) log.debug("closing context");
             ctx.close();
         }
+    }
+
+    public synchronized void shutdown() {
+        if (log.isDebugEnabled()) log.debug("resource loader has registered " + resourcesByConfiguredName.entrySet().size() + " resource(s), closing them now");
+        Iterator it = resourcesByConfiguredName.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry entry = (Map.Entry) it.next();
+            ResourceBean bean = (ResourceBean) entry.getValue();
+            String uniqueName = bean.getUniqueName();
+
+            XAResourceProducer producer = ResourceRegistrar.get(uniqueName);
+            if (log.isDebugEnabled()) log.debug("closing " + uniqueName + " - " + producer);
+            try {
+                producer.close();
+            } catch (Exception ex) {
+                log.warn("error closing resource " + producer, ex);
+            }
+        }
+        resourcesByConfiguredName.clear();
     }
 
     /*

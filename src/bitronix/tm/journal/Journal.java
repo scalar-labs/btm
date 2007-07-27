@@ -1,6 +1,7 @@
 package bitronix.tm.journal;
 
 import bitronix.tm.internal.Uid;
+import bitronix.tm.internal.Service;
 
 import java.io.IOException;
 import java.util.Map;
@@ -13,7 +14,7 @@ import java.util.Set;
  *
  * @author lorban
  */
-public interface Journal {
+public interface Journal extends Service {
 
     /**
      * Log a new transaction status to journal. Note that the journal will not check the flow of the transactions.

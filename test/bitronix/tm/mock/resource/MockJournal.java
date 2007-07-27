@@ -1,15 +1,14 @@
 package bitronix.tm.mock.resource;
 
+import bitronix.tm.internal.Uid;
 import bitronix.tm.journal.Journal;
 import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.events.JournalLogEvent;
-import bitronix.tm.internal.Uid;
 
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Set;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * <p></p>
@@ -38,5 +37,8 @@ public class MockJournal implements Journal {
 
     public Map collectDanglingRecords() throws IOException {
         return new HashMap();
+    }
+
+    public void shutdown() {
     }
 }

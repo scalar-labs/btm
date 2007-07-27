@@ -1,6 +1,8 @@
 package bitronix.tm.timer;
 
 import bitronix.tm.BitronixTransaction;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.internal.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +14,7 @@ import java.util.*;
  *
  * @author lorban
  */
-public class TaskScheduler extends Thread {
+public class TaskScheduler extends Thread implements Service {
 
     private final static Logger log = LoggerFactory.getLogger(TaskScheduler.class);
 
@@ -20,7 +22,7 @@ public class TaskScheduler extends Thread {
      * Keys of this map are GTRID represented as a String, as per UidGenerator.uidToString.
      * Values are Task objects.
      */
-    private Map tasks = Collections.synchronizedMap(new HashMap());
+    private final Map tasks = Collections.synchronizedMap(new HashMap());
     private boolean active = true;
 
     public TaskScheduler() {
@@ -36,6 +38,17 @@ public class TaskScheduler extends Thread {
 
     public boolean isActive() {
         return active;
+    }
+
+    public synchronized void shutdown() {
+        try {
+            long gracefulShutdownTime = TransactionManagerServices.getConfiguration().getGracefulShutdownInterval() * 1000;
+            if (log.isDebugEnabled()) log.debug("graceful scheduler shutdown interval: " + gracefulShutdownTime + "ms");
+            setActive(false);
+            join(gracefulShutdownTime);
+        } catch (InterruptedException ex) {
+            log.error("could not stop the task scheduler within " + TransactionManagerServices.getConfiguration().getGracefulShutdownInterval() + "s");
+        }
     }
 
     /**

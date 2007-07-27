@@ -3,6 +3,7 @@ package bitronix.tm;
 import bitronix.tm.internal.InitializationException;
 import bitronix.tm.internal.UidGenerator;
 import bitronix.tm.internal.PropertyUtils;
+import bitronix.tm.internal.Service;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -66,7 +67,7 @@ import java.lang.reflect.InvocationTargetException;
  *
  * @author lorban
  */
-public class Configuration {
+public class Configuration implements Service {
 
     private final static Logger log = LoggerFactory.getLogger(Configuration.class);
 
@@ -425,6 +426,9 @@ public class Configuration {
             log.info("JVM unique ID: <" + new String(serverIdArray) + ">");
         }
         return serverIdArray;
+    }
+
+    public void shutdown() {
     }
 
     public String toString() {

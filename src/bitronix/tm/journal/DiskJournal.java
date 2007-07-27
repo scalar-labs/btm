@@ -102,7 +102,7 @@ public class DiskJournal implements Journal {
      * If files are not present on disk, this method will create and pre-allocate them.
      * @throws IOException
      */
-    public void open() throws IOException {
+    public synchronized void open() throws IOException {
         if (activeTla != null) {
             log.warn("disk journal already open");
             return;
@@ -115,7 +115,7 @@ public class DiskJournal implements Journal {
             log.debug("creation of log files");
             createLogfile(file2, TransactionManagerServices.getConfiguration().getMaxLogSizeInMb());
             // let the clock run a little before creating the 2nd log file to make the timestamp headers not the same
-            try { Thread.sleep(10); } catch (InterruptedException ex) { }
+            try { Thread.sleep(10); } catch (InterruptedException ex) { /* ignore */ }
             createLogfile(file1, TransactionManagerServices.getConfiguration().getMaxLogSizeInMb());
         }
 
@@ -140,9 +140,8 @@ public class DiskJournal implements Journal {
      * Close the disk journal and the underlying files.
      * @throws IOException
      */
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         if (activeTla == null) {
-            log.warn("cannot close disk journal as it is not open");
             return;
         }
 
@@ -161,6 +160,14 @@ public class DiskJournal implements Journal {
         activeTla = null;
 
         log.debug("disk journal closed");
+    }
+
+    public void shutdown() {
+        try {
+            close();
+        } catch (IOException ex) {
+            log.error("error shutting down disk journal. Transaction log integrity could be compromised !", ex);
+        }
     }
 
     /**
@@ -182,7 +189,7 @@ public class DiskJournal implements Journal {
      * Create a fresh log file on disk. If the specified file already exists it will be deleted then recreated.
      * @param logfile the file to create
      * @param maxLogSizeInMb the file size in megabytes to preallocate
-     * @throws IOException
+     * @throws java.io.IOException in case of disk IO failure.
      */
     private static void createLogfile(File logfile, int maxLogSizeInMb) throws IOException {
         if (logfile.isDirectory())
@@ -220,7 +227,7 @@ public class DiskJournal implements Journal {
      * @param tla1 the first of the two candidate active TransactionLogAppenders
      * @param tla2 the second of the two candidate active TransactionLogAppenders
      * @return the state of the designated active TransactionLogAppender as returned by TransactionLogHeader.getState()
-     * @throws IOException
+     * @throws java.io.IOException in case of disk IO failure.
      */
     private byte pickActiveJournalFile(TransactionLogAppender tla1, TransactionLogAppender tla2) throws IOException {
         if (tla1.getHeader().getTimestamp() > tla2.getHeader().getTimestamp()) {
@@ -250,6 +257,7 @@ public class DiskJournal implements Journal {
      *   <li>do a force on passive log file. It is now the active file.</li>
      *   <li>switch references of active/passive files.</li>
      * </ul>
+     * @throws java.io.IOException in case of disk IO failure.
      */
     private void swapJournalFiles() throws IOException {
         if (log.isDebugEnabled()) log.debug("swapping journal log file to " + getPassiveTransactionLogAppender());
@@ -289,7 +297,7 @@ public class DiskJournal implements Journal {
      * Copy all records that have status COMMITTING and no corresponding COMMITTED record from the fromTla to the toTla.
      * @param fromTla the source where to search for COMMITTING records with no corresponding COMMITTED record
      * @param toTla the destination where the COMMITTING records will be copied to
-     * @throws IOException
+     * @throws java.io.IOException in case of disk IO failure.
      */
     private static void copyDanglingRecords(TransactionLogAppender fromTla, TransactionLogAppender toTla) throws IOException {
         if (log.isDebugEnabled()) log.debug("starting copy of dangling records");
@@ -309,7 +317,7 @@ public class DiskJournal implements Journal {
      * no corresponding COMMITTED record
      * @param tla the TransactionLogAppender to scan
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
-     * @throws IOException
+     * @throws java.io.IOException in case of disk IO failure.
      */
     private static Map collectDanglingRecords(TransactionLogAppender tla) throws IOException {
         Map danglingRecords = new HashMap(64);
@@ -320,7 +328,7 @@ public class DiskJournal implements Journal {
             int committed = 0;
 
             while (true) {
-                TransactionLogRecord tlog = null;
+                TransactionLogRecord tlog;
                 try {
                     tlog = tlc.readLog();
                 } catch (CorruptedTransactionLogException ex) {

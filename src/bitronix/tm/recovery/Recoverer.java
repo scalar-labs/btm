@@ -60,7 +60,7 @@ import java.util.*;
  * @see ResourceLoader
  * @author lorban
  */
-public class Recoverer implements Runnable, RecovererMBean {
+public class Recoverer implements Runnable, Service, RecovererMBean {
 
     private final static Logger log = LoggerFactory.getLogger(Recoverer.class);
 
@@ -71,6 +71,10 @@ public class Recoverer implements Runnable, RecovererMBean {
 
     public Recoverer() {
         ManagementRegistrar.register("bitronix.tm:type=Recoverer", this);
+    }
+
+    public void shutdown() {
+        ManagementRegistrar.unregister("bitronix.tm:type=Recoverer");
     }
 
     /**
@@ -143,11 +147,13 @@ public class Recoverer implements Runnable, RecovererMBean {
         if (producer.getUniqueName() == null)
             throw new IllegalArgumentException("invalid resource with null uniqueName");
 
-        if (!registeredResources.containsKey(producer.getUniqueName()))
-            throw new IllegalArgumentException("resource with uniqueName '" + producer.getUniqueName() + "' has not been registered");
-
-        if (log.isDebugEnabled()) log.debug("unregistering from recoverer " + producer);
-        registeredResources.remove(producer.getUniqueName());
+        if (!registeredResources.containsKey(producer.getUniqueName())) {
+            if (log.isDebugEnabled()) log.debug("resource with uniqueName '" + producer.getUniqueName() + "' has not been registered");
+        }
+        else {
+            if (log.isDebugEnabled()) log.debug("unregistering from recoverer " + producer);
+            registeredResources.remove(producer.getUniqueName());
+        }
     }
 
 
