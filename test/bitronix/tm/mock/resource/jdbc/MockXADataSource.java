@@ -1,7 +1,5 @@
 package bitronix.tm.mock.resource.jdbc;
 
-import bitronix.tm.mock.resource.jdbc.MockXAConnection;
-
 import javax.sql.XADataSource;
 import javax.sql.XAConnection;
 import java.sql.SQLException;

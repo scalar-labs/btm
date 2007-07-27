@@ -13,7 +13,7 @@ import junit.framework.TestCase;
  */
 public class RestartTest extends TestCase {
 
-    public void testRestartWithoutLoader() throws Exception {
+    public void testRestartWithoutLoaderNoReuseResource() throws Exception {
         for (int i=0; i<3 ;i++) {
             PoolingDataSource pds = new PoolingDataSource();
             pds.setClassName(MockXADataSource.class.getName());
@@ -22,7 +22,7 @@ public class RestartTest extends TestCase {
             pds.init();
 
             try {
-                TransactionManagerServices.getRecoverer().registerResource(pds);
+                ResourceRegistrar.register(pds);
                 fail("expected IllegalArgumentException");
             } catch (IllegalArgumentException ex) {
                 assertEquals("resource with uniqueName 'ds' has already been registered", ex.getMessage());
@@ -33,6 +33,39 @@ public class RestartTest extends TestCase {
             assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
 
             pds.close();
+        }
+    }
+
+    public void testRestartWithoutLoaderReuseResource() throws Exception {
+        PoolingDataSource pds = new PoolingDataSource();
+        pds.setClassName(MockXADataSource.class.getName());
+        pds.setUniqueName("ds");
+        pds.setPoolSize(1);
+        pds.init();
+
+        for (int i=0; i<3 ;i++) {
+            try {
+                ResourceRegistrar.register(pds);
+                fail("expected IllegalArgumentException");
+            } catch (IllegalArgumentException ex) {
+                assertEquals("resource with uniqueName 'ds' has already been registered", ex.getMessage());
+            }
+
+            BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+            tm.shutdown();
+            assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
+        }
+
+        pds.close();
+    }
+
+    public void testRestartWithLoader() throws Exception {
+        TransactionManagerServices.getConfiguration().setResourceConfigurationFilename("test/" + getClass().getName().replace('.', '/') + ".properties");
+
+        for (int i=0; i<3 ;i++) {
+            BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+            tm.shutdown();
+            assertEquals(0, ResourceRegistrar.getResourcesUniqueNames().size());
         }
     }
 

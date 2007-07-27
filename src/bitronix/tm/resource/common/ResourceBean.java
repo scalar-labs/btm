@@ -32,13 +32,6 @@ public abstract class ResourceBean implements Serializable {
     }
 
     /**
-     * @return the block name used in the configuration file.
-     */
-    public String getConfigurationName() {
-        return configurationName;
-    }
-
-    /**
      * Specify the block name used in the configuration file. It can be null when the bean is not created by the
      * Resource Loader.
      * @param configurationName the block name used in the configuration file.
@@ -134,6 +127,7 @@ public abstract class ResourceBean implements Serializable {
     /**
      * Create the resource wrapper described by this bean.
      * @return the resource wrapper described by this bean.
+     * @deprecated superceded by init() method of {@link XAResourceProducer}.
      */
     public abstract XAResourceProducer createResource();
 

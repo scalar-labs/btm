@@ -54,6 +54,6 @@ public class DataSourceBean extends ResourceBean {
      * @return a human-readable String describing the bean.
      */
     public String toString() {
-        return "a DataSourceBean with " + (getConfigurationName() != null ? "configured name " + getConfigurationName() + ", " : "") + "unique name " + getUniqueName() + " and class " + getClassName();
+        return "a DataSourceBean with unique name " + getUniqueName() + " and class " + getClassName();
     }
 }

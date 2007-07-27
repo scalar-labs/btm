@@ -64,7 +64,7 @@ public class ConnectionFactoryBean extends ResourceBean {
      * @return a human-readable String describing the bean.
      */
     public String toString() {
-        return "a ConnectionFactoryBean with " + (getConfigurationName() != null ? "configured name " + getConfigurationName() + ", " : "") + "unique name " + getUniqueName() + " and class " + getClassName();
+        return "a ConnectionFactoryBean with unique name " + getUniqueName() + " and class " + getClassName();
     }
 
 }

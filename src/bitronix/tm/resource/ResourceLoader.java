@@ -4,7 +4,6 @@ import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.internal.InitializationException;
 import bitronix.tm.internal.PropertyUtils;
 import bitronix.tm.internal.Service;
-import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.resource.common.XAResourceProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +37,7 @@ public class ResourceLoader implements Service {
     private final static String JMS_RESOUCE_CLASSNAME = "bitronix.tm.resource.jms.PoolingConnectionFactory";
 
     private boolean bindJndi;
-    private Map resourcesByConfiguredName;
+    private Map resourcesByUniqueName;
 
     /**
      * Create a ResourceLoader and load the resources configuration file specified in
@@ -48,54 +47,35 @@ public class ResourceLoader implements Service {
         String filename = TransactionManagerServices.getConfiguration().getResourceConfigurationFilename();
         if (filename != null) {
             if (!new File(filename).exists())
-                throw new ResourceConfigurationException("cannot find resources configuration file, missing or invalid value of property: bitronix.tm.resource.configuration");
+                throw new ResourceConfigurationException("cannot find resources configuration file '" + filename + "', missing or invalid value of property: bitronix.tm.resource.configuration");
             log.info("reading resources configuration from " + filename);
             init(filename);
         }
         else {
             if (log.isDebugEnabled()) log.debug("no resource configuration file specified");
-            resourcesByConfiguredName = Collections.EMPTY_MAP;
+            resourcesByUniqueName = Collections.EMPTY_MAP;
         }
     }
 
     /**
-     * Get a Map with the configured resName as key and ResourceBean as value.
-     * @return a Map using the resName as key and ResourceBean as value.
+     * Get a Map with the configured uniqueName as key and {@link XAResourceProducer} as value.
+     * @return a Map using the uniqueName as key and {@link XAResourceProducer} as value.
      */
     public Map getResources() {
-        return resourcesByConfiguredName;
-    }
-
-    /**
-     * Get a List of all resources unique names.
-     * @return a List of the resources unique names.
-     */
-    public List getResourcesUniqueNames() {
-        List resourcesUniqueNames = new ArrayList();
-        if (resourcesByConfiguredName == null)
-            return resourcesUniqueNames;
-
-        Iterator it = resourcesByConfiguredName.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            ResourceBean bean = (ResourceBean) entry.getValue();
-            resourcesUniqueNames.add(bean.getUniqueName());
-        }
-
-        return resourcesUniqueNames;
+        return resourcesByUniqueName;
     }
 
     /**
      * Bind all configured resources to JNDI if the <code>bitronix.tm.resource.bind</code> property has been set to true.
      * Resources are bound under a JNDI name equals to their unique name.
-     * @throws NamingException
+     * @throws NamingException if an error happens during binding.
      */
     public void bindAll() throws NamingException {
         if (!bindJndi) {
             if (log.isDebugEnabled()) log.debug("JNDI resource binding disabled");
             return;
         }
-        if (resourcesByConfiguredName.size() == 0) {
+        if (resourcesByUniqueName.size() == 0) {
             if (log.isDebugEnabled()) log.debug("no resource configuration file, nothing to bind");
             return;
         }
@@ -110,8 +90,8 @@ public class ResourceLoader implements Service {
                 Iterator it = resources.entrySet().iterator();
                 while (it.hasNext()) {
                     Map.Entry entry = (Map.Entry) it.next();
-                    ResourceBean bean = (ResourceBean) entry.getValue();
-                    bind(ctx, bean.getUniqueName());
+                    XAResourceProducer producer = (XAResourceProducer) entry.getValue();
+                    bind(ctx, producer.getUniqueName());
                 }
                 log.info("bound " + resources.size() + " resource(s) to JNDI");
             }
@@ -122,22 +102,19 @@ public class ResourceLoader implements Service {
     }
 
     public synchronized void shutdown() {
-        if (log.isDebugEnabled()) log.debug("resource loader has registered " + resourcesByConfiguredName.entrySet().size() + " resource(s), closing them now");
-        Iterator it = resourcesByConfiguredName.entrySet().iterator();
+        if (log.isDebugEnabled()) log.debug("resource loader has registered " + resourcesByUniqueName.entrySet().size() + " resource(s), unregistering them now");
+        Iterator it = resourcesByUniqueName.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry entry = (Map.Entry) it.next();
-            ResourceBean bean = (ResourceBean) entry.getValue();
-            String uniqueName = bean.getUniqueName();
-
-            XAResourceProducer producer = ResourceRegistrar.get(uniqueName);
-            if (log.isDebugEnabled()) log.debug("closing " + uniqueName + " - " + producer);
+            XAResourceProducer producer = (XAResourceProducer) entry.getValue();
+            if (log.isDebugEnabled()) log.debug("closing " + producer);
             try {
                 producer.close();
             } catch (Exception ex) {
                 log.warn("error closing resource " + producer, ex);
             }
         }
-        resourcesByConfiguredName.clear();
+        resourcesByUniqueName.clear();
     }
 
     /*
@@ -145,14 +122,14 @@ public class ResourceLoader implements Service {
      */
 
     /**
-     * Create a ResourceBean subclass implementation which depends on the XA resource class name.
+     * Create an unitialized {@link XAResourceProducer} implementation which depends on the XA resource class name.
      * @param xaResourceClassName an XA resource class name.
-     * @return a ResourceBean implementation.
-     * @throws ClassNotFoundException
-     * @throws IllegalAccessException
-     * @throws InstantiationException
+     * @return a {@link XAResourceProducer} implementation.
+     * @throws ClassNotFoundException if the {@link XAResourceProducer} cannot be instanciated.
+     * @throws IllegalAccessException if the {@link XAResourceProducer} cannot be instanciated.
+     * @throws InstantiationException if the {@link XAResourceProducer} cannot be instanciated.
      */
-    private static ResourceBean instanciate(String xaResourceClassName) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+    private static XAResourceProducer instanciate(String xaResourceClassName) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         Class clazz = Thread.currentThread().getContextClassLoader().loadClass(xaResourceClassName);
 
         // resource classes are instanciated via reflection so that there is no hard class binding between this internal
@@ -160,17 +137,17 @@ public class ResourceLoader implements Service {
         // This allows using the TM with a 100% JDBC application without requiring JMS libraries.
 
         if (XADataSource.class.isAssignableFrom(clazz)) {
-            return (ResourceBean) Thread.currentThread().getContextClassLoader().loadClass(JDBC_RESOUCE_CLASSNAME).newInstance();
+            return (XAResourceProducer) Thread.currentThread().getContextClassLoader().loadClass(JDBC_RESOUCE_CLASSNAME).newInstance();
         }
         else if (XAConnectionFactory.class.isAssignableFrom(clazz)) {
-            return (ResourceBean) Thread.currentThread().getContextClassLoader().loadClass(JMS_RESOUCE_CLASSNAME).newInstance();
+            return (XAResourceProducer) Thread.currentThread().getContextClassLoader().loadClass(JMS_RESOUCE_CLASSNAME).newInstance();
         }
         else
             return null;
     }
 
     /**
-     * Read the resources properties file and create ResourceBean accordingly.
+     * Read the resources properties file and create {@link XAResourceProducer} accordingly.
      * @param propertiesFilename the name of the properties file to load.
      */
     private void init(String propertiesFilename) {
@@ -186,7 +163,7 @@ public class ResourceLoader implements Service {
             }
 
             bindJndi = Boolean.valueOf(properties.getProperty("bitronix.tm.resource.bind")).booleanValue();
-            initResourceBeans(properties);
+            initXAResourceProducers(properties);
         } catch (IOException ex) {
             throw new InitializationException("cannot create resource binder", ex);
         }
@@ -217,23 +194,23 @@ public class ResourceLoader implements Service {
     }
 
     /**
-     * Initialize ResourceBeans given a set of properties.
+     * Initialize {@link XAResourceProducer}s given a set of properties.
      * @param properties the properties to use for initialization.
      */
-    void initResourceBeans(Properties properties) {
+    void initXAResourceProducers(Properties properties) {
         Map entries = buildConfigurationEntriesMap(properties);
 
-        resourcesByConfiguredName = new HashMap();
+        resourcesByUniqueName = new HashMap();
         for (Iterator it = entries.entrySet().iterator(); it.hasNext();) {
             Map.Entry entry = (Map.Entry) it.next();
             String configuredName = (String) entry.getKey();
             List propertyPairs = (List) entry.getValue();
-            ResourceBean bean = buildResourceBean(configuredName, propertyPairs);
+            XAResourceProducer producer = buildXAResourceProducer(configuredName, propertyPairs);
 
-            if (log.isDebugEnabled()) log.debug("creating resource out of " + bean);
-            bean.createResource();
+            if (log.isDebugEnabled()) log.debug("creating resource " + producer);
+            producer.init();
 
-            resourcesByConfiguredName.put(configuredName, bean);
+            resourcesByUniqueName.put(producer.getUniqueName(), producer);
         }
     }
 
@@ -275,27 +252,26 @@ public class ResourceLoader implements Service {
     }
 
     /**
-     * Build a fully set ResourceBean out of a list of property pairs and the config name.
-     * @param configuredName index name of the config file
-     * @param propertyPairs the properties attached to this index
-     * @return a ready to use ResourceBean
-     * @throws ResourceConfigurationException
+     * Build a populated {@link XAResourceProducer} out of a list of property pairs and the config name.
+     * @param configuredName index name of the config file.
+     * @param propertyPairs the properties attached to this index.
+     * @return a populated {@link XAResourceProducer}.
+     * @throws ResourceConfigurationException if the {@link XAResourceProducer} cannot be built.
      */
-    private ResourceBean buildResourceBean(String configuredName, List propertyPairs) throws ResourceConfigurationException {
+    private XAResourceProducer buildXAResourceProducer(String configuredName, List propertyPairs) throws ResourceConfigurationException {
         String lastPropertyName = "className";
         try {
-            ResourceBean bean = createBean(configuredName, propertyPairs);
-            bean.setConfigurationName(configuredName);
+            XAResourceProducer producer = createBean(configuredName, propertyPairs);
 
             for (int i = 0; i < propertyPairs.size(); i++) {
                 PropertyPair propertyPair = (PropertyPair) propertyPairs.get(i);
                 lastPropertyName = propertyPair.getName();
-                PropertyUtils.setProperty(bean, propertyPair.getName(), propertyPair.getValue());
+                PropertyUtils.setProperty(producer, propertyPair.getName(), propertyPair.getValue());
             }
-            if (bean.getUniqueName() == null)
+            if (producer.getUniqueName() == null)
                 throw new ResourceConfigurationException("missing mandatory property <uniqueName> for resource <" + configuredName + "> in resources configuration file");
 
-            return bean;
+            return producer;
         } catch (ResourceConfigurationException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -304,23 +280,25 @@ public class ResourceLoader implements Service {
     }
 
     /**
-     * Create an empty ResourceBean subclass instance depending on the className value.
+     * Create a populated, uninitialized {@link XAResourceProducer} instance depending on the className value.
      * @param configuredName the properties configured name.
      * @param propertyPairs a list of {@link PropertyPair}s.
-     * @return a {@link ResourceBean}.
-     * @throws ClassNotFoundException
+     * @return a {@link XAResourceProducer}.
+     * @throws ClassNotFoundException if the {@link XAResourceProducer} cannot be instanciated.
+     * @throws IllegalAccessException if the {@link XAResourceProducer} cannot be instanciated.
+     * @throws InstantiationException if the {@link XAResourceProducer} cannot be instanciated.
      */
-    private ResourceBean createBean(String configuredName, List propertyPairs) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+    private XAResourceProducer createBean(String configuredName, List propertyPairs) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         for (int i = 0; i < propertyPairs.size(); i++) {
             PropertyPair propertyPair = (PropertyPair) propertyPairs.get(i);
             if (propertyPair.getName().equals("className")) {
                 String className = propertyPair.getValue();
-                ResourceBean bean = instanciate(className);
-                if (bean == null)
+                XAResourceProducer producer = instanciate(className);
+                if (producer == null)
                     throw new ResourceConfigurationException("property <className> " +
                             "for resource <" + configuredName + "> in resources configuration file " +
                             "must be the name of a class implementing either javax.sql.XADataSource or javax.jms.XAConnectionFactory");
-                return bean;
+                return producer;
             }
         }
         throw new ResourceConfigurationException("missing mandatory property <className> for resource <" + configuredName + "> in resources configuration file");

@@ -1,14 +1,12 @@
 package bitronix.tm.resource;
 
-import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.resource.common.XAResourceProducer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.transaction.xa.XAResource;
 import java.util.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Collection of initialized {@link XAResourceProducer}s. All resources must be registered in the {@link ResourceRegistrar}
@@ -51,8 +49,6 @@ public class ResourceRegistrar {
         if (resources.containsKey(uniqueName))
             throw new IllegalArgumentException("resource with uniqueName '" + producer.getUniqueName() + "' has already been registered");
         resources.put(uniqueName, producer);
-
-        TransactionManagerServices.getRecoverer().registerResource(producer);
     }
 
     /**
@@ -66,8 +62,6 @@ public class ResourceRegistrar {
         if (!resources.containsKey(uniqueName))
             throw new IllegalArgumentException("resource with uniqueName '" + producer.getUniqueName() + "' has not been registered");
         resources.remove(uniqueName);
-
-        TransactionManagerServices.getRecoverer().unregisterResource(producer);
     }
 
     /**

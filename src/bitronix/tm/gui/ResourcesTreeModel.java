@@ -3,9 +3,10 @@ package bitronix.tm.gui;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.resource.ResourceLoader;
 
+import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import javax.swing.event.TreeModelListener;
+import java.util.Iterator;
 
 /**
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
@@ -48,7 +49,13 @@ public class ResourcesTreeModel implements TreeModel {
     public Object getChild(Object parent, int index) {
         if (index < 0)
             return ROOT;
-        return resourceLoader.getResourcesUniqueNames().get(index);
+
+        Iterator it = resourceLoader.getResources().entrySet().iterator();
+        Object result = null;
+        for(int i= -1; i<index ;i++) {
+            result = it.next();
+        }
+        return result;
     }
 
     public int getIndexOfChild(Object parent, Object child) {

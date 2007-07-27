@@ -52,7 +52,8 @@ public class ResourcesPanel extends JPanel {
                         while (it2.hasNext()) {
                             Map.Entry entry = (Map.Entry) it2.next();
                             String name = (String) entry.getKey();
-                            String value = entry.getValue().toString();
+                            Object valueObject = entry.getValue();
+                            String value = valueObject == null ? null : valueObject.toString();
 
                             sb.append(name);
                             sb.append('=');
@@ -63,6 +64,7 @@ public class ResourcesPanel extends JPanel {
 
                         activeResource.setText(sb.toString());
                     } catch (Exception ex) {
+                        ex.printStackTrace();
                         JOptionPane.showMessageDialog(null, "error querying resource loader", "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }

@@ -5,6 +5,7 @@ import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.internal.*;
 import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.resource.ResourceLoader;
+import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.XAResourceProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,13 +84,20 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      */
     public void run() {
         try {
-            if (registeredResources.size() == 0) {
-                log.warn("no recoverable resource found. Please check ResourceLoader configuration or make sure you " +
+            if (ResourceRegistrar.getResourcesUniqueNames().size() == 0) {
+                log.warn("no recoverable resource found. Please check Resource Loader configuration or make sure you " +
                         "created resources before starting the transaction manager.");
                 return;
             }
 
-            // 1. call recover on all known resources - hope that nobody changed the DS config file in the mean time !
+            // Query resources from ResourceRegistrar
+            Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+            while (it.hasNext()) {
+                String name = (String) it.next();
+                registeredResources.put(name, ResourceRegistrar.get(name));
+            }
+
+            // 1. call recover on all known resources
             recoverAllResources();
 
             // 2. commit dangling COMMITTING transactions
@@ -106,6 +114,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         }
         finally {
             recoveredXidSets.clear();
+            registeredResources.clear();
         }
     }
 
@@ -116,46 +125,6 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     public Exception getCompletionException() {
         return completionException;
     }
-
-    /**
-     * Register a resource for recovery. ResourceRegistrar uses this method internally.
-     * @param producer the {@link XAResourceProducer} to register.
-     */
-    public void registerResource(XAResourceProducer producer) {
-        if (producer.getUniqueName() == null)
-            throw new IllegalArgumentException("invalid resource with null uniqueName");
-
-        if (registeredResources.containsKey(producer.getUniqueName()))
-            throw new IllegalArgumentException("resource with uniqueName '" + producer.getUniqueName() + "' has already been registered");
-
-        if (log.isDebugEnabled()) log.debug("registering in recoverer " + producer);
-        registeredResources.put(producer.getUniqueName(), producer);
-
-        if (TransactionManagerServices.isTransactionManagerRunning()) {
-            if (log.isDebugEnabled()) log.debug("resource registered in recovery while transaction manager has already started, running recovery");
-            run();
-            if (completionException != null)
-                throw new BitronixRuntimeException("recovery failed at registration of resource " + producer, completionException);
-        }
-    }
-
-    /**
-     * Unregister a resource previously registered for recovery. ResourceRegistrar uses this method internally.
-     * @param producer the {@link XAResourceProducer} to unregister.
-     */
-    public void unregisterResource(XAResourceProducer producer) {
-        if (producer.getUniqueName() == null)
-            throw new IllegalArgumentException("invalid resource with null uniqueName");
-
-        if (!registeredResources.containsKey(producer.getUniqueName())) {
-            if (log.isDebugEnabled()) log.debug("resource with uniqueName '" + producer.getUniqueName() + "' has not been registered");
-        }
-        else {
-            if (log.isDebugEnabled()) log.debug("unregistering from recoverer " + producer);
-            registeredResources.remove(producer.getUniqueName());
-        }
-    }
-
 
     /**
      * Recover all configured resources and fill the <code>recoveredXidSets</code> with all recovered XIDs.
@@ -185,7 +154,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * Step 1.
      * @return a Set of BitronixXids.
      * @param producer the {@link XAResourceProducer} to recover.
-     * @throws javax.transaction.xa.XAException
+     * @throws javax.transaction.xa.XAException if {@link XAResource#recover(int)} call fails.
      */
     private Set recover(XAResourceProducer producer) throws XAException {
         if (producer == null)
@@ -221,7 +190,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * @param resourceHolderState the {@link XAResourceHolderState} to recover.
      * @param alreadyRecoveredXids a set of {@link Xid}s already recovered from this resource in this recovery session.
      * @param flags any combination of {@link XAResource#TMSTARTRSCAN}, {@link XAResource#TMNOFLAGS} or {@link XAResource#TMENDRSCAN}.
-     * @throws javax.transaction.xa.XAException
+     * @throws javax.transaction.xa.XAException if {@link XAResource#recover(int)} call fails.
      */
     private int recover(XAResourceHolderState resourceHolderState, Set alreadyRecoveredXids, int flags) throws XAException {
         Xid[] xids = resourceHolderState.getXAResource().recover(flags);
@@ -261,7 +230,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * Commit transactions that have a dangling COMMITTING record in the journal.
      * Step 2.
      * @return a Set of all committed GTRIDs encoded as strings.
-     * @throws java.io.IOException
+     * @throws java.io.IOException if there is an I/O error reading the journal.
      */
     private Set commitDanglingTransactions() throws IOException {
         Set committedGtrids = new HashSet();

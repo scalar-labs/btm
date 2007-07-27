@@ -41,6 +41,11 @@ public interface XAResourceProducer extends Referenceable, Serializable {
     public XAResourceHolder findXAResourceHolder(XAResource xaResource);
 
     /**
+     * Initialize this {@link XAResourceProducer}'s internal resources.
+     */
+    public void init();
+
+    /**
      * Release this {@link XAResourceProducer}'s internal resources.
      */
     public void close();
