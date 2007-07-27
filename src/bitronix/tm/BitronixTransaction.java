@@ -276,7 +276,8 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     /**
      * Run all registered Synchronizations' beforeCompletion() method. Be aware that this method can change the
      * transaction status to mark it as rollback only for instance.
-     * @throws bitronix.tm.internal.BitronixSystemException
+     * @throws bitronix.tm.internal.BitronixSystemException if status changing due to a synchronization throwing an
+     *         exception fails.
      */
     private void fireBeforeCompletionEvent() throws BitronixSystemException {
         if (log.isDebugEnabled()) log.debug("before completion, " + synchronizations.size() + " synchronization(s) to execute");
@@ -291,8 +292,6 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
                 return;
             }
         }
-
-        ManagementRegistrar.unregister("bitronix.tm:type=Transaction,Gtrid=" + resourceManager.getGtrid());
     }
 
     private void fireAfterCompletionEvent() {
@@ -305,7 +304,9 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             } catch (Exception ex) {
                 log.warn("Synchronization.afterCompletion() call failed for " + synchronization, ex);
             }
-        } // for
+        }
+
+        ManagementRegistrar.unregister("bitronix.tm:type=Transaction,Gtrid=" + resourceManager.getGtrid());
     }
 
     private boolean isDone() {
