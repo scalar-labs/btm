@@ -214,7 +214,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * Check if the transaction manager is in the process of shutting down.
      * @return true if the transaction manager is in the process of shutting down.
      */
-    public boolean isShuttingDown() {
+    private boolean isShuttingDown() {
         return shuttingDown;
     }
 
@@ -247,7 +247,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      */
     public synchronized void shutdown() {
         if (isShuttingDown()) {
-            if (log.isDebugEnabled()) log.debug("Transaction Manager is already shutting down or has shutdown");
+            if (log.isDebugEnabled()) log.debug("Transaction Manager has already shut down");
             return;
         }
 
