@@ -17,50 +17,13 @@ import java.util.Iterator;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * Configuration repository of the transaction manager. You can either set parameters via the properties or the
- * configuration file. Once the transaction manager has started it is not possible to change the configuration.
- * <p>
- * The configuration filename must be specified with the <code>bitronix.tm.configuration</code> system property.
- * Here is the list of configuration properties:
- * <ul>
- *  <li><b>bitronix.tm.serverId -</b> <i>(defaults to server's IP address but that's unsafe)</i><br/>
- *      ID that must uniquely identify this TM instance.</li>
- *  <li><b>bitronix.tm.journal.disk.logPart1Filename -</b> <i>(defaults to btm1.tlog)</i><br/>
- *      Journal fragment file 1.</li>
- *  <li><b>bitronix.tm.journal.disk.logPart2Filename -</b> <i>(defaults to btm2.tlog)</i><br/>
- *      Journal fragment file 2.</li>
- *  <li><b>bitronix.tm.journal.disk.forcedWriteEnabled -</b> <i>(defaults to true)</i><br/>
- *      Are logs forced to disk ? Do not use in production since without disk force, integrity is not guaranteed.</li>
- *  <li><b>bitronix.tm.journal.disk.forceBatchingEnabled -</b> <i>(defaults to true)</i><br/>
- *      Are disk forces batched ? Disabling batching can seriously lower the transaction throughput.</li>
- *  <li><b>bitronix.tm.journal.disk.maxLogSize -</b> <i>(defaults to 2)</i><br/>
- *      Maximum size in megabytes of the journal fragments.</li>
- *  <li><b>bitronix.tm.journal.disk.filterLogStatus -</b> <i>(defaults to false)</i><br/>
- *      Should only mandatory logs be written ? Enabling this parameter lowers space usage of the fragments but makes
- *      debugging more complex.</li>
- *  <li><b>bitronix.tm.journal.disk.skipCorruptedLogs -</b> <i>(defaults to false)</i><br/>
- *      Should corrupted logs be skipped ? This is generally a bad idea unless you encounter corrupted logs issues
- *      and you want to restore as much as possible of of them.</li>
- *  <li><b>bitronix.tm.2pc.async -</b> <i>(defaults to false)</i><br/>
- *      Should two phase commit be executed asynchronously ? Asynchronous two phase commit can improve performance when
- *      there are many resources enlisted in transactions but is more CPU intensive due to the dynamic thread spawning
- *      requirements. It also makes debugging more complex.</li>
- *  <li><b>bitronix.tm.2pc.warnAboutZeroResourceTransactions -</b> <i>(defaults to true)</i><br/>
- *      Should zero-resource transactions result in a warning or not ?</li>
- *  <li><b>bitronix.tm.timer.defaultTransactionTimeout -</b> <i>(defaults to 60)</i><br/>
- *      Default transaction timeout in seconds.</li>
- *  <li><b>bitronix.tm.timer.transactionRetryInterval -</b> <i>(defaults to 10)</i><br/>
- *      Default pause interval in seconds after a resource communication error has been detected in a transaction
- *      before retry.</li>
- *  <li><b>bitronix.tm.timer.gracefulShutdownInterval -</b> <i>(defaults to 60)</i><br/>
- *      Maximum amount of seconds the TM will wait for transactions to get done before aborting them at shutdown time.</li>
- *  <li><b>bitronix.tm.timer.backgroundRecoveryInterval -</b> <i>(defaults to 0)</i><br/>Interval in minutes at which
- *      to run the recovery process on a timely basis in the background. Disabled when set to 0.</li>
- *  <li><b>bitronix.tm.resource.configuration -</b> <i>(optional)</i><br/>
- *      {@link bitronix.tm.resource.ResourceLoader} configuration file name.</li>
- * </ul>
- * The default settings are good enough for running in a test environment but certainly not for production usage.
- * </p>
+ * Configuration repository of the transaction manager. You can set configurable values either via the properties file
+ * or by setting properties of the {@link Configuration} object.
+ * Once the transaction manager has started it is not possible to change the configuration: all calls to setters will
+ * throw a {@link IllegalStateException}.
+ * <p>The configuration filename must be specified with the <code>bitronix.tm.configuration</code> system property.</p>
+ * <p>The default settings are good enough for running in a test environment but certainly not for production usage.
+ * Also, all properties are reset to their default value after the transaction manager has shut down.</p>
  * <p>All those properties can refer to other defined ones or to system properties using the Ant notation:
  * <code>${some.property.name}</code>.</p>
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
@@ -134,6 +97,8 @@ public class Configuration implements Service {
 
     /**
      * ASCII ID that must uniquely identify this TM instance. It must not exceed 51 characters or it will be truncated.
+     * <p>Property name:<br/><b>bitronix.tm.serverId -</b> <i>(defaults to server's IP address but that's unsafe for
+     * production use)</i></p>
      * @return the unique ID of this TM instance.
      */
     public String getServerId() {
@@ -143,6 +108,7 @@ public class Configuration implements Service {
     /**
      * Set the ASCII ID that must uniquely identify this TM instance. It must not exceed 51 characters or it will be
      * truncated.
+     * @see #getServerId()
      * @param serverId the unique ID of this TM instance.
      */
     public void setServerId(String serverId) {
@@ -152,6 +118,7 @@ public class Configuration implements Service {
 
     /**
      * Get the journal fragment file 1 name.
+     * <p>Property name:<br/><b>bitronix.tm.journal.disk.logPart1Filename -</b> <i>(defaults to btm1.tlog)</i></p>
      * @return the journal fragment file 1 name.
      */
     public String getLogPart1Filename() {
@@ -160,6 +127,7 @@ public class Configuration implements Service {
 
     /**
      * Set the journal fragment file 1 name.
+     * @see #getLogPart1Filename()
      * @param logPart1Filename the journal fragment file 1 name.
      */
     public void setLogPart1Filename(String logPart1Filename) {
@@ -169,6 +137,7 @@ public class Configuration implements Service {
 
     /**
      * Get the journal fragment file 2 name.
+     * <p>Property name:<br/><b>bitronix.tm.journal.disk.logPart2Filename -</b> <i>(defaults to btm2.tlog)</i></p>
      * @return the journal fragment file 2 name.
      */
     public String getLogPart2Filename() {
@@ -177,6 +146,7 @@ public class Configuration implements Service {
 
     /**
      * Set the journal fragment file 2 name.
+     * @see #getLogPart2Filename()
      * @param logPart2Filename the journal fragment file 2 name.
      */
     public void setLogPart2Filename(String logPart2Filename) {
@@ -187,6 +157,7 @@ public class Configuration implements Service {
     /**
      * Are logs forced to disk ?  Do not set to false in production since without disk force, integrity is not
      * guaranteed.
+     * <p>Property name:<br/><b>bitronix.tm.journal.disk.forcedWriteEnabled -</b> <i>(defaults to true)</i></p>
      * @return true if logs are forced to disk, false otherwise.
      */
     public boolean isForcedWriteEnabled() {
@@ -196,6 +167,7 @@ public class Configuration implements Service {
     /**
      * Set if logs are forced to disk.  Do not set to false in production since without disk force, integrity is not
      * guaranteed.
+     * @see #isForcedWriteEnabled()
      * @param forcedWriteEnabled true if logs should be forced to disk, false otherwise.
      */
     public void setForcedWriteEnabled(boolean forcedWriteEnabled) {
@@ -205,6 +177,7 @@ public class Configuration implements Service {
 
     /**
      * Are disk forces batched ? Disabling batching can seriously lower the transaction manager's throughput.
+     * <p>Property name:<br/><b>bitronix.tm.journal.disk.forceBatchingEnabled -</b> <i>(defaults to true)</i></p>
      * @return true if disk forces are batched, false otherwise.
      */
     public boolean isForceBatchingEnabled() {
@@ -213,6 +186,7 @@ public class Configuration implements Service {
 
     /**
      * Set if disk forces are batched. Disabling batching can seriously lower the transaction manager's throughput.
+     * @see #isForceBatchingEnabled()
      * @param forceBatchingEnabled true if disk forces are batched, false otherwise.
      */
     public void setForceBatchingEnabled(boolean forceBatchingEnabled) {
@@ -223,6 +197,7 @@ public class Configuration implements Service {
     /**
      * Maximum size in megabytes of the journal fragments. Larger logs allow transactions to stay longer in-doubt but
      * the TM pauses longer when a fragment is full.
+     * <p>Property name:<br/><b>bitronix.tm.journal.disk.maxLogSize -</b> <i>(defaults to 2)</i></p>
      * @return the maximum size in megabytes of the journal fragments.
      */
     public int getMaxLogSizeInMb() {
@@ -232,6 +207,7 @@ public class Configuration implements Service {
     /**
      * Set the Maximum size in megabytes of the journal fragments. Larger logs allow transactions to stay longer
      * in-doubt but the TM pauses longer when a fragment is full.
+     * @see #getMaxLogSizeInMb()
      * @param maxLogSizeInMb the maximum size in megabytes of the journal fragments.
      */
     public void setMaxLogSizeInMb(int maxLogSizeInMb) {
@@ -242,6 +218,7 @@ public class Configuration implements Service {
     /**
      * Should only mandatory logs be written ? Enabling this parameter lowers space usage of the fragments but makes
      * debugging more complex.
+     * <p>Property name:<br/><b>bitronix.tm.journal.disk.filterLogStatus -</b> <i>(defaults to false)</i></p>
      * @return true if only mandatory logs should be written.
      */
     public boolean isFilterLogStatus() {
@@ -251,6 +228,7 @@ public class Configuration implements Service {
     /**
      * Set if only mandatory logs should be written. Enabling this parameter lowers space usage of the fragments but
      * makes debugging more complex.
+     * @see #isFilterLogStatus()
      * @param filterLogStatus true if only mandatory logs should be written.
      */
     public void setFilterLogStatus(boolean filterLogStatus) {
@@ -260,6 +238,7 @@ public class Configuration implements Service {
 
     /**
      * Should corrupted logs be skipped ?
+     * <p>Property name:<br/><b>bitronix.tm.journal.disk.skipCorruptedLogs -</b> <i>(defaults to false)</i></p>
      * @return true if corrupted logs should be skipped.
      */
     public boolean isSkipCorruptedLogs() {
@@ -268,6 +247,7 @@ public class Configuration implements Service {
 
     /**
      * Set if corrupted logs should be skipped.
+     * @see #isSkipCorruptedLogs()
      * @param skipCorruptedLogs true if corrupted logs should be skipped.
      */
     public void setSkipCorruptedLogs(boolean skipCorruptedLogs) {
@@ -278,6 +258,7 @@ public class Configuration implements Service {
      * Should two phase commit be executed asynchronously ? Asynchronous two phase commit can improve performance when
      * there are many resources enlisted in transactions but is more CPU intensive due to the dynamic thread spawning
      * requirements. It also makes debugging more complex.
+     * <p>Property name:<br/><b>bitronix.tm.2pc.async -</b> <i>(defaults to false)</i></p>
      * @return true if two phase commit should be executed asynchronously.
      */
     public boolean isAsynchronous2Pc() {
@@ -288,6 +269,7 @@ public class Configuration implements Service {
      * Set if two phase commit should be executed asynchronously. Asynchronous two phase commit can improve performance
      * when there are many resources enlisted in transactions but is more CPU intensive due to the dynamic thread
      * spawning requirements. It also makes debugging more complex.
+     * @see #isAsynchronous2Pc()
      * @param asynchronous2Pc true if two phase commit should be executed asynchronously.
      */
     public void setAsynchronous2Pc(boolean asynchronous2Pc) {
@@ -298,6 +280,7 @@ public class Configuration implements Service {
     /**
      * Should transactions executed without a single enlisted resource result in a warning or not ? Most of the time
      * transactions executed with no enlisted resource reflect a bug or a mis-configuration somewhere.
+     * <p>Property name:<br/><b>bitronix.tm.2pc.warnAboutZeroResourceTransactions -</b> <i>(defaults to true)</i></p>
      * @return true if transactions executed without a single enlisted resource should result in a warning.
      */
     public boolean isWarnAboutZeroResourceTransaction() {
@@ -307,6 +290,7 @@ public class Configuration implements Service {
     /**
      * Set if transactions executed without a single enlisted resource should result in a warning or not. Most of the
      * time transactions executed with no enlisted resource reflect a bug or a mis-configuration somewhere.
+     * @see #isWarnAboutZeroResourceTransaction()
      * @param warnAboutZeroResourceTransaction true if transactions executed without a single enlisted resource should
      *        result in a warning.
      */
@@ -317,6 +301,7 @@ public class Configuration implements Service {
 
     /**
      * Default transaction timeout in seconds.
+     * <p>Property name:<br/><b>bitronix.tm.timer.defaultTransactionTimeout -</b> <i>(defaults to 60)</i></p>
      * @return the default transaction timeout in seconds.
      */
     public int getDefaultTransactionTimeout() {
@@ -325,6 +310,7 @@ public class Configuration implements Service {
 
     /**
      * Set the default transaction timeout in seconds.
+     * @see #getDefaultTransactionTimeout()
      * @param defaultTransactionTimeout the default transaction timeout in seconds.
      */
     public void setDefaultTransactionTimeout(int defaultTransactionTimeout) {
@@ -335,6 +321,7 @@ public class Configuration implements Service {
     /**
      * Default pause interval in seconds after a resource communication error has been detected in a transaction before
      * retry.
+     * <p>Property name:<br/><b>bitronix.tm.timer.transactionRetryInterval -</b> <i>(defaults to 10)</i></p>
      * @return the default pause interval in seconds.
      */
     public int getTransactionRetryInterval() {
@@ -344,6 +331,7 @@ public class Configuration implements Service {
     /**
      * Set the default pause interval in seconds after a resource communication error has been detected in a transaction
      * before retry.
+     * @see #getTransactionRetryInterval()
      * @param transactionRetryInterval the default pause interval in seconds.
      */
     public void setTransactionRetryInterval(int transactionRetryInterval) {
@@ -353,6 +341,7 @@ public class Configuration implements Service {
 
     /**
      * Maximum amount of seconds the TM will wait for transactions to get done before aborting them at shutdown time.
+     * <p>Property name:<br/><b>bitronix.tm.timer.gracefulShutdownInterval -</b> <i>(defaults to 60)</i></p>
      * @return the maximum amount of time in seconds.
      */
     public int getGracefulShutdownInterval() {
@@ -362,6 +351,7 @@ public class Configuration implements Service {
     /**
      * Set the maximum amount of seconds the TM will wait for transactions to get done before aborting them at shutdown
      * time.
+     * @see #getGracefulShutdownInterval()
      * @param gracefulShutdownInterval the maximum amount of time in seconds.
      */
     public void setGracefulShutdownInterval(int gracefulShutdownInterval) {
@@ -371,6 +361,7 @@ public class Configuration implements Service {
 
     /**
      * Interval in minutes at which to run the recovery process in the background. Disabled when set to 0.
+     * <p>Property name:<br/><b>bitronix.tm.timer.backgroundRecoveryInterval -</b> <i>(defaults to 0)</i></p>
      * @return the interval in minutes.
      */
     public int getBackgroundRecoveryInterval() {
@@ -379,6 +370,7 @@ public class Configuration implements Service {
 
     /**
      * Set the interval in minutes at which to run the recovery process in the background. Disabled when set to 0.
+     * @see #getBackgroundRecoveryInterval()
      * @param backgroundRecoveryInterval the interval in minutes.
      */
     public void setBackgroundRecoveryInterval(int backgroundRecoveryInterval) {
@@ -387,7 +379,9 @@ public class Configuration implements Service {
     }
 
     /**
-     * {@link bitronix.tm.resource.ResourceLoader} configuration file name.
+     * {@link bitronix.tm.resource.ResourceLoader} configuration file name. {@link bitronix.tm.resource.ResourceLoader}
+     * will be disabled if this value is null.
+     * <p>Property name:<br/><b>bitronix.tm.resource.configuration -</b> <i>(defaults to null)</i></p>
      * @return the filename of the resources configuration file or null if not configured.
      */
     public String getResourceConfigurationFilename() {
@@ -396,6 +390,7 @@ public class Configuration implements Service {
 
     /**
      * Set the {@link bitronix.tm.resource.ResourceLoader} configuration file name.
+     * @see #getResourceConfigurationFilename()
      * @param resourceConfigurationFilename the filename of the resources configuration file or null you do not want to
      *        use the {@link bitronix.tm.resource.ResourceLoader}.
      */
