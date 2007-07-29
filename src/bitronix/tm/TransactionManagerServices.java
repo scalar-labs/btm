@@ -11,9 +11,11 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Container for all BTM services.
- * <p>The different services available are: TransactionManager, Configuration, Journal, TaskScheduler, ResourceLoader,
- * Recoverer and Executor. They are used in all places of the TM.</p>
- * <p>A shutdown hook is registered when this class is loaded. This hook will perform graceful shutdown.</p>
+ * <p>The different services available are: {@link BitronixTransactionManager}, {@link Configuration}, {@link Journal},
+ * {@link TaskScheduler}, {@link ResourceLoader}, {@link Recoverer} and {@link Executor}. They are used in all places
+ * of the TM so they must be globally reachable.</p>
+ * <p>A shutdown hook is registered when this class is loaded to perform graceful shutdown if not yet done by a call
+ * to {@link BitronixTransactionManager#shutdown}.</p>
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban

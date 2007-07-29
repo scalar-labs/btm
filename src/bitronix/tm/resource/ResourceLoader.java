@@ -19,13 +19,14 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * XA resources configurator & loader.
+ * XA resources pools configurator & loader.
  * <p>{@link ResourceLoader} relies on the optional <code>bitronix.tm.resource.configuration</code> propery to load the
- * JDBC datasources ({@link bitronix.tm.resource.jdbc.PoolingDataSource}) and JMS XA connection factories configuration
+ * JDBC datasources ({@link bitronix.tm.resource.jdbc.PoolingDataSource}) and JMS connection factories configuration
  * ({@link bitronix.tm.resource.jms.PoolingConnectionFactory}) file and create the resources.</p>
  * <p>There is an optional <code>bitronix.tm.resource.bind</code> property that makes ResourceLoader bind resources
  * to JNDI.</p>
- * <p>When <code>bitronix.tm.resource.configuration</code> is not specified, resources should be manually created.</p>
+ * <p>When <code>bitronix.tm.resource.configuration</code> is not specified, ResourceLoader is disabled and resources
+ * should be manually created.</p>
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban

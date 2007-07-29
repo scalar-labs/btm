@@ -235,14 +235,12 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
     /**
      * Shut down the transaction manager and release all resources held by it.
-     * <p>This includes the resources pools registered in the {@link bitronix.tm.resource.ResourceRegistrar} like JMS
-     * and JDBC pools which automatically register themselves at creation time.</p><p>The Transaction Manager will wait
-     * during a configurable graceful period before forcibly killing active transactions.</p>
+     * <p>This call will also close the resources pools registered by the {@link bitronix.tm.resource.ResourceLoader}
+     * like JMS and JDBC pools. The manually created ones are left untouched.</p>
+     * <p>The Transaction Manager will wait during a configurable graceful period before forcibly killing active
+     * transactions.</p>
      * After this method is called, attempts to create new transactions (via calls to
      * {@link javax.transaction.TransactionManager#begin()}) will be rejected with a {@link SystemException}.</p>
-     * <p>This method is automatically called by a shutdown hook if not called manually by the application code.</p>
-     * <p>Once the transaction manager has been shutdown, there is no way to restart it except by restarting the JVM.</p>
-     * @see Runtime#addShutdownHook(Thread)
      * @see Configuration#getGracefulShutdownInterval()
      */
     public synchronized void shutdown() {
