@@ -13,7 +13,7 @@ import java.io.Serializable;
  */
 public class MockXASession implements XASession {
 
-    private XAResource xaResource = new MockXAResource();
+    private XAResource xaResource = new MockXAResource(null);
 
     public Session getSession() throws JMSException {
         return this;

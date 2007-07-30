@@ -67,7 +67,10 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
 
     private Map registeredResources = new HashMap();
     private Map recoveredXidSets = new HashMap();
+
     private Exception completionException;
+    private int committedCount;
+    private int rolledbackCount;
 
 
     public Recoverer() {
@@ -90,6 +93,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 return;
             }
 
+            committedCount = 0;
+            rolledbackCount = 0;
+
             // Query resources from ResourceRegistrar
             Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
             while (it.hasNext()) {
@@ -102,11 +108,12 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
 
             // 2. commit dangling COMMITTING transactions
             Set committedGtrids = commitDanglingTransactions();
+            committedCount = committedGtrids.size();
 
             // 3. rollback any remaining recovered transaction
-            int rollbackCount = rollbackAbortedTransactions(committedGtrids);
+            rolledbackCount = rollbackAbortedTransactions(committedGtrids);
 
-            log.info("recovery committed " + committedGtrids.size() + " dangling transaction(s) and rolled back " + rollbackCount + " aborted transaction(s) on resource(s) " + getResourcesUniqueNames());
+            log.info("recovery committed " + committedCount + " dangling transaction(s) and rolled back " + rolledbackCount + " aborted transaction(s) on resource(s) " + getResourcesUniqueNames());
             this.completionException = null;
         } catch (Exception ex) {
             this.completionException = ex;
@@ -124,6 +131,22 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      */
     public Exception getCompletionException() {
         return completionException;
+    }
+
+    /**
+     * Get the amount of transactions committed during the last recovery run.
+     * @return the amount of committed transactions.
+     */
+    public int getCommittedCount() {
+        return committedCount;
+    }
+
+    /**
+     * Get the amount of transactions rolled back during the last recovery run.
+     * @return the amount of rolled back transactions.
+     */
+    public int getRolledbackCount() {
+        return rolledbackCount;
     }
 
     /**

@@ -2,10 +2,12 @@ package bitronix.tm.mock.resource.jdbc;
 
 import javax.sql.XADataSource;
 import javax.sql.XAConnection;
+import javax.transaction.xa.Xid;
 import java.sql.SQLException;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * (c) Bitronix, 19-déc.-2005
@@ -18,6 +20,7 @@ public class MockXADataSource implements XADataSource {
     private String userName;
     private String password;
     private String database;
+    private List inDoubtXids = new ArrayList();
 
     public int getLoginTimeout() throws SQLException {
         return 0;
@@ -34,7 +37,7 @@ public class MockXADataSource implements XADataSource {
     }
 
     public XAConnection getXAConnection() throws SQLException {
-        MockXAConnection mockXAConnection = new MockXAConnection();
+        MockXAConnection mockXAConnection = new MockXAConnection(this);
         xaConnections.add(mockXAConnection);
         return mockXAConnection;
     }
@@ -69,5 +72,24 @@ public class MockXADataSource implements XADataSource {
 
     public void setDatabase(String database) {
         this.database = database;
+    }
+
+    public void addInDoubtXid(Xid xid) {
+        inDoubtXids.add(xid);
+    }
+
+    public boolean removeInDoubtXid(Xid xid) {
+        for (int i = 0; i < inDoubtXids.size(); i++) {
+            Xid xid1 = (Xid) inDoubtXids.get(i);
+            if (Arrays.equals(xid1.getGlobalTransactionId(), xid.getGlobalTransactionId()) && Arrays.equals(xid1.getBranchQualifier(), xid.getBranchQualifier()) ) {
+                inDoubtXids.remove(xid1);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public Xid[] getInDoubtXids() {
+        return (Xid[]) inDoubtXids.toArray(new Xid[inDoubtXids.size()]);
     }
 }

@@ -1,9 +1,11 @@
 package bitronix.tm.mock.resource;
 
+import bitronix.tm.internal.BitronixXAException;
 import bitronix.tm.mock.events.*;
+import bitronix.tm.mock.resource.jdbc.MockXADataSource;
 
-import javax.transaction.xa.XAResource;
 import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 /**
@@ -15,18 +17,24 @@ public class MockXAResource implements XAResource {
 
     private int prepareRc = XAResource.XA_OK;
     private int transactiontimeout;
+    private MockXADataSource xads;
 
     private XAException prepareException;
     private XAException commitException;
     private XAException rollbackException;
     private RuntimeException prepareRuntimeException;
 
-    public MockXAResource() {
+    public MockXAResource(MockXADataSource xads) {
+        this.xads = xads;
     }
 
 
     public void setPrepareRc(int prepareRc) {
         this.prepareRc = prepareRc;
+    }
+
+    public void addInDoubtXid(Xid xid) {
+        xads.addInDoubtXid(xid);
     }
 
     private EventRecorder getEventRecorder() {
@@ -51,7 +59,7 @@ public class MockXAResource implements XAResource {
     }
 
     public Xid[] recover(int flag) throws XAException {
-        return new Xid[0];
+        return xads.getInDoubtXids();
     }
 
     public int prepare(Xid xid) throws XAException {
@@ -71,12 +79,16 @@ public class MockXAResource implements XAResource {
 
     public void forget(Xid xid) throws XAException {
         getEventRecorder().addEvent(new XAResourceForgetEvent(this, xid));
+        boolean found = xads.removeInDoubtXid(xid);
+        if (!found)
+            throw new BitronixXAException("unknown XID: " + xid, XAException.XAER_INVAL);
     }
 
     public void rollback(Xid xid) throws XAException {
         getEventRecorder().addEvent(new XAResourceRollbackEvent(this, rollbackException, xid));
         if (rollbackException != null)
             throw rollbackException;
+        xads.removeInDoubtXid(xid);
     }
 
     public void end(Xid xid, int flag) throws XAException {
@@ -91,6 +103,7 @@ public class MockXAResource implements XAResource {
         getEventRecorder().addEvent(new XAResourceCommitEvent(this, commitException, xid, b));
         if (commitException != null)
             throw commitException;
+        xads.removeInDoubtXid(xid);
     }
 
     public void setPrepareException(XAException prepareException) {
