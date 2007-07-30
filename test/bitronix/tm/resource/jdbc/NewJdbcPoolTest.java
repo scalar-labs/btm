@@ -2,22 +2,22 @@ package bitronix.tm.resource.jdbc;
 
 import bitronix.tm.BitronixTransaction;
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.resource.common.XAPool;
 import bitronix.tm.mock.events.*;
 import bitronix.tm.mock.resource.jdbc.MockXADataSource;
+import bitronix.tm.resource.common.XAPool;
 import junit.framework.TestCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.transaction.UserTransaction;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectInputStream;
-import java.io.FileInputStream;
 
 /**
  * <p></p>
@@ -40,6 +40,8 @@ public class NewJdbcPoolTest extends TestCase {
         pds.setUniqueName("pds");
         pds.setPoolSize(POOL_SIZE);
         pds.init();
+
+        EventRecorder.clear();
     }
 
     protected void tearDown() throws Exception {

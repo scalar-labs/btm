@@ -1,18 +1,17 @@
 package bitronix.tm;
 
-import bitronix.tm.resource.jdbc.PoolingDataSource;
 import bitronix.tm.drivers.*;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
 import junit.framework.TestCase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.transaction.Transaction;
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.sql.ResultSet;
-import java.lang.reflect.Field;
-
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
+import java.sql.Statement;
 
 /**
  * (c) Bitronix, 20-oct.-2005

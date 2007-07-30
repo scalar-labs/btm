@@ -59,6 +59,8 @@ public class MockXAResource implements XAResource {
     }
 
     public Xid[] recover(int flag) throws XAException {
+        if (xads == null)
+            return new Xid[0];
         return xads.getInDoubtXids();
     }
 
@@ -88,7 +90,7 @@ public class MockXAResource implements XAResource {
         getEventRecorder().addEvent(new XAResourceRollbackEvent(this, rollbackException, xid));
         if (rollbackException != null)
             throw rollbackException;
-        xads.removeInDoubtXid(xid);
+        if (xads != null) xads.removeInDoubtXid(xid);
     }
 
     public void end(Xid xid, int flag) throws XAException {
@@ -103,7 +105,7 @@ public class MockXAResource implements XAResource {
         getEventRecorder().addEvent(new XAResourceCommitEvent(this, commitException, xid, b));
         if (commitException != null)
             throw commitException;
-        xads.removeInDoubtXid(xid);
+        if (xads != null) xads.removeInDoubtXid(xid);
     }
 
     public void setPrepareException(XAException prepareException) {

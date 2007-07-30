@@ -5,6 +5,8 @@ import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import junit.framework.TestCase;
 
+import java.util.Iterator;
+
 /**
  * <p></p>
  * <p>&copy; Bitronix 2005, 2006</p>
@@ -12,6 +14,15 @@ import junit.framework.TestCase;
  * @author lorban
  */
 public class RestartTest extends TestCase {
+
+
+    protected void setUp() throws Exception {
+        Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+        while (it.hasNext()) {
+            String name = (String) it.next();
+            ResourceRegistrar.unregister(ResourceRegistrar.get(name));
+        }
+    }
 
     public void testRestartWithoutLoaderNoReuseResource() throws Exception {
         for (int i=0; i<3 ;i++) {
