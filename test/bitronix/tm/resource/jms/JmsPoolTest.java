@@ -21,15 +21,17 @@ public class JmsPoolTest extends TestCase {
     private PoolingConnectionFactory pcf;
 
     protected void setUp() throws Exception {
-        ConnectionFactoryBean cfb = new ConnectionFactoryBean();
-        cfb.setClassName(MockXAConnectionFactory.class.getName());
-        cfb.setUniqueName("pcf");
-        cfb.setPoolSize(POOL_SIZE);
-
-        pcf = (PoolingConnectionFactory) cfb.createResource();
+        this.pcf = new PoolingConnectionFactory();
+        pcf.setClassName(MockXAConnectionFactory.class.getName());
+        pcf.setUniqueName("pcf");
+        pcf.setPoolSize(POOL_SIZE);
+        pcf.init();
     }
 
-    
+    protected void tearDown() throws Exception {
+        pcf.close();
+    }
+
     public void testSerialization() throws Exception {
         ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("test-jms-pool.ser"));
         oos.writeObject(pcf);

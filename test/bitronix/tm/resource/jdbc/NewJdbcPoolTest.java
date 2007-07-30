@@ -29,18 +29,17 @@ public class NewJdbcPoolTest extends TestCase {
 
     private final static Logger log = LoggerFactory.getLogger(NewJdbcPoolTest.class);
 
-    private static final int LOOPS = 1;
+    private static final int LOOPS = 2;
     private static final int POOL_SIZE = 5;
 
     private PoolingDataSource pds;
 
     protected void setUp() throws Exception {
-        DataSourceBean dsb = new DataSourceBean();
-        dsb.setClassName(MockXADataSource.class.getName());
-        dsb.setUniqueName("pds");
-        dsb.setPoolSize(POOL_SIZE);
-
-        pds = (PoolingDataSource) dsb.createResource();
+        this.pds = new PoolingDataSource();
+        pds.setClassName(MockXADataSource.class.getName());
+        pds.setUniqueName("pds");
+        pds.setPoolSize(POOL_SIZE);
+        pds.init();
     }
 
     protected void tearDown() throws Exception {
@@ -194,7 +193,7 @@ public class NewJdbcPoolTest extends TestCase {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
-                    ;// ignore
+                    // ignore
                 }
                 if (log.isDebugEnabled()) log.debug("*** catched exception, waited 500ms - " + number, ex);
                 synchronized (LooseTransactionThread.class) {
