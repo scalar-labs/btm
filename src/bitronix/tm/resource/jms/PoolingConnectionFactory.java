@@ -198,6 +198,8 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
     }
 
     public XAStatefulHolder createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
+        if (!(xaFactory instanceof XAConnectionFactory))
+            throw new IllegalArgumentException("class '" + xaFactory.getClass().getName() + "' does not implement " + XAConnectionFactory.class.getName());
         XAConnectionFactory xaConnectionFactory = (XAConnectionFactory) xaFactory;
         return new JmsPooledConnection(this, xaConnectionFactory.createXAConnection());
     }

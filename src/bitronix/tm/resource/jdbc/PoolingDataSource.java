@@ -153,6 +153,8 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     }
 
     public XAStatefulHolder createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
+        if (!(xaFactory instanceof XADataSource))
+            throw new IllegalArgumentException("class '" + xaFactory.getClass().getName() + "' does not implement " + XADataSource.class.getName());
         XADataSource xads = (XADataSource) xaFactory;
         return new JdbcPooledConnection(this, xads.getXAConnection());
     }
