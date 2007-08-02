@@ -181,7 +181,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      */
     private Set recover(XAResourceProducer producer) throws XAException {
         if (producer == null)
-            throw new NullPointerException("recoverable resource cannot be null");
+            throw new IllegalArgumentException("recoverable resource cannot be null");
 
         Set xids = new HashSet();
 
