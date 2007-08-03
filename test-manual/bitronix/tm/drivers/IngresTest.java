@@ -1,12 +1,10 @@
 package bitronix.tm.drivers;
 
-import javax.sql.XADataSource;
-
-import bitronix.tm.resource.jdbc.DataSourceBean;
-
-import java.util.Properties;
-
+import bitronix.tm.resource.jdbc.PoolingDataSource;
 import com.ingres.jdbc.IngresXADataSource;
+
+import javax.sql.XADataSource;
+import java.util.Properties;
 
 /**
  * (c) Bitronix, 05-nov.-2005
@@ -16,8 +14,8 @@ import com.ingres.jdbc.IngresXADataSource;
 public class IngresTest extends XATestSuite {
 
 
-    public static DataSourceBean getDataSourceBean1() {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource1() {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(IngresXADataSource.class.getName());
         bean.setUniqueName("ingres1");
         bean.setPoolSize(5);
@@ -32,8 +30,8 @@ public class IngresTest extends XATestSuite {
         return bean;
     }
 
-    public static DataSourceBean getDataSourceBean2() {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource2() {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(IngresXADataSource.class.getName());
         bean.setUniqueName("ingres2");
         bean.setPoolSize(5);

@@ -1,6 +1,6 @@
 package bitronix.tm.drivers;
 
-import bitronix.tm.resource.jdbc.DataSourceBean;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
 import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
 
 import javax.sql.XADataSource;
@@ -13,8 +13,8 @@ import java.util.Properties;
  */
 public class HsqldbTest extends XATestSuite {
 
-    public static DataSourceBean getDataSourceBean1() {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource1() {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(LrcXADataSource.class.getName());
         bean.setUniqueName("hsql1");
         bean.setPoolSize(1);
@@ -29,8 +29,8 @@ public class HsqldbTest extends XATestSuite {
         return bean;
    }
 
-    public static DataSourceBean getDataSourceBean2() {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource2() {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(LrcXADataSource.class.getName());
         bean.setUniqueName("hsql2");
         bean.setPoolSize(1);

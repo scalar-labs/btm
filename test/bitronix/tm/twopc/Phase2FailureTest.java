@@ -2,14 +2,13 @@ package bitronix.tm.twopc;
 
 import bitronix.tm.BitronixTransactionManager;
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.mock.AbstractMockJdbcTest;
 import bitronix.tm.mock.events.*;
 import bitronix.tm.mock.resource.MockJournal;
+import bitronix.tm.mock.resource.MockXAResource;
 import bitronix.tm.mock.resource.jdbc.MockXAConnection;
 import bitronix.tm.mock.resource.jdbc.MockXADataSource;
-import bitronix.tm.mock.resource.MockXAResource;
-import bitronix.tm.mock.AbstractMockJdbcTest;
 import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
-import bitronix.tm.resource.jdbc.DataSourceBean;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import junit.framework.TestCase;
 
@@ -17,10 +16,10 @@ import javax.transaction.HeuristicMixedException;
 import javax.transaction.Status;
 import javax.transaction.xa.XAException;
 import java.lang.reflect.Field;
+import java.sql.Connection;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.sql.Connection;
 
 /**
  * <p></p>
@@ -46,22 +45,22 @@ public class Phase2FailureTest extends TestCase {
      *  2 XAResourcePrepareEvent, 4 XAResourceCommitEvent
      * Expected journal events:
      *   ACTIVE, PREPARING, PREPARED, COMMITTING, COMMITTED
+     * @throws Exception if any error happens.
      */
     public void test() throws Exception {
-        DataSourceBean bean1 = new DataSourceBean();
-        bean1.setClassName(MockXADataSource.class.getName());
-        bean1.setUniqueName("pds1");
-        bean1.setPoolSize(5);
-        bean1.setAutomaticEnlistingEnabled(true);
+        PoolingDataSource poolingDataSource1 = new PoolingDataSource();
+        poolingDataSource1.setClassName(MockXADataSource.class.getName());
+        poolingDataSource1.setUniqueName("pds1");
+        poolingDataSource1.setPoolSize(5);
+        poolingDataSource1.setAutomaticEnlistingEnabled(true);
+        poolingDataSource1.init();
 
-        DataSourceBean bean2 = new DataSourceBean();
-        bean2.setClassName(MockXADataSource.class.getName());
-        bean2.setUniqueName("pds2");
-        bean2.setPoolSize(5);
-        bean2.setAutomaticEnlistingEnabled(true);
-
-        PoolingDataSource poolingDataSource1 = (PoolingDataSource) bean1.createResource();
-        PoolingDataSource poolingDataSource2 = (PoolingDataSource) bean2.createResource();
+        PoolingDataSource poolingDataSource2 = new PoolingDataSource();
+        poolingDataSource2.setClassName(MockXADataSource.class.getName());
+        poolingDataSource2.setUniqueName("pds2");
+        poolingDataSource2.setPoolSize(5);
+        poolingDataSource2.setAutomaticEnlistingEnabled(true);
+        poolingDataSource2.init();
 
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 
@@ -137,22 +136,22 @@ public class Phase2FailureTest extends TestCase {
      *  2 XAResourcePrepareEvent, 2 XAResourceCommitEvent, 1 XAResourceForgetEvent
      * Expected journal events:
      *   ACTIVE, PREPARING, PREPARED, COMMITTING, COMMITTED
+     * @throws Exception if any error happens.
      */
     public void testHeuristicCommit() throws Exception {
-        DataSourceBean bean1 = new DataSourceBean();
-        bean1.setClassName(MockXADataSource.class.getName());
-        bean1.setUniqueName("pds1");
-        bean1.setPoolSize(5);
-        bean1.setAutomaticEnlistingEnabled(true);
+        PoolingDataSource poolingDataSource1 = new PoolingDataSource();
+        poolingDataSource1.setClassName(MockXADataSource.class.getName());
+        poolingDataSource1.setUniqueName("pds1");
+        poolingDataSource1.setPoolSize(5);
+        poolingDataSource1.setAutomaticEnlistingEnabled(true);
+        poolingDataSource1.init();
 
-        DataSourceBean bean2 = new DataSourceBean();
-        bean2.setClassName(MockXADataSource.class.getName());
-        bean2.setUniqueName("pds2");
-        bean2.setPoolSize(5);
-        bean2.setAutomaticEnlistingEnabled(true);
-
-        PoolingDataSource poolingDataSource1 = (PoolingDataSource) bean1.createResource();
-        PoolingDataSource poolingDataSource2 = (PoolingDataSource) bean2.createResource();
+        PoolingDataSource poolingDataSource2 = new PoolingDataSource();
+        poolingDataSource2.setClassName(MockXADataSource.class.getName());
+        poolingDataSource2.setUniqueName("pds2");
+        poolingDataSource2.setPoolSize(5);
+        poolingDataSource2.setAutomaticEnlistingEnabled(true);
+        poolingDataSource2.init();
 
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 
@@ -217,22 +216,22 @@ public class Phase2FailureTest extends TestCase {
      *  2 XAResourcePrepareEvent, 2 XAResourceCommitEvent
      * Expected journal events:
      *   ACTIVE, PREPARING, PREPARED, COMMITTING, COMMITTED
+     * @throws Exception if any error happens.
      */
     public void testHeuristicMixed() throws Exception {
-        DataSourceBean bean1 = new DataSourceBean();
-        bean1.setClassName(MockXADataSource.class.getName());
-        bean1.setUniqueName("pds1");
-        bean1.setPoolSize(5);
-        bean1.setAutomaticEnlistingEnabled(true);
+        PoolingDataSource poolingDataSource1 = new PoolingDataSource();
+        poolingDataSource1.setClassName(MockXADataSource.class.getName());
+        poolingDataSource1.setUniqueName("pds1");
+        poolingDataSource1.setPoolSize(5);
+        poolingDataSource1.setAutomaticEnlistingEnabled(true);
+        poolingDataSource1.init();
 
-        DataSourceBean bean2 = new DataSourceBean();
-        bean2.setClassName(MockXADataSource.class.getName());
-        bean2.setUniqueName("pds2");
-        bean2.setPoolSize(5);
-        bean2.setAutomaticEnlistingEnabled(true);
-
-        PoolingDataSource poolingDataSource1 = (PoolingDataSource) bean1.createResource();
-        PoolingDataSource poolingDataSource2 = (PoolingDataSource) bean2.createResource();
+        PoolingDataSource poolingDataSource2 = new PoolingDataSource();
+        poolingDataSource2.setClassName(MockXADataSource.class.getName());
+        poolingDataSource2.setUniqueName("pds2");
+        poolingDataSource2.setPoolSize(5);
+        poolingDataSource2.setAutomaticEnlistingEnabled(true);
+        poolingDataSource2.init();
 
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 

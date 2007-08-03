@@ -1,8 +1,8 @@
 package bitronix.tm.drivers;
 
-import bitronix.tm.resource.jms.ConnectionFactoryBean;
-import org.mr.api.jms.MantaXAConnectionFactory;
+import bitronix.tm.resource.jms.PoolingConnectionFactory;
 import junit.framework.TestCase;
+import org.mr.api.jms.MantaXAConnectionFactory;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,10 +13,10 @@ import junit.framework.TestCase;
  */
 public class MantarayTest extends TestCase {
 
-    public static ConnectionFactoryBean getConnectionFactoryBean1() {
+    public static PoolingConnectionFactory getPoolingConnectionFactory1() {
         System.setProperty("mantaConfig", "/java/mantaray_2.0.1_bin/config/default_config.xml");
 
-        ConnectionFactoryBean bean = new ConnectionFactoryBean();
+        PoolingConnectionFactory bean = new PoolingConnectionFactory();
         bean.setClassName(MantaXAConnectionFactory .class.getName());
         bean.setUniqueName("manta1");
         bean.setPoolSize(2);

@@ -1,20 +1,20 @@
 package bitronix.tm.drivers;
 
-import bitronix.tm.resource.jms.ConnectionFactoryBean;
-import bitronix.tm.resource.jms.JndiXAConnectionFactory;
-import bitronix.tm.mock.resource.MockXid;
 import bitronix.tm.internal.Decoder;
+import bitronix.tm.mock.resource.MockXid;
+import bitronix.tm.resource.jms.JndiXAConnectionFactory;
+import bitronix.tm.resource.jms.PoolingConnectionFactory;
 import junit.framework.TestCase;
 
-import javax.naming.InitialContext;
-import javax.naming.Context;
-import javax.naming.NamingException;
 import javax.jms.*;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
-import javax.transaction.xa.XAException;
-import java.util.Properties;
 import java.util.Date;
+import java.util.Properties;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,8 +25,8 @@ import java.util.Date;
  */
 public class SwiftmqTest extends TestCase {
 
-    public static ConnectionFactoryBean getConnectionFactoryBean1() {
-        ConnectionFactoryBean bean = new ConnectionFactoryBean();
+    public static PoolingConnectionFactory getPoolingConnectionFactory1() {
+        PoolingConnectionFactory bean = new PoolingConnectionFactory();
         bean.setClassName(JndiXAConnectionFactory.class.getName());
         bean.setUniqueName("swiftmq1");
         bean.setPoolSize(5);
@@ -36,8 +36,8 @@ public class SwiftmqTest extends TestCase {
         return bean;
     }
 
-    public static ConnectionFactoryBean getConnectionFactoryBean2() {
-        ConnectionFactoryBean bean = new ConnectionFactoryBean();
+    public static PoolingConnectionFactory getPoolingConnectionFactory2() {
+        PoolingConnectionFactory bean = new PoolingConnectionFactory();
         bean.setClassName(JndiXAConnectionFactory.class.getName());
         bean.setUniqueName("swiftmq2");
         bean.setPoolSize(5);

@@ -1,10 +1,9 @@
 package bitronix.tm.drivers;
 
-import javax.sql.XADataSource;
-
 import COM.FirstSQL.Dbcp.DbcpXADataSource;
-import bitronix.tm.resource.jdbc.DataSourceBean;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
 
+import javax.sql.XADataSource;
 import java.util.Properties;
 
 /**
@@ -15,8 +14,8 @@ import java.util.Properties;
 public class FirstsqlTest extends XATestSuite {
 
 
-    public static DataSourceBean getDataSourceBean1() {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource1() {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(DbcpXADataSource.class.getName());
         bean.setUniqueName("fistsql1");
         bean.setPoolSize(5);
@@ -33,8 +32,8 @@ public class FirstsqlTest extends XATestSuite {
         return bean;
     }
 
-    public static DataSourceBean getDataSourceBean2() {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource2() {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(DbcpXADataSource.class.getName());
         bean.setUniqueName("fistsql2");
         bean.setPoolSize(5);

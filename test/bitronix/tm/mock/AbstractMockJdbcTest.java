@@ -31,19 +31,19 @@ public abstract class AbstractMockJdbcTest extends TestCase {
     protected static final String DATASOURCE2_NAME = "pds2";
 
     protected void setUp() throws Exception {
-        DataSourceBean dsb1 = new DataSourceBean();
-        dsb1.setClassName(MockXADataSource.class.getName());
-        dsb1.setUniqueName(DATASOURCE1_NAME);
-        dsb1.setPoolSize(POOL_SIZE);
-        dsb1.setAllowLocalTransactions(true);
-        poolingDataSource1 = (PoolingDataSource) dsb1.createResource();
+        poolingDataSource1 = new PoolingDataSource();
+        poolingDataSource1.setClassName(MockXADataSource.class.getName());
+        poolingDataSource1.setUniqueName(DATASOURCE1_NAME);
+        poolingDataSource1.setPoolSize(POOL_SIZE);
+        poolingDataSource1.setAllowLocalTransactions(true);
+        poolingDataSource1.init();
 
-        DataSourceBean dsb2 = new DataSourceBean();
-        dsb2.setClassName(MockXADataSource.class.getName());
-        dsb2.setUniqueName(DATASOURCE2_NAME);
-        dsb2.setPoolSize(POOL_SIZE);
-        dsb2.setAllowLocalTransactions(true);
-        poolingDataSource2 = (PoolingDataSource) dsb2.createResource();
+        poolingDataSource2 = new PoolingDataSource();
+        poolingDataSource2.setClassName(MockXADataSource.class.getName());
+        poolingDataSource2.setUniqueName(DATASOURCE2_NAME);
+        poolingDataSource2.setPoolSize(POOL_SIZE);
+        poolingDataSource2.setAllowLocalTransactions(true);
+        poolingDataSource2.init();
 
         // change disk journal into mock journal
         Field journalField = TransactionManagerServices.class.getDeclaredField("journal");
@@ -51,9 +51,9 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         journalField.set(TransactionManagerServices.class, new MockJournal());
 
         // change connection pools into mock pools
-        XAPool p1 = getPool(poolingDataSource1);
+        XAPool p1 = getPool(this.poolingDataSource1);
         registerPoolEventListener(p1);
-        XAPool p2 = getPool(poolingDataSource2);
+        XAPool p2 = getPool(this.poolingDataSource2);
         registerPoolEventListener(p2);
 
         // change transactionRetryInterval to 1 second

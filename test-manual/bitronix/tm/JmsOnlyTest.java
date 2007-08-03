@@ -49,7 +49,7 @@ public class JmsOnlyTest extends TestCase {
         if (poolingConnectionFactory1 != null)
             return;
 
-        poolingConnectionFactory1 = (PoolingConnectionFactory) AmqTest.getConnectionFactoryBean1().createResource();
+        poolingConnectionFactory1 = AmqTest.getPoolingConnectionFactory1();
         inboundQueueName = "queue-testAutoEnlistment";
         outboundQueueName = "queue-testAutoEnlistment";
     }
@@ -58,7 +58,7 @@ public class JmsOnlyTest extends TestCase {
         if (poolingConnectionFactory1 != null)
             return;
 
-        poolingConnectionFactory1 = (PoolingConnectionFactory) SwiftmqTest.getConnectionFactoryBean1().createResource();
+        poolingConnectionFactory1 = SwiftmqTest.getPoolingConnectionFactory1();
         inboundQueueName = "queue-testAutoEnlistment@router1";
         outboundQueueName = "queue-testAutoEnlistment@router1";
     }
@@ -67,7 +67,7 @@ public class JmsOnlyTest extends TestCase {
         if (poolingConnectionFactory1 != null)
             return;
 
-        poolingConnectionFactory1 = (PoolingConnectionFactory) MantarayTest.getConnectionFactoryBean1().createResource();
+        poolingConnectionFactory1 = MantarayTest.getPoolingConnectionFactory1();
         inboundQueueName = "queue-testAutoEnlistment";
         outboundQueueName = "queue-testAutoEnlistment";
     }

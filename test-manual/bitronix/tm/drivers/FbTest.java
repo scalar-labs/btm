@@ -1,11 +1,9 @@
 package bitronix.tm.drivers;
 
+import bitronix.tm.resource.jdbc.PoolingDataSource;
 import org.firebirdsql.pool.FBConnectionPoolDataSource;
 
 import javax.sql.XADataSource;
-
-import bitronix.tm.resource.jdbc.DataSourceBean;
-
 import java.util.Properties;
 
 
@@ -17,8 +15,8 @@ import java.util.Properties;
 public class FbTest extends XATestSuite {
 
 
-    public static DataSourceBean getDataSourceBean1() {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource1() {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(FBConnectionPoolDataSource.class.getName());
         bean.setUniqueName("fb1");
         bean.setPoolSize(5);
@@ -33,8 +31,8 @@ public class FbTest extends XATestSuite {
         return bean;
    }
 
-    public static DataSourceBean getDataSourceBean2() {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource2() {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(FBConnectionPoolDataSource.class.getName());
         bean.setUniqueName("fb2");
         bean.setPoolSize(5);

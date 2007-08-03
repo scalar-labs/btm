@@ -1,14 +1,12 @@
 package bitronix.tm.drivers;
 
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+import com.informix.jdbcx.IfxXADataSource;
+
 import javax.sql.XADataSource;
-
-import bitronix.tm.resource.jdbc.DataSourceBean;
-
-import java.util.Properties;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-
-import com.informix.jdbcx.IfxXADataSource;
+import java.util.Properties;
 
 
 /**
@@ -18,8 +16,8 @@ import com.informix.jdbcx.IfxXADataSource;
  */
 public class IfxTest extends XATestSuite {
 
-    public static DataSourceBean getDataSourceBean1() throws UnknownHostException {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource1() throws UnknownHostException {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(IfxXADataSource.class.getName());
         bean.setUniqueName("ifx1");
         bean.setPoolSize(5);
@@ -39,8 +37,8 @@ public class IfxTest extends XATestSuite {
         return bean;
    }
 
-    public static DataSourceBean getDataSourceBean2() throws UnknownHostException {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource2() throws UnknownHostException {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(IfxXADataSource.class.getName());
         bean.setUniqueName("ifx2");
         bean.setPoolSize(5);

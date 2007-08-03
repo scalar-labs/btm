@@ -1,16 +1,16 @@
 package bitronix.tm.drivers;
 
-import bitronix.tm.resource.jms.ConnectionFactoryBean;
 import bitronix.tm.internal.Decoder;
-import org.apache.activemq.ActiveMQXAConnectionFactory;
+import bitronix.tm.resource.jms.PoolingConnectionFactory;
 import junit.framework.TestCase;
+import org.apache.activemq.ActiveMQXAConnectionFactory;
 
-import javax.jms.XAConnectionFactory;
 import javax.jms.XAConnection;
+import javax.jms.XAConnectionFactory;
 import javax.jms.XASession;
+import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
-import javax.transaction.xa.XAException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -21,8 +21,8 @@ import javax.transaction.xa.XAException;
  */
 public class AmqTest extends TestCase {
 
-    public static ConnectionFactoryBean getConnectionFactoryBean1() {
-        ConnectionFactoryBean bean = new ConnectionFactoryBean();
+    public static PoolingConnectionFactory getPoolingConnectionFactory1() {
+        PoolingConnectionFactory bean = new PoolingConnectionFactory();
         bean.setClassName(ActiveMQXAConnectionFactory.class.getName());
         bean.setUniqueName("amq1");
         bean.setPoolSize(5);
@@ -30,8 +30,8 @@ public class AmqTest extends TestCase {
         return bean;
     }
 
-    public static ConnectionFactoryBean getConnectionFactoryBean2() {
-        ConnectionFactoryBean bean = new ConnectionFactoryBean();
+    public static PoolingConnectionFactory getPoolingConnectionFactory2() {
+        PoolingConnectionFactory bean = new PoolingConnectionFactory();
         bean.setClassName(ActiveMQXAConnectionFactory.class.getName());
         bean.setUniqueName("amq2");
         bean.setPoolSize(5);

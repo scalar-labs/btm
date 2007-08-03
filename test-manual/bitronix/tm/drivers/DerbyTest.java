@@ -1,10 +1,9 @@
 package bitronix.tm.drivers;
 
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+import org.apache.derby.jdbc.EmbeddedXADataSource;
+
 import javax.sql.XADataSource;
-
-import org.apache.derby.jdbc.ClientXADataSource;
-import bitronix.tm.resource.jdbc.DataSourceBean;
-
 import java.util.Properties;
 
 /**
@@ -15,9 +14,9 @@ import java.util.Properties;
 public class DerbyTest extends XATestSuite {
 
 
-    public static DataSourceBean getDataSourceBean1() {
-        DataSourceBean bean = new DataSourceBean();
-        bean.setClassName(ClientXADataSource.class.getName());
+    public static PoolingDataSource getPoolingDataSource1() {
+        PoolingDataSource bean = new PoolingDataSource();
+        bean.setClassName(EmbeddedXADataSource.class.getName());
         bean.setUniqueName("derby1");
         bean.setPoolSize(5);
         bean.setDeferConnectionRelease(true);
@@ -31,9 +30,9 @@ public class DerbyTest extends XATestSuite {
         return bean;
     }
 
-    public static DataSourceBean getDataSourceBean2() {
-        DataSourceBean bean = new DataSourceBean();
-        bean.setClassName(ClientXADataSource.class.getName());
+    public static PoolingDataSource getPoolingDataSource2() {
+        PoolingDataSource bean = new PoolingDataSource();
+        bean.setClassName(EmbeddedXADataSource.class.getName());
         bean.setUniqueName("derby2");
         bean.setPoolSize(5);
         bean.setDeferConnectionRelease(true);
@@ -47,16 +46,16 @@ public class DerbyTest extends XATestSuite {
         return bean;
     }
 
-    public static ClientXADataSource getXADataSource1() throws Exception {
-        ClientXADataSource dataSource = new ClientXADataSource();
+    public static EmbeddedXADataSource getXADataSource1() throws Exception {
+        EmbeddedXADataSource dataSource = new EmbeddedXADataSource();
         dataSource.setUser("users1");
         dataSource.setPassword("users1");
         dataSource.setDatabaseName("users1");
         return dataSource;
     }
 
-    public static ClientXADataSource getXADataSource2() throws Exception {
-        ClientXADataSource dataSource = new ClientXADataSource();
+    public static EmbeddedXADataSource getXADataSource2() throws Exception {
+        EmbeddedXADataSource dataSource = new EmbeddedXADataSource();
         dataSource.setUser("users2");
         dataSource.setPassword("users2");
         dataSource.setDatabaseName("users2");

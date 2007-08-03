@@ -39,8 +39,8 @@ public class JdbcOnlyTest extends TestCase {
 
         query = "insert into users (id, name) values (" + genPk() + ", ?)";
 
-        poolingDataSource1 = (PoolingDataSource) FbTest.getDataSourceBean1().createResource();
-        poolingDataSource2 = (PoolingDataSource) FbTest.getDataSourceBean2().createResource();
+        poolingDataSource1 = FbTest.getPoolingDataSource1();
+        poolingDataSource2 = FbTest.getPoolingDataSource2();
     }
 
     private void setUpJdbc_HSQL() throws Exception {
@@ -49,8 +49,8 @@ public class JdbcOnlyTest extends TestCase {
 
         query = "insert into users (id, name) values (" + genPk() + ", ?)";
 
-        poolingDataSource1 = (PoolingDataSource) HsqldbTest.getDataSourceBean1().createResource();
-        poolingDataSource2 = (PoolingDataSource) FbTest.getDataSourceBean2().createResource();
+        poolingDataSource1 = HsqldbTest.getPoolingDataSource1();
+        poolingDataSource2 = FbTest.getPoolingDataSource2();
     }
 
     private void setUpJdbc_Ingres() throws Exception {
@@ -59,8 +59,8 @@ public class JdbcOnlyTest extends TestCase {
 
         query = "insert into users (id, name) values (" + genPk() + ", ?)";
 
-        poolingDataSource1 = (PoolingDataSource) IngresTest.getDataSourceBean1().createResource();
-        poolingDataSource2 = (PoolingDataSource) IngresTest.getDataSourceBean2().createResource();
+        poolingDataSource1 = IngresTest.getPoolingDataSource1();
+        poolingDataSource2 = IngresTest.getPoolingDataSource2();
     }
 
     private void setUpJdbc_Derby() throws Exception {
@@ -69,8 +69,8 @@ public class JdbcOnlyTest extends TestCase {
 
         query = "insert into users (id, name) values (" + genPk() + ", ?)";
 
-        poolingDataSource1 = (PoolingDataSource) DerbyTest.getDataSourceBean1().createResource();
-        poolingDataSource2 = (PoolingDataSource) DerbyTest.getDataSourceBean2().createResource();
+        poolingDataSource1 = DerbyTest.getPoolingDataSource1();
+        poolingDataSource2 = DerbyTest.getPoolingDataSource2();
     }
 
     private void setUpJdbc_Mysql() throws Exception {
@@ -79,8 +79,8 @@ public class JdbcOnlyTest extends TestCase {
 
         query = "insert into users (name) values (?)";
 
-        poolingDataSource1 = (PoolingDataSource) MysqlTest.getDataSourceBean1().createResource();
-        poolingDataSource2 = (PoolingDataSource) MysqlTest.getDataSourceBean2().createResource();
+        poolingDataSource1 = MysqlTest.getPoolingDataSource1();
+        poolingDataSource2 = MysqlTest.getPoolingDataSource2();
     }
 
     private void setUpJdbc_ORA() throws Exception {
@@ -89,8 +89,8 @@ public class JdbcOnlyTest extends TestCase {
 
         query = "insert into users (id, name) values (seq_users.nextval, ?)";
 
-        poolingDataSource1 = (PoolingDataSource) OracleTest.getDataSourceBean1().createResource();
-        poolingDataSource2 = (PoolingDataSource) OracleTest.getDataSourceBean2().createResource();
+        poolingDataSource1 = OracleTest.getPoolingDataSource1();
+        poolingDataSource2 = OracleTest.getPoolingDataSource2();
     }
 
     private void setUpJdbc_ASE() throws Exception {
@@ -99,8 +99,8 @@ public class JdbcOnlyTest extends TestCase {
 
         query = "insert into users (name) values (?)";
 
-        poolingDataSource1 = (PoolingDataSource) SybaseTest.getDataSourceBean1().createResource();
-        poolingDataSource2 = (PoolingDataSource) SybaseTest.getDataSourceBean2().createResource();
+        poolingDataSource1 = SybaseTest.getPoolingDataSource1();
+        poolingDataSource2 = SybaseTest.getPoolingDataSource2();
     }
 
     private void setUpJdbc_FSQL() throws Exception {
@@ -109,8 +109,8 @@ public class JdbcOnlyTest extends TestCase {
 
         query = "insert into users (id, name) values (" + genPk() + ", ?)";
 
-        poolingDataSource1 = (PoolingDataSource) FirstsqlTest.getDataSourceBean1().createResource();
-        poolingDataSource2 = (PoolingDataSource) FirstsqlTest.getDataSourceBean2().createResource();
+        poolingDataSource1 = FirstsqlTest.getPoolingDataSource1();
+        poolingDataSource2 = FirstsqlTest.getPoolingDataSource2();
     }
 
     private void setUpJdbc_PB() throws Exception {
@@ -119,8 +119,8 @@ public class JdbcOnlyTest extends TestCase {
 
         query = "insert into users (name) values (?)";
 
-        poolingDataSource1 = (PoolingDataSource) PointbaseTest.getDataSourceBean1().createResource();
-        poolingDataSource2 = (PoolingDataSource) PointbaseTest.getDataSourceBean2().createResource();
+        poolingDataSource1 = PointbaseTest.getPoolingDataSource1();
+        poolingDataSource2 = PointbaseTest.getPoolingDataSource2();
     }
 
 

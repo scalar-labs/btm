@@ -1,14 +1,15 @@
 package bitronix.tm.drivers;
 
-import javax.sql.XADataSource;
-import javax.sql.XAConnection;
-
-import bitronix.tm.resource.jdbc.DataSourceBean;
-
-import java.util.Properties;
-import java.sql.*;
-
+import bitronix.tm.resource.jdbc.PoolingDataSource;
 import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
+
+import javax.sql.XAConnection;
+import javax.sql.XADataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Properties;
 
 /**
  * (c) Bitronix, 05-nov.-2005
@@ -17,8 +18,8 @@ import com.mysql.jdbc.jdbc2.optional.MysqlXADataSource;
  */
 public class MysqlTest extends XATestSuite {
 
-    public static DataSourceBean getDataSourceBean1() {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource1() {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(MysqlXADataSource.class.getName());
         bean.setUniqueName("mysql1");
         bean.setPoolSize(5);
@@ -33,8 +34,8 @@ public class MysqlTest extends XATestSuite {
         return bean;
     }
 
-    public static DataSourceBean getDataSourceBean2() {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource2() {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(MysqlXADataSource.class.getName());
         bean.setUniqueName("mysql2");
         bean.setPoolSize(5);

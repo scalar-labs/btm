@@ -1,10 +1,9 @@
 package bitronix.tm.drivers;
 
-import javax.sql.XADataSource;
-
+import bitronix.tm.resource.jdbc.PoolingDataSource;
 import oracle.jdbc.xa.client.OracleXADataSource;
-import bitronix.tm.resource.jdbc.DataSourceBean;
 
+import javax.sql.XADataSource;
 import java.util.Properties;
 
 /**
@@ -15,8 +14,8 @@ import java.util.Properties;
 public class OracleTest extends XATestSuite {
 
 
-    public static DataSourceBean getDataSourceBean1() {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource1() {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(OracleXADataSource.class.getName());
         bean.setUniqueName("oracle1");
         bean.setPoolSize(5);
@@ -31,8 +30,8 @@ public class OracleTest extends XATestSuite {
         return bean;
     }
 
-    public static DataSourceBean getDataSourceBean2() {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource2() {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(OracleXADataSource.class.getName());
         bean.setUniqueName("oracle2");
         bean.setPoolSize(5);

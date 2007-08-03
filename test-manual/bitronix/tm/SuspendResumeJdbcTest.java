@@ -41,7 +41,7 @@ public class SuspendResumeJdbcTest extends TestCase {
 
         query = "insert into users (id, name) values (?, ?)";
 
-        poolingDataSource1 = (PoolingDataSource) FbTest.getDataSourceBean1().createResource();
+        poolingDataSource1 = FbTest.getPoolingDataSource1();
     }
 
 
@@ -51,7 +51,7 @@ public class SuspendResumeJdbcTest extends TestCase {
 
         query = "insert into users (id, name) values (" + genPk() + ", ?)";
 
-        poolingDataSource1 = (PoolingDataSource) DerbyTest.getDataSourceBean1().createResource();
+        poolingDataSource1 = DerbyTest.getPoolingDataSource1();
     }
 
     private void setUpJdbc_Mysql() throws Exception {
@@ -60,7 +60,7 @@ public class SuspendResumeJdbcTest extends TestCase {
 
         query = "insert into users (name) values (?)";
 
-        poolingDataSource1 = (PoolingDataSource) MysqlTest.getDataSourceBean1().createResource();
+        poolingDataSource1 = MysqlTest.getPoolingDataSource1();
     }
 
     private void setUpJdbc_ORA() throws Exception {
@@ -69,7 +69,7 @@ public class SuspendResumeJdbcTest extends TestCase {
 
         query = "insert into users (id, name) values (" + genPk() + ", ?)";
 
-        poolingDataSource1 = (PoolingDataSource) OracleTest.getDataSourceBean1().createResource();
+        poolingDataSource1 = OracleTest.getPoolingDataSource1();
     }
 
     private void setUpJdbc_ASE() throws Exception {
@@ -78,7 +78,7 @@ public class SuspendResumeJdbcTest extends TestCase {
 
         query = "insert into users (name) values (?)";
 
-        poolingDataSource1 = (PoolingDataSource) SybaseTest.getDataSourceBean1().createResource();
+        poolingDataSource1 = SybaseTest.getPoolingDataSource1();
     }
 
 
@@ -88,7 +88,7 @@ public class SuspendResumeJdbcTest extends TestCase {
 
         query = "insert into users (id, name) values (" + genPk() + ", ?)";
 
-        poolingDataSource1 = (PoolingDataSource) FirstsqlTest.getDataSourceBean1().createResource();
+        poolingDataSource1 = FirstsqlTest.getPoolingDataSource1();
     }
 
     public void testInterleaveLocalGlobal() throws Exception {

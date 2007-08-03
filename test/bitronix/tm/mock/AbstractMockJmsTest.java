@@ -5,7 +5,6 @@ import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.resource.MockJournal;
 import bitronix.tm.mock.resource.jms.MockXAConnectionFactory;
 import bitronix.tm.resource.jms.PoolingConnectionFactory;
-import bitronix.tm.resource.jms.ConnectionFactoryBean;
 import junit.framework.TestCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,19 +29,19 @@ public abstract class AbstractMockJmsTest extends TestCase {
     protected static final String CONNECTION_FACTORY2_NAME = "pcf2";
 
     protected void setUp() throws Exception {
-        ConnectionFactoryBean cfb1 = new ConnectionFactoryBean();
-        cfb1.setClassName(MockXAConnectionFactory.class.getName());
-        cfb1.setUniqueName(CONNECTION_FACTORY1_NAME);
-        cfb1.setAcquisitionTimeout(5);
-        cfb1.setPoolSize(POOL_SIZE);
-        poolingConnectionFactory1 = (PoolingConnectionFactory) cfb1.createResource();
+        poolingConnectionFactory1 = new PoolingConnectionFactory();
+        poolingConnectionFactory1.setClassName(MockXAConnectionFactory.class.getName());
+        poolingConnectionFactory1.setUniqueName(CONNECTION_FACTORY1_NAME);
+        poolingConnectionFactory1.setAcquisitionTimeout(5);
+        poolingConnectionFactory1.setPoolSize(POOL_SIZE);
+        poolingConnectionFactory1.init();
 
-        ConnectionFactoryBean cfb2 = new ConnectionFactoryBean();
-        cfb2.setClassName(MockXAConnectionFactory.class.getName());
-        cfb2.setUniqueName(CONNECTION_FACTORY2_NAME);
-        cfb2.setAcquisitionTimeout(5);
-        cfb2.setPoolSize(POOL_SIZE);
-        poolingConnectionFactory2 = (PoolingConnectionFactory) cfb2.createResource();
+        poolingConnectionFactory2 = new PoolingConnectionFactory();
+        poolingConnectionFactory2.setClassName(MockXAConnectionFactory.class.getName());
+        poolingConnectionFactory2.setUniqueName(CONNECTION_FACTORY2_NAME);
+        poolingConnectionFactory2.setAcquisitionTimeout(5);
+        poolingConnectionFactory2.setPoolSize(POOL_SIZE);
+        poolingConnectionFactory2.init();
 
         // change disk journal into mock journal
         Field journalField = TransactionManagerServices.class.getDeclaredField("journal");

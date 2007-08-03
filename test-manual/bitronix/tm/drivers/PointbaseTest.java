@@ -1,12 +1,10 @@
 package bitronix.tm.drivers;
 
-import bitronix.tm.resource.jdbc.DataSourceBean;
-
-import java.util.Properties;
-
+import bitronix.tm.resource.jdbc.PoolingDataSource;
 import com.pointbase.xa.xaDataSource;
 
 import javax.sql.XADataSource;
+import java.util.Properties;
 
 /**
  * (c) Bitronix, 05-nov.-2005
@@ -17,8 +15,8 @@ public class PointbaseTest extends XATestSuite {
 
     private final static String PB_INI_PATH = "C:/java/pointbase55/tools/embedded/pointbase.ini";
 
-    public static DataSourceBean getDataSourceBean1() {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource1() {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(xaDataSource.class.getName());
         bean.setUniqueName("pb1");
         bean.setPoolSize(5);
@@ -33,8 +31,8 @@ public class PointbaseTest extends XATestSuite {
         return bean;
    }
 
-    public static DataSourceBean getDataSourceBean2() {
-        DataSourceBean bean = new DataSourceBean();
+    public static PoolingDataSource getPoolingDataSource2() {
+        PoolingDataSource bean = new PoolingDataSource();
         bean.setClassName(xaDataSource.class.getName());
         bean.setUniqueName("pb2");
         bean.setPoolSize(5);
