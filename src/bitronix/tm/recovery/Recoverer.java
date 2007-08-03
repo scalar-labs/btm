@@ -58,7 +58,6 @@ import java.util.*;
  * </ul></p>
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
- * @see ResourceLoader
  * @author lorban
  */
 public class Recoverer implements Runnable, Service, RecovererMBean {

@@ -30,16 +30,16 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     private boolean shuttingDown;
 
     /**
-     * Create the BitronixTransactionManager. Open the journal, load resources and start the recovery process
+     * Create the {@link BitronixTransactionManager}. Open the journal, load resources and perform recovery
      * synchronously. If <code>bitronix.tm.timer.backgroundRecoveryInterval</code> is greater than 0, the recovery
-     * service get scheduled for background recovery.
+     * service gets scheduled for background recovery.
      */
     protected BitronixTransactionManager() {
         try {
             shuttingDown = false;
             logVersion();
             Configuration configuration = TransactionManagerServices.getConfiguration();
-            configuration.buildServerIdArray(); // first call to initialize the ServerId
+            configuration.buildServerIdArray(); // first call will initialize the ServerId
 
             if (log.isDebugEnabled()) log.debug("starting BitronixTransactionManager using " + configuration);
             TransactionManagerServices.getJournal().open();
