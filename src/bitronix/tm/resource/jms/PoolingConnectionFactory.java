@@ -2,9 +2,9 @@ package bitronix.tm.resource.jms;
 
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.recovery.RecoveryException;
+import bitronix.tm.resource.ResourceConfigurationException;
 import bitronix.tm.resource.ResourceFactory;
 import bitronix.tm.resource.ResourceRegistrar;
-import bitronix.tm.resource.ResourceConfigurationException;
 import bitronix.tm.resource.common.*;
 import bitronix.tm.resource.jms.inbound.asf.BitronixServerSessionPool;
 import org.slf4j.Logger;
@@ -18,8 +18,6 @@ import javax.naming.NamingException;
 import javax.naming.Reference;
 import javax.naming.StringRefAddr;
 import javax.transaction.xa.XAResource;
-import java.io.IOException;
-import java.util.List;
 import java.util.Properties;
 
 /**
@@ -136,7 +134,7 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
     }
 
     public Connection createConnection(String userName, String password) throws JMSException {
-        // ignore username & password
+        if (log.isDebugEnabled()) log.debug("JMS connections are pooled, username and password ignored");
         return createConnection();
     }
 
@@ -145,7 +143,7 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
     }
 
 
-    /* RecoverableResourceProducer implementation */
+    /* XAResourceProducer implementation */
 
     public XAResourceHolderState startRecovery() {
         try {
@@ -208,16 +206,12 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
         return pool.findXAResourceHolder(xaResource);
     }
 
-    public List getXAResourceHolders() {
-        return pool.getXAResourceHolders();
-    }
-
     /* Referenceable implementation */
 
     /**
-     * PoolingConnectionFactory must alway have a unique name so this method builds a reference to this object using
-     * the unique name as RefAddr.
-     * @return a reference to this PoolingConnectionFactory.
+     * {@link PoolingConnectionFactory} must alway have a unique name so this method builds a reference to this object
+     * using the unique name as {@link javax.naming.RefAddr}.
+     * @return a reference to this {@link PoolingConnectionFactory}.
      */
     public Reference getReference() throws NamingException {
         if (log.isDebugEnabled()) log.debug("creating new JNDI reference of " + this);
@@ -228,15 +222,4 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
                 null);
     }
 
-    /* deserialization implementation */
-
-    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        try {
-            buildXAPool();
-        } catch (Exception ex) {
-            throw (IOException) new IOException("error rebuilding XA pool during deserialization").initCause(ex);
-        }
-    }
-    
 }

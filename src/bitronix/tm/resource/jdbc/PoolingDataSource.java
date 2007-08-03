@@ -2,7 +2,9 @@ package bitronix.tm.resource.jdbc;
 
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.recovery.RecoveryException;
-import bitronix.tm.resource.*;
+import bitronix.tm.resource.ResourceConfigurationException;
+import bitronix.tm.resource.ResourceFactory;
+import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +16,6 @@ import javax.sql.DataSource;
 import javax.sql.XADataSource;
 import javax.transaction.xa.XAResource;
 import java.io.PrintWriter;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -103,7 +104,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     }
 
     public Connection getConnection(String username, String password) throws SQLException {
-        if (log.isDebugEnabled()) log.debug("connections are pooled, username and password ignored");
+        if (log.isDebugEnabled()) log.debug("JDBC connections are pooled, username and password ignored");
         return getConnection();
     }
 
@@ -112,7 +113,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     }
 
 
-    /* RecoverableResourceProducer implementation */
+    /* XAResourceProducer implementation */
 
     public XAResourceHolderState startRecovery() {
         init();
@@ -165,9 +166,9 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
 
 
     /**
-     * PoolingDataSource must alway have a unique name so this method builds a reference to this object using
-     * the unique name as RefAddr.
-     * @return a reference to this PoolingDataSource
+     * {@link PoolingDataSource} must alway have a unique name so this method builds a reference to this object using
+     * the unique name as {@link javax.naming.RefAddr}.
+     * @return a reference to this {@link PoolingDataSource}.
      */
     public Reference getReference() throws NamingException {
         if (log.isDebugEnabled()) log.debug("creating new JNDI reference of " + this);
@@ -178,18 +179,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
                 null);
     }
 
-    /* deserialization implementation */
-
-    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        try {
-            buildXAPool();
-        } catch (Exception ex) {
-            throw (IOException) new IOException("error rebuilding XA pool during deserialization").initCause(ex);
-        }
-    }
-
-    /* DataSource dumb implementation */
+    /* DataSource implementation */
 
     public int getLoginTimeout() throws SQLException {
         return xaDataSource.getLoginTimeout();
