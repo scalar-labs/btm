@@ -270,8 +270,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             if (log.isDebugEnabled()) log.debug("committing dangling transaction with GTRID " + gtrid);
             commit(danglingTransactions);
             if (log.isDebugEnabled()) log.debug("committed dangling transaction with GTRID " + gtrid);
-            committedGtrids.add(gtrid);
-
+            committedGtrids.add(gtrid); 
             if (log.isDebugEnabled()) log.debug("updating journal's transaction status to COMMITTED");
             TransactionManagerServices.getJournal().log(Status.STATUS_COMMITTED, tlog.getGtrid(), uniqueNames);
         }
@@ -297,10 +296,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             if (log.isDebugEnabled()) log.debug("finding dangling transaction(s) in recovered XID(s) of resource " + uniqueName);
             Set recoveredXids = (Set) recoveredXidSets.get(uniqueName);
             if (recoveredXids == null) {
-                log.error("recovery haven't been run on resource named " + uniqueName + " found in the transaction log, " +
-                        "please check ResourceLoader configuration file or make sure you manually created this resource " +
-                        "before starting the transaction manager");
-                continue;
+                throw new RecoveryException("Recoverer could not find resource '" + uniqueName + "' present in the " +
+                        "journal, please check ResourceLoader configuration file or make sure you manually created " +
+                        "this resource before starting the transaction manager");
             }
 
             Iterator it2 = recoveredXids.iterator();

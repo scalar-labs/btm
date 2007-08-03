@@ -16,6 +16,7 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 import java.util.HashSet;
 import java.util.Set;
+import java.io.File;
 
 /**
  * <p></p>
@@ -35,6 +36,9 @@ public class RecovererTest extends TestCase {
         pds.setUniqueName("mock-xads");
         pds.setPoolSize(3);
         pds.init();
+
+        new File(TransactionManagerServices.getConfiguration().getLogPart1Filename()).delete();
+        new File(TransactionManagerServices.getConfiguration().getLogPart2Filename()).delete();
 
         JdbcConnectionHandle handle = (JdbcConnectionHandle) pds.getConnection();
         xaResource = (MockXAResource) handle.getPooledConnection().getXAResource();
@@ -92,6 +96,28 @@ public class RecovererTest extends TestCase {
         assertEquals(3, TransactionManagerServices.getRecoverer().getCommittedCount());
         assertEquals(0, TransactionManagerServices.getRecoverer().getRolledbackCount());
         assertEquals(0, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
+    }
+
+    public void testRecoverMissingResource() throws Exception {
+        Xid xid0 = new MockXid(0, 0, BitronixXid.FORMAT_ID);
+        xaResource.addInDoubtXid(xid0);
+
+        Set names = new HashSet();
+        names.add("no-such-registered-resource");
+        // recoverer needs the journal to be open to be run manually
+        Journal journal = TransactionManagerServices.getJournal();
+        journal.open();
+        journal.log(Status.STATUS_COMMITTING, new Uid(xid0.getGlobalTransactionId()), names);
+        TransactionManagerServices.getRecoverer().run();
+        journal.close();
+
+        assertEquals("Recoverer could not find resource 'no-such-registered-resource' present in the journal, please " +
+                "check ResourceLoader configuration file or make sure you manually created this resource before " +
+                "starting the transaction manager", TransactionManagerServices.getRecoverer().getCompletionException().getMessage());
+
+        assertEquals(0, TransactionManagerServices.getRecoverer().getCommittedCount());
+        assertEquals(0, TransactionManagerServices.getRecoverer().getRolledbackCount());
+        assertEquals(1, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
     }
 
 }
