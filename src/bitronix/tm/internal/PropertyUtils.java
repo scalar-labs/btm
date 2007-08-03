@@ -23,11 +23,9 @@ public class PropertyUtils {
      * @param target the target object on which to set the property.
      * @param propertyName the name of the property to set.
      * @param propertyValue the value of the property to set.
-     * @throws IllegalAccessException
-     * @throws PropertyException
-     * @throws java.lang.reflect.InvocationTargetException
+     * @throws PropertyException if an error happened while trying to set the property.
      */
-    public static void setProperty(Object target, String propertyName, Object propertyValue) throws IllegalAccessException, InvocationTargetException, PropertyException {
+    public static void setProperty(Object target, String propertyName, Object propertyValue) throws PropertyException {
         String[] propertyNames = propertyName.split("\\.");
         Object currentTarget = target;
         for (int i = 0; i < propertyNames.length -1; i++) {
@@ -38,6 +36,8 @@ public class PropertyUtils {
                 try {
                     result = propertyType.newInstance();
                 } catch (InstantiationException ex) {
+                    throw new PropertyException("cannot set property '" + propertyName + "' - '" + name + "' is null and cannot be auto-filled", ex);
+                } catch (IllegalAccessException ex) {
                     throw new PropertyException("cannot set property '" + propertyName + "' - '" + name + "' is null and cannot be auto-filled", ex);
                 }
                 callSetter(currentTarget, name, result);
@@ -59,10 +59,9 @@ public class PropertyUtils {
      * Build a map of direct javabeans properties of the target object.
      * @param target the target object from which to get properties names.
      * @return a Map of String with properties names as key and their values
-     * @throws IllegalAccessException
-     * @throws java.lang.reflect.InvocationTargetException
+     * @throws PropertyException if an error happened while trying to get a property.
      */
-    public static Map getProperties(Object target) throws IllegalAccessException, InvocationTargetException {
+    public static Map getProperties(Object target) throws PropertyException {
         Map properties = new HashMap();
         Class clazz = target.getClass();
         Method[] methods = clazz.getMethods();
@@ -71,15 +70,21 @@ public class PropertyUtils {
             String name = method.getName();
             if (method.getModifiers() == Modifier.PUBLIC && method.getParameterTypes().length == 0 && name.startsWith("get") && !name.equals("getClass")) {
                 String propertyName = Character.toLowerCase(name.charAt(3)) + name.substring(4);
-                Object propertyValue = method.invoke(target, (Object[]) null);
+                try {
+                    Object propertyValue = method.invoke(target, (Object[]) null);
+                    if (propertyValue != null && propertyValue instanceof Properties) {
+                        Map propertiesContent = getNestedProperties(propertyName, (Properties) propertyValue);
+                        properties.putAll(propertiesContent);
+                    }
+                    else {
+                        properties.put(propertyName, propertyValue);
+                    }
+                } catch (IllegalAccessException ex) {
+                    throw new PropertyException("cannot set property '" + propertyName + "' - '" + name + "' is null and cannot be auto-filled", ex);
+                } catch (InvocationTargetException ex) {
+                    throw new PropertyException("cannot set property '" + propertyName + "' - '" + name + "' is null and cannot be auto-filled", ex);
+                }
 
-                if (propertyValue != null && propertyValue instanceof Properties) {
-                    Map propertiesContent = getNestedProperties(propertyName, (Properties) propertyValue);
-                    properties.putAll(propertiesContent);
-                }
-                else {
-                    properties.put(propertyName, propertyValue);
-                }
             } // if
         } // for
         return properties;
@@ -90,10 +95,9 @@ public class PropertyUtils {
      * @param target the target object from which to get the property.
      * @param propertyName the name of the property to get.
      * @return the value of the specified property.
-     * @throws IllegalAccessException
-     * @throws java.lang.reflect.InvocationTargetException
+     * @throws PropertyException if an error happened while trying to get the property.
      */
-    public static Object getProperty(Object target, String propertyName) throws IllegalAccessException, InvocationTargetException {
+    public static Object getProperty(Object target, String propertyName) throws PropertyException {
         String[] propertyNames = propertyName.split("\\.");
         Object currentTarget = target;
         for (int i = 0; i < propertyNames.length; i++) {
@@ -111,10 +115,9 @@ public class PropertyUtils {
      * Set a map of properties on the target object.
      * @param target the target object on which to set the properties.
      * @param properties a map of String/Object pairs.
-     * @throws IllegalAccessException
-     * @throws InvocationTargetException
+     * @throws PropertyException if an error happened while trying to set a property.
      */
-    public static void setProperties(Object target, Map properties) throws IllegalAccessException, InvocationTargetException {
+    public static void setProperties(Object target, Map properties) throws PropertyException {
         Iterator it = properties.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry entry = (Map.Entry) it.next();
@@ -130,18 +133,23 @@ public class PropertyUtils {
      * @param target the target object on which to set the property.
      * @param propertyName the name of the property to set.
      * @param propertyValue the value of the property to set.
-     * @throws IllegalAccessException
-     * @throws java.lang.reflect.InvocationTargetException
+     * @throws PropertyException if an error happened while trying to set the property.
      */
-    private static void setDirectProperty(Object target, String propertyName, Object propertyValue) throws IllegalAccessException, InvocationTargetException {
+    private static void setDirectProperty(Object target, String propertyName, Object propertyValue) throws PropertyException {
         Method setter = getSetter(target, propertyName);
         Class parameterType = setter.getParameterTypes()[0];
-        if (propertyValue != null) {
-            Object transformedPropertyValue = transform(propertyValue, parameterType);
-            setter.invoke(target, new Object[] {transformedPropertyValue});
-        }
-        else {
-            setter.invoke(target, new Object[] {null});
+        try {
+            if (propertyValue != null) {
+                Object transformedPropertyValue = transform(propertyValue, parameterType);
+                setter.invoke(target, new Object[] {transformedPropertyValue});
+            }
+            else {
+                setter.invoke(target, new Object[] {null});
+            }
+        } catch (IllegalAccessException ex) {
+            throw new PropertyException("property '" + propertyName + "' is not accessible", ex);
+        } catch (InvocationTargetException ex) {
+            throw new PropertyException("property '" + propertyName + "' access threw an exception", ex);
         }
     }
 
@@ -169,20 +177,32 @@ public class PropertyUtils {
         }
 
         if ((destinationClass == boolean.class || destinationClass == Boolean.class)  &&  value.getClass() == String.class) {
-            return new Boolean((String) value);
+            return Boolean.valueOf((String) value);
         }
 
         throw new PropertyException("cannot convert values of type '" + value.getClass().getName() + "' into type '" + destinationClass + "'");
     }
 
-    private static void callSetter(Object target, String propertyName, Object parameter) throws IllegalAccessException, InvocationTargetException {
+    private static void callSetter(Object target, String propertyName, Object parameter) throws PropertyException {
         Method setter = getSetter(target, propertyName);
-        setter.invoke(target, new Object[] {parameter});
+        try {
+            setter.invoke(target, new Object[] {parameter});
+        } catch (IllegalAccessException ex) {
+            throw new PropertyException("property '" + propertyName + "' is not accessible", ex);
+        } catch (InvocationTargetException ex) {
+            throw new PropertyException("property '" + propertyName + "' access threw an exception", ex);
+        }
     }
 
-    private static Object callGetter(Object target, String propertyName) throws IllegalAccessException, InvocationTargetException {
+    private static Object callGetter(Object target, String propertyName) throws PropertyException {
         Method getter = getGetter(target, propertyName);
-        return getter.invoke(target, (Object[]) null);
+        try {
+            return getter.invoke(target, (Object[]) null);
+        } catch (IllegalAccessException ex) {
+            throw new PropertyException("property '" + propertyName + "' is not accessible", ex);
+        } catch (InvocationTargetException ex) {
+            throw new PropertyException("property '" + propertyName + "' access threw an exception", ex);
+        }
     }
 
     private static Method getSetter(Object target, String propertyName) {

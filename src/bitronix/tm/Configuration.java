@@ -1,20 +1,16 @@
 package bitronix.tm;
 
-import bitronix.tm.internal.InitializationException;
-import bitronix.tm.internal.UidGenerator;
-import bitronix.tm.internal.PropertyUtils;
-import bitronix.tm.internal.Service;
-import org.slf4j.LoggerFactory;
+import bitronix.tm.internal.*;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
-import java.util.Properties;
-import java.util.Map;
 import java.util.Iterator;
-import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Configuration repository of the transaction manager. You can set configurable values either via the properties file
@@ -442,9 +438,7 @@ public class Configuration implements Service {
                 if (it.hasNext())
                 sb.append(", ");
             }
-        } catch (IllegalAccessException ex) {
-            if (log.isDebugEnabled()) log.debug("error accessing properties of configuration object", ex);
-        } catch (InvocationTargetException ex) {
+        } catch (PropertyException ex) {
             if (log.isDebugEnabled()) log.debug("error accessing properties of configuration object", ex);
         }
 
