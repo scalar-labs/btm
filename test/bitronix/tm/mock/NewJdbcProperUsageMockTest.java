@@ -2,11 +2,14 @@ package bitronix.tm.mock;
 
 import bitronix.tm.BitronixTransactionManager;
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.BitronixTransaction;
 import bitronix.tm.mock.events.*;
 import bitronix.tm.mock.resource.jdbc.MockXAConnection;
 import bitronix.tm.mock.resource.MockXAResource;
 import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
 import bitronix.tm.resource.jdbc.JdbcPooledConnection;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+import bitronix.tm.resource.common.XAPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +19,12 @@ import javax.transaction.xa.XAResource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.ArrayList;
+import java.lang.reflect.Field;
+import java.io.ObjectOutputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.FileInputStream;
 
 /**
  * (c) Bitronix, 20-oct.-2005
@@ -25,6 +34,7 @@ import java.util.List;
 public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
 
     private final static Logger log = LoggerFactory.getLogger(NewJdbcProperUsageMockTest.class);
+    private static final int LOOPS = 2;
 
     public void testSimpleWorkingCase() throws Exception {
         if (log.isDebugEnabled()) log.debug("*** getting TM");
@@ -672,6 +682,208 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         assertEquals(Status.STATUS_ROLLEDBACK, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+    }
+
+
+    public void testNonXaPool() throws Exception {
+        for (int i=0; i<LOOPS ;i++) {
+            TransactionManagerServices.getTransactionManager().begin();
+            assertEquals(1, TransactionManagerServices.getTransactionManager().getInFlightTransactions().size());
+
+            assertEquals(0, ((BitronixTransaction)TransactionManagerServices.getTransactionManager().getTransaction()).getResourceManager().size());
+            Connection c = poolingDataSource1.getConnection();
+            c.createStatement();
+            c.close();
+            assertEquals(1, ((BitronixTransaction)TransactionManagerServices.getTransactionManager().getTransaction()).getResourceManager().size());
+
+            // rollback is necessary if deferConnectionRelease=true and to avoid nested TX
+            TransactionManagerServices.getTransactionManager().rollback();
+            assertEquals(0, TransactionManagerServices.getTransactionManager().getInFlightTransactions().size());
+        }
+
+        System.out.println(EventRecorder.dumpToString());
+
+        List events = EventRecorder.getOrderedEvents();
+
+        /* LOOPS * 9 events:
+            JournalLogEvent ACTIVE
+            ConnectionDequeuedEvent
+            XAResourceStartEvent
+            ConnectionCloseEvent
+            XAResourceEndEvent
+            JournalLogEvent ROLLINGBACK
+            XAResourceRollbackEvent
+            JournalLogEvent ROLLEDBACK
+            ConnectionQueuedEvent
+         */
+        assertEquals(9 * LOOPS, events.size());
+        for (int i = 0; i < 9 * LOOPS; ) {
+            Event event;
+
+            event = (Event) events.get(i++);
+            assertEquals("at " + i, JournalLogEvent.class, event.getClass());
+
+            event = (Event) events.get(i++);
+            assertEquals("at " + i, ConnectionDequeuedEvent.class, event.getClass());
+
+            event = (Event) events.get(i++);
+            assertEquals("at " + i, XAResourceStartEvent.class, event.getClass());
+
+            event = (Event) events.get(i++);
+            assertEquals("at " + i, ConnectionCloseEvent.class, event.getClass());
+
+            event = (Event) events.get(i++);
+            assertEquals("at " + i, XAResourceEndEvent.class, event.getClass());
+
+            event = (Event) events.get(i++);
+            assertEquals("at " + i, JournalLogEvent.class, event.getClass());
+
+            event = (Event) events.get(i++);
+            assertEquals("at " + i, XAResourceRollbackEvent.class, event.getClass());
+
+            event = (Event) events.get(i++);
+            assertEquals("at " + i, JournalLogEvent.class, event.getClass());
+
+            event = (Event) events.get(i++);
+            assertEquals("at " + i, ConnectionQueuedEvent.class, event.getClass());
+        }
+
+    }
+
+
+    public void testDuplicateClose() throws Exception {
+        Field poolField = poolingDataSource1.getClass().getDeclaredField("pool");
+        poolField.setAccessible(true);
+        XAPool pool = (XAPool) poolField.get(poolingDataSource1);
+        assertEquals(POOL_SIZE, pool.inPoolSize());
+
+        if (log.isDebugEnabled()) log.debug(" *** getting connection");
+        Connection c = poolingDataSource1.getConnection();
+        assertEquals(POOL_SIZE -1, pool.inPoolSize());
+
+        if (log.isDebugEnabled()) log.debug(" *** closing once");
+        c.close();
+        assertEquals(POOL_SIZE, pool.inPoolSize());
+
+        if (log.isDebugEnabled()) log.debug(" *** closing twice");
+        c.close();
+        assertEquals(POOL_SIZE, pool.inPoolSize());
+
+        if (log.isDebugEnabled()) log.debug(" *** checking pool size");
+        Connection c1 = poolingDataSource1.getConnection();
+        Connection c2 = poolingDataSource1.getConnection();
+        Connection c3 = poolingDataSource1.getConnection();
+        Connection c4 = poolingDataSource1.getConnection();
+        Connection c5 = poolingDataSource1.getConnection();
+        assertEquals(POOL_SIZE -5, pool.inPoolSize());
+
+        c1.close();
+        c2.close();
+        c3.close();
+        c4.close();
+        c5.close();
+        assertEquals(POOL_SIZE, pool.inPoolSize());
+
+        if (log.isDebugEnabled()) log.debug(" *** done");
+    }
+
+
+    public void testPoolBoundsWithLooseEnlistment() throws Exception {
+        ArrayList list = new ArrayList();
+
+        for (int i=0; i<LOOPS ;i++) {
+            Thread t = new LooseTransactionThread(i, poolingDataSource1);
+            list.add(t);
+            t.start();
+        }
+
+        for (int i = 0; i < list.size(); i++) {
+            LooseTransactionThread thread = (LooseTransactionThread) list.get(i);
+            thread.join(5000);
+            if (!thread.isSuccesful())
+                log.info("thread " + thread.getNumber() + " failed");
+        }
+
+        assertEquals(LOOPS, LooseTransactionThread.successes);
+        assertEquals(0, LooseTransactionThread.failures);
+
+        LooseTransactionThread thread = new LooseTransactionThread(-1, poolingDataSource1);
+        thread.run();
+        assertTrue(thread.isSuccesful());
+    }
+
+
+    static class LooseTransactionThread extends Thread {
+
+        static int successes = 0;
+        static int failures = 0;
+
+        private int number;
+        private PoolingDataSource poolingDataSource;
+        private boolean succesful = false;
+
+        public LooseTransactionThread(int number, PoolingDataSource poolingDataSource) {
+            this.number = number;
+            this.poolingDataSource = poolingDataSource;
+        }
+
+        public void run() {
+            try {
+                UserTransaction ut = TransactionManagerServices.getTransactionManager();
+                if (log.isDebugEnabled()) log.debug("*** getting connection - " + number);
+                Connection c1 = poolingDataSource.getConnection();
+
+                if (log.isDebugEnabled()) log.debug("*** beginning the transaction - " + number);
+                ut.begin();
+
+                c1.prepareStatement("");
+
+                if (log.isDebugEnabled()) log.debug("*** committing the transaction - " + number);
+                ut.commit();
+
+
+                if (log.isDebugEnabled()) log.debug("*** closing connection - " + number);
+                c1.close();
+
+                if (log.isDebugEnabled()) log.debug("*** all done - " + number);
+
+                synchronized (LooseTransactionThread.class) {
+                    successes++;
+                }
+                succesful = true;
+
+            } catch (Exception ex) {
+                log.warn("*** catched exception, waiting 500ms - " + number, ex);
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+                if (log.isDebugEnabled()) log.debug("*** catched exception, waited 500ms - " + number, ex);
+                synchronized (LooseTransactionThread.class) {
+                    failures++;
+                }
+            }
+        } // run
+
+        public int getNumber() {
+            return number;
+        }
+
+        public boolean isSuccesful() {
+            return succesful;
+        }
+
+    }
+
+    public void testSerialization() throws Exception {
+        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("test-jdbc-pool.ser"));
+        oos.writeObject(poolingDataSource1);
+        oos.close();
+
+        ObjectInputStream ois = new ObjectInputStream(new FileInputStream("test-jdbc-pool.ser"));
+        poolingDataSource1 = (PoolingDataSource) ois.readObject();
+        ois.close();
     }
 
 }

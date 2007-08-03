@@ -47,6 +47,8 @@ public class RecovererTest extends TestCase {
 
     protected void tearDown() throws Exception {
         pds.close();
+        new File(TransactionManagerServices.getConfiguration().getLogPart1Filename()).delete();
+        new File(TransactionManagerServices.getConfiguration().getLogPart2Filename()).delete();
     }
 
     /**

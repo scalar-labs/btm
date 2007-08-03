@@ -2,6 +2,7 @@ package bitronix.tm.mock;
 
 import bitronix.tm.BitronixTransactionManager;
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.resource.jms.PoolingConnectionFactory;
 import bitronix.tm.mock.events.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,10 @@ import javax.jms.Session;
 import javax.jms.Queue;
 import javax.jms.MessageProducer;
 import java.util.List;
+import java.io.ObjectOutputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.FileInputStream;
 
 /**
  * (c) Bitronix, 20-oct.-2005
@@ -70,4 +75,13 @@ public class JmsProperUsageMockTest extends AbstractMockJmsTest {
         assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
     }
 
+    public void testSerialization() throws Exception {
+        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("test-jms-pool.ser"));
+        oos.writeObject(poolingConnectionFactory1);
+        oos.close();
+
+        ObjectInputStream ois = new ObjectInputStream(new FileInputStream("test-jms-pool.ser"));
+        poolingConnectionFactory1 = (PoolingConnectionFactory) ois.readObject();
+        ois.close();
+    }
 }
