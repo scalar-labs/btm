@@ -2,9 +2,11 @@ package bitronix.tm.mock.resource;
 
 import bitronix.tm.internal.Uid;
 import bitronix.tm.journal.Journal;
+import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.events.JournalLogEvent;
 
+import javax.transaction.Status;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,25 +20,36 @@ import java.util.Set;
  */
 public class MockJournal implements Journal {
 
+    private Map danglingRecords = new HashMap();
+
     private EventRecorder getEventRecorder() {
         return EventRecorder.getEventRecorder(this);
     }
 
-    public void log(int status, Uid gtrid, Set jndiNames) throws IOException {
-        getEventRecorder().addEvent(new JournalLogEvent(this, status, gtrid, jndiNames));
+    public void log(int status, Uid gtrid, Set uniqueNames) throws IOException {
+        TransactionLogRecord record = new TransactionLogRecord(status, gtrid, uniqueNames);
+        if (status == Status.STATUS_COMMITTING) {
+            danglingRecords.put(gtrid, record);
+        }
+        if (status == Status.STATUS_COMMITTED) {
+            danglingRecords.remove(gtrid);
+        }
+        getEventRecorder().addEvent(new JournalLogEvent(this, status, gtrid, uniqueNames));
     }
 
     public void open() throws IOException {
+        danglingRecords = new HashMap();
     }
 
     public void close() throws IOException {
+        danglingRecords = new HashMap();
     }
 
     public void force() throws IOException {
     }
 
     public Map collectDanglingRecords() throws IOException {
-        return new HashMap();
+        return danglingRecords;
     }
 
     public void shutdown() {

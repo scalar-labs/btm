@@ -10,6 +10,7 @@ import bitronix.tm.mock.resource.jdbc.MockXAConnection;
 import bitronix.tm.mock.resource.jdbc.MockXADataSource;
 import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
+import bitronix.tm.resource.ResourceRegistrar;
 import junit.framework.TestCase;
 
 import javax.transaction.HeuristicMixedException;
@@ -20,6 +21,7 @@ import java.sql.Connection;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Iterator;
 
 /**
  * <p></p>
@@ -280,6 +282,12 @@ public class Phase2FailureTest extends TestCase {
     }
 
     protected void setUp() throws Exception {
+        Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+        while (it.hasNext()) {
+            String name = (String) it.next();
+            ResourceRegistrar.unregister(ResourceRegistrar.get(name));
+        }
+
         EventRecorder.clear();
 
         // change disk journal into mock journal

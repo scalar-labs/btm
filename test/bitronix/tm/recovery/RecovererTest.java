@@ -7,6 +7,7 @@ import bitronix.tm.journal.Journal;
 import bitronix.tm.mock.resource.MockXAResource;
 import bitronix.tm.mock.resource.MockXid;
 import bitronix.tm.mock.resource.jdbc.MockXADataSource;
+import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import junit.framework.TestCase;
@@ -14,9 +15,10 @@ import junit.framework.TestCase;
 import javax.transaction.Status;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
-import java.util.HashSet;
-import java.util.Set;
 import java.io.File;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * <p></p>
@@ -31,6 +33,12 @@ public class RecovererTest extends TestCase {
 
 
     protected void setUp() throws Exception {
+        Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+        while (it.hasNext()) {
+            String name = (String) it.next();
+            ResourceRegistrar.unregister(ResourceRegistrar.get(name));
+        }
+
         pds = new PoolingDataSource();
         pds.setClassName(MockXADataSource.class.getName());
         pds.setUniqueName("mock-xads");

@@ -10,12 +10,14 @@ import bitronix.tm.resource.jdbc.*;
 import bitronix.tm.resource.common.AbstractXAResourceHolder;
 import bitronix.tm.resource.common.XAPool;
 import bitronix.tm.resource.common.*;
+import bitronix.tm.resource.ResourceRegistrar;
 import junit.framework.TestCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  *
@@ -31,6 +33,12 @@ public abstract class AbstractMockJdbcTest extends TestCase {
     protected static final String DATASOURCE2_NAME = "pds2";
 
     protected void setUp() throws Exception {
+        Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+        while (it.hasNext()) {
+            String name = (String) it.next();
+            ResourceRegistrar.unregister(ResourceRegistrar.get(name));
+        }
+
         poolingDataSource1 = new PoolingDataSource();
         poolingDataSource1.setClassName(MockXADataSource.class.getName());
         poolingDataSource1.setUniqueName(DATASOURCE1_NAME);
@@ -106,6 +114,8 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         }
         poolingDataSource1.close();
         poolingDataSource2.close();
+
+        TransactionManagerServices.getTransactionManager().shutdown();
     }
 
     public static Object getWrappedXAConnectionOf(JdbcPooledConnection pc1) throws NoSuchFieldException, IllegalAccessException {
