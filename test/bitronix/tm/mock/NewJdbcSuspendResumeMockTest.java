@@ -192,8 +192,7 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         } catch (SQLException ex) {
             assertEquals("cannot close a resource when its XAResource is taking part in an unfinished global transaction", ex.getCause().getMessage());
         }
-        // TODO: (bug) when the TM vetoes a connection close, it is closed anyway
-//        assertFalse(connection1.isClosed());
+        assertFalse(connection1.isClosed());
 
         assertEquals(POOL_SIZE -1, getPool(poolingDataSource1).inPoolSize());
 
@@ -217,20 +216,19 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         List orderedEvents = EventRecorder.getOrderedEvents();
         System.out.println(EventRecorder.dumpToString());
 
-        assertEquals(12, orderedEvents.size());
+        assertEquals(11, orderedEvents.size());
         int i=0;
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
-        assertEquals(ConnectionCloseEvent.class, orderedEvents.get(i++).getClass());
         assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(Status.STATUS_COMMITTING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(true, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
         assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
-        assertEquals(ConnectionCloseEvent.class, orderedEvents.get(i++).getClass());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(ConnectionCloseEvent.class, orderedEvents.get(i++).getClass());
     }
 
     public void testInterleavedLocalGlobalTransactions() throws Exception {
@@ -273,8 +271,8 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
-        assertEquals(ConnectionCloseEvent.class, orderedEvents.get(i++).getClass());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(ConnectionCloseEvent.class, orderedEvents.get(i++).getClass());
         assertEquals(ConnectionCloseEvent.class, orderedEvents.get(i++).getClass());
         assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());

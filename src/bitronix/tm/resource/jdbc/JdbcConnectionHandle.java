@@ -61,17 +61,21 @@ public class JdbcConnectionHandle implements Connection {
     public void close() throws SQLException {
         if (log.isDebugEnabled()) log.debug("closing " + this);
 
-        // don't set connection back to null as we want to see JDBC driver error messages when calls to the
-        // connection are made after it's been closed.
-        connection.close();
-
         // in case the connection has already been closed
         if (jdbcPooledConnection == null)
             return;
 
-        jdbcPooledConnection.markConnectionHandleAsClosed();
         jdbcPooledConnection.release();
         jdbcPooledConnection = null;
+
+        /*
+         * connection.close() must happen after jdbcPooledConnection.release() so that the vendor's connection handle
+         * doesn't get closed if connection release is vetoed.
+         */
+
+        // don't set connection back to null as we want to see JDBC driver error messages when calls to the
+        // connection are made after it's been closed.
+        connection.close();
     }
 
     public void commit() throws SQLException {

@@ -41,7 +41,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
     private boolean emulateXa = false;
 
     protected Connection connection;
-    private boolean connectionHandleClosed = false;
 
     /* management */
     private String jmxName;
@@ -163,13 +162,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
     public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
         if (newState == STATE_IN_POOL) {
             if (log.isDebugEnabled()) log.debug("requeued JDBC connection of " + poolingDataSource);
-            try {
-                if (!connectionHandleClosed)
-                    connection.close();
-            } catch (SQLException ex) {
-                //TODO: fire connectionErrorOccurred events
-                log.warn("error closing connection " + connection, ex);
-            }
             fireCloseEvent();
         }
         if (oldState == STATE_IN_POOL && newState == STATE_ACCESSIBLE) {
@@ -178,10 +170,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
         if (newState == STATE_CLOSED) {
             ManagementRegistrar.unregister(jmxName);
         }
-    }
-
-    public void markConnectionHandleAsClosed() {
-        this.connectionHandleClosed = true;
     }
 
     public String toString() {

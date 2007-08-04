@@ -17,7 +17,6 @@ import java.sql.SQLException;
  */
 public class MockXAConnection implements XAConnection {
 
-    private MockConnection mockConnection = new MockConnection();
     private MockXAResource mockXAResource;
 
 
@@ -34,7 +33,7 @@ public class MockXAConnection implements XAConnection {
     }
 
     public Connection getConnection() throws SQLException {
-        return mockConnection;
+        return new MockConnection();
     }
 
     public void addConnectionEventListener(ConnectionEventListener listener) {

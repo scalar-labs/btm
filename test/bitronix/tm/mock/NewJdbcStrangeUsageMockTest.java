@@ -216,8 +216,8 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
 
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
 
-        assertEquals(ConnectionCloseEvent.class, orderedEvents.get(i++).getClass());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(ConnectionCloseEvent.class, orderedEvents.get(i++).getClass());
 
         assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
@@ -287,7 +287,7 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
         List orderedEvents = EventRecorder.getOrderedEvents();
         System.out.println(EventRecorder.dumpToString());
 
-        assertEquals(17, orderedEvents.size());
+        assertEquals(16, orderedEvents.size());
         int i=0;
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
@@ -295,7 +295,6 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
 
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
-        assertEquals(ConnectionCloseEvent.class, orderedEvents.get(i++).getClass());
         assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(Status.STATUS_COMMITTING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
@@ -306,8 +305,8 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
         assertEquals(Status.STATUS_COMMITTING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(true, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
         assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
-        assertEquals(ConnectionCloseEvent.class, orderedEvents.get(i++).getClass());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(ConnectionCloseEvent.class, orderedEvents.get(i++).getClass());
     }
 
 }
