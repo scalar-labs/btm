@@ -18,7 +18,7 @@ public class JmsConnectionHandle implements Connection {
         this.xaConnection = xaConnection;
     }
 
-    private XAConnection getXAConnection() throws JMSException {
+    public XAConnection getXAConnection() throws JMSException {
         if (xaConnection == null)
             throw new JMSException("XA connection handle has been closed");
         return xaConnection;

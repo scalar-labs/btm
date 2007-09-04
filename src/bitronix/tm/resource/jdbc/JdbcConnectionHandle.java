@@ -31,7 +31,7 @@ public class JdbcConnectionHandle implements Connection {
         return jdbcPooledConnection;
     }
 
-    private Connection getConnection() {
+    public Connection getConnection() {
         return connection;
     }
 
