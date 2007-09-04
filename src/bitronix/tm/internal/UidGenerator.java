@@ -16,22 +16,7 @@ import bitronix.tm.TransactionManagerServices;
  */
 public class UidGenerator {
 
-    /**
-     * Maximum serverId length.
-     */
-    public final static int MAX_SERVER_ID_LENGTH = 51;
-
     private static int sequenceNumber = 0;
-    private static byte[] serverId;
-
-    static {
-        serverId = TransactionManagerServices.getConfiguration().buildServerIdArray();
-        if (serverId.length > MAX_SERVER_ID_LENGTH) {
-            byte[] truncatedServerId = new byte[MAX_SERVER_ID_LENGTH];
-            System.arraycopy(serverId, 0, truncatedServerId, 0, MAX_SERVER_ID_LENGTH);
-            serverId = truncatedServerId;
-        }
-    }
 
     /**
      * Generate a UID, globally unique. This method relies on the configured serverId for network uniqueness.
@@ -41,14 +26,18 @@ public class UidGenerator {
         byte[] timestamp = Encoder.longToBytes(System.currentTimeMillis());
         byte[] sequence = Encoder.intToBytes(getNextSequenceNumber());
 
-        int uidLength = serverId.length + timestamp.length + sequence.length;
+        int uidLength = getServerId().length + timestamp.length + sequence.length;
         byte[] uidArray = new byte[uidLength];
 
-        System.arraycopy(serverId, 0, uidArray, 0, serverId.length);
-        System.arraycopy(timestamp, 0, uidArray, serverId.length, timestamp.length);
-        System.arraycopy(sequence, 0, uidArray, serverId.length + timestamp.length, sequence.length);
+        System.arraycopy(getServerId(), 0, uidArray, 0, getServerId().length);
+        System.arraycopy(timestamp, 0, uidArray, getServerId().length, timestamp.length);
+        System.arraycopy(sequence, 0, uidArray, getServerId().length + timestamp.length, sequence.length);
 
         return new Uid(uidArray);
+    }
+
+    private static byte[] getServerId() {
+        return TransactionManagerServices.getConfiguration().buildServerIdArray();
     }
 
     /**

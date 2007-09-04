@@ -30,6 +30,8 @@ public class Configuration implements Service {
 
     private final static Logger log = LoggerFactory.getLogger(Configuration.class);
 
+    private final static int MAX_SERVER_ID_LENGTH = 51;
+
     private String serverId;
     private byte[] serverIdArray;
     private String logPart1Filename;
@@ -403,7 +405,7 @@ public class Configuration implements Service {
     public byte[] buildServerIdArray() {
         if (serverIdArray == null) {
             try {
-                serverIdArray = serverId.substring(0, Math.min(serverId.length(), UidGenerator.MAX_SERVER_ID_LENGTH)).getBytes("US-ASCII");
+                serverIdArray = serverId.substring(0, Math.min(serverId.length(), MAX_SERVER_ID_LENGTH)).getBytes("US-ASCII");
             } catch (Exception ex) {
                 log.warn("cannot get this JVM unique ID. Make sure it is configured and you only use ASCII characters. Will use IP address instead (unsafe for production usage!).");
                 try {
@@ -414,6 +416,13 @@ public class Configuration implements Service {
                     serverIdArray = unknownServerId.getBytes();
                 }
             }
+
+            if (serverIdArray.length > MAX_SERVER_ID_LENGTH) {
+                byte[] truncatedServerId = new byte[MAX_SERVER_ID_LENGTH];
+                System.arraycopy(serverIdArray, 0, truncatedServerId, 0, MAX_SERVER_ID_LENGTH);
+                serverIdArray = truncatedServerId;
+            }
+
             log.info("JVM unique ID: <" + new String(serverIdArray) + ">");
         }
         return serverIdArray;
@@ -436,7 +445,7 @@ public class Configuration implements Service {
                 sb.append("=");
                 sb.append(val);
                 if (it.hasNext())
-                sb.append(", ");
+                    sb.append(", ");
             }
         } catch (PropertyException ex) {
             if (log.isDebugEnabled()) log.debug("error accessing properties of configuration object", ex);
