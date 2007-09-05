@@ -17,7 +17,10 @@ public abstract class ResourceBean implements Serializable {
     private boolean automaticEnlistingEnabled = true;
     private boolean useTmJoin = true;
     private Properties driverProperties = new Properties();
-    private int poolSize = 0;
+    private int maxPoolSize = 0;
+    private int minPoolSize = 0;
+    private int maxIdleTime = 60;
+    private int acquireIncrement = 1;
     private int acquisitionTimeout = 30;
     private boolean deferConnectionRelease = true;
     private int acquisitionInterval = 1;
@@ -123,17 +126,52 @@ public abstract class ResourceBean implements Serializable {
 
     /**
      * @return the amount of connections to be created in the pool.
+     * @deprecated replaced with {@link #getMinPoolSize}.
      */
     public int getPoolSize() {
-        return poolSize;
+        return minPoolSize;
     }
 
     /**
      * Define the amount of connections that should be created in the pool.
      * @param poolSize the amount of connections to be created in the pool.
+     * @deprecated replaced with {@link #setMinPoolSize}.
      */
     public void setPoolSize(int poolSize) {
-        this.poolSize = poolSize;
+        this.minPoolSize = poolSize;
+        this.maxPoolSize = poolSize;
+    }
+
+    public int getMaxPoolSize() {
+        return maxPoolSize;
+    }
+
+    public void setMaxPoolSize(int maxPoolSize) {
+        this.maxPoolSize = maxPoolSize;
+    }
+
+    public int getMinPoolSize() {
+        return minPoolSize;
+    }
+
+    public void setMinPoolSize(int minPoolSize) {
+        this.minPoolSize = minPoolSize;
+    }
+
+    public int getMaxIdleTime() {
+        return maxIdleTime;
+    }
+
+    public void setMaxIdleTime(int maxIdleTime) {
+        this.maxIdleTime = maxIdleTime;
+    }
+
+    public int getAcquireIncrement() {
+        return acquireIncrement;
+    }
+
+    public void setAcquireIncrement(int acquireIncrement) {
+        this.acquireIncrement = acquireIncrement;
     }
 
     /**

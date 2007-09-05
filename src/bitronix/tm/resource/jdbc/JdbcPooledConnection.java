@@ -40,11 +40,10 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
     private PoolingDataSource poolingDataSource;
     private boolean emulateXa = false;
 
-    protected Connection connection;
-
     /* management */
     private String jmxName;
     private Date acquisitionDate;
+    private Date lastReleaseDate;
 
 
     public JdbcPooledConnection(PoolingDataSource poolingDataSource, XAConnection xaConnection) throws SQLException {
@@ -73,9 +72,16 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
 
     public Connection getConnection() throws SQLException {
         if (log.isDebugEnabled()) log.debug("getting connection handle from " + this);
+        int oldState = getState();
         setState(STATE_ACCESSIBLE);
-        connection = xaConnection.getConnection();
-        testConnection(connection);
+        Connection connection = xaConnection.getConnection();
+        if (oldState == STATE_IN_POOL) {
+            if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state STATE_IN_POOL, testing it");
+            testConnection(connection);
+        }
+        else {
+            if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state " + Decoder.decodeXAStatefulHolderState(oldState) + ", no need to test it");
+        }
         if (log.isDebugEnabled()) log.debug("got connection handle from " + this);
         return new JdbcConnectionHandle(this, connection);
     }
@@ -92,8 +98,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
         ResultSet rs = stmt.executeQuery();
         rs.close();
         stmt.close();
-        if (!connection.getAutoCommit())
-            connection.rollback();
         if (log.isDebugEnabled()) log.debug("successfully tested connection of " + this);
     }
 
@@ -128,9 +132,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
     /**
      * If this method returns false, then local transaction calls like Connection.commit() can be made.
      * @return true if start() has been successfully called but not end() yet <i>and</i> the transaction is not suspended.
-     * @throws java.sql.SQLException
      */
-    public boolean isParticipatingInActiveGlobalTransaction() throws SQLException {
+    public boolean isParticipatingInActiveGlobalTransaction() {
         XAResourceHolderState xaResourceHolderState = getXAResourceHolderState();
         if (xaResourceHolderState == null)
             return false;
@@ -162,6 +165,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
     public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
         if (newState == STATE_IN_POOL) {
             if (log.isDebugEnabled()) log.debug("requeued JDBC connection of " + poolingDataSource);
+            lastReleaseDate = new Date();
             fireCloseEvent();
         }
         if (oldState == STATE_IN_POOL && newState == STATE_ACCESSIBLE) {
@@ -188,11 +192,15 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
     /* management */
 
     public String getStateDescription() {
-        return Decoder.decodeXAStatefulHolderState(state);
+        return Decoder.decodeXAStatefulHolderState(getState());
     }
 
     public Date getAcquisitionDate() {
         return acquisitionDate;
+    }
+
+    public Date getLastReleaseDate() {
+        return lastReleaseDate;
     }
 
     public String getTransactionGtridCurrentlyHoldingThis() {

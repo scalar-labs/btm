@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.transaction.xa.XAResource;
 import java.util.List;
+import java.util.Date;
 
 /**
  * {@link XAResourceHolder} created by an {@link bitronix.tm.resource.common.XAResourceProducer} that is
@@ -26,6 +27,10 @@ public class RecoveryXAResourceHolder extends AbstractXAResourceHolder {
     public void close() throws Exception {
         if (log.isDebugEnabled()) log.debug("recovery xa resource is being closed: " + xaResourceHolder);
         xaResourceHolder.setState(STATE_IN_POOL);
+    }
+
+    public Date getLastReleaseDate() {
+        return null;
     }
 
     public XAResource getXAResource() {

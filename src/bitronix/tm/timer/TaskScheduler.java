@@ -2,6 +2,7 @@ package bitronix.tm.timer;
 
 import bitronix.tm.BitronixTransaction;
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.resource.common.XAPool;
 import bitronix.tm.internal.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ public class TaskScheduler extends Thread implements Service {
     /**
      * Keys of this map are GTRID represented as a String, as per UidGenerator.uidToString.
      * Values are Task objects.
+     * TODO: tasks container should not be a map as there is not always a hashable key
      */
     private final Map tasks = Collections.synchronizedMap(new HashMap());
     private boolean active = true;
@@ -85,10 +87,39 @@ public class TaskScheduler extends Thread implements Service {
         if (log.isDebugEnabled()) log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size());
     }
 
+    public void schedulePoolShrinking(XAPool xaPool) {
+        Date executionTime = xaPool.getNextShrinkDate();
+        if (log.isDebugEnabled()) log.debug("scheduling pool shrinking task on " + xaPool + " for " + executionTime);
+        if (executionTime == null)
+            throw new IllegalArgumentException("expected a non-null execution date");
+        PoolShrinkingTask task = new PoolShrinkingTask(xaPool, executionTime);
+        tasks.put(executionTime, task);
+        if (log.isDebugEnabled()) log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size());
+    }
+
+    public void cancelPoolShrinking(XAPool xaPool) {
+        if (log.isDebugEnabled()) log.debug("cancelling pool shrinking task on " + xaPool);
+        if (xaPool == null)
+            throw new IllegalArgumentException("expected a non-null XA pool");
+        Iterator it = tasks.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry entry = (Map.Entry) it.next();
+            if (entry.getValue() instanceof PoolShrinkingTask) {
+                PoolShrinkingTask task = (PoolShrinkingTask) entry.getValue();
+
+                if (task.getXaPool() == xaPool) {
+                    it.remove();
+                    if (log.isDebugEnabled()) log.debug("cancelled " + task + ", total task(s) still queued: " + tasks.size());
+                    break;
+                }
+            } // if
+        } // while
+    }
+
     public void run() {
         while (isActive()) {
             try {
-                executeOneTask();
+                executeElapsedTasks();
                 Thread.sleep(500); // execute twice per second. That's enough precision.
             } catch (InterruptedException ex) {
                 // ignore
@@ -96,7 +127,7 @@ public class TaskScheduler extends Thread implements Service {
         } // while
     }
 
-    private void executeOneTask() {
+    private void executeElapsedTasks() {
         if (tasks.size() == 0)
             return;
 

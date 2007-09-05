@@ -29,6 +29,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     /* management */
     private String jmxName;
     private Date acquisitionDate;
+    private Date lastReleaseDate;
 
     protected JmsPooledConnection(PoolingConnectionFactory poolingConnectionFactory, XAConnection connection) {
         this.poolingConnectionFactory = poolingConnectionFactory;
@@ -148,6 +149,10 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
         }
     }
 
+    public Date getLastReleaseDate() {
+        return lastReleaseDate;
+    }
+
     public String toString() {
         return "a JmsPooledConnection of pool " + poolingConnectionFactory.getUniqueName() + " in state " +
                 Decoder.decodeXAStatefulHolderState(getState()) + " with underlying connection " + xaConnection +
@@ -157,7 +162,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     /* management */
 
     public String getStateDescription() {
-        return Decoder.decodeXAStatefulHolderState(state);
+        return Decoder.decodeXAStatefulHolderState(getState());
     }
 
     public Date getAcquisitionDate() {
@@ -185,6 +190,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
         public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
             if (newState == STATE_IN_POOL) {
                 if (log.isDebugEnabled()) log.debug("requeued JMS connection of " + poolingConnectionFactory);
+                lastReleaseDate = new Date();
             }
             if (oldState == STATE_IN_POOL && newState == STATE_ACCESSIBLE) {
                 acquisitionDate = new Date();

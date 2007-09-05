@@ -128,6 +128,10 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         }
     }
 
+    public Date getLastReleaseDate() {
+        return null;
+    }
+
     /**
      * When the session is closed (directly or deferred) the action is to change its state to IN_POOL.
      * There is no such state for JMS sessions, this just means that it has been closed -> force a
