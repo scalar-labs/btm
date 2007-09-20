@@ -199,6 +199,9 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
                 ManagementRegistrar.unregister(jmxName);
             }
         }
+
+        public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
+        }
     }
 
     /**
@@ -211,6 +214,9 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
                 sessions.remove(source);
                 if (log.isDebugEnabled()) log.debug("DualSessionWrapper has been closed, " + sessions.size() + " session(s) left open in pooled connection");
             }
+        }
+
+        public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
         }
     }
 }

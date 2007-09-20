@@ -193,6 +193,9 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         } // if newState == STATE_CLOSED
     }
 
+    public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
+    }
+
     public MessageProducer createProducer(Destination destination) throws JMSException {
         MessageProducerConsumerKey key = new MessageProducerConsumerKey(destination);
         if (log.isDebugEnabled()) log.debug("looking for producer based on " + key);

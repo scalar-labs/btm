@@ -42,9 +42,12 @@ public class JdbcConnectionHandle implements Connection {
     /**
      * Enlist this connection into the current transaction if automaticEnlistingEnabled = true for this resource.
      * If no transaction is running then this method does nothing.
-     * @throws SQLException
+     * @throws SQLException thrown when an error occurs during elistment.
      */
     private void enlistResource() throws SQLException {
+        if (jdbcPooledConnection == null)
+            throw new SQLException("connection handle already closed");
+
         if (jdbcPooledConnection.getPoolingDataSource().getAutomaticEnlistingEnabled()) {
             try {
                 TransactionContextHelper.enlistInCurrentTransaction(jdbcPooledConnection, jdbcPooledConnection.getPoolingDataSource());
@@ -65,6 +68,9 @@ public class JdbcConnectionHandle implements Connection {
         if (jdbcPooledConnection == null)
             return;
 
+        // keep a reference on poolingDataSource for keepConnectionOpenUntilAfter2Pc check
+        PoolingDataSource poolingDataSource = jdbcPooledConnection.getPoolingDataSource();
+
         jdbcPooledConnection.release();
         jdbcPooledConnection = null;
 
@@ -72,17 +78,20 @@ public class JdbcConnectionHandle implements Connection {
          * connection.close() must happen after jdbcPooledConnection.release() so that the vendor's connection handle
          * doesn't get closed if connection release is vetoed.
          */
-
-        // don't set connection back to null as we want to see JDBC driver error messages when calls to the
-        // connection are made after it's been closed.
-        connection.close();
+        if (!poolingDataSource.getKeepConnectionOpenUntilAfter2Pc()) {
+            // don't set connection back to null as we want to see JDBC driver error messages when calls to the
+            // connection are made after it's been closed.
+            connection.close();
+        }
+        else {
+            if (log.isDebugEnabled()) log.debug("keeping connection open until after 2PC: " + connection);
+        }
     }
 
     public void commit() throws SQLException {
-        if (jdbcPooledConnection == null) {
-            getConnection().commit(); // the connection is closed in this case and we want the driver's error message
-            throw new SQLException("XA connection handle already closed (JDBC driver should have reported this)");
-        }
+        if (jdbcPooledConnection == null)
+            throw new SQLException("connection handle already closed");
+
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot commit a resource enlisted in a global transaction");
 
@@ -90,10 +99,9 @@ public class JdbcConnectionHandle implements Connection {
     }
 
     public void rollback() throws SQLException {
-        if (jdbcPooledConnection == null) {
-            getConnection().rollback(); // the connection is closed in this case and we want the driver's error message
-            throw new SQLException("XA connection handle already closed (JDBC driver should have reported this)");
-        }
+        if (jdbcPooledConnection == null)
+            throw new SQLException("connection handle already closed");
+
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot rollback a resource enlisted in a global transaction");
 
@@ -101,10 +109,9 @@ public class JdbcConnectionHandle implements Connection {
     }
 
     public void rollback(Savepoint savepoint) throws SQLException {
-        if (jdbcPooledConnection == null) {
-            getConnection().rollback(savepoint); // the connection is closed in this case and we want the driver's error message
-            throw new SQLException("XA connection handle already closed (JDBC driver should have reported this)");
-        }
+        if (jdbcPooledConnection == null)
+            throw new SQLException("connection handle already closed");
+
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot rollback a resource enlisted in a global transaction");
 
@@ -112,10 +119,9 @@ public class JdbcConnectionHandle implements Connection {
     }
 
     public boolean getAutoCommit() throws SQLException {
-        if (log.isDebugEnabled()) log.debug("getting autocommit mode of " + this);
-        if (jdbcPooledConnection == null) {
-            return getConnection().getAutoCommit(); // the connection is closed in this case and we want the driver's error message
-        }
+        if (jdbcPooledConnection == null)
+            throw new SQLException("connection handle already closed");
+
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             return false;
 
@@ -123,12 +129,10 @@ public class JdbcConnectionHandle implements Connection {
     }
 
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-        if (log.isDebugEnabled()) log.debug("setting autocommit mode to " + autoCommit + " on " + this);
-        if (jdbcPooledConnection == null) {
-            getConnection().setAutoCommit(autoCommit); // the connection is closed in this case and we want the driver's error message
-            throw new SQLException("XA connection handle already closed (JDBC driver should have reported this)");
-        }
-        else if (!jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
+        if (jdbcPooledConnection == null)
+            throw new SQLException("connection handle already closed");
+
+        if (!jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             getConnection().setAutoCommit(autoCommit);
         else if (autoCommit)
             throw new SQLException("autocommit is not allowed on a resource enlisted in a global transaction");
@@ -194,11 +198,13 @@ public class JdbcConnectionHandle implements Connection {
         return getConnection().prepareStatement(sql, columnNames);
     }
 
-    /* dumb wrapping of Connection methods */
-
     public boolean isClosed() throws SQLException {
+        if (jdbcPooledConnection == null)
+            return true;
         return getConnection().isClosed();
     }
+
+    /* dumb wrapping of Connection methods */
 
     public int getHoldability() throws SQLException {
         return getConnection().getHoldability();

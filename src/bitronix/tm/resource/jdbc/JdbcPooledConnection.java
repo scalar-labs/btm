@@ -36,6 +36,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
 
     private List connectionEventListeners = new ArrayList();
     private XAConnection xaConnection;
+    private Connection connection;
     private XAResource xaResource;
     private PoolingDataSource poolingDataSource;
     private boolean emulateXa = false;
@@ -74,7 +75,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
         if (log.isDebugEnabled()) log.debug("getting connection handle from " + this);
         int oldState = getState();
         setState(STATE_ACCESSIBLE);
-        Connection connection = xaConnection.getConnection();
+        connection = xaConnection.getConnection();
         if (oldState == STATE_IN_POOL) {
             if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state STATE_IN_POOL, testing it");
             testConnection(connection);
@@ -173,6 +174,20 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
         }
         if (newState == STATE_CLOSED) {
             ManagementRegistrar.unregister(jmxName);
+        }
+    }
+
+    public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
+        if (futureState == STATE_IN_POOL) {
+            if (poolingDataSource.getKeepConnectionOpenUntilAfter2Pc()) {
+                try {
+                    if (log.isDebugEnabled()) log.debug("2PC is done, closing connection: " + connection);
+                    connection.close();
+                } catch (SQLException ex) {
+                    log.warn("error closing connection", ex);
+                }
+                connection = null;
+            }
         }
     }
 

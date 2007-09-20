@@ -96,6 +96,9 @@ public abstract class AbstractMockJdbcTest extends TestCase {
                     if (newState == AbstractXAResourceHolder.STATE_ACCESSIBLE)
                         EventRecorder.getEventRecorder(this).addEvent(new ConnectionDequeuedEvent(this, (JdbcPooledConnection) source));
                 }
+
+                public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
+                }
             });
         }
 

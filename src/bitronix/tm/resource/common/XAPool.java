@@ -140,6 +140,9 @@ public class XAPool implements StateChangeListener {
         }
     }
 
+    public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
+    }
+
     public synchronized XAResourceHolder findXAResourceHolder(XAResource xaResource) {
         for (int i = 0; i < totalPoolSize(); i++) {
             XAStatefulHolder xaStatefulHolder = (XAStatefulHolder) objects.get(i);

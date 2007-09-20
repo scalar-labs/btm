@@ -34,6 +34,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     private transient RecoveryXAResourceHolder recoveryXAResourceHolder;
     private transient JdbcConnectionHandle recoveryConnectionHandle;
     private String testQuery;
+    private boolean keepConnectionOpenUntilAfter2Pc = false;
 
     public PoolingDataSource() {
     }
@@ -78,13 +79,30 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
 
     /**
      * When set, the specified query will be executed on the connection acquired from the pool before being handed to
-     * the caller. The connections won't be tested when not set.
+     * the caller. The connections won't be tested when not set. Default value is null.
      * @param testQuery the query that will be used to test connections.
      */
     public void setTestQuery(String testQuery) {
         this.testQuery = testQuery;
     }
 
+    /**
+     * @return true if the {@link Connection} acquired from the {@link javax.sql.XAConnection} should not be closed
+     *         until after 2PC has run, false otherwise.
+     */
+    public boolean getKeepConnectionOpenUntilAfter2Pc() {
+        return keepConnectionOpenUntilAfter2Pc;
+    }
+
+    /**
+     * When set, the {@link Connection} acquired from the {@link javax.sql.XAConnection} will not be closed until
+     * after 2PC has run. Default value is false.
+     * @param keepConnectionOpenUntilAfter2Pc true if the {@link Connection} acquired from the
+     *        {@link javax.sql.XAConnection} should not be closed until after 2PC has run, false otherwise.
+     */
+    public void setKeepConnectionOpenUntilAfter2Pc(boolean keepConnectionOpenUntilAfter2Pc) {
+        this.keepConnectionOpenUntilAfter2Pc = keepConnectionOpenUntilAfter2Pc;
+    }
 
     public Connection getConnection() throws SQLException {
         init();
@@ -109,7 +127,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     }
 
     public String toString() {
-        return "a PoolingDataSource containing " + pool;
+        return "a PoolingDataSource " + (keepConnectionOpenUntilAfter2Pc ? "with keepConnectionOpenUntilAfter2Pc=true " : "") + "containing " + pool;
     }
 
 
