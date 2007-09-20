@@ -1,7 +1,7 @@
 package bitronix.tm.resource.common;
 
-import java.util.Properties;
 import java.io.Serializable;
+import java.util.Properties;
 
 /**
  * Abstract javabean container for all common properties of a {@link bitronix.tm.resource.common.XAResourceProducer} as configured in the
@@ -125,7 +125,7 @@ public abstract class ResourceBean implements Serializable {
     public abstract XAResourceProducer createResource();
 
     /**
-     * @return the amount of connections to be created in the pool.
+     * @return the fixed amount of connections to be created in the pool.
      * @deprecated replaced with {@link #getMinPoolSize}.
      */
     public int getPoolSize() {
@@ -133,49 +133,77 @@ public abstract class ResourceBean implements Serializable {
     }
 
     /**
-     * Define the amount of connections that should be created in the pool.
-     * @param poolSize the amount of connections to be created in the pool.
-     * @deprecated replaced with {@link #setMinPoolSize}.
+     * Define the fixed amount of connections that should be created in the pool.
+     * @param poolSize a fixed amount of connections to be created in the pool.
+     * @deprecated replaced with {@link #setMinPoolSize} and {@link #setMaxPoolSize}.
      */
     public void setPoolSize(int poolSize) {
         this.minPoolSize = poolSize;
         this.maxPoolSize = poolSize;
     }
 
+    /**
+     * @return the maximum amount of connections that can be in the pool.
+     */
     public int getMaxPoolSize() {
         return maxPoolSize;
     }
 
+    /**
+     * Define the maximum amount of connections that can be in the pool.
+     * @param maxPoolSize the maximum amount of connections that can be in the pool.
+     */
     public void setMaxPoolSize(int maxPoolSize) {
         this.maxPoolSize = maxPoolSize;
     }
 
+    /**
+     * @return the minimal amount of connections that can be in the pool.
+     */
     public int getMinPoolSize() {
         return minPoolSize;
     }
 
+    /**
+     * Define the minimal amount of connections that can be in the pool.
+     * @param minPoolSize the maximum amount of connections that can be in the pool.
+     */
     public void setMinPoolSize(int minPoolSize) {
         this.minPoolSize = minPoolSize;
     }
 
+    /**
+     * @return the amount of seconds and idle connection can stay in the pool before getting closed.
+     */
     public int getMaxIdleTime() {
         return maxIdleTime;
     }
 
-    public void setMaxIdleTime(int maxIdleTime) {
+    /**
+     * Define the amount of seconds and idle connection can stay in the pool before getting closed.
+     * @param maxIdleTime the amount of seconds and idle connection can stay in the pool before getting closed.
+     */
+    public void maxIdleTime(int maxIdleTime) {
         this.maxIdleTime = maxIdleTime;
     }
 
+    /**
+     * @return the amount of connections to be created at once when the pool needs to grow.
+     */
     public int getAcquireIncrement() {
         return acquireIncrement;
     }
 
+    /**
+     * Define the amount of connections to be created at once when the pool needs to grow.
+     * @param acquireIncrement the amount of connections to be created at once when the pool needs to grow.
+     */
     public void setAcquireIncrement(int acquireIncrement) {
         this.acquireIncrement = acquireIncrement;
     }
 
     /**
-     * @return the amount of time in seconds.
+     * @return the amount of time in seconds a call to get a connection from the pool will wait when the pool is empty.
      */
     public int getAcquisitionTimeout() {
         return acquisitionTimeout;
@@ -190,7 +218,7 @@ public abstract class ResourceBean implements Serializable {
     }
 
     /**
-     * @return true only if the database can run many transactions on the same connection.
+     * @return false only if the database can run many transactions on the same connection.
      */
     public boolean getDeferConnectionRelease() {
         return deferConnectionRelease;
@@ -199,7 +227,7 @@ public abstract class ResourceBean implements Serializable {
     /**
      * Define the transaction interleaving capability of the database.
      * Should be true only if the database can run many transactions on the same connection.
-     * @param deferConnectionRelease true only if the database can run many transactions on the same connection.
+     * @param deferConnectionRelease false only if the database can run many transactions on the same connection.
      */
     public void setDeferConnectionRelease(boolean deferConnectionRelease) {
         this.deferConnectionRelease = deferConnectionRelease;
@@ -220,7 +248,6 @@ public abstract class ResourceBean implements Serializable {
     public void setAcquisitionInterval(int acquisitionInterval) {
         this.acquisitionInterval = acquisitionInterval;
     }
-
 
     /**
      * @return true if the transaction manager should allow mixing XA and non-XA transactions.
