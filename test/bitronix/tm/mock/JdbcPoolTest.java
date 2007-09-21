@@ -1,13 +1,16 @@
 package bitronix.tm.mock;
 
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.mock.resource.jdbc.MockXADataSource;
-import bitronix.tm.resource.jdbc.PoolingDataSource;
 import bitronix.tm.resource.common.XAPool;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
 import junit.framework.TestCase;
 
+import javax.transaction.TransactionManager;
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.lang.reflect.Field;
+import java.sql.Statement;
 
 public class JdbcPoolTest extends TestCase {
 
@@ -82,6 +85,115 @@ public class JdbcPoolTest extends TestCase {
 
         assertEquals(1, pool.inPoolSize());
         assertEquals(1, pool.totalPoolSize());
+    }
+
+    public void testCloseLocalContext() throws Exception {
+        Connection c = pds.getConnection();
+        Statement stmt = c.createStatement();
+        stmt.close();
+        c.close();
+        assertTrue(c.isClosed());
+
+        try {
+            c.createStatement();
+            fail("expected SQLException");
+        } catch (SQLException ex) {
+            assertEquals("connection handle already closed", ex.getMessage());
+        }
+    }
+
+    public void testCloseGlobalContextRecycle() throws Exception {
+        TransactionManager tm = TransactionManagerServices.getTransactionManager();
+        tm.begin();
+
+        Connection c1 = pds.getConnection();
+        c1.createStatement();
+        c1.close();
+        assertTrue(c1.isClosed());
+
+        try {
+            c1.createStatement();
+            fail("expected SQLException");
+        } catch (SQLException ex) {
+            assertEquals("connection handle already closed", ex.getMessage());
+        }
+
+        Connection c2 = pds.getConnection();
+        c2.createStatement();
+
+         try {
+            c2.commit();
+            fail("expected SQLException");
+        } catch (SQLException ex) {
+            assertEquals("cannot commit a resource enlisted in a global transaction", ex.getMessage());
+        }
+
+        tm.commit();
+        assertFalse(c2.isClosed());
+
+        c2.close();
+        assertTrue(c2.isClosed());
+
+        try {
+            c2.createStatement();
+            fail("expected SQLException");
+        } catch (SQLException ex) {
+            assertEquals("connection handle already closed", ex.getMessage());
+        }
+
+        try {
+            c2.commit();
+            fail("expected SQLException");
+        } catch (SQLException ex) {
+            assertEquals("connection handle already closed", ex.getMessage());
+        }
+    }
+
+    public void testCloseGlobalContextNoRecycle() throws Exception {
+        TransactionManager tm = TransactionManagerServices.getTransactionManager();
+        tm.begin();
+
+        Connection c1 = pds.getConnection();
+        Connection c2 = pds.getConnection();
+        c1.createStatement();
+        c1.close();
+        assertTrue(c1.isClosed());
+
+        try {
+            c1.createStatement();
+            fail("expected SQLException");
+        } catch (SQLException ex) {
+            assertEquals("connection handle already closed", ex.getMessage());
+        }
+
+        c2.createStatement();
+
+        try {
+            c2.commit();
+            fail("expected SQLException");
+        } catch (SQLException ex) {
+            assertEquals("cannot commit a resource enlisted in a global transaction", ex.getMessage());
+        }
+
+        tm.commit();
+        assertFalse(c2.isClosed());
+
+        c2.close();
+        assertTrue(c2.isClosed());
+
+        try {
+            c2.createStatement();
+            fail("expected SQLException");
+        } catch (SQLException ex) {
+            assertEquals("connection handle already closed", ex.getMessage());
+        }
+
+        try {
+            c2.commit();
+            fail("expected SQLException");
+        } catch (SQLException ex) {
+            assertEquals("connection handle already closed", ex.getMessage());
+        }
     }
 
 }

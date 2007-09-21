@@ -1,21 +1,21 @@
 package bitronix.tm.resource.common;
 
 import bitronix.tm.BitronixTransaction;
-import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.BitronixXid;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.internal.BitronixSystemException;
 import bitronix.tm.internal.Uid;
 import bitronix.tm.internal.XAResourceHolderState;
-import bitronix.tm.internal.BitronixSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
 import javax.transaction.Synchronization;
+import javax.transaction.SystemException;
 import javax.transaction.xa.XAResource;
-import java.util.Map;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Helper class that contains static logic common accross all resource types.
@@ -250,4 +250,21 @@ public class TransactionContextHelper {
         return null;
     }
 
+    public static void markRecycled(XAStatefulHolder xaStatefulHolder) {
+        BitronixTransaction currentTransaction = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
+        List synchronizations = currentTransaction.getSynchronizations();
+        for (int i = 0; i < synchronizations.size(); i++) {
+            Synchronization synchronization = (Synchronization) synchronizations.get(i);
+            if (synchronization instanceof DeferredReleaseSynchronization) {
+                DeferredReleaseSynchronization deferredReleaseSynchronization = (DeferredReleaseSynchronization) synchronization;
+                if (deferredReleaseSynchronization.getXAStatefulHolder() == xaStatefulHolder) {
+                    if (log.isDebugEnabled()) log.debug(xaStatefulHolder + " has been recycled, unregistering deferred release from " + currentTransaction);
+                    synchronizations.remove(deferredReleaseSynchronization);
+                    break;
+                }
+            } // if synchronization instanceof DeferredReleaseSynchronization
+            log.warn("cannot unregister DeferredReleaseSynchronization of " + xaStatefulHolder + " from " + currentTransaction);
+        } // for
+
+    }
 }

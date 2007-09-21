@@ -1,12 +1,12 @@
 package bitronix.tm.resource.jdbc;
 
-import bitronix.tm.internal.Decoder;
-import bitronix.tm.internal.XAResourceHolderState;
+import bitronix.tm.BitronixXid;
 import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.internal.Decoder;
 import bitronix.tm.internal.ManagementRegistrar;
+import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.resource.common.*;
 import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
-import bitronix.tm.BitronixXid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,8 +21,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Implementation of a JDBC {@link PooledConnection} wrapping vendor's {@link XAConnection} implementation.
@@ -171,6 +171,9 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
         }
         if (oldState == STATE_IN_POOL && newState == STATE_ACCESSIBLE) {
             acquisitionDate = new Date();
+        }
+        if (oldState == STATE_NOT_ACCESSIBLE && newState == STATE_ACCESSIBLE) {
+            TransactionContextHelper.markRecycled(this);
         }
         if (newState == STATE_CLOSED) {
             ManagementRegistrar.unregister(jmxName);
