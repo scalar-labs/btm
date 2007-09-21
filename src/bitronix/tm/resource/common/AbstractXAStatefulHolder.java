@@ -27,6 +27,8 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
 
     public void setState(int state) {
         int oldState = this.state;
+        fireStateChanging(oldState, state);
+
         synchronized (this) {
             if (oldState == state)
                 throw new IllegalArgumentException("cannot switch state from " + Decoder.decodeXAStatefulHolderState(oldState) +
@@ -37,7 +39,8 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
 
             this.state = state;
         }
-        fireStateChange(oldState, state);
+
+        fireStateChanged(oldState, state);
     }
 
     public void addStateChangeEventListener(StateChangeListener listener) {
@@ -48,9 +51,20 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
         stateChangeEventListeners.remove(listener);
     }
 
-    private void fireStateChange(int oldState, int newState) {
+    private void fireStateChanging(int currentState, int futureState) {
         if (log.isDebugEnabled()) log.debug("notifying " + stateChangeEventListeners.size() +
-                " stateChangeEventListener(s) about state change from " + Decoder.decodeXAStatefulHolderState(oldState) +
+                " stateChangeEventListener(s) about state changing from " + Decoder.decodeXAStatefulHolderState(currentState) +
+                " to " + Decoder.decodeXAStatefulHolderState(futureState) + " in " + this);
+
+        for (int i = 0; i < stateChangeEventListeners.size(); i++) {
+            StateChangeListener stateChangeListener = (StateChangeListener) stateChangeEventListeners.get(i);
+            stateChangeListener.stateChanging(this, currentState, futureState);
+        }
+    }
+
+    private void fireStateChanged(int oldState, int newState) {
+        if (log.isDebugEnabled()) log.debug("notifying " + stateChangeEventListeners.size() +
+                " stateChangeEventListener(s) about state changed from " + Decoder.decodeXAStatefulHolderState(oldState) +
                 " to " + Decoder.decodeXAStatefulHolderState(newState) + " in " + this);
 
         for (int i = 0; i < stateChangeEventListeners.size(); i++) {
