@@ -183,7 +183,7 @@ public abstract class ResourceBean implements Serializable {
      * Define the amount of seconds and idle connection can stay in the pool before getting closed.
      * @param maxIdleTime the amount of seconds and idle connection can stay in the pool before getting closed.
      */
-    public void maxIdleTime(int maxIdleTime) {
+    public void setMaxIdleTime(int maxIdleTime) {
         this.maxIdleTime = maxIdleTime;
     }
 
