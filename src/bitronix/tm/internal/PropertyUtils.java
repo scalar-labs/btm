@@ -56,7 +56,8 @@ public class PropertyUtils {
     }
 
     /**
-     * Build a map of direct javabeans properties of the target object.
+     * Build a map of direct javabeans properties of the target object. Only read/write properties (ie: those who have
+     * both a getter and a setter) are returned.
      * @param target the target object from which to get properties names.
      * @return a Map of String with properties names as key and their values
      * @throws PropertyException if an error happened while trying to get a property.
@@ -68,7 +69,7 @@ public class PropertyUtils {
         for (int i = 0; i < methods.length; i++) {
             Method method = methods[i];
             String name = method.getName();
-            if (method.getModifiers() == Modifier.PUBLIC && method.getParameterTypes().length == 0 && name.startsWith("get") && !name.equals("getClass")) {
+            if (method.getModifiers() == Modifier.PUBLIC && method.getParameterTypes().length == 0 && (name.startsWith("get") || name.startsWith("is")) && containsSetterForGetter(clazz, method)) {
                 String propertyName = Character.toLowerCase(name.charAt(3)) + name.substring(4);
                 try {
                     Object propertyValue = method.invoke(target, (Object[]) null);
@@ -88,6 +89,26 @@ public class PropertyUtils {
             } // if
         } // for
         return properties;
+    }
+
+    private static boolean containsSetterForGetter(Class clazz, Method method) {
+        String methodName = method.getName();
+        String setterName;
+
+        if (methodName.startsWith("get"))
+            setterName = "set" + methodName.substring(3);
+        else if (methodName.startsWith("is"))
+            setterName = "set" + methodName.substring(2);
+        else
+            throw new PropertyException("method '" + methodName + "' is not a getter, no setter can be found");
+
+        Method[] methods = clazz.getMethods();
+        for (int i = 0; i < methods.length; i++) {
+            Method method1 = methods[i];
+            if (method1.getName().equals(setterName))
+                return true;
+        }
+        return false;
     }
 
     /**
