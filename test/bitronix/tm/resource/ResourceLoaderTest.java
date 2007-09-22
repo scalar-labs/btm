@@ -53,7 +53,7 @@ public class ResourceLoaderTest extends TestCase {
 
         Properties p = new Properties();
         p.setProperty("resource.ds1.className", MockXADataSource.class.getName());
-        p.setProperty("resource.ds1.uniqueName", "dataSource1");
+        p.setProperty("resource.ds1.uniqueName", "dataSource10");
         p.setProperty("resource.ds1.maxPoolSize", "123");
         p.setProperty("resource.ds1.automaticEnlistingEnabled", "true");
         p.setProperty("resource.ds1.useTmJoin", "false");
@@ -68,10 +68,10 @@ public class ResourceLoaderTest extends TestCase {
 
         assertEquals(1, dataSources.size());
         String uniqueName = (String) dataSources.keySet().iterator().next();
-        assertEquals("dataSource1", uniqueName);
+        assertEquals("dataSource10", uniqueName);
         PoolingDataSource pds = (PoolingDataSource) dataSources.get(uniqueName);
         assertEquals("bitronix.tm.mock.resource.jdbc.MockXADataSource", pds.getClassName());
-        assertEquals("dataSource1", pds.getUniqueName());
+        assertEquals("dataSource10", pds.getUniqueName());
         assertEquals(123, pds.getMaxPoolSize());
         assertEquals(3, pds.getDriverProperties().size());
         assertEquals("java", pds.getDriverProperties().getProperty("password"));
