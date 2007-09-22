@@ -1,6 +1,7 @@
 package bitronix.tm.resource;
 
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.internal.CryptoEngine;
 import bitronix.tm.internal.InitializationException;
 import bitronix.tm.internal.PropertyUtils;
 import bitronix.tm.internal.Service;
@@ -34,8 +35,11 @@ import java.util.*;
 public class ResourceLoader implements Service {
 
     private final static Logger log = LoggerFactory.getLogger(ResourceLoader.class);
+
     private final static String JDBC_RESOUCE_CLASSNAME = "bitronix.tm.resource.jdbc.PoolingDataSource";
     private final static String JMS_RESOUCE_CLASSNAME = "bitronix.tm.resource.jms.PoolingConnectionFactory";
+    private static final String RESOURCE_BIND_PROPERTY_NAME = "bitronix.tm.resource.bind";
+    private static final String PASSWORD_PROPERTY_NAME = "driverProperties.password";
 
     private boolean bindJndi;
     private Map resourcesByUniqueName;
@@ -163,7 +167,7 @@ public class ResourceLoader implements Service {
                 if (fis != null) fis.close();
             }
 
-            bindJndi = Boolean.valueOf(properties.getProperty("bitronix.tm.resource.bind")).booleanValue();
+            bindJndi = Boolean.valueOf(properties.getProperty(RESOURCE_BIND_PROPERTY_NAME)).booleanValue();
             initXAResourceProducers(properties);
         } catch (IOException ex) {
             throw new InitializationException("cannot create resource binder", ex);
@@ -267,7 +271,12 @@ public class ResourceLoader implements Service {
             for (int i = 0; i < propertyPairs.size(); i++) {
                 PropertyPair propertyPair = (PropertyPair) propertyPairs.get(i);
                 lastPropertyName = propertyPair.getName();
-                PropertyUtils.setProperty(producer, propertyPair.getName(), propertyPair.getValue());
+                String propertyValue = propertyPair.getValue();
+
+                if (PASSWORD_PROPERTY_NAME.equals(lastPropertyName)) {
+                    propertyValue = decrypt(propertyValue);
+                }
+                PropertyUtils.setProperty(producer, lastPropertyName, propertyValue);
             }
             if (producer.getUniqueName() == null)
                 throw new ResourceConfigurationException("missing mandatory property <uniqueName> for resource <" + configuredName + "> in resources configuration file");
@@ -278,6 +287,18 @@ public class ResourceLoader implements Service {
         } catch (Exception ex) {
             throw new ResourceConfigurationException("cannot configure resource for configuration entries with name <" + configuredName + ">" + " - failing property is <" + lastPropertyName + ">", ex);
         }
+    }
+
+    private String decrypt(String resourcePassword) throws Exception {
+        int startIdx = resourcePassword.indexOf("{");
+        int endIdx = resourcePassword.indexOf("}");
+
+        if (startIdx != 0 || endIdx == -1)
+            return resourcePassword;
+
+        String cipher = resourcePassword.substring(1, endIdx);
+        if (log.isDebugEnabled()) log.debug("resource password is encrypted, decrypting " + resourcePassword);
+        return CryptoEngine.decrypt(cipher, resourcePassword.substring(endIdx + 1));
     }
 
     /**

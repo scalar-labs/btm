@@ -24,7 +24,7 @@ public class ResourceLoaderTest extends TestCase {
         Properties p = new Properties();
         p.setProperty("resource.ds1.className", MockXADataSource.class.getName());
         p.setProperty("resource.ds1.uniqueName", "dataSource1");
-        p.setProperty("resource.ds1.poolSize", "123");
+        p.setProperty("resource.ds1.maxPoolSize", "123");
         p.setProperty("resource.ds1.automaticEnlistingEnabled", "true");
         p.setProperty("resource.ds1.useTmJoin", "false");
         p.setProperty("resource.ds1.deferConnectionRelease", "true");
@@ -42,9 +42,39 @@ public class ResourceLoaderTest extends TestCase {
         PoolingDataSource pds = (PoolingDataSource) dataSources.get(uniqueName);
         assertEquals("bitronix.tm.mock.resource.jdbc.MockXADataSource", pds.getClassName());
         assertEquals("dataSource1", pds.getUniqueName());
-        assertEquals(123, pds.getPoolSize());
+        assertEquals(123, pds.getMaxPoolSize());
         assertEquals(3, pds.getDriverProperties().size());
 
+    }
+
+
+    public void testDecryptPassword() throws Exception {
+        ResourceLoader loader = new ResourceLoader();
+
+        Properties p = new Properties();
+        p.setProperty("resource.ds1.className", MockXADataSource.class.getName());
+        p.setProperty("resource.ds1.uniqueName", "dataSource1");
+        p.setProperty("resource.ds1.maxPoolSize", "123");
+        p.setProperty("resource.ds1.automaticEnlistingEnabled", "true");
+        p.setProperty("resource.ds1.useTmJoin", "false");
+        p.setProperty("resource.ds1.deferConnectionRelease", "true");
+        p.setProperty("resource.ds1.driverProperties.userName", "java");
+        p.setProperty("resource.ds1.driverProperties.password", "{DES}UcXKog312decCrwu51xGmw==");
+        p.setProperty("resource.ds1.driverProperties.database", "users1");
+
+
+        loader.initXAResourceProducers(p);
+        Map dataSources = loader.getResources();
+
+        assertEquals(1, dataSources.size());
+        String uniqueName = (String) dataSources.keySet().iterator().next();
+        assertEquals("dataSource1", uniqueName);
+        PoolingDataSource pds = (PoolingDataSource) dataSources.get(uniqueName);
+        assertEquals("bitronix.tm.mock.resource.jdbc.MockXADataSource", pds.getClassName());
+        assertEquals("dataSource1", pds.getUniqueName());
+        assertEquals(123, pds.getMaxPoolSize());
+        assertEquals(3, pds.getDriverProperties().size());
+        assertEquals("java", pds.getDriverProperties().getProperty("password"));
     }
 
     public void testBindOneJms() throws Exception {
@@ -53,7 +83,7 @@ public class ResourceLoaderTest extends TestCase {
         Properties p = new Properties();
         p.setProperty("resource.ds1.className", MockXAConnectionFactory.class.getName());
         p.setProperty("resource.ds1.uniqueName", "mq1");
-        p.setProperty("resource.ds1.poolSize", "123");
+        p.setProperty("resource.ds1.maxPoolSize", "123");
         p.setProperty("resource.ds1.automaticEnlistingEnabled", "true");
         p.setProperty("resource.ds1.useTmJoin", "false");
         p.setProperty("resource.ds1.deferConnectionRelease", "true");
@@ -69,7 +99,7 @@ public class ResourceLoaderTest extends TestCase {
         PoolingConnectionFactory pcf = (PoolingConnectionFactory) dataSources.get(uniqueName);
         assertEquals("bitronix.tm.mock.resource.jms.MockXAConnectionFactory", pcf.getClassName());
         assertEquals("mq1", pcf.getUniqueName());
-        assertEquals(123, pcf.getPoolSize());
+        assertEquals(123, pcf.getMaxPoolSize());
         assertEquals(1, pcf.getDriverProperties().size());
 
     }
@@ -80,7 +110,7 @@ public class ResourceLoaderTest extends TestCase {
         Properties p = new Properties();
         p.setProperty("resource.ds1.className", MockXADataSource.class.getName());
         p.setProperty("resource.ds1.uniqueName", "dataSource2");
-        p.setProperty("resource.ds1.poolSize", "123");
+        p.setProperty("resource.ds1.maxPoolSize", "123");
         p.setProperty("resource.ds1.automaticEnlistingEnabled", "true");
         p.setProperty("resource.ds1.useTmJoin", "false");
         p.setProperty("resource.ds1.deferConnectionRelease", "true");
@@ -99,13 +129,13 @@ public class ResourceLoaderTest extends TestCase {
         PoolingDataSource pds = (PoolingDataSource) dataSources.get("dataSource2");
         assertEquals("bitronix.tm.mock.resource.jdbc.MockXADataSource", pds.getClassName());
         assertEquals("dataSource2", pds.getUniqueName());
-        assertEquals(123, pds.getPoolSize());
+        assertEquals(123, pds.getMaxPoolSize());
         assertEquals(3, pds.getDriverProperties().size());
 
         pds = (PoolingDataSource) dataSources.get("some.unique.Name");
         assertEquals("bitronix.tm.mock.resource.jdbc.MockXADataSource", pds.getClassName());
         assertEquals("some.unique.Name", pds.getUniqueName());
-        assertEquals(123, pds.getPoolSize());
+        assertEquals(123, pds.getMaxPoolSize());
         assertEquals(true, pds.getDeferConnectionRelease());
         assertEquals(true, pds.getAutomaticEnlistingEnabled());
         assertEquals(true, pds.getUseTmJoin());
