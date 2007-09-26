@@ -42,7 +42,7 @@ public class RecovererTest extends TestCase {
         pds = new PoolingDataSource();
         pds.setClassName(MockXADataSource.class.getName());
         pds.setUniqueName("mock-xads");
-        pds.setPoolSize(3);
+        pds.setMaxPoolSize(3);
         pds.init();
 
         new File(TransactionManagerServices.getConfiguration().getLogPart1Filename()).delete();
