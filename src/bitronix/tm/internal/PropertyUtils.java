@@ -70,7 +70,14 @@ public class PropertyUtils {
             Method method = methods[i];
             String name = method.getName();
             if (method.getModifiers() == Modifier.PUBLIC && method.getParameterTypes().length == 0 && (name.startsWith("get") || name.startsWith("is")) && containsSetterForGetter(clazz, method)) {
-                String propertyName = Character.toLowerCase(name.charAt(3)) + name.substring(4);
+                String propertyName;
+                if (name.startsWith("get"))
+                    propertyName = Character.toLowerCase(name.charAt(3)) + name.substring(4);
+                else if (name.startsWith("is"))
+                    propertyName = Character.toLowerCase(name.charAt(2)) + name.substring(3);
+                else
+                    throw new PropertyException("method '" + name + "' is not a getter, no setter can be found");
+
                 try {
                     Object propertyValue = method.invoke(target, (Object[]) null);
                     if (propertyValue != null && propertyValue instanceof Properties) {
@@ -242,10 +249,11 @@ public class PropertyUtils {
 
     private static Method getGetter(Object target, String propertyName) {
         String getterName = "get" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
+        String getterIsName = "is" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
         Method[] methods = target.getClass().getMethods();
         for (int i = 0; i < methods.length; i++) {
             Method method = methods[i];
-            if (method.getName().equals(getterName)  &&  !method.getReturnType().equals(void.class)  &&  method.getParameterTypes().length == 0) {
+            if ((method.getName().equals(getterName) || method.getName().equals(getterIsName))  &&  !method.getReturnType().equals(void.class)  &&  method.getParameterTypes().length == 0) {
                 return method;
             }
         }
