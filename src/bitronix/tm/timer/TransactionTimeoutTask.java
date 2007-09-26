@@ -18,9 +18,13 @@ public class TransactionTimeoutTask extends Task {
 
     private BitronixTransaction transaction;
 
-    public TransactionTimeoutTask(BitronixTransaction transaction, Date executionTime) {
-        super(executionTime);
+    public TransactionTimeoutTask(BitronixTransaction transaction, Date executionTime, TaskScheduler scheduler) {
+        super(executionTime, scheduler);
         this.transaction = transaction;
+    }
+
+    public Object getObject() {
+        return transaction;
     }
 
     public void execute() throws TaskException {
@@ -29,7 +33,7 @@ public class TransactionTimeoutTask extends Task {
     }
 
     public String toString() {
-        return "a TransactionTimeoutTask on " + transaction + " scheduled for " + executionTime;
+        return "a TransactionTimeoutTask on " + transaction + " scheduled for " + getExecutionTime();
     }
 
 }

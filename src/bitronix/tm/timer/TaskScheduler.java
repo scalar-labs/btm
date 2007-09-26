@@ -2,6 +2,7 @@ package bitronix.tm.timer;
 
 import bitronix.tm.BitronixTransaction;
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.recovery.Recoverer;
 import bitronix.tm.resource.common.XAPool;
 import bitronix.tm.internal.Service;
 import org.slf4j.Logger;
@@ -19,12 +20,7 @@ public class TaskScheduler extends Thread implements Service {
 
     private final static Logger log = LoggerFactory.getLogger(TaskScheduler.class);
 
-    /**
-     * Keys of this map are GTRID represented as a String, as per UidGenerator.uidToString.
-     * Values are Task objects.
-     * TODO: tasks container should not be a map as there is not always a hashable key
-     */
-    private final Map tasks = Collections.synchronizedMap(new HashMap());
+    private final List tasks = Collections.synchronizedList(new ArrayList());
     private boolean active = true;
 
     public TaskScheduler() {
@@ -40,6 +36,10 @@ public class TaskScheduler extends Thread implements Service {
 
     public boolean isActive() {
         return active;
+    }
+
+    public int countTasksQueued() {
+        return tasks.size();
     }
 
     public synchronized void shutdown() {
@@ -65,8 +65,9 @@ public class TaskScheduler extends Thread implements Service {
             throw new IllegalArgumentException("expected a non-null transaction");
         if (executionTime == null)
             throw new IllegalArgumentException("expected a non-null execution date");
-        TransactionTimeoutTask task = new TransactionTimeoutTask(transaction, executionTime);
-        tasks.put(transaction, task);
+
+        TransactionTimeoutTask task = new TransactionTimeoutTask(transaction, executionTime, this);
+        addTask(task);
         if (log.isDebugEnabled()) log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size());
     }
 
@@ -74,17 +75,28 @@ public class TaskScheduler extends Thread implements Service {
         if (log.isDebugEnabled()) log.debug("cancelling transaction timeout task on " + transaction);
         if (transaction == null)
             throw new IllegalArgumentException("expected a non-null transaction");
-        Object task = tasks.remove(transaction);
-        if (log.isDebugEnabled()) log.debug("cancelled " + task + ", total task(s) still queued: " + tasks.size());
+
+        if (!removeTaskByObject(transaction))
+            log.warn("no task found based on object " + transaction);
     }
 
-    public void scheduleRecovery(Date executionTime) {
+    public void scheduleRecovery(Recoverer recoverer, Date executionTime) {
         if (log.isDebugEnabled()) log.debug("scheduling recovery task for " + executionTime);
+        if (recoverer == null)
+            throw new IllegalArgumentException("expected a non-null recoverer");
         if (executionTime == null)
             throw new IllegalArgumentException("expected a non-null execution date");
-        RecoveryTask task = new RecoveryTask(executionTime);
-        tasks.put(executionTime, task);
+
+        RecoveryTask task = new RecoveryTask(recoverer, executionTime, this);
+        addTask(task);
         if (log.isDebugEnabled()) log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size());
+    }
+
+    public void cancelRecovery(Recoverer recoverer) {
+        if (log.isDebugEnabled()) log.debug("cancelling recovery task");
+
+        if (!removeTaskByObject(recoverer))
+            log.warn("no task found based on object " + recoverer);
     }
 
     public void schedulePoolShrinking(XAPool xaPool) {
@@ -92,8 +104,9 @@ public class TaskScheduler extends Thread implements Service {
         if (log.isDebugEnabled()) log.debug("scheduling pool shrinking task on " + xaPool + " for " + executionTime);
         if (executionTime == null)
             throw new IllegalArgumentException("expected a non-null execution date");
-        PoolShrinkingTask task = new PoolShrinkingTask(xaPool, executionTime);
-        tasks.put(executionTime, task);
+
+        PoolShrinkingTask task = new PoolShrinkingTask(xaPool, executionTime, this);
+        addTask(task);
         if (log.isDebugEnabled()) log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size());
     }
 
@@ -101,19 +114,32 @@ public class TaskScheduler extends Thread implements Service {
         if (log.isDebugEnabled()) log.debug("cancelling pool shrinking task on " + xaPool);
         if (xaPool == null)
             throw new IllegalArgumentException("expected a non-null XA pool");
-        Iterator it = tasks.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            if (entry.getValue() instanceof PoolShrinkingTask) {
-                PoolShrinkingTask task = (PoolShrinkingTask) entry.getValue();
 
-                if (task.getXaPool() == xaPool) {
-                    it.remove();
+        if (!removeTaskByObject(xaPool))
+            log.warn("no task found based on object " + xaPool);
+    }
+
+    private void addTask(Task task) {
+        synchronized (tasks) {
+            removeTaskByObject(task.getObject());
+            tasks.add(task);
+        }
+    }
+
+    private boolean removeTaskByObject(Object obj) {
+        synchronized (tasks) {
+            if (log.isDebugEnabled()) log.debug("removing task by " + obj);
+            for (int i = 0; i < tasks.size(); i++) {
+                Task task = (Task) tasks.get(i);
+
+                if (task.getObject() == obj) {
+                    tasks.remove(task);
                     if (log.isDebugEnabled()) log.debug("cancelled " + task + ", total task(s) still queued: " + tasks.size());
-                    break;
+                    return true;
                 }
-            } // if
-        } // while
+            }
+            return false;
+        }
     }
 
     public void run() {
@@ -128,31 +154,28 @@ public class TaskScheduler extends Thread implements Service {
     }
 
     private void executeElapsedTasks() {
-        if (tasks.size() == 0)
+        if (this.tasks.size() == 0)
             return;
 
-        // Copying a map means iterating it so this block must be synchronized as specified by
-        // http://java.sun.com/j2se/api/Collections.html#synchronizedMap(java.util.Map)
-        Map tasks;
+        // Copying a collection means iterating it so this block must be synchronized
+        List tasks;
         synchronized (this.tasks) {
-            tasks = new HashMap(this.tasks);
+            tasks = new ArrayList(this.tasks);
         }
 
-        Iterator it = tasks.entrySet().iterator();
+        Iterator it = tasks.iterator();
         while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            Object key = entry.getKey();
-            Task task = (Task) entry.getValue();
+            Task task = (Task) it.next();
             if (task.getExecutionTime().compareTo(new Date()) <= 0) { // if the execution time is now or in the past
                 if (log.isDebugEnabled()) log.debug("running " + task);
                 try {
                     task.execute();
-                    this.tasks.remove(key);
                     if (log.isDebugEnabled()) log.debug("successfully ran " + task);
                 } catch (Exception ex) {
-                    int taskRetryInterval = 10; // TODO: should that be configurable ?
-                    log.warn("error running " + task + ", retrying in " + taskRetryInterval + "s", ex);
-                    task.setExecutionTime(new Date(System.currentTimeMillis() + (taskRetryInterval * 1000L)));
+                    log.warn("error running " + task, ex);
+                } finally {
+                    this.tasks.remove(task);
+                    if (log.isDebugEnabled()) log.debug("total task(s) still queued: " + tasks.size());
                 }
             } // if
         } // while

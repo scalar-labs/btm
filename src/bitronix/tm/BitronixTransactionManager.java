@@ -53,7 +53,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             if (backgroundRecoveryInterval > 0) {
                 if (log.isDebugEnabled()) log.debug("recovery will run in the background every " + backgroundRecoveryInterval + " minutes");
                 Date nextExecutionDate = new Date(System.currentTimeMillis() + (backgroundRecoveryInterval * 60L * 1000L));
-                TransactionManagerServices.getTaskScheduler().scheduleRecovery(nextExecutionDate);
+                TransactionManagerServices.getTaskScheduler().scheduleRecovery(TransactionManagerServices.getRecoverer(), nextExecutionDate);
             }
         } catch (IOException ex) {
             throw new InitializationException("cannot open disk logger", ex);

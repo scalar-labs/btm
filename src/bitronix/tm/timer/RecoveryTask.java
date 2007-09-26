@@ -1,6 +1,7 @@
 package bitronix.tm.timer;
 
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.recovery.Recoverer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,25 +17,32 @@ public class RecoveryTask extends Task {
 
     private final static Logger log = LoggerFactory.getLogger(RecoveryTask.class);
 
-    public RecoveryTask(Date executionTime) {
-        super(executionTime);
+    private Recoverer recoverer;
+
+    public RecoveryTask(Recoverer recoverer, Date executionTime, TaskScheduler scheduler) {
+        super(executionTime, scheduler);
+        this.recoverer = recoverer;
+    }
+
+    public Object getObject() {
+        return recoverer;
     }
 
     public void execute() throws TaskException {
         if (log.isDebugEnabled()) log.debug("running recovery");
-        Thread recovery = new Thread(TransactionManagerServices.getRecoverer());
+        Thread recovery = new Thread(recoverer);
         recovery.setName("bitronix-recovery-thread");
         recovery.setDaemon(true);
-        recovery.setPriority(Thread.NORM_PRIORITY -2);
+        recovery.setPriority(Thread.NORM_PRIORITY -1);
         recovery.start();
 
-        Date nextExecutionDate = new Date(executionTime.getTime() + (TransactionManagerServices.getConfiguration().getBackgroundRecoveryInterval() * 60L * 1000L));
+        Date nextExecutionDate = new Date(getExecutionTime().getTime() + (TransactionManagerServices.getConfiguration().getBackgroundRecoveryInterval() * 60L * 1000L));
         if (log.isDebugEnabled()) log.debug("rescheduling recovery for " + nextExecutionDate);
-        TransactionManagerServices.getTaskScheduler().scheduleRecovery(nextExecutionDate);
+        getTaskScheduler().scheduleRecovery(recoverer, nextExecutionDate);
     }
 
     public String toString() {
-        return "a RecoveryTask scheduled for " + executionTime;
+        return "a RecoveryTask scheduled for " + getExecutionTime();
     }
     
 }

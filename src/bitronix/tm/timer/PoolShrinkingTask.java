@@ -1,6 +1,5 @@
 package bitronix.tm.timer;
 
-import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.resource.common.XAPool;
 
 import java.util.Date;
@@ -15,9 +14,13 @@ public class PoolShrinkingTask extends Task {
 
     private XAPool xaPool;
 
-    public PoolShrinkingTask(XAPool xaPool, Date executionTime) {
-        super(executionTime);
+    public PoolShrinkingTask(XAPool xaPool, Date executionTime, TaskScheduler scheduler) {
+        super(executionTime, scheduler);
         this.xaPool = xaPool;
+    }
+
+    public Object getObject() {
+        return xaPool;
     }
 
     public void execute() throws TaskException {
@@ -26,16 +29,12 @@ public class PoolShrinkingTask extends Task {
         } catch (Exception ex) {
             throw new TaskException("error while trying to shrink " + xaPool, ex);
         } finally {
-            TransactionManagerServices.getTaskScheduler().schedulePoolShrinking(xaPool);
+            getTaskScheduler().schedulePoolShrinking(xaPool);
         }
     }
 
-    public XAPool getXaPool() {
-        return xaPool;
-    }
-
     public String toString() {
-        return "a PoolShrinkingTask scheduled for " + executionTime + " on " + xaPool;
+        return "a PoolShrinkingTask scheduled for " + getExecutionTime() + " on " + xaPool;
     }
 
 }

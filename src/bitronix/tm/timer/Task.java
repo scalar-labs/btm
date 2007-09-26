@@ -10,10 +10,12 @@ import java.util.Date;
  */
 public abstract class Task {
 
-    protected Date executionTime;
+    private Date executionTime;
+    private TaskScheduler taskScheduler;
 
-    protected Task(Date executionTime) {
+    protected Task(Date executionTime, TaskScheduler scheduler) {
         this.executionTime = executionTime;
+        this.taskScheduler = scheduler;
     }
 
     public Date getExecutionTime() {
@@ -23,6 +25,12 @@ public abstract class Task {
     public void setExecutionTime(Date executionTime) {
         this.executionTime = executionTime;
     }
+
+    protected TaskScheduler getTaskScheduler() {
+        return taskScheduler;
+    }
+
+    public abstract Object getObject();
 
     public abstract void execute() throws TaskException;
 
