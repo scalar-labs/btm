@@ -49,11 +49,12 @@ public class PropertyUtilsTest extends TestCase {
 
         Map map = PropertyUtils.getProperties(destination);
 
-        assertEquals(5, map.size());
+        assertEquals(6, map.size());
         assertEquals("one", map.get("props.number1"));
         assertEquals("two", map.get("props.number2"));
         assertEquals(new Integer(10), map.get("anInteger"));
         assertEquals(new Boolean(true), map.get("aBoolean"));
+        assertEquals(new Boolean(false), map.get("anotherBoolean"));
         assertNull(map.get("subDestination"));
     }
 
@@ -63,6 +64,7 @@ public class PropertyUtilsTest extends TestCase {
         private int anInteger;
         private int aWriteOnlyInt;
         private boolean aBoolean;
+        private boolean anotherBoolean;
 
         public Properties getProps() {
             return props;
@@ -88,7 +90,7 @@ public class PropertyUtilsTest extends TestCase {
             this.anInteger = anInteger;
         }
 
-        public void setAWriteOnlyInt(int aReadOnlyInt) {
+        public void setAWriteOnlyInt(int aWriteOnlyInt) {
             this.aWriteOnlyInt = aWriteOnlyInt;
         }
 
@@ -98,6 +100,14 @@ public class PropertyUtilsTest extends TestCase {
 
         public void setABoolean(boolean aBoolean) {
             this.aBoolean = aBoolean;
+        }
+
+        public boolean isAnotherBoolean() {
+            return anotherBoolean;
+        }
+
+        public void setAnotherBoolean(boolean anotherBoolean) {
+            this.anotherBoolean = anotherBoolean;
         }
     }
 
