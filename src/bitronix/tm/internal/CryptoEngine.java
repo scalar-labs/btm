@@ -101,10 +101,19 @@ public class CryptoEngine {
         return sb.substring(LONG_SIZE_IN_BYTES);
     }
 
+    /**
+     * Main class that can be used as a command-line too to get a crypted version of a resource password.
+     * @param args the command-line arguments.
+     * @throws Exception when an error occurs crypting the given resource password.
+     */
     public static void main(String[] args) throws Exception {
         System.out.println("Bitronix Transaction Manager password property crypter");
+        System.out.flush();
         if (args.length < 1 || args.length > 2) {
             System.err.println("Usage: CryptoEngine <password> [cipher]");
+            System.err.println("  where:");
+            System.err.println("    <password> is mandatory and is the resource password to crypt");
+            System.err.println("    [cipher]   is optional and is the cipher to be used to crypt the password");
             System.exit(-1);
         }
 
