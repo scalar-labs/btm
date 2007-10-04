@@ -30,14 +30,10 @@ public class TaskScheduler extends Thread implements Service {
         setName("bitronix-scheduler");
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
+    /**
+     * Get the amount of tasks currently queued.
+     * @return the amount of tasks currently queued.
+     */
     public int countTasksQueued() {
         return tasks.size();
     }
@@ -71,6 +67,10 @@ public class TaskScheduler extends Thread implements Service {
         if (log.isDebugEnabled()) log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size());
     }
 
+    /**
+     * Cancel the task that will mark the transaction as timed out at the specified date.
+     * @param transaction the transaction to mark as timeout.
+     */
     public void cancelTransactionTimeout(BitronixTransaction transaction) {
         if (log.isDebugEnabled()) log.debug("cancelling transaction timeout task on " + transaction);
         if (transaction == null)
@@ -80,6 +80,11 @@ public class TaskScheduler extends Thread implements Service {
             log.warn("no task found based on object " + transaction);
     }
 
+    /**
+     * Schedule a task that will run background recovery at the specified date.
+     * @param recoverer the recovery implementation to use.
+     * @param executionTime the date at which the transaction must be marked.
+     */
     public void scheduleRecovery(Recoverer recoverer, Date executionTime) {
         if (log.isDebugEnabled()) log.debug("scheduling recovery task for " + executionTime);
         if (recoverer == null)
@@ -92,6 +97,10 @@ public class TaskScheduler extends Thread implements Service {
         if (log.isDebugEnabled()) log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size());
     }
 
+    /**
+     * Cancel the task that will run background recovery at the specified date.
+     * @param recoverer the recovery implementation to use.
+     */
     public void cancelRecovery(Recoverer recoverer) {
         if (log.isDebugEnabled()) log.debug("cancelling recovery task");
 
@@ -99,6 +108,11 @@ public class TaskScheduler extends Thread implements Service {
             log.warn("no task found based on object " + recoverer);
     }
 
+    /**
+     * Schedule a task that will tell a XA pool to close idle connections. The execution time will be provided by the
+     * XA pool itself via the {@link bitronix.tm.resource.common.XAPool#getNextShrinkDate()}.
+     * @param xaPool the XA pool to notify.
+     */
     public void schedulePoolShrinking(XAPool xaPool) {
         Date executionTime = xaPool.getNextShrinkDate();
         if (log.isDebugEnabled()) log.debug("scheduling pool shrinking task on " + xaPool + " for " + executionTime);
@@ -110,6 +124,10 @@ public class TaskScheduler extends Thread implements Service {
         if (log.isDebugEnabled()) log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size());
     }
 
+    /**
+     * Cancel the task that will tell a XA pool to close idle connections.
+     * @param xaPool the XA pool to notify.
+     */
     public void cancelPoolShrinking(XAPool xaPool) {
         if (log.isDebugEnabled()) log.debug("cancelling pool shrinking task on " + xaPool);
         if (xaPool == null)
@@ -140,6 +158,14 @@ public class TaskScheduler extends Thread implements Service {
             }
             return false;
         }
+    }
+
+    void setActive(boolean active) {
+        this.active = active;
+    }
+
+    private boolean isActive() {
+        return active;
     }
 
     public void run() {
