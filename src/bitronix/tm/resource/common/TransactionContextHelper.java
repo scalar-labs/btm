@@ -103,7 +103,7 @@ public class TransactionContextHelper {
                 if (log.isDebugEnabled()) log.debug("not resource in enlisting global transaction context, immediately releasing to pool " + xaStatefulHolder);
                 xaStatefulHolder.setState(XAResourceHolder.STATE_IN_POOL);
             } else {
-                throw new BitronixSystemException("cannot close a resource producer when one of its XAResource's is taking part in an unfinished global transaction");
+                throw new BitronixSystemException("cannot close a resource when its XAResource is taking part in an unfinished global transaction");
             }
         } else if (bean.getDeferConnectionRelease()) {
             // global mode, defer connection requeuing
