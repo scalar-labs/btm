@@ -5,7 +5,7 @@ import bitronix.tm.resource.common.XAPool;
 import java.util.Date;
 
 /**
- * This task is used to run the background recovery.
+ * This task is used to notify a XA pool to close idle connections.
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban
