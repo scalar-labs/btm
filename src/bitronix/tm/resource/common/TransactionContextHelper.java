@@ -86,43 +86,13 @@ public class TransactionContextHelper {
     }
 
     /**
-     * Switches the {@link XAResourceHolder}'s state appropriately after the acquired resource handle has been closed.
+     * Switch the {@link XAStatefulHolder}'s state appropriately after the acquired resource handle has been closed.
      * The pooled resource will either be marked as closed or not accessible, depending on the value of the bean's
      * <code>deferConnectionRelease</code> property and will be marked for release after 2PC execution in the latter case.
-     * @param xaResourceHolder the {@link XAResourceHolder} to requeue.
+     * @param xaStatefulHolder the {@link XAStatefulHolder} to requeue.
      * @param bean the {@link ResourceBean} of the {@link XAResourceHolder}.
      * @throws BitronixSystemException
      */
-    public static void requeue(XAResourceHolder xaResourceHolder, ResourceBean bean) throws BitronixSystemException {
-        BitronixTransaction currentTransaction = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
-        if (log.isDebugEnabled()) log.debug("requeuing " + xaResourceHolder + " from " + currentTransaction);
-
-        if (!TransactionContextHelper.isInEnlistingGlobalTransactionContext(xaResourceHolder, currentTransaction)) {
-            if (!TransactionContextHelper.isEnlistedInSomeTransaction(xaResourceHolder)) {
-                // local mode, always requeue connection immediately
-                if (log.isDebugEnabled()) log.debug("not in enlisting global transaction context, immediately releasing to pool " + xaResourceHolder);
-                xaResourceHolder.setState(XAResourceHolder.STATE_IN_POOL);
-            } else {
-                throw new BitronixSystemException("cannot close a resource when its XAResource is taking part in an unfinished global transaction");
-            }
-        } else if (bean.getDeferConnectionRelease()) {
-            // global mode, defer connection requeuing
-            if (log.isDebugEnabled()) log.debug("deferring release to pool of " + xaResourceHolder);
-            xaResourceHolder.setState(XAResourceHolder.STATE_NOT_ACCESSIBLE);
-
-            if (!TransactionContextHelper.isAlreadyRegisteredForDeferredRelease(xaResourceHolder, currentTransaction)) {
-                if (log.isDebugEnabled()) log.debug("registering deferred release synchronization for " + xaResourceHolder);
-                DeferredReleaseSynchronization synchronization = new DeferredReleaseSynchronization(xaResourceHolder);
-                currentTransaction.getSynchronizations().add(synchronization);
-            }
-            else if (log.isDebugEnabled()) log.debug("already registered deferred release synchronization for " + xaResourceHolder);
-        } else {
-            // global mode, immediate connection requeuing
-            if (log.isDebugEnabled()) log.debug("immediately releasing to pool " + xaResourceHolder);
-            xaResourceHolder.setState(XAResourceHolder.STATE_IN_POOL);
-        }
-    }
-
     public static void requeue(XAStatefulHolder xaStatefulHolder, ResourceBean bean) throws BitronixSystemException {
         BitronixTransaction currentTransaction = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
         if (log.isDebugEnabled()) log.debug("requeuing " + xaStatefulHolder + " from " + currentTransaction);
@@ -153,24 +123,44 @@ public class TransactionContextHelper {
         }
     }
 
+    /**
+     * Ensure the {@link XAStatefulHolder}'s release won't be deferred anymore (when appropriate) as it has been recycled.
+     * @param xaStatefulHolder the recycled {@link XAStatefulHolder}.
+     */
+    public static void markRecycled(XAStatefulHolder xaStatefulHolder) {
+        BitronixTransaction currentTransaction = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
+        if (log.isDebugEnabled()) log.debug("marking " + xaStatefulHolder + " as recycled in " + currentTransaction);
+        List synchronizations = currentTransaction.getSynchronizations();
+
+        DeferredReleaseSynchronization deferredReleaseSynchronization = findDeferredRelease(xaStatefulHolder, currentTransaction);
+        if (deferredReleaseSynchronization != null) {
+            if (log.isDebugEnabled()) log.debug(xaStatefulHolder + " has been recycled, unregistering deferred release from " + currentTransaction);
+            synchronizations.remove(deferredReleaseSynchronization);
+        }
+    }
+
+
     /* private methods must not call TransactionManagerServices.getTransactionManager().getCurrentTransaction() */
 
     private static boolean isAlreadyRegisteredForDeferredRelease(XAStatefulHolder xaStatefulHolder, BitronixTransaction currentTransaction) {
-        boolean alreadyDeferred = false;
+        boolean alreadyDeferred = findDeferredRelease(xaStatefulHolder, currentTransaction) != null;
+        if (log.isDebugEnabled()) log.debug(xaStatefulHolder + " is " + (alreadyDeferred ? "" : "not ") + "already registered for deferred release in " + currentTransaction);
+        return alreadyDeferred;
+    }
+
+    private static DeferredReleaseSynchronization findDeferredRelease(XAStatefulHolder xaStatefulHolder, BitronixTransaction currentTransaction) {
         List synchronizations = currentTransaction.getSynchronizations();
         for (int i = 0; i < synchronizations.size(); i++) {
             Synchronization synchronization = (Synchronization) synchronizations.get(i);
             if (synchronization instanceof DeferredReleaseSynchronization) {
                 DeferredReleaseSynchronization deferredReleaseSynchronization = (DeferredReleaseSynchronization) synchronization;
                 if (deferredReleaseSynchronization.getXAStatefulHolder() == xaStatefulHolder) {
-                    alreadyDeferred = true;
-                    break;
+                    return deferredReleaseSynchronization;
                 }
             } // if synchronization instanceof DeferredReleaseSynchronization
         } // for
 
-        if (log.isDebugEnabled()) log.debug(xaStatefulHolder + " is " + (alreadyDeferred ? "" : "not ") + "already registered for deferred release in " + currentTransaction);
-        return alreadyDeferred;
+        return null;
     }
 
     private static boolean isEnlistedInSomeTransaction(XAResourceHolder xaResourceHolder) throws BitronixSystemException {
@@ -250,21 +240,4 @@ public class TransactionContextHelper {
         return null;
     }
 
-    public static void markRecycled(XAStatefulHolder xaStatefulHolder) {
-        BitronixTransaction currentTransaction = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
-        List synchronizations = currentTransaction.getSynchronizations();
-        for (int i = 0; i < synchronizations.size(); i++) {
-            Synchronization synchronization = (Synchronization) synchronizations.get(i);
-            if (synchronization instanceof DeferredReleaseSynchronization) {
-                DeferredReleaseSynchronization deferredReleaseSynchronization = (DeferredReleaseSynchronization) synchronization;
-                if (deferredReleaseSynchronization.getXAStatefulHolder() == xaStatefulHolder) {
-                    if (log.isDebugEnabled()) log.debug(xaStatefulHolder + " has been recycled, unregistering deferred release from " + currentTransaction);
-                    synchronizations.remove(deferredReleaseSynchronization);
-                    break;
-                }
-            } // if synchronization instanceof DeferredReleaseSynchronization
-            log.warn("cannot unregister DeferredReleaseSynchronization of " + xaStatefulHolder + " from " + currentTransaction);
-        } // for
-
-    }
 }
