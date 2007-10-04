@@ -15,6 +15,7 @@ import java.util.Iterator;
  *
  * @see bitronix.tm.resource.common.ResourceBean
  * @author lorban
+ * @deprecated superseded by {@link ResourceObjectFactory}.
  */
 public class ResourceFactory implements ObjectFactory {
 

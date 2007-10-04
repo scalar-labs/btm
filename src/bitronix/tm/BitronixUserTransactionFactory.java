@@ -6,6 +6,7 @@ package bitronix.tm;
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban
+ * @deprecated superseded by {@link BitronixUserTransactionObjectFactory}.
  */
-public class BitronixUserTransactionFactory extends BitronixTransactionManagerFactory {
+public class BitronixUserTransactionFactory extends BitronixTransactionManagerObjectFactory {
 }

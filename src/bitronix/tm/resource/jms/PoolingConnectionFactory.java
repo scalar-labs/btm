@@ -3,7 +3,7 @@ package bitronix.tm.resource.jms;
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.recovery.RecoveryException;
 import bitronix.tm.resource.ResourceConfigurationException;
-import bitronix.tm.resource.ResourceFactory;
+import bitronix.tm.resource.ResourceObjectFactory;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.*;
 import bitronix.tm.resource.jms.inbound.asf.BitronixServerSessionPool;
@@ -218,7 +218,7 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
         return new Reference(
                 PoolingConnectionFactory.class.getName(),
                 new StringRefAddr("uniqueName", getUniqueName()),
-                ResourceFactory.class.getName(),
+                ResourceObjectFactory.class.getName(),
                 null);
     }
 

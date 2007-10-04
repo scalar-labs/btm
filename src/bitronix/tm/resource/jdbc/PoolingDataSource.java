@@ -3,7 +3,7 @@ package bitronix.tm.resource.jdbc;
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.recovery.RecoveryException;
 import bitronix.tm.resource.ResourceConfigurationException;
-import bitronix.tm.resource.ResourceFactory;
+import bitronix.tm.resource.ResourceObjectFactory;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.*;
 import org.slf4j.Logger;
@@ -193,7 +193,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         return new Reference(
                 PoolingDataSource.class.getName(),
                 new StringRefAddr("uniqueName", getUniqueName()),
-                ResourceFactory.class.getName(),
+                ResourceObjectFactory.class.getName(),
                 null);
     }
 

@@ -25,8 +25,8 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionManager.class);
 
-    private final static ThreadLocal threadLocalContexts = new ThreadLocal();
-    private final static Map inFlightTransactions = Collections.synchronizedMap(new HashMap());
+    private final ThreadLocal threadLocalContexts = new ThreadLocal();
+    private final Map inFlightTransactions = Collections.synchronizedMap(new HashMap());
     private boolean shuttingDown;
 
     /**
@@ -34,7 +34,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * synchronously. If <code>bitronix.tm.timer.backgroundRecoveryInterval</code> is greater than 0, the recovery
      * service gets scheduled for background recovery.
      */
-    protected BitronixTransactionManager() {
+    public BitronixTransactionManager() {
         try {
             shuttingDown = false;
             logVersion();
@@ -185,7 +185,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         return new Reference(
                 BitronixTransactionManager.class.getName(),
                 null,
-                BitronixTransactionManagerFactory.class.getName(),
+                BitronixTransactionManagerObjectFactory.class.getName(),
                 null
         );
     }

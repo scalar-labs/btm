@@ -13,6 +13,7 @@ import java.util.Hashtable;
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban
+ * @deprecated superseded by {@link BitronixTransactionManagerObjectFactory}.
  */
 public class BitronixTransactionManagerFactory implements ObjectFactory {
 
