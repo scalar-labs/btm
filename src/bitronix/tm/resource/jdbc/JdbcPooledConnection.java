@@ -10,9 +10,6 @@ import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.ConnectionEvent;
-import javax.sql.ConnectionEventListener;
-import javax.sql.PooledConnection;
 import javax.sql.XAConnection;
 import javax.transaction.SystemException;
 import javax.transaction.xa.XAResource;
@@ -25,16 +22,15 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Implementation of a JDBC {@link PooledConnection} wrapping vendor's {@link XAConnection} implementation.
+ * Implementation of a JDBC pooled connection wrapping vendor's {@link XAConnection} implementation.
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban
  */
-public class JdbcPooledConnection extends AbstractXAResourceHolder implements PooledConnection, StateChangeListener, JdbcPooledConnectionMBean {
+public class JdbcPooledConnection extends AbstractXAResourceHolder implements StateChangeListener, JdbcPooledConnectionMBean {
 
     private final static Logger log = LoggerFactory.getLogger(JdbcPooledConnection.class);
 
-    private List connectionEventListeners = new ArrayList();
     private XAConnection xaConnection;
     private Connection connection;
     private XAResource xaResource;
@@ -69,22 +65,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
 
     public RecoveryXAResourceHolder createRecoveryXAResourceHolder() {
         return new RecoveryXAResourceHolder(this);
-    }
-
-    public Connection getConnection() throws SQLException {
-        if (log.isDebugEnabled()) log.debug("getting connection handle from " + this);
-        int oldState = getState();
-        setState(STATE_ACCESSIBLE);
-        connection = xaConnection.getConnection();
-        if (oldState == STATE_IN_POOL) {
-            if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state STATE_IN_POOL, testing it");
-            testConnection(connection);
-        }
-        else {
-            if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state " + Decoder.decodeXAStatefulHolderState(oldState) + ", no need to test it");
-        }
-        if (log.isDebugEnabled()) log.debug("got connection handle from " + this);
-        return new JdbcConnectionHandle(this, connection);
     }
 
     private void testConnection(Connection connection) throws SQLException {
@@ -141,14 +121,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
         return (xaResourceHolderState.isStarted()) && (!xaResourceHolderState.isSuspended()) && (!xaResourceHolderState.isEnded());
     }
 
-    public void addConnectionEventListener(ConnectionEventListener listener) {
-        connectionEventListeners.add(listener);
-    }
-
-    public void removeConnectionEventListener(ConnectionEventListener listener) {
-        connectionEventListeners.remove(listener);
-    }
-
     public PoolingDataSource getPoolingDataSource() {
         return poolingDataSource;
     }
@@ -160,14 +132,25 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
     }
 
     public Object getConnectionHandle() throws Exception {
-        return getConnection();
+        if (log.isDebugEnabled()) log.debug("getting connection handle from " + this);
+        int oldState = getState();
+        setState(STATE_ACCESSIBLE);
+        connection = xaConnection.getConnection();
+        if (oldState == STATE_IN_POOL) {
+            if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state STATE_IN_POOL, testing it");
+            testConnection(connection);
+        }
+        else {
+            if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state " + Decoder.decodeXAStatefulHolderState(oldState) + ", no need to test it");
+        }
+        if (log.isDebugEnabled()) log.debug("got connection handle from " + this);
+        return new JdbcConnectionHandle(this, connection);
     }
 
     public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
         if (newState == STATE_IN_POOL) {
             if (log.isDebugEnabled()) log.debug("requeued JDBC connection of " + poolingDataSource);
             lastReleaseDate = new Date();
-            fireCloseEvent();
         }
         if (oldState == STATE_IN_POOL && newState == STATE_ACCESSIBLE) {
             acquisitionDate = new Date();
@@ -196,15 +179,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements Po
 
     public String toString() {
         return "a JdbcPooledConnection from datasource " + poolingDataSource.getUniqueName() + " in state " + Decoder.decodeXAStatefulHolderState(getState()) + " wrapping " + xaConnection;
-    }
-
-    private void fireCloseEvent() {
-        if (log.isDebugEnabled()) log.debug("notifying " + connectionEventListeners.size() + " connectionEventListener(s) about closing of " + this);
-        ConnectionEvent event = new ConnectionEvent(this);
-        for (int i = 0; i < connectionEventListeners.size(); i++) {
-            ConnectionEventListener connectionEventListener = (ConnectionEventListener) connectionEventListeners.get(i);
-            connectionEventListener.connectionClosed(event);
-        }
     }
 
     /* management */
