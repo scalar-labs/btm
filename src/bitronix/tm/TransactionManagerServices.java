@@ -142,7 +142,13 @@ public class TransactionManagerServices {
     }
 
     static {
-        Runtime.getRuntime().addShutdownHook(new ShutdownHandler());
+        if (System.getProperty("bitronix.tm.registerShutdownHook", "true").equalsIgnoreCase("true")) {
+            if (log.isDebugEnabled()) log.debug("registering shutdown hook");
+            Runtime.getRuntime().addShutdownHook(new ShutdownHandler());
+        }
+        else {
+            if (log.isDebugEnabled()) log.debug("not registering shutdown hook");
+        }
     }
 
     private static class ShutdownHandler extends Thread {
