@@ -4,8 +4,9 @@ import java.util.List;
 import java.util.Date;
 
 /**
- * Wrappers of a poolable XA object must implement this interface. It defines all the services that must be
- * implemented by the wrapper as well as the pooling lifecycle states.
+ * Any pooled connection class must implement the {@link XAStatefulHolder} interface. It defines all the services
+ * that must be implemented by the connection as well as the pooling lifecycle states.
+ * Instances of this interface have to create and manage {@link XAResourceHolder}s.
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban
@@ -78,7 +79,7 @@ public interface XAStatefulHolder {
     public Object getConnectionHandle() throws Exception;
 
     /**
-     * Close the physical connection implementing {@link bitronix.tm.resource.common.XAStatefulHolder}.
+     * Close the physical connection that this {@link bitronix.tm.resource.common.XAStatefulHolder} represents.
      * @throws Exception a resource-specific exception thrown when there is an error closing the physical connection.
      */
     public void close() throws Exception;

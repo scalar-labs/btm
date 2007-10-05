@@ -7,7 +7,8 @@ import javax.transaction.xa.XAResource;
 import java.io.Serializable;
 
 /**
- * All XA-capable wrappers must implement this interface.
+ * A {@link XAResourceProducer} is a {@link XAStatefulHolder} factory. It must be implemented by any class that is
+ * able to produce pooled XA connections.
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban

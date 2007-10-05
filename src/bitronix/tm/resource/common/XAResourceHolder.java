@@ -5,10 +5,11 @@ import bitronix.tm.internal.XAResourceHolderState;
 import javax.transaction.xa.XAResource;
 
 /**
- * {@link XAResource} wrappers must implement this interface. It defines all the services that must be implemented by
- * the wrapper.
+ * {@link XAResource} wrappers must implement this interface. It defines a way to get access to the transactional
+ * state of this {@link XAResourceHolder}.
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
+ * @see XAResourceHolderState
  * @author lorban
  */
 public interface XAResourceHolder extends XAStatefulHolder {
