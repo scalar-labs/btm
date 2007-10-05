@@ -42,14 +42,16 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         poolingDataSource1 = new PoolingDataSource();
         poolingDataSource1.setClassName(MockXADataSource.class.getName());
         poolingDataSource1.setUniqueName(DATASOURCE1_NAME);
-        poolingDataSource1.setPoolSize(POOL_SIZE);
+        poolingDataSource1.setMinPoolSize(POOL_SIZE);
+        poolingDataSource1.setMaxPoolSize(POOL_SIZE);
         poolingDataSource1.setAllowLocalTransactions(true);
         poolingDataSource1.init();
 
         poolingDataSource2 = new PoolingDataSource();
         poolingDataSource2.setClassName(MockXADataSource.class.getName());
         poolingDataSource2.setUniqueName(DATASOURCE2_NAME);
-        poolingDataSource2.setPoolSize(POOL_SIZE);
+        poolingDataSource2.setMinPoolSize(POOL_SIZE);
+        poolingDataSource2.setMaxPoolSize(POOL_SIZE);
         poolingDataSource2.setAllowLocalTransactions(true);
         poolingDataSource2.init();
 

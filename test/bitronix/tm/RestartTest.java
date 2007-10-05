@@ -29,7 +29,7 @@ public class RestartTest extends TestCase {
             PoolingDataSource pds = new PoolingDataSource();
             pds.setClassName(MockXADataSource.class.getName());
             pds.setUniqueName("ds");
-            pds.setPoolSize(1);
+            pds.setMaxPoolSize(1);
             pds.init();
 
             try {
@@ -51,7 +51,7 @@ public class RestartTest extends TestCase {
         PoolingDataSource pds = new PoolingDataSource();
         pds.setClassName(MockXADataSource.class.getName());
         pds.setUniqueName("ds");
-        pds.setPoolSize(1);
+        pds.setMaxPoolSize(1);
         pds.init();
 
         for (int i=0; i<3 ;i++) {

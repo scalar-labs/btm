@@ -33,14 +33,16 @@ public abstract class AbstractMockJmsTest extends TestCase {
         poolingConnectionFactory1.setClassName(MockXAConnectionFactory.class.getName());
         poolingConnectionFactory1.setUniqueName(CONNECTION_FACTORY1_NAME);
         poolingConnectionFactory1.setAcquisitionTimeout(5);
-        poolingConnectionFactory1.setPoolSize(POOL_SIZE);
+        poolingConnectionFactory1.setMinPoolSize(POOL_SIZE);
+        poolingConnectionFactory1.setMaxPoolSize(POOL_SIZE);
         poolingConnectionFactory1.init();
 
         poolingConnectionFactory2 = new PoolingConnectionFactory();
         poolingConnectionFactory2.setClassName(MockXAConnectionFactory.class.getName());
         poolingConnectionFactory2.setUniqueName(CONNECTION_FACTORY2_NAME);
         poolingConnectionFactory2.setAcquisitionTimeout(5);
-        poolingConnectionFactory2.setPoolSize(POOL_SIZE);
+        poolingConnectionFactory2.setMinPoolSize(POOL_SIZE);
+        poolingConnectionFactory2.setMaxPoolSize(POOL_SIZE);
         poolingConnectionFactory2.init();
 
         // change disk journal into mock journal

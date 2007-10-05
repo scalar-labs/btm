@@ -56,14 +56,16 @@ public class Phase1FailureTest extends TestCase {
         PoolingDataSource poolingDataSource1 = new PoolingDataSource();
         poolingDataSource1.setClassName(MockXADataSource.class.getName());
         poolingDataSource1.setUniqueName("pds1");
-        poolingDataSource1.setPoolSize(5);
+        poolingDataSource1.setMinPoolSize(5);
+        poolingDataSource1.setMaxPoolSize(5);
         poolingDataSource1.setAutomaticEnlistingEnabled(true);
         poolingDataSource1.init();
 
         PoolingDataSource poolingDataSource2 = new PoolingDataSource();
         poolingDataSource2.setClassName(MockXADataSource.class.getName());
         poolingDataSource2.setUniqueName("pds2");
-        poolingDataSource2.setPoolSize(5);
+        poolingDataSource2.setMinPoolSize(5);
+        poolingDataSource2.setMaxPoolSize(5);
         poolingDataSource2.setAutomaticEnlistingEnabled(true);
         poolingDataSource2.init();
 
@@ -149,14 +151,16 @@ public class Phase1FailureTest extends TestCase {
         PoolingDataSource poolingDataSource1 = new PoolingDataSource();
         poolingDataSource1.setClassName(MockXADataSource.class.getName());
         poolingDataSource1.setUniqueName("pds1");
-        poolingDataSource1.setPoolSize(5);
+        poolingDataSource1.setMinPoolSize(5);
+        poolingDataSource1.setMaxPoolSize(5);
         poolingDataSource1.setAutomaticEnlistingEnabled(true);
         poolingDataSource1.init();
 
         PoolingDataSource poolingDataSource2 = new PoolingDataSource();
         poolingDataSource2.setClassName(MockXADataSource.class.getName());
         poolingDataSource2.setUniqueName("pds2");
-        poolingDataSource2.setPoolSize(5);
+        poolingDataSource2.setMinPoolSize(5);
+        poolingDataSource2.setMaxPoolSize(5);
         poolingDataSource2.setAutomaticEnlistingEnabled(true);
         poolingDataSource2.init();
 
