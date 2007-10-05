@@ -250,6 +250,33 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         }
 
         log.info("shutting down Bitronix Transaction Manager");
+        internalShutdown();
+
+        if (log.isDebugEnabled()) log.debug("shutting down resource loader");
+        TransactionManagerServices.getResourceLoader().shutdown();
+
+        if (log.isDebugEnabled()) log.debug("shutting down executor");
+        TransactionManagerServices.getExecutor().shutdown();
+
+        if (log.isDebugEnabled()) log.debug("shutting task scheduler");
+        TransactionManagerServices.getTaskScheduler().shutdown();
+
+        if (log.isDebugEnabled()) log.debug("shutting down disk journal");
+        TransactionManagerServices.getJournal().shutdown();
+
+        if (log.isDebugEnabled()) log.debug("shutting down recoverer");
+        TransactionManagerServices.getRecoverer().shutdown();
+
+        if (log.isDebugEnabled()) log.debug("shutting down configuration");
+        TransactionManagerServices.getConfiguration().shutdown();
+
+        // clear references
+        TransactionManagerServices.clear();
+
+        if (log.isDebugEnabled()) log.debug("shutdown ran successfully");
+    }
+
+    private void internalShutdown() {
         shuttingDown = true;
         dumpTransactionContexts();
 
@@ -278,29 +305,6 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         else {
             if (log.isDebugEnabled()) log.debug("all transactions finished, resuming shutdown");
         }
-
-        if (log.isDebugEnabled()) log.debug("shutting down resource loader");
-        TransactionManagerServices.getResourceLoader().shutdown();
-
-        if (log.isDebugEnabled()) log.debug("shutting down executor");
-        TransactionManagerServices.getExecutor().shutdown();
-
-        if (log.isDebugEnabled()) log.debug("shutting task scheduler");
-        TransactionManagerServices.getTaskScheduler().shutdown();
-
-        if (log.isDebugEnabled()) log.debug("shutting down disk journal");
-        TransactionManagerServices.getJournal().shutdown();
-
-        if (log.isDebugEnabled()) log.debug("shutting down recoverer");
-        TransactionManagerServices.getRecoverer().shutdown();
-
-        if (log.isDebugEnabled()) log.debug("shutting down configuration");
-        TransactionManagerServices.getConfiguration().shutdown();
-
-        // clear references
-        TransactionManagerServices.clear();
-
-        if (log.isDebugEnabled()) log.debug("shutdown ran successfully");
     }
 
     public String toString() {
