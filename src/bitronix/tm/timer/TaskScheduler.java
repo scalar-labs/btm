@@ -77,7 +77,7 @@ public class TaskScheduler extends Thread implements Service {
             throw new IllegalArgumentException("expected a non-null transaction");
 
         if (!removeTaskByObject(transaction))
-            log.warn("no task found based on object " + transaction);
+            if (log.isDebugEnabled()) log.debug("no task found based on object " + transaction);
     }
 
     /**
@@ -105,7 +105,7 @@ public class TaskScheduler extends Thread implements Service {
         if (log.isDebugEnabled()) log.debug("cancelling recovery task");
 
         if (!removeTaskByObject(recoverer))
-            log.warn("no task found based on object " + recoverer);
+            if (log.isDebugEnabled()) log.debug("no task found based on object " + recoverer);
     }
 
     /**
@@ -134,7 +134,7 @@ public class TaskScheduler extends Thread implements Service {
             throw new IllegalArgumentException("expected a non-null XA pool");
 
         if (!removeTaskByObject(xaPool))
-            log.warn("no task found based on object " + xaPool);
+            if (log.isDebugEnabled()) log.debug("no task found based on object " + xaPool);
     }
 
     private void addTask(Task task) {
