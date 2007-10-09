@@ -23,6 +23,7 @@ public class MockXAResource implements XAResource {
     private XAException commitException;
     private XAException rollbackException;
     private RuntimeException prepareRuntimeException;
+    private XAException recoverException;
 
     public MockXAResource(MockXADataSource xads) {
         this.xads = xads;
@@ -59,6 +60,8 @@ public class MockXAResource implements XAResource {
     }
 
     public Xid[] recover(int flag) throws XAException {
+        if (recoverException != null)
+            throw recoverException;
         if (xads == null)
             return new Xid[0];
         return xads.getInDoubtXids();
@@ -122,5 +125,9 @@ public class MockXAResource implements XAResource {
 
     public void setRollbackException(XAException rollbackException) {
         this.rollbackException = rollbackException;
+    }
+
+    public void setRecoverException(XAException recoverException) {
+        this.recoverException = recoverException;
     }
 }

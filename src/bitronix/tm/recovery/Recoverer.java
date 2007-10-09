@@ -165,7 +165,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 if (log.isDebugEnabled()) log.debug("recovered " + xids.size() + " XID(s) from resource " + uniqueName);
                 recoveredXidSets.put(uniqueName, xids);
             } catch (XAException ex) {
-                throw new RecoveryException("error running recovery on resource " + uniqueName + " - " + Decoder.decodeXAExceptionErrorCode(ex), ex);
+                throw new RecoveryException("error running recovery on resource " + uniqueName + " (" + Decoder.decodeXAExceptionErrorCode(ex) + ")", ex);
             } catch (Exception ex) {
                 throw new RecoveryException("error running recovery on resource " + uniqueName, ex);
             }
@@ -189,17 +189,10 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         if (log.isDebugEnabled()) log.debug("running recovery on " + producer);
 
         try {
-            int failureCount = 0;
-            int xidCount = 0;
             XAResourceHolderState xaResourceHolderState = producer.startRecovery();
             if (log.isDebugEnabled()) log.debug("recovering with STARTRSCAN");
-            try {
-                xidCount = recover(xaResourceHolderState, xids, XAResource.TMSTARTRSCAN);
-                if (log.isDebugEnabled()) log.debug("STARTRSCAN recovered " + xidCount + " xid(s) on " + producer.getUniqueName());
-            } catch (XAException ex) {
-                if (log.isDebugEnabled()) log.debug("STARTRSCAN recovery call failed", ex);
-                failureCount++;
-            }
+            int xidCount = recover(xaResourceHolderState, xids, XAResource.TMSTARTRSCAN);
+            if (log.isDebugEnabled()) log.debug("STARTRSCAN recovered " + xidCount + " xid(s) on " + producer.getUniqueName());
 
             try {
                 while (xidCount > 0) {
@@ -209,7 +202,6 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 }
             } catch (XAException ex) {
                 if (log.isDebugEnabled()) log.debug("NOFLAGS recovery call failed", ex);
-                failureCount++;
             }
 
             try {
@@ -218,11 +210,6 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 if (log.isDebugEnabled()) log.debug("ENDRSCAN recovered " + xidCount + " xid(s) on " + producer.getUniqueName());
             } catch (XAException ex) {
                 if (log.isDebugEnabled()) log.debug("ENDRSCAN recovery call failed", ex);
-                failureCount++;
-            }
-
-            if (failureCount >= 3) {
-                log.warn("all 3 recovery calls style failed on resource" + producer.getUniqueName() + ". Please manually check the resource.");
             }
         } finally {
             producer.endRecovery();
