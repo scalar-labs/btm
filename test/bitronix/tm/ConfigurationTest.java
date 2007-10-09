@@ -64,5 +64,10 @@ public class ConfigurationTest extends TestCase {
         assertEquals(false, Configuration.getBoolean(props, "faux", true));
         assertEquals(true, Configuration.getBoolean(props, "wrong", true));
     }
+    
+    public void testToString() {
+        String configString = new Configuration().toString();
+        assertEquals("a Configuration with [warnAboutZeroResourceTransaction=true, logPart1Filename=btm1.tlog, resourceConfigurationFilename=null, filterLogStatus=false, transactionRetryInterval=10, serverId=null, asynchronous2Pc=false, forcedWriteEnabled=true, defaultTransactionTimeout=60, forceBatchingEnabled=true, backgroundRecoveryInterval=0, skipCorruptedLogs=false, logPart2Filename=btm2.tlog, maxLogSizeInMb=2, gracefulShutdownInterval=10]", configString);
+    }
 
 }
