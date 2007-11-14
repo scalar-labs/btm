@@ -91,7 +91,6 @@ public class JdbcConnectionHandle implements Connection {
     public void commit() throws SQLException {
         if (jdbcPooledConnection == null)
             throw new SQLException("connection handle already closed");
-
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot commit a resource enlisted in a global transaction");
 
@@ -101,7 +100,6 @@ public class JdbcConnectionHandle implements Connection {
     public void rollback() throws SQLException {
         if (jdbcPooledConnection == null)
             throw new SQLException("connection handle already closed");
-
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot rollback a resource enlisted in a global transaction");
 
@@ -111,11 +109,37 @@ public class JdbcConnectionHandle implements Connection {
     public void rollback(Savepoint savepoint) throws SQLException {
         if (jdbcPooledConnection == null)
             throw new SQLException("connection handle already closed");
-
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot rollback a resource enlisted in a global transaction");
 
         getConnection().rollback(savepoint);
+    }
+
+    public Savepoint setSavepoint() throws SQLException {
+        if (jdbcPooledConnection == null)
+            throw new SQLException("connection handle already closed");
+        if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
+            throw new SQLException("cannot set a savepoint on a resource enlisted in a global transaction");
+
+        return getConnection().setSavepoint();
+    }
+
+    public Savepoint setSavepoint(String name) throws SQLException {
+        if (jdbcPooledConnection == null)
+            throw new SQLException("connection handle already closed");
+        if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
+            throw new SQLException("cannot set a savepoint on a resource enlisted in a global transaction");
+
+        return getConnection().setSavepoint(name);
+    }
+
+    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+        if (jdbcPooledConnection == null)
+            throw new SQLException("connection handle already closed");
+        if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
+            throw new SQLException("cannot release a savepoint on a resource enlisted in a global transaction");
+
+        getConnection().releaseSavepoint(savepoint);
     }
 
     public boolean getAutoCommit() throws SQLException {
@@ -250,14 +274,6 @@ public class JdbcConnectionHandle implements Connection {
         return getConnection().getWarnings();
     }
 
-    public Savepoint setSavepoint() throws SQLException {
-        return getConnection().setSavepoint();
-    }
-
-    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-        getConnection().releaseSavepoint(savepoint);
-    }
-
     public Map getTypeMap() throws SQLException {
         return getConnection().getTypeMap();
     }
@@ -268,10 +284,6 @@ public class JdbcConnectionHandle implements Connection {
 
     public String nativeSQL(String sql) throws SQLException {
         return getConnection().nativeSQL(sql);
-    }
-
-    public Savepoint setSavepoint(String name) throws SQLException {
-        return getConnection().setSavepoint(name);
     }
 
 }
