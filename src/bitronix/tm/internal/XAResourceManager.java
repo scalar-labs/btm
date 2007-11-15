@@ -107,7 +107,7 @@ public class XAResourceManager {
     }
 
     /**
-     * Call end on all {@link XAResourceHolderState}s enlisted in the current transaction that haven't been ended yet.
+     * Delist all {@link XAResourceHolderState}s enlisted in the current transaction that haven't been delisted yet.
      * This method should be called by the transaction manager when commit() or rollback() is called, prior to
      * run the two-phase commit protocol to ensure all non-closed connections that participated in the transaction
      * are ended.
@@ -239,8 +239,8 @@ public class XAResourceManager {
     }
 
     /**
-     * Get a List of unique names of all the enlisted {@link XAResourceHolderState}s.
-     * @return a List of unique names of all the enlisted {@link XAResourceHolderState}s.
+     * Get a {@link Set} of unique names of all the enlisted {@link XAResourceHolderState}s.
+     * @return a {@link Set} of unique names of all the enlisted {@link XAResourceHolderState}s.
      */
     public Set collectUniqueNames() {
         Set names = new HashSet();
@@ -254,9 +254,9 @@ public class XAResourceManager {
     }
 
     /**
-     * Get an Iterator on the {@link Xid}/{@link XAResourceHolderState} {@link java.util.Map.Entry} pairs registered in
+     * Get an {@link Iterator} of the {@link Xid} / {@link XAResourceHolderState} {@link java.util.Map.Entry} pairs registered in
      * this instance.
-     * @return an Iterator on the {@link Xid}/{@link XAResourceHolderState} {@link java.util.Map.Entry} pairs.
+     * @return an {@link Iterator} of the {@link Xid} / {@link XAResourceHolderState} {@link java.util.Map.Entry} pairs.
      */
     public Iterator entriesIterator() {
         return resources.entrySet().iterator();
@@ -271,15 +271,16 @@ public class XAResourceManager {
     }
 
     /**
-     * @return the GTRID of the transaction the XAResourceManager instance is attached to.
+     * Get the GTRID of the transaction the {@link XAResourceManager} instance is attached to.
+     * @return the GTRID of the transaction the {@link XAResourceManager} instance is attached to.
      */
     public Uid getGtrid() {
         return gtrid;
     }
 
     /**
-     * Return a String representation of this object.
-     * @return a String representation of this object.
+     * Return a human-readable representation of this object.
+     * @return a human-readable representation of this object.
      */
     public String toString() {
         return "a XAResourceManager with GTRID [" + gtrid + "] and " + resources.size() + " enlisted resource(s)";

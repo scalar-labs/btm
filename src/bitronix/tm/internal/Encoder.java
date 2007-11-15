@@ -1,7 +1,7 @@
 package bitronix.tm.internal;
 
 /**
- * Numbers to byte arrays encoder.
+ * Number to byte array encoder.
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban

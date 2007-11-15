@@ -102,7 +102,7 @@ public class CryptoEngine {
     }
 
     /**
-     * Main class that can be used as a command-line too to get a crypted version of a resource password.
+     * Main class that can be used as a command-line tool to get a crypted version of a resource password.
      * @param args the command-line arguments.
      * @throws Exception when an error occurs crypting the given resource password.
      */

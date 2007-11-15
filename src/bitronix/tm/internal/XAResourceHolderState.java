@@ -10,14 +10,14 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 /**
- * {@link XAResourceHolder} state container. There is one {@link XAResourceHolderState} per {@link XAResourceHolder}
- * per transaction. Instances are kept in the transaction and bound to / unbound from the {@link XAResourceHolder} as
- * the resource participates in different transactions. A {@link XAResourceHolder} without {@link XAResourceHolderState}
+ * {@link XAResourceHolder} state container.
+ * Instances are kept in the transaction and bound to / unbound from the {@link XAResourceHolder} as the
+ * resource participates in different transactions. A {@link XAResourceHolder} without {@link XAResourceHolderState}
  * is considered to be in local transaction mode.
  * <p>Objects of this class also expose resource specific configuration like the unique resource name.</p>
  * <p>The {@link XAResource} state during a transaction participation is also contained: assigned XID, transaction
  * start / end state...</p>
- * <p>There is exactly one {@link XAResourceHolderState} object per {@link XAResource} per
+ * <p>There is exactly one {@link XAResourceHolderState} object per {@link XAResourceHolder} per
  * {@link javax.transaction.Transaction}.</p>
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *

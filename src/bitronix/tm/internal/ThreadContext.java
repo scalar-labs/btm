@@ -70,8 +70,8 @@ public class ThreadContext {
     }
 
     /**
-     * Return a String representation.
-     * @return a String representation.
+     * Return a human-readable representation.
+     * @return a human-readable representation.
      */
     public String toString() {
         return "a ThreadContext with transaction " + transaction + ", default timeout " + timeout + "s";

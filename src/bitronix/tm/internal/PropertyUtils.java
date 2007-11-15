@@ -140,9 +140,9 @@ public class PropertyUtils {
     }
 
     /**
-     * Set a map of properties on the target object.
+     * Set a {@link Map} of direct or indirect properties on the target object.
      * @param target the target object on which to set the properties.
-     * @param properties a map of String/Object pairs.
+     * @param properties a {@link Map} of String/Object pairs.
      * @throws PropertyException if an error happened while trying to set a property.
      */
     public static void setProperties(Object target, Map properties) throws PropertyException {

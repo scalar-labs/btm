@@ -8,7 +8,7 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 
 /**
- * JTA contants to string decoder.
+ * Constant to string decoder.
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban
