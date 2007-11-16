@@ -20,23 +20,30 @@ public class JdbcConnectionHandle implements Connection {
     private final static Logger log = LoggerFactory.getLogger(JdbcConnectionHandle.class);
 
     private JdbcPooledConnection jdbcPooledConnection;
-    private Connection connection;
+    private Connection delegate;
+    private boolean pretendClosed = false;
 
     public JdbcConnectionHandle(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
         this.jdbcPooledConnection = jdbcPooledConnection;
-        this.connection = connection;
+        this.delegate = connection;
     }
 
     public JdbcPooledConnection getPooledConnection() {
         return jdbcPooledConnection;
     }
 
+    private Connection getDelegate() throws SQLException {
+        if (pretendClosed)
+            throw new SQLException("connection is closed");
+        return delegate;
+    }
+
     public Connection getConnection() {
-        return connection;
+        return delegate;
     }
 
     public String toString() {
-        return "a JdbcConnectionHandle of " + jdbcPooledConnection + " on " + connection;
+        return "a JdbcConnectionHandle of " + jdbcPooledConnection + " on " + delegate;
     }
 
     /**
@@ -75,16 +82,17 @@ public class JdbcConnectionHandle implements Connection {
         jdbcPooledConnection = null;
 
         /*
-         * connection.close() must happen after jdbcPooledConnection.release() so that the vendor's connection handle
+         * delegate.close() must happen after jdbcPooledConnection.release() so that the vendor's delegate handle
          * doesn't get closed if connection release is vetoed.
          */
         if (!poolingDataSource.getKeepConnectionOpenUntilAfter2Pc()) {
-            // don't set connection back to null as we want to see JDBC driver error messages when calls to the
+            // don't set delegate back to null as we want to see JDBC driver error messages when calls to the
             // connection are made after it's been closed.
-            connection.close();
+            delegate.close();
         }
         else {
-            if (log.isDebugEnabled()) log.debug("keeping connection open until after 2PC: " + connection);
+            pretendClosed = true;
+            if (log.isDebugEnabled()) log.debug("keeping connection open until after 2PC: " + delegate);
         }
     }
 
@@ -94,7 +102,7 @@ public class JdbcConnectionHandle implements Connection {
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot commit a resource enlisted in a global transaction");
 
-        getConnection().commit();
+        getDelegate().commit();
     }
 
     public void rollback() throws SQLException {
@@ -103,7 +111,7 @@ public class JdbcConnectionHandle implements Connection {
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot rollback a resource enlisted in a global transaction");
 
-        getConnection().rollback();
+        getDelegate().rollback();
     }
 
     public void rollback(Savepoint savepoint) throws SQLException {
@@ -112,7 +120,7 @@ public class JdbcConnectionHandle implements Connection {
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot rollback a resource enlisted in a global transaction");
 
-        getConnection().rollback(savepoint);
+        getDelegate().rollback(savepoint);
     }
 
     public Savepoint setSavepoint() throws SQLException {
@@ -121,7 +129,7 @@ public class JdbcConnectionHandle implements Connection {
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot set a savepoint on a resource enlisted in a global transaction");
 
-        return getConnection().setSavepoint();
+        return getDelegate().setSavepoint();
     }
 
     public Savepoint setSavepoint(String name) throws SQLException {
@@ -130,7 +138,7 @@ public class JdbcConnectionHandle implements Connection {
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot set a savepoint on a resource enlisted in a global transaction");
 
-        return getConnection().setSavepoint(name);
+        return getDelegate().setSavepoint(name);
     }
 
     public void releaseSavepoint(Savepoint savepoint) throws SQLException {
@@ -139,7 +147,7 @@ public class JdbcConnectionHandle implements Connection {
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot release a savepoint on a resource enlisted in a global transaction");
 
-        getConnection().releaseSavepoint(savepoint);
+        getDelegate().releaseSavepoint(savepoint);
     }
 
     public boolean getAutoCommit() throws SQLException {
@@ -149,7 +157,7 @@ public class JdbcConnectionHandle implements Connection {
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             return false;
 
-        return getConnection().getAutoCommit();
+        return getDelegate().getAutoCommit();
     }
 
     public void setAutoCommit(boolean autoCommit) throws SQLException {
@@ -157,133 +165,133 @@ public class JdbcConnectionHandle implements Connection {
             throw new SQLException("connection handle already closed");
 
         if (!jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
-            getConnection().setAutoCommit(autoCommit);
+            getDelegate().setAutoCommit(autoCommit);
         else if (autoCommit)
             throw new SQLException("autocommit is not allowed on a resource enlisted in a global transaction");
     }
 
     public Statement createStatement() throws SQLException {
         enlistResource();
-        return getConnection().createStatement();
+        return getDelegate().createStatement();
     }
 
     public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
         enlistResource();
-        return getConnection().createStatement(resultSetType, resultSetConcurrency);
+        return getDelegate().createStatement(resultSetType, resultSetConcurrency);
     }
 
     public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         enlistResource();
-        return getConnection().createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
+        return getDelegate().createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
     }
 
     public CallableStatement prepareCall(String sql) throws SQLException {
         enlistResource();
-        return getConnection().prepareCall(sql);
+        return getDelegate().prepareCall(sql);
     }
 
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         enlistResource();
-        return getConnection().prepareCall(sql, resultSetType, resultSetConcurrency);
+        return getDelegate().prepareCall(sql, resultSetType, resultSetConcurrency);
     }
 
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         enlistResource();
-        return getConnection().prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+        return getDelegate().prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
     }
 
     public PreparedStatement prepareStatement(String sql) throws SQLException {
         enlistResource();
-        return getConnection().prepareStatement(sql);
+        return getDelegate().prepareStatement(sql);
     }
 
     public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
         enlistResource();
-        return getConnection().prepareStatement(sql, autoGeneratedKeys);
+        return getDelegate().prepareStatement(sql, autoGeneratedKeys);
     }
 
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         enlistResource();
-        return getConnection().prepareStatement(sql, resultSetType, resultSetConcurrency);
+        return getDelegate().prepareStatement(sql, resultSetType, resultSetConcurrency);
     }
 
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         enlistResource();
-        return getConnection().prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+        return getDelegate().prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
     }
 
     public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
         enlistResource();
-        return getConnection().prepareStatement(sql, columnIndexes);
+        return getDelegate().prepareStatement(sql, columnIndexes);
     }
 
     public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
         enlistResource();
-        return getConnection().prepareStatement(sql, columnNames);
+        return getDelegate().prepareStatement(sql, columnNames);
     }
 
     public boolean isClosed() throws SQLException {
         if (jdbcPooledConnection == null)
             return true;
-        return getConnection().isClosed();
+        return getDelegate().isClosed();
     }
 
     /* dumb wrapping of Connection methods */
 
     public int getHoldability() throws SQLException {
-        return getConnection().getHoldability();
+        return getDelegate().getHoldability();
     }
 
     public int getTransactionIsolation() throws SQLException {
-        return getConnection().getTransactionIsolation();
+        return getDelegate().getTransactionIsolation();
     }
 
     public void clearWarnings() throws SQLException {
-        getConnection().clearWarnings();
+        getDelegate().clearWarnings();
     }
 
     public boolean isReadOnly() throws SQLException {
-        return getConnection().isReadOnly();
+        return getDelegate().isReadOnly();
     }
 
     public void setHoldability(int holdability) throws SQLException {
-        getConnection().setHoldability(holdability);
+        getDelegate().setHoldability(holdability);
     }
 
     public void setTransactionIsolation(int level) throws SQLException {
-        getConnection().setTransactionIsolation(level);
+        getDelegate().setTransactionIsolation(level);
     }
 
     public void setReadOnly(boolean readOnly) throws SQLException {
-        getConnection().setReadOnly(readOnly);
+        getDelegate().setReadOnly(readOnly);
     }
 
     public String getCatalog() throws SQLException {
-        return getConnection().getCatalog();
+        return getDelegate().getCatalog();
     }
 
     public void setCatalog(String catalog) throws SQLException {
-        getConnection().setCatalog(catalog);
+        getDelegate().setCatalog(catalog);
     }
 
     public DatabaseMetaData getMetaData() throws SQLException {
-        return getConnection().getMetaData();
+        return getDelegate().getMetaData();
     }
 
     public SQLWarning getWarnings() throws SQLException {
-        return getConnection().getWarnings();
+        return getDelegate().getWarnings();
     }
 
     public Map getTypeMap() throws SQLException {
-        return getConnection().getTypeMap();
+        return getDelegate().getTypeMap();
     }
 
     public void setTypeMap(Map map) throws SQLException {
-        getConnection().setTypeMap(map);
+        getDelegate().setTypeMap(map);
     }
 
     public String nativeSQL(String sql) throws SQLException {
-        return getConnection().nativeSQL(sql);
+        return getDelegate().nativeSQL(sql);
     }
 
 }
