@@ -165,6 +165,15 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
         if (futureState == STATE_IN_POOL) {
+            try {
+                if (!connection.getAutoCommit()) {
+                    if (log.isDebugEnabled()) log.debug("resetting autocommit mode of " + connection);
+                    connection.setAutoCommit(true);
+                }
+            } catch (SQLException ex) {
+                log.warn("error resetting autocommit mode", ex);
+            }
+
             if (poolingDataSource.getKeepConnectionOpenUntilAfter2Pc()) {
                 try {
                     if (log.isDebugEnabled()) log.debug("2PC is done, closing connection: " + connection);
