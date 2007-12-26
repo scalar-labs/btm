@@ -10,10 +10,7 @@ import bitronix.tm.resource.jms.inbound.asf.BitronixServerSessionPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.JMSException;
-import javax.jms.XAConnectionFactory;
+import javax.jms.*;
 import javax.naming.NamingException;
 import javax.naming.Reference;
 import javax.naming.StringRefAddr;
@@ -38,6 +35,8 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
     private Properties serverSessionPool = new Properties();
     private boolean cacheProducersConsumers = true;
     private boolean testConnections = false;
+    private String user;
+    private String password;
 
 
     public PoolingConnectionFactory() {
@@ -111,6 +110,22 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
 
     public void setTestConnections(boolean testConnections) {
         this.testConnections = testConnections;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
 
@@ -199,7 +214,18 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
         if (!(xaFactory instanceof XAConnectionFactory))
             throw new IllegalArgumentException("class '" + xaFactory.getClass().getName() + "' does not implement " + XAConnectionFactory.class.getName());
         XAConnectionFactory xaConnectionFactory = (XAConnectionFactory) xaFactory;
-        return new JmsPooledConnection(this, xaConnectionFactory.createXAConnection());
+
+        XAConnection xaConnection;
+        if (user == null || password == null) {
+            if (log.isDebugEnabled()) log.debug("creating new JMS XAConnection with no credentials");
+            xaConnection = xaConnectionFactory.createXAConnection();
+        }
+        else {
+            if (log.isDebugEnabled()) log.debug("creating new JMS XAConnection with user <" + user + "> and password <" + password + ">");
+            xaConnection = xaConnectionFactory.createXAConnection(user, password);
+        }
+
+        return new JmsPooledConnection(this, xaConnection);
     }
 
     public XAResourceHolder findXAResourceHolder(XAResource xaResource) {

@@ -39,7 +39,7 @@ public class ResourceLoader implements Service {
     private final static String JDBC_RESOUCE_CLASSNAME = "bitronix.tm.resource.jdbc.PoolingDataSource";
     private final static String JMS_RESOUCE_CLASSNAME = "bitronix.tm.resource.jms.PoolingConnectionFactory";
     private static final String RESOURCE_BIND_PROPERTY_NAME = "bitronix.tm.resource.bind";
-    private static final String PASSWORD_PROPERTY_NAME = "driverProperties.password";
+    private static final String PASSWORD_PROPERTY_NAME = "password";
 
     private boolean bindJndi;
     private Map resourcesByUniqueName;
@@ -273,7 +273,7 @@ public class ResourceLoader implements Service {
                 lastPropertyName = propertyPair.getName();
                 String propertyValue = propertyPair.getValue();
 
-                if (PASSWORD_PROPERTY_NAME.equals(lastPropertyName)) {
+                if (lastPropertyName.endsWith(PASSWORD_PROPERTY_NAME)) {
                     propertyValue = decrypt(propertyValue);
                 }
                 PropertyUtils.setProperty(producer, lastPropertyName, propertyValue);
