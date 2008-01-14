@@ -74,9 +74,6 @@ public class JdbcConnectionHandle implements Connection {
         if (jdbcPooledConnection == null)
             return;
 
-        // keep a reference on poolingDataSource for keepConnectionOpenUntilAfter2Pc check
-        PoolingDataSource poolingDataSource = jdbcPooledConnection.getPoolingDataSource();
-
         jdbcPooledConnection.release();
         jdbcPooledConnection = null;
     }

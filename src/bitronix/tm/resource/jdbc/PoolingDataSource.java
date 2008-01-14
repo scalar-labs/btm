@@ -34,7 +34,6 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     private transient RecoveryXAResourceHolder recoveryXAResourceHolder;
     private transient JdbcConnectionHandle recoveryConnectionHandle;
     private String testQuery;
-    private boolean keepConnectionOpenUntilAfter2Pc = false;
     private int preparedStatementCacheSize = 0;
 
     public PoolingDataSource() {
@@ -118,7 +117,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     }
 
     public String toString() {
-        return "a PoolingDataSource " + (keepConnectionOpenUntilAfter2Pc ? "with keepConnectionOpenUntilAfter2Pc=true " : "") + "containing " + pool;
+        return "a PoolingDataSource containing " + pool;
     }
 
 
