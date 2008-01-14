@@ -1,10 +1,7 @@
 package bitronix.tm.resource.jdbc;
 
 import bitronix.tm.BitronixXid;
-import bitronix.tm.internal.BitronixSystemException;
-import bitronix.tm.internal.Decoder;
-import bitronix.tm.internal.ManagementRegistrar;
-import bitronix.tm.internal.XAResourceHolderState;
+import bitronix.tm.internal.*;
 import bitronix.tm.resource.common.*;
 import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
 import org.slf4j.Logger;
@@ -17,9 +14,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Implementation of a JDBC pooled connection wrapping vendor's {@link XAConnection} implementation.
@@ -36,6 +31,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     private XAResource xaResource;
     private PoolingDataSource poolingDataSource;
     private boolean emulateXa = false;
+    private LruMap statementsCache;
 
     /* management */
     private String jmxName;
@@ -47,6 +43,19 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         this.poolingDataSource = poolingDataSource;
         this.xaConnection = xaConnection;
         this.xaResource = xaConnection.getXAResource();
+        this.statementsCache = new LruMap(poolingDataSource.getPreparedStatementCacheSize());
+        statementsCache.addEvictionListener(new LruEvictionListener() {
+            public void onEviction(Object value) {
+                PreparedStatement stmt = (PreparedStatement) value;
+                try {
+                    if (log.isDebugEnabled()) log.debug("closing evicted statement " + stmt);
+                    stmt.close();
+                } catch (SQLException ex) {
+                    log.warn("error closing evicted statement", ex);
+                }
+            }
+        });
+        connection = xaConnection.getConnection();
         addStateChangeEventListener(this);
 
         if (poolingDataSource.getClassName().equals(LrcXADataSource.class.getName())) {
@@ -60,6 +69,15 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     public void close() throws SQLException {
         setState(STATE_CLOSED);
+
+        // cleanup of pooled resources
+        Iterator it = statementsCache.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry entry = (Map.Entry) it.next();
+            PreparedStatement stmt = (PreparedStatement) entry.getValue();
+            stmt.close();
+        }
+        connection.close();
         xaConnection.close();
     }
 
@@ -135,7 +153,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         if (log.isDebugEnabled()) log.debug("getting connection handle from " + this);
         int oldState = getState();
         setState(STATE_ACCESSIBLE);
-        connection = xaConnection.getConnection();
         if (oldState == STATE_IN_POOL) {
             if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state STATE_IN_POOL, testing it");
             testConnection(connection);
@@ -164,26 +181,18 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     }
 
     public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
-        if (futureState == STATE_IN_POOL) {
-            try {
-                if (!connection.getAutoCommit()) {
-                    if (log.isDebugEnabled()) log.debug("resetting autocommit mode of " + connection);
-                    connection.setAutoCommit(true);
-                }
-            } catch (SQLException ex) {
-                log.warn("error resetting autocommit mode", ex);
-            }
+    }
 
-            if (poolingDataSource.getKeepConnectionOpenUntilAfter2Pc()) {
-                try {
-                    if (log.isDebugEnabled()) log.debug("2PC is done, closing connection: " + connection);
-                    connection.close();
-                } catch (SQLException ex) {
-                    log.warn("error closing connection", ex);
-                }
-                connection = null;
-            }
-        }
+    public PreparedStatement getCachedStatement(String sql) {
+        PreparedStatement stmt = (PreparedStatement) statementsCache.get(sql);
+        if (log.isDebugEnabled()) log.debug("statement cache lookup of <" + sql + "> in " + this + ": " + stmt);
+        return stmt;
+    }
+
+    public boolean putCachedStatement(String sql, PreparedStatement stmt) {
+        if (log.isDebugEnabled()) log.debug("caching statement <" + sql + "> in " + this);
+        statementsCache.put(sql, stmt);
+        return statementsCache.get(sql) == stmt;
     }
 
     public String toString() {

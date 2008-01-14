@@ -35,6 +35,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     private transient JdbcConnectionHandle recoveryConnectionHandle;
     private String testQuery;
     private boolean keepConnectionOpenUntilAfter2Pc = false;
+    private int preparedStatementCacheSize = 0;
 
     public PoolingDataSource() {
     }
@@ -86,22 +87,12 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         this.testQuery = testQuery;
     }
 
-    /**
-     * @return true if the {@link Connection} acquired from the {@link javax.sql.XAConnection} should not be closed
-     *         until after 2PC has run, false otherwise.
-     */
-    public boolean getKeepConnectionOpenUntilAfter2Pc() {
-        return keepConnectionOpenUntilAfter2Pc;
+    public int getPreparedStatementCacheSize() {
+        return preparedStatementCacheSize;
     }
 
-    /**
-     * When set, the {@link Connection} acquired from the {@link javax.sql.XAConnection} will not be closed until
-     * after 2PC has run. Default value is false.
-     * @param keepConnectionOpenUntilAfter2Pc true if the {@link Connection} acquired from the
-     *        {@link javax.sql.XAConnection} should not be closed until after 2PC has run, false otherwise.
-     */
-    public void setKeepConnectionOpenUntilAfter2Pc(boolean keepConnectionOpenUntilAfter2Pc) {
-        this.keepConnectionOpenUntilAfter2Pc = keepConnectionOpenUntilAfter2Pc;
+    public void setPreparedStatementCacheSize(int preparedStatementCacheSize) {
+        this.preparedStatementCacheSize = preparedStatementCacheSize;
     }
 
     public Connection getConnection() throws SQLException {
