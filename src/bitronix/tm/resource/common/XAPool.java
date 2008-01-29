@@ -5,14 +5,10 @@ import org.slf4j.LoggerFactory;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.BitronixTransaction;
 import bitronix.tm.BitronixXid;
-import bitronix.tm.internal.PropertyUtils;
-import bitronix.tm.internal.Uid;
-import bitronix.tm.internal.XAResourceHolderState;
-import bitronix.tm.internal.BitronixRuntimeException;
+import bitronix.tm.internal.*;
 
 import javax.transaction.xa.XAResource;
 import java.util.*;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * Generic XA pool. {@link XAStatefulHolder} instances are created by the {@link XAPool} out of a
@@ -25,6 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 public class XAPool implements StateChangeListener {
 
     private final static Logger log = LoggerFactory.getLogger(XAPool.class);
+    private final static String PASSWORD_PROPERTY_NAME = "password";
 
     private List objects = new ArrayList();
     private ResourceBean bean;
@@ -202,7 +199,7 @@ public class XAPool implements StateChangeListener {
         objects.add(xaStatefulHolder);
     }
 
-    private static Object createXAFactory(ResourceBean bean) throws ClassNotFoundException, IllegalAccessException, InstantiationException, InvocationTargetException {
+    private static Object createXAFactory(ResourceBean bean) throws Exception {
         String className = bean.getClassName();
         if (className == null)
             throw new IllegalArgumentException("className cannot be null");
@@ -214,10 +211,27 @@ public class XAPool implements StateChangeListener {
             Map.Entry entry = (Map.Entry) it.next();
             String name = (String) entry.getKey();
             String value = (String) entry.getValue();
+
+            if (name.endsWith(PASSWORD_PROPERTY_NAME)) {
+                value = decrypt(value);
+            }
+
             if (log.isDebugEnabled()) log.debug("setting vendor property '" + name + "' to '" + value + "'");
             PropertyUtils.setProperty(xaFactory, name, value);
         }
         return xaFactory;
+    }
+
+    private static String decrypt(String resourcePassword) throws Exception {
+        int startIdx = resourcePassword.indexOf("{");
+        int endIdx = resourcePassword.indexOf("}");
+
+        if (startIdx != 0 || endIdx == -1)
+            return resourcePassword;
+
+        String cipher = resourcePassword.substring(1, endIdx);
+        if (log.isDebugEnabled()) log.debug("resource password is encrypted, decrypting " + resourcePassword);
+        return CryptoEngine.decrypt(cipher, resourcePassword.substring(endIdx + 1));
     }
 
     private XAStatefulHolder getNotAccessible() {

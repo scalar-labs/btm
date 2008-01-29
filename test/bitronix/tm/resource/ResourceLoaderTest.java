@@ -4,10 +4,14 @@ import bitronix.tm.mock.resource.jdbc.MockXADataSource;
 import bitronix.tm.mock.resource.jms.MockXAConnectionFactory;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import bitronix.tm.resource.jms.PoolingConnectionFactory;
+import bitronix.tm.resource.common.XAPool;
+import bitronix.tm.internal.PropertyUtils;
 import junit.framework.TestCase;
 
+import javax.sql.XADataSource;
 import java.util.Map;
 import java.util.Properties;
+import java.lang.reflect.Field;
 
 /**
  * Created by IntelliJ IDEA.
@@ -74,7 +78,14 @@ public class ResourceLoaderTest extends TestCase {
         assertEquals("dataSource10", pds.getUniqueName());
         assertEquals(123, pds.getMaxPoolSize());
         assertEquals(3, pds.getDriverProperties().size());
-        assertEquals("java", pds.getDriverProperties().getProperty("password"));
+        String decryptedPassword = (String) PropertyUtils.getProperty(getXADataSource(pds), "password");
+        assertEquals("java", decryptedPassword);
+    }
+
+    protected XADataSource getXADataSource(PoolingDataSource poolingDataSource) throws NoSuchFieldException, IllegalAccessException {
+        Field field = PoolingDataSource.class.getDeclaredField("xaDataSource");
+        field.setAccessible(true);
+        return (XADataSource) field.get(poolingDataSource);
     }
 
     public void testBindOneJms() throws Exception {
