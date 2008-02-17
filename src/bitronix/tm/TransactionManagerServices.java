@@ -131,7 +131,10 @@ public class TransactionManagerServices {
         return transactionManager != null;
     }
 
-    static synchronized void clear() {
+    /**
+     * Clear services references. Called at the end of the shutdown procedure.
+     */
+    protected static synchronized void clear() {
         transactionManager = null;
         configuration = null;
         journal = null;
@@ -139,25 +142,6 @@ public class TransactionManagerServices {
         resourceLoader = null;
         recoverer = null;
         executor = null;
-    }
-
-    static {
-        if (System.getProperty("bitronix.tm.registerShutdownHook", "true").equalsIgnoreCase("true")) {
-            if (log.isDebugEnabled()) log.debug("registering shutdown hook");
-            Runtime.getRuntime().addShutdownHook(new ShutdownHandler());
-        }
-        else {
-            if (log.isDebugEnabled()) log.debug("not registering shutdown hook");
-        }
-    }
-
-    private static class ShutdownHandler extends Thread {
-        public void run() {
-            if (transactionManager != null) {
-                if (log.isDebugEnabled()) log.debug("shutdown hook is shutting down Transaction Manager");
-                transactionManager.shutdown();
-            }
-        }
     }
 
 }
