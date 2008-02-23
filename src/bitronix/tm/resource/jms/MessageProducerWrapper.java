@@ -18,7 +18,7 @@ import javax.transaction.SystemException;
 public class MessageProducerWrapper implements MessageProducer {
 
     private MessageProducer messageProducer;
-    private DualSessionWrapper session;
+    protected DualSessionWrapper session;
     private PoolingConnectionFactory poolingConnectionFactory;
 
     public MessageProducerWrapper(MessageProducer messageProducer, DualSessionWrapper session, PoolingConnectionFactory poolingConnectionFactory) {
@@ -27,7 +27,7 @@ public class MessageProducerWrapper implements MessageProducer {
         this.poolingConnectionFactory = poolingConnectionFactory;
     }
 
-    private MessageProducer getMessageProducer() {
+    public MessageProducer getMessageProducer() {
         return messageProducer;
     }
 
@@ -36,7 +36,7 @@ public class MessageProducerWrapper implements MessageProducer {
      * If no transaction is running then this method does nothing.
      * @throws JMSException
      */
-    private void enlistResource() throws JMSException {
+    protected void enlistResource() throws JMSException {
         if (poolingConnectionFactory.getAutomaticEnlistingEnabled()) {
             try {
                 TransactionContextHelper.enlistInCurrentTransaction(session, poolingConnectionFactory);

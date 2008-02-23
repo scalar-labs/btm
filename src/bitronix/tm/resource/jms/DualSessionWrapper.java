@@ -34,6 +34,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
     private XAResource xaResource;
     private Map messageProducers = new HashMap();
     private Map messageConsumers = new HashMap();
+    private Map topicSubscribers = new HashMap();
     private MessageListener listener;
 
     public DualSessionWrapper(JmsPooledConnection pooledConnection, boolean transacted, int acknowledgeMode) {
@@ -264,6 +265,40 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return messageConsumer;
     }
 
+    public TopicSubscriber createDurableSubscriber(Topic topic, String name) throws JMSException {
+        MessageProducerConsumerKey key = new MessageProducerConsumerKey(topic);
+        if (log.isDebugEnabled()) log.debug("looking for durable subscriber based on " + key);
+        TopicSubscriberWrapper topicSubscriber = (TopicSubscriberWrapper) topicSubscribers.get(key);
+        if (topicSubscriber == null) {
+            if (log.isDebugEnabled()) log.debug("found no durable subscriber based on " + key + ", creating it");
+            topicSubscriber = new TopicSubscriberWrapper(getSession().createDurableSubscriber(topic, name), this, pooledConnection.getPoolingConnectionFactory());
+
+            if (pooledConnection.getPoolingConnectionFactory().getCacheProducersConsumers()) {
+                if (log.isDebugEnabled()) log.debug("caching durable subscriber via key " + key);
+                topicSubscribers.put(key, topicSubscriber);
+            }
+        }
+        else if (log.isDebugEnabled()) log.debug("found durable subscriber based on " + key + ", recycling it: " + topicSubscriber);
+        return topicSubscriber;
+    }
+
+    public TopicSubscriber createDurableSubscriber(Topic topic, String name, String messageSelector, boolean noLocal) throws JMSException {
+        MessageProducerConsumerKey key = new MessageProducerConsumerKey(topic, messageSelector, noLocal);
+        if (log.isDebugEnabled()) log.debug("looking for durable subscriber based on " + key);
+        TopicSubscriberWrapper topicSubscriber = (TopicSubscriberWrapper) topicSubscribers.get(key);
+        if (topicSubscriber == null) {
+            if (log.isDebugEnabled()) log.debug("found no durable subscriber based on " + key + ", creating it");
+            topicSubscriber = new TopicSubscriberWrapper(getSession().createDurableSubscriber(topic, name, messageSelector, noLocal), this, pooledConnection.getPoolingConnectionFactory());
+
+            if (pooledConnection.getPoolingConnectionFactory().getCacheProducersConsumers()) {
+                if (log.isDebugEnabled()) log.debug("caching durable subscriber via key " + key);
+                topicSubscribers.put(key, topicSubscriber);
+            }
+        }
+        else if (log.isDebugEnabled()) log.debug("found durable subscriber based on " + key + ", recycling it: " + topicSubscriber);
+        return topicSubscriber;
+    }
+
     public MessageListener getMessageListener() throws JMSException {
         return listener;
     }
@@ -360,14 +395,6 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
     public Topic createTopic(String topicName) throws JMSException {
         return getSession().createTopic(topicName);
-    }
-
-    public TopicSubscriber createDurableSubscriber(Topic topic, String name) throws JMSException {
-        return getSession().createDurableSubscriber(topic, name);
-    }
-
-    public TopicSubscriber createDurableSubscriber(Topic topic, String name, String messageSelector, boolean noLocal) throws JMSException {
-        return getSession().createDurableSubscriber(topic, name, messageSelector, noLocal);
     }
 
     public QueueBrowser createBrowser(javax.jms.Queue queue) throws JMSException {
