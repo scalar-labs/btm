@@ -4,9 +4,7 @@ import bitronix.tm.internal.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.naming.NamingException;
-import javax.naming.Reference;
-import javax.naming.Referenceable;
+import javax.naming.*;
 import javax.transaction.*;
 import javax.transaction.xa.XAException;
 import java.io.IOException;
@@ -184,7 +182,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     public Reference getReference() throws NamingException {
         return new Reference(
                 BitronixTransactionManager.class.getName(),
-                null,
+                new StringRefAddr("TransactionManager", "BitronixTransactionManager"),
                 BitronixTransactionManagerObjectFactory.class.getName(),
                 null
         );
