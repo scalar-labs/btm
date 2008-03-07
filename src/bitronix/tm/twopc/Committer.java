@@ -6,6 +6,7 @@ import bitronix.tm.BitronixTransaction;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.twopc.executor.Executor;
+import bitronix.tm.twopc.executor.Job;
 import bitronix.tm.internal.*;
 
 import javax.transaction.HeuristicMixedException;
@@ -96,7 +97,7 @@ public class Committer {
                 if (xaException.errorCode == XAException.XA_HEURHAZ)
                     hazard = true;
                 heuristicExceptions.add(xaException);
-                log.error("cannot commit resource " + job.resourceHolder + ", error=" + Decoder.decodeXAExceptionErrorCode(xaException) + ", will not retry", xaException);
+                log.error("cannot commit resource " + job.getResource() + ", error=" + Decoder.decodeXAExceptionErrorCode(xaException) + ", will not retry", xaException);
             }
             else if (runtimeException != null) {
                 throw runtimeException;
@@ -189,23 +190,15 @@ public class Committer {
         }
     }
 
-    private static class CommitJob implements Runnable {
-        private XAResourceHolderState resourceHolder;
+    private static class CommitJob extends Job {
         private BitronixTransaction transaction;
         private boolean onePhase;
-        private XAException xaException;
-        private RuntimeException runtimeException;
         private TransactionTimeoutException transactionTimeoutException;
-        private Object future;
 
         public CommitJob(BitronixTransaction transaction, XAResourceHolderState resourceHolder, boolean onePhase) {
-            this.resourceHolder = resourceHolder;
+            super(resourceHolder);
             this.transaction = transaction;
             this.onePhase = onePhase;
-        }
-
-        public XAResourceHolderState getResource() {
-            return resourceHolder;
         }
 
         public XAException getXAException() {
@@ -222,7 +215,7 @@ public class Committer {
 
         public void run() {
             try {
-                commitResource(transaction, resourceHolder, onePhase);
+                commitResource(transaction, getResource(), onePhase);
             } catch (RuntimeException ex) {
                 runtimeException = ex;
             } catch (XAException ex) {
@@ -231,14 +224,6 @@ public class Committer {
                 transactionTimeoutException = ex;
             }
         }
-
-        public Object getFuture() {
-            return future;
-        }
-
-        public void setFuture(Object future) {
-            this.future = future;
-        }
-    } // class
+    }
 
 }

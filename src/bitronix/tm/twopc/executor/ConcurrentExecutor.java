@@ -71,7 +71,7 @@ public class ConcurrentExecutor implements Executor {
             if (log.isDebugEnabled()) log.debug("cannot find a valid implementation for executor <" + executorsImpl + ">, disabling it");
     }
 
-    public Object submit(Runnable job) {
+    public Object submit(Job job) {
         if (!isUsable())
             throw new BitronixRuntimeException("concurrent executor is disabled because there is no valid executor implementation");
         try {

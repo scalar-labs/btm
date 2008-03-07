@@ -5,6 +5,7 @@ import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.internal.*;
 import bitronix.tm.twopc.executor.Executor;
+import bitronix.tm.twopc.executor.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ public class Preparer {
      * @throws bitronix.tm.internal.BitronixSystemException
      * @throws bitronix.tm.internal.TransactionTimeoutException
      * @throws javax.transaction.RollbackException
+     * @throws javax.transaction.HeuristicMixedException
      */
     public Map prepare(BitronixTransaction transaction) throws TransactionTimeoutException, RollbackException, BitronixSystemException, HeuristicMixedException {
         if (transaction.timedOut())
@@ -82,7 +84,7 @@ public class Preparer {
                 emulatingHolder = resourceHolder;
             }
             else {
-                PrepareJob job = new PrepareJob(resourceHolder, resourceHolder.getXid(), preparedResources);
+                PrepareJob job = new PrepareJob(resourceHolder, preparedResources);
                 Object future = executor.submit(job);
                 job.setFuture(future);
                 jobs.add(job);
@@ -108,8 +110,8 @@ public class Preparer {
             RuntimeException runtimeException = job.getRuntimeException();
 
             if (xaException != null) {
-                if (log.isDebugEnabled()) log.debug("error preparing resource, failed resource=" + job.resourceHolder + ", prepared resources: " + resourceManager.size() + ", errorCode=" + Decoder.decodeXAExceptionErrorCode(xaException));
-                throwException(job.resourceHolder, xaException);
+                if (log.isDebugEnabled()) log.debug("error preparing resource, failed resource=" + job.getResource() + ", prepared resources: " + resourceManager.size() + ", errorCode=" + Decoder.decodeXAExceptionErrorCode(xaException));
+                throwException(job.getResource(), xaException);
             } else if (runtimeException != null) {
                 throw runtimeException;
             }
@@ -146,9 +148,9 @@ public class Preparer {
     }
 
 
-    private static void runPrepare(XAResourceHolderState resourceHolder, Xid xid, Map preparedResources) throws XAException {
+    private static void runPrepare(XAResourceHolderState resourceHolder,Map preparedResources) throws XAException {
         if (log.isDebugEnabled()) log.debug("preparing resource " + resourceHolder);
-        int vote = resourceHolder.getXAResource().prepare(xid);
+        int vote = resourceHolder.getXAResource().prepare(resourceHolder.getXid());
         if (vote != XAResource.XA_RDONLY) {
             preparedResources.put(resourceHolder.getXid(), resourceHolder);
         }
@@ -156,49 +158,23 @@ public class Preparer {
     }
 
 
-    private static class PrepareJob implements Runnable {
-        private XAResourceHolderState resourceHolder;
-        private Xid xid;
+    private static class PrepareJob extends Job {
         private Map preparedResources;
-        private XAException xaException;
-        private RuntimeException runtimeException;
-        private Object future;
 
-        public PrepareJob(XAResourceHolderState resourceHolder, Xid xid, Map preparedResources) {
-            this.resourceHolder = resourceHolder;
-            this.xid = xid;
+        public PrepareJob(XAResourceHolderState resourceHolder, Map preparedResources) {
+            super(resourceHolder);
             this.preparedResources = Collections.synchronizedMap(preparedResources);
-        }
-
-        public XAResourceHolderState getResource() {
-            return resourceHolder;
-        }
-
-        public XAException getXAException() {
-            return xaException;
-        }
-
-        public RuntimeException getRuntimeException() {
-            return runtimeException;
         }
 
         public void run() {
             try {
-                runPrepare(resourceHolder, xid, preparedResources);
+                runPrepare(getResource(), preparedResources);
             } catch (RuntimeException ex) {
                 runtimeException = ex;
             } catch (XAException ex) {
                 xaException = ex;
             }
         }
-
-        public void setFuture(Object future) {
-            this.future = future;
-        }
-
-        public Object getFuture() {
-            return future;
-        }
-    } // class
+    }
 
 }

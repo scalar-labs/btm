@@ -16,7 +16,7 @@ public interface Executor extends Service {
      * @param job the {@link Runnable} to execute.
      * @return an object used to monitor the execution of the submitted {@link Runnable}.
      */
-    public Object submit(Runnable job);
+    public Object submit(Job job);
 
     /**
      * Wait for the job represented by the future to terminate. The call to this method will block until the job

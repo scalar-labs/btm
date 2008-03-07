@@ -8,7 +8,7 @@ package bitronix.tm.twopc.executor;
  */
 public class SyncExecutor implements Executor {
 
-    public Object submit(Runnable job) {
+    public Object submit(Job job) {
         job.run();
         return new Object();
     }

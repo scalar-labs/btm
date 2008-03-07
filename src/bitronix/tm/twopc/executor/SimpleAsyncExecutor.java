@@ -10,7 +10,7 @@ import bitronix.tm.internal.BitronixRuntimeException;
  */
 public class SimpleAsyncExecutor implements Executor {
 
-    public Object submit(Runnable job) {
+    public Object submit(Job job) {
         Thread t = new Thread(job);
         t.setDaemon(true);
         t.start();

@@ -6,6 +6,7 @@ import bitronix.tm.BitronixTransaction;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.twopc.executor.Executor;
+import bitronix.tm.twopc.executor.Job;
 import bitronix.tm.internal.*;
 
 import javax.transaction.Status;
@@ -166,29 +167,13 @@ public class Rollbacker {
     }
 
 
-    private static class RollbackJob implements Runnable {
+    private static class RollbackJob extends Job {
         private BitronixTransaction transaction;
-        private XAResourceHolderState resourceHolder;
-        private XAException xaException;
-        private RuntimeException runtimeException;
         private TransactionTimeoutException transactionTimeoutException;
-        private Object future;
 
         public RollbackJob(BitronixTransaction transaction, XAResourceHolderState resourceHolder) {
+            super(resourceHolder);
             this.transaction = transaction;
-            this.resourceHolder = resourceHolder;
-        }
-
-        public XAResourceHolderState getResource() {
-            return resourceHolder;
-        }
-
-        public XAException getXAException() {
-            return xaException;
-        }
-
-        public RuntimeException getRuntimeException() {
-            return runtimeException;
         }
 
         public TransactionTimeoutException getTransactionTimeoutException() {
@@ -197,7 +182,7 @@ public class Rollbacker {
 
         public void run() {
             try {
-                rollbackResource(transaction, resourceHolder);
+                rollbackResource(transaction, getResource());
             } catch (RuntimeException ex) {
                 runtimeException = ex;
             } catch (XAException ex) {
@@ -206,14 +191,6 @@ public class Rollbacker {
                 transactionTimeoutException = ex;
             }
         }
-
-        public void setFuture(Object future) {
-            this.future = future;
-        }
-
-        public Object getFuture() {
-            return future;
-        }
-    } // class
+    }
 
 }
