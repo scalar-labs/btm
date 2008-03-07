@@ -60,11 +60,9 @@ public class Preparer {
 
         // 1PC optimization
         if (resourceManager.size() == 1) {
-            Map.Entry entry = (Map.Entry) resourceManager.entriesIterator().next();
-            Xid xid = (Xid) entry.getKey();
-            XAResourceHolderState resourceHolder = (XAResourceHolderState) entry.getValue();
+            XAResourceHolderState resourceHolder = (XAResourceHolderState) resourceManager.iterator().next();
 
-            preparedResources.put(xid, resourceHolder);
+            preparedResources.put(resourceHolder.getXid(), resourceHolder);
             if (log.isDebugEnabled()) log.debug("1 resource enlisted, no prepare needed (1PC)");
             transaction.setStatus(Status.STATUS_PREPARED);
             return preparedResources;
@@ -75,18 +73,16 @@ public class Preparer {
         // start preparing threads
         if (log.isDebugEnabled()) log.debug(resourceManager.size() + " resource(s) enlisted, preparing");
         XAResourceHolderState emulatingHolder = null;
-        Iterator it = resourceManager.entriesIterator();
+        Iterator it = resourceManager.iterator();
         while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            Xid xid = (Xid) entry.getKey();
-            XAResourceHolderState resourceHolder = (XAResourceHolderState) entry.getValue();
+            XAResourceHolderState resourceHolder = (XAResourceHolderState) it.next();
 
             if (resourceHolder.getXAResourceHolder().isEmulatingXA()) {
                 if (log.isDebugEnabled()) log.debug("keeping emulating resource for later: " + resourceHolder);
                 emulatingHolder = resourceHolder;
             }
             else {
-                PrepareJob job = new PrepareJob(resourceHolder, xid, preparedResources);
+                PrepareJob job = new PrepareJob(resourceHolder, resourceHolder.getXid(), preparedResources);
                 Object future = executor.submit(job);
                 job.setFuture(future);
                 jobs.add(job);

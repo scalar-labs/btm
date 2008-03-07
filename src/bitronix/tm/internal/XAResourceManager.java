@@ -24,7 +24,7 @@ public class XAResourceManager {
     private final static Logger log = LoggerFactory.getLogger(XAResourceManager.class);
 
     private Uid gtrid;
-    private Map resources = new HashMap();
+    private ResourceScheduler resources = new ResourceScheduler();
 
     /**
      * Create a resource manager for the specified GTRID.
@@ -86,7 +86,7 @@ public class XAResourceManager {
         xaResourceHolderState.start(flag);
 
         // this has to be done only after start() successfully returned
-        resources.put(xid, xaResourceHolderState);
+        resources.addResource(xaResourceHolderState);
     }
 
     /**
@@ -117,10 +117,9 @@ public class XAResourceManager {
      * @throws SystemException
      */
     public void delistUnclosedResources(BitronixTransaction transaction) {
-        Iterator it = resources.entrySet().iterator();
+        Iterator it = resources.iterator();
         while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) entry.getValue();
+            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
             if (!xaResourceHolderState.isEnded()) {
                 if (log.isDebugEnabled()) log.debug("found unclosed resource to delist: " + xaResourceHolderState);
                 try {
@@ -137,10 +136,9 @@ public class XAResourceManager {
      * @throws XAException
      */
     public void suspend() throws XAException {
-        Iterator it = resources.entrySet().iterator();
+        Iterator it = resources.iterator();
         while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) entry.getValue();
+            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
             if (!xaResourceHolderState.isEnded()) {
                 if (log.isDebugEnabled()) log.debug("suspending " + xaResourceHolderState);
                 xaResourceHolderState.end(XAResource.TMSUCCESS);
@@ -154,10 +152,9 @@ public class XAResourceManager {
      * @throws XAException
      */
     public void resume() throws XAException {
-        Iterator it = resources.entrySet().iterator();
+        Iterator it = resources.iterator();
         while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) entry.getValue();
+            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
             if (log.isDebugEnabled()) log.debug("resuming " + xaResourceHolderState);
 
             // The {@link XAResourceHolder} got borrowed by the new {@link XAResourceHolderState} created after suspend.
@@ -184,14 +181,14 @@ public class XAResourceManager {
             throw new BitronixSystemException("cannot find a wrapped resource using another wrapped resource, please report this");
         }
 
-        Iterator it = resources.entrySet().iterator();
+        Iterator it = resources.iterator();
         while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) entry.getValue();
+            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
 
             if (xaResourceHolderState.getXAResource() == xaResource)
                 return xaResourceHolderState;
         }
+        
         return null;
     }
 
@@ -209,9 +206,9 @@ public class XAResourceManager {
             return null;
         }
 
-        for (Iterator iterator = resources.entrySet().iterator(); iterator.hasNext();) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            XAResourceHolderState alreadyEnlistedHolderState = (XAResourceHolderState) entry.getValue();
+        Iterator it = resources.iterator();
+        while (it.hasNext()) {
+            XAResourceHolderState alreadyEnlistedHolderState = (XAResourceHolderState) it.next();
 
             if (log.isDebugEnabled()) log.debug("checking joinability of " + alreadyEnlistedHolderState + " with " + alreadyEnlistedHolderState);
             if (alreadyEnlistedHolderState.getXAResource().isSameRM(alreadyEnlistedHolderState.getXAResource()) && alreadyEnlistedHolderState.isEnded()) {
@@ -230,12 +227,11 @@ public class XAResourceManager {
      * @return the non-XA {@link XAResourceHolderState} if one has been enlisted, null otherwise.
      */
     public XAResourceHolderState findEmulatingXAResourceHolderState() {
-        Iterator it = resources.entrySet().iterator();
+        Iterator it = resources.iterator();
         while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            XAResourceHolderState holder = (XAResourceHolderState) entry.getValue();
-            if (holder.getXAResourceHolder().isEmulatingXA())
-                return holder;
+            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
+            if (xaResourceHolderState.getXAResourceHolder().isEmulatingXA())
+                return xaResourceHolderState;
         }
         return null;
     }
@@ -246,10 +242,9 @@ public class XAResourceManager {
      */
     public Set collectUniqueNames() {
         Set names = new HashSet();
-        Iterator it = resources.entrySet().iterator();
+        Iterator it = resources.iterator();
         while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) entry.getValue();
+            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
             names.add(xaResourceHolderState.getUniqueName());
         }
         return names;
@@ -258,10 +253,10 @@ public class XAResourceManager {
     /**
      * Get an {@link Iterator} of the {@link Xid} / {@link XAResourceHolderState} {@link java.util.Map.Entry} pairs registered in
      * this instance.
-     * @return an {@link Iterator} of the {@link Xid} / {@link XAResourceHolderState} {@link java.util.Map.Entry} pairs.
+     * @return an {@link Iterator} of {@link XAResourceHolderState}s iterating them in priority order.
      */
-    public Iterator entriesIterator() {
-        return resources.entrySet().iterator();
+    public Iterator iterator() {
+        return resources.iterator();
     }
 
     /**

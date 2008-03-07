@@ -12,7 +12,6 @@ import javax.transaction.Status;
 import javax.transaction.xa.XAException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.List;
 
 /**
@@ -45,10 +44,9 @@ public class Rollbacker {
 
         List jobs = new ArrayList();
 
-        Iterator it = resourceManager.entriesIterator();
+        Iterator it = resourceManager.iterator();
         while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            XAResourceHolderState resourceHolder = (XAResourceHolderState) entry.getValue();
+            XAResourceHolderState resourceHolder = (XAResourceHolderState) it.next();
 
             RollbackJob job = new RollbackJob(transaction, resourceHolder);
             Object future = executor.submit(job);

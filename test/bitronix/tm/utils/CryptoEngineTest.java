@@ -1,4 +1,4 @@
-package bitronix.tm.internal;
+package bitronix.tm.utils;
 
 import junit.framework.TestCase;
 import bitronix.tm.utils.CryptoEngine;

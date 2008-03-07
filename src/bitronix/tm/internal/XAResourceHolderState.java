@@ -72,6 +72,10 @@ public class XAResourceHolderState {
         return bean.getUseTmJoin();
     }
 
+    public int getCommitOrderingPosition() {
+        return bean.getCommitOrderingPosition();
+    }
+
     public boolean isEnded() {
         return ended;
     }
