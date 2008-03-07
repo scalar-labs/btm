@@ -25,19 +25,16 @@ public class UidGenerator {
     public static Uid generateUid() {
         byte[] timestamp = Encoder.longToBytes(System.currentTimeMillis());
         byte[] sequence = Encoder.intToBytes(getNextSequenceNumber());
+        byte[] serverId = TransactionManagerServices.getConfiguration().buildServerIdArray();
 
-        int uidLength = getServerId().length + timestamp.length + sequence.length;
+        int uidLength = serverId.length + timestamp.length + sequence.length;
         byte[] uidArray = new byte[uidLength];
 
-        System.arraycopy(getServerId(), 0, uidArray, 0, getServerId().length);
-        System.arraycopy(timestamp, 0, uidArray, getServerId().length, timestamp.length);
-        System.arraycopy(sequence, 0, uidArray, getServerId().length + timestamp.length, sequence.length);
+        System.arraycopy(serverId, 0, uidArray, 0, serverId.length);
+        System.arraycopy(timestamp, 0, uidArray, serverId.length, timestamp.length);
+        System.arraycopy(sequence, 0, uidArray, serverId.length + timestamp.length, sequence.length);
 
         return new Uid(uidArray);
-    }
-
-    private static byte[] getServerId() {
-        return TransactionManagerServices.getConfiguration().buildServerIdArray();
     }
 
     /**
