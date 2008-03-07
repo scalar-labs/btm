@@ -6,6 +6,8 @@ import bitronix.tm.resource.ResourceConfigurationException;
 import bitronix.tm.resource.ResourceObjectFactory;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.*;
+import bitronix.tm.utils.PropertyUtils;
+import bitronix.tm.utils.PropertyException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,7 +119,19 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     }
 
     public String toString() {
-        return "a PoolingDataSource containing " + pool;
+        StringBuffer sb = new StringBuffer(128);
+        sb.append("a PoolingDataSource with [");
+
+        try {
+            PropertyUtils.propertiesToString(sb);
+        } catch (PropertyException ex) {
+            sb.append("???");
+            if (log.isDebugEnabled()) log.debug("error accessing properties of PoolingDataSource object", ex);
+        }
+
+        sb.append("] containing ");
+        sb.append(pool);
+        return sb.toString();
     }
 
 

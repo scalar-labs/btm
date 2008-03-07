@@ -11,8 +11,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -439,19 +437,10 @@ public class Configuration implements Service {
         sb.append("a Configuration with [");
 
         try {
-            Map properties = PropertyUtils.getProperties(this);
-            Iterator it = properties.keySet().iterator();
-            while (it.hasNext()) {
-                String property = (String) it.next();
-                Object val = PropertyUtils.getProperty(this, property);
-                sb.append(property);
-                sb.append("=");
-                sb.append(val);
-                if (it.hasNext())
-                    sb.append(", ");
-            }
+            PropertyUtils.propertiesToString(sb);
         } catch (PropertyException ex) {
-            if (log.isDebugEnabled()) log.debug("error accessing properties of configuration object", ex);
+            sb.append("???");
+            if (log.isDebugEnabled()) log.debug("error accessing properties of Configuration object", ex);
         }
 
         sb.append("]");

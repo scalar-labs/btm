@@ -76,10 +76,10 @@ public class PropertyUtils {
                 else if (name.startsWith("is"))
                     propertyName = Character.toLowerCase(name.charAt(2)) + name.substring(3);
                 else
-                    throw new PropertyException("method '" + name + "' is not a getter, no setter can be found");
+                    throw new PropertyException("method '" + name + "' is not a getter, thereof no setter can be found");
 
                 try {
-                    Object propertyValue = method.invoke(target, (Object[]) null);
+                    Object propertyValue = method.invoke(target, (Object[]) null);  // casting to (Object[]) b/c of javac 1.5 warning
                     if (propertyValue != null && propertyValue instanceof Properties) {
                         Map propertiesContent = getNestedProperties(propertyName, (Properties) propertyValue);
                         properties.putAll(propertiesContent);
@@ -107,7 +107,7 @@ public class PropertyUtils {
         else if (methodName.startsWith("is"))
             setterName = "set" + methodName.substring(2);
         else
-            throw new PropertyException("method '" + methodName + "' is not a getter, no setter can be found");
+            throw new PropertyException("method '" + methodName + "' is not a getter, thereof no setter can be found");
 
         Method[] methods = clazz.getMethods();
         for (int i = 0; i < methods.length; i++) {
@@ -153,6 +153,27 @@ public class PropertyUtils {
             Object value = entry.getValue();
             setProperty(target, name, value);
         }
+    }
+
+    /**
+     * Return a comma-separated String of r/w properties of the specified object.
+     * @param obj the object to introspect.
+     * @return a a comma-separated String of r/w properties.
+     */
+    public static String propertiesToString(Object obj) {
+        StringBuffer sb = new StringBuffer();
+        Map properties = PropertyUtils.getProperties(obj);
+        Iterator it = properties.keySet().iterator();
+        while (it.hasNext()) {
+            String property = (String) it.next();
+            Object val = PropertyUtils.getProperty(obj, property);
+            sb.append(property);
+            sb.append("=");
+            sb.append(val);
+            if (it.hasNext())
+                sb.append(", ");
+        }
+        return sb.toString();
     }
 
     /**
@@ -225,7 +246,7 @@ public class PropertyUtils {
     private static Object callGetter(Object target, String propertyName) throws PropertyException {
         Method getter = getGetter(target, propertyName);
         try {
-            return getter.invoke(target, (Object[]) null);
+            return getter.invoke(target, (Object[]) null); // casting to (Object[]) b/c of javac 1.5 warning
         } catch (IllegalAccessException ex) {
             throw new PropertyException("property '" + propertyName + "' is not accessible", ex);
         } catch (InvocationTargetException ex) {
