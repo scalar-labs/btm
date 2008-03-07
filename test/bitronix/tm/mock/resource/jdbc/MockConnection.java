@@ -2,6 +2,8 @@ package bitronix.tm.mock.resource.jdbc;
 
 import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.events.ConnectionCloseEvent;
+import bitronix.tm.mock.events.LocalCommitEvent;
+import bitronix.tm.mock.events.LocalRollbackEvent;
 
 import java.sql.*;
 import java.util.Map;
@@ -42,11 +44,11 @@ public class MockConnection implements Connection {
     }
 
     public void commit() throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        getEventRecorder().addEvent(new LocalCommitEvent(this, new Exception()));
     }
 
     public void rollback() throws SQLException {
-        //To change body of implemented methods use File | Settings | File Templates.
+        getEventRecorder().addEvent(new LocalRollbackEvent(this, new Exception()));
     }
 
     public boolean getAutoCommit() throws SQLException {

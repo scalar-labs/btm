@@ -5,10 +5,12 @@ import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.BitronixTransaction;
 import bitronix.tm.mock.events.*;
 import bitronix.tm.mock.resource.jdbc.MockXAConnection;
+import bitronix.tm.mock.resource.jdbc.MockDriver;
 import bitronix.tm.mock.resource.MockXAResource;
 import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
 import bitronix.tm.resource.jdbc.JdbcPooledConnection;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
+import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
 import bitronix.tm.resource.common.XAPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,6 +91,70 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+    }
+
+    public void testLrc() throws Exception {
+        PoolingDataSource poolingDataSource2 = new PoolingDataSource();
+        poolingDataSource2.setClassName(LrcXADataSource.class.getName());
+        poolingDataSource2.setUniqueName(DATASOURCE2_NAME + "_lrc");
+        poolingDataSource2.setMinPoolSize(POOL_SIZE);
+        poolingDataSource2.setMaxPoolSize(POOL_SIZE);
+        poolingDataSource2.setAllowLocalTransactions(true);
+        poolingDataSource2.getDriverProperties().setProperty("driverClassName", MockDriver.class.getName());
+        poolingDataSource2.getDriverProperties().setProperty("user", "user");
+        poolingDataSource2.getDriverProperties().setProperty("password", "password");
+        poolingDataSource2.init();
+
+
+        if (log.isDebugEnabled()) log.debug("*** getting TM");
+        BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) log.debug("*** before begin");
+        tm.setTransactionTimeout(10);
+        tm.begin();
+        if (log.isDebugEnabled()) log.debug("*** after begin");
+
+        if (log.isDebugEnabled()) log.debug("*** getting connection from DS2");
+        Connection connection2 = poolingDataSource2.getConnection();
+        if (log.isDebugEnabled()) log.debug("*** creating statement 1 on connection 2");
+        connection2.createStatement();
+        if (log.isDebugEnabled()) log.debug("*** creating statement 2 on connection 2");
+        connection2.createStatement();
+
+        if (log.isDebugEnabled()) log.debug("*** getting connection from DS1");
+        Connection connection1 = poolingDataSource1.getConnection();
+        if (log.isDebugEnabled()) log.debug("*** creating statement 1 on connection 1");
+        connection1.createStatement();
+        if (log.isDebugEnabled()) log.debug("*** creating statement 2 on connection 1");
+        connection1.createStatement();
+
+        if (log.isDebugEnabled()) log.debug("*** closing connection 2");
+        connection2.close();
+
+        if (log.isDebugEnabled()) log.debug("*** closing connection 1");
+        connection1.close();
+
+        if (log.isDebugEnabled()) log.debug("*** committing");
+        tm.commit();
+        if (log.isDebugEnabled()) log.debug("*** TX is done");
+
+        // check flow
+        List orderedEvents = EventRecorder.getOrderedEvents();
+        System.out.println(EventRecorder.dumpToString());
+
+        assertEquals(12, orderedEvents.size());
+        int i=0;
+        assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(XAResource.XA_OK, ((XAResourcePrepareEvent) orderedEvents.get(i++)).getReturnCode());
+        assertEquals(LocalCommitEvent.class, orderedEvents.get(i++).getClass());
+        assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(Status.STATUS_COMMITTING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(false, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
+        assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
     }
 
     public void testStatementTimeout() throws Exception {
@@ -760,7 +826,6 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
 
         if (log.isDebugEnabled()) log.debug(" *** done");
     }
-
 
     public void testPoolBoundsWithLooseEnlistment() throws Exception {
         ArrayList list = new ArrayList();
