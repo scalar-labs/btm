@@ -38,8 +38,12 @@ public class Rollbacker {
      * cleanup as possible.
      *
      * @param transaction the transaction to rollback.
+     * @throws bitronix.tm.internal.BitronixHeuristicCommitException
+     * @throws bitronix.tm.internal.BitronixHeuristicMixedException
+     * @throws bitronix.tm.internal.BitronixSystemException
+     * @throws bitronix.tm.internal.TransactionTimeoutException
      */
-    public void rollback(BitronixTransaction transaction) throws TransactionTimeoutException, BitronixHeuristicMixedException, BitronixHeuristicCommitException, BitronixSystemException {
+    public void rollback(BitronixTransaction transaction) throws BitronixHeuristicMixedException, BitronixHeuristicCommitException, BitronixSystemException {
         XAResourceManager resourceManager = transaction.getResourceManager();
         transaction.setStatus(Status.STATUS_ROLLING_BACK);
 
@@ -49,7 +53,7 @@ public class Rollbacker {
         while (it.hasNext()) {
             XAResourceHolderState resourceHolder = (XAResourceHolderState) it.next();
 
-            RollbackJob job = new RollbackJob(transaction, resourceHolder);
+            RollbackJob job = new RollbackJob(resourceHolder);
             Object future = executor.submit(job);
             job.setFuture(future);
             jobs.add(job);
@@ -103,7 +107,7 @@ public class Rollbacker {
             transaction.setStatus(Status.STATUS_ROLLEDBACK);
     }
 
-    private static void rollbackResource(BitronixTransaction transaction, XAResourceHolderState resourceHolder) throws XAException, TransactionTimeoutException {
+    private static void rollbackResource(XAResourceHolderState resourceHolder) throws XAException, TransactionTimeoutException {
         while (true) {
             try {
                 if (log.isDebugEnabled()) log.debug("trying to rollback resource " + resourceHolder);
@@ -112,9 +116,6 @@ public class Rollbacker {
             } catch (XAException ex) {
                 boolean fixed = handleXAException(resourceHolder, ex);
                 if (!fixed) {
-                    if (transaction.timedOut())
-                        throw new TransactionTimeoutException("time out during rollback of " + transaction, ex);
-
                     int transactionRetryInterval = TransactionManagerServices.getConfiguration().getTransactionRetryInterval();
                     log.error("cannot rollback resource " + resourceHolder + ", error=" + Decoder.decodeXAExceptionErrorCode(ex) + ", retrying in " + transactionRetryInterval + "s", ex);
                     try {
@@ -168,12 +169,10 @@ public class Rollbacker {
 
 
     private static class RollbackJob extends Job {
-        private BitronixTransaction transaction;
         private TransactionTimeoutException transactionTimeoutException;
 
-        public RollbackJob(BitronixTransaction transaction, XAResourceHolderState resourceHolder) {
+        public RollbackJob(XAResourceHolderState resourceHolder) {
             super(resourceHolder);
-            this.transaction = transaction;
         }
 
         public TransactionTimeoutException getTransactionTimeoutException() {
@@ -182,7 +181,7 @@ public class Rollbacker {
 
         public void run() {
             try {
-                rollbackResource(transaction, getResource());
+                rollbackResource(getResource());
             } catch (RuntimeException ex) {
                 runtimeException = ex;
             } catch (XAException ex) {

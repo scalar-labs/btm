@@ -119,18 +119,22 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
         fireBeforeCompletionEvent();
         if (status == Status.STATUS_MARKED_ROLLBACK) {
-            if (log.isDebugEnabled()) log.debug("beforeCompletion synchronization(s) marked transaction as rollback only");
+            if (log.isDebugEnabled()) log.debug("transaction marked as rollback only");
             rollback();
             throw new BitronixRollbackException("transaction was marked as rollback only and has been rolled back");
+        }
+        if (timedOut()) {
+            if (log.isDebugEnabled()) log.debug("transaction timed out");
+            rollback();
+            throw new BitronixRollbackException("transaction timed out and has been rolled back");
         }
 
         resourceManager.delistUnclosedResources(this);
 
-        Map interestedResources = null;
         try {
             if (log.isDebugEnabled()) log.debug("committing, " + resourceManager.size() + " enlisted resource(s)");
 
-            interestedResources = preparer.prepare(this);
+            Map interestedResources = preparer.prepare(this);
 
             if (log.isDebugEnabled()) log.debug(interestedResources.size() + " interested resource(s)");
 
@@ -147,17 +151,6 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             if (log.isDebugEnabled()) log.debug("caught rollback exception during prepare, trying to rollback before rethrowing it", ex);
             try { lastChanceRollback(); } catch (BitronixSystemException ex2) { if (log.isDebugEnabled()) log.debug("last chance rollback failed", ex2);}
             throw ex;
-        }
-        catch (TransactionTimeoutException ex) {
-            if (interestedResources == null) {
-                if (log.isDebugEnabled()) log.debug("transaction timed out during prepare, trying to rollback before handling error");
-                try { lastChanceRollback(); } catch (BitronixSystemException ex2) { if (log.isDebugEnabled()) log.debug("last chance rollback failed", ex2);}
-                throw new BitronixRollbackException("transaction timed out during prepare", ex);
-            }
-            else {
-                if (log.isDebugEnabled()) log.debug("transaction timed out during commit, prepared resources: " + resourceManager.size());
-                throw new BitronixSystemException("transaction timed out due to unrecoverable resource error during commit. Transaction has been left in-doubt !", ex);
-            }
         }
         finally {
             fireAfterCompletionEvent();
@@ -183,10 +176,6 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             if (log.isDebugEnabled()) log.debug("caught runtime exception during rollback, trying to rollback again before throwing SystemException", ex);
             try { lastChanceRollback(); } catch (BitronixSystemException ex2) { if (log.isDebugEnabled()) log.debug("last chance rollback failed", ex2);}
             throw new BitronixSystemException("caught runtime exception during rollback", ex);
-        }
-        catch (TransactionTimeoutException ex) {
-            if (log.isDebugEnabled()) log.debug("transaction timed out during rollback phase");
-            throw new BitronixSystemException("transaction timed out due to unrecoverable resource error during rollback phase. Transaction has been left in-doubt !", ex);
         } catch (BitronixHeuristicMixedException ex) {
             throw new BitronixSystemException("transaction partly committed and partly rolled back. Resources are now inconsistent !", ex);
         } catch (BitronixHeuristicCommitException ex) {
@@ -268,8 +257,6 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         try {
             rollbacker.rollback(this);
             if (log.isDebugEnabled()) log.debug("last chance rollback succeeded");
-        } catch (TransactionTimeoutException ex) {
-            log.error("rollback failed due to unrecoverable resource error after time out. Transaction has been left in-doubt !", ex);
         } catch (BitronixHeuristicMixedException ex) {
             throw new BitronixSystemException("transaction partly committed and partly rolled back. Global transaction state is now inconsistent !", ex);
         } catch (BitronixHeuristicCommitException ex) {

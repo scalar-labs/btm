@@ -43,9 +43,7 @@ public class Preparer {
      * @throws javax.transaction.RollbackException
      * @throws javax.transaction.HeuristicMixedException
      */
-    public Map prepare(BitronixTransaction transaction) throws TransactionTimeoutException, RollbackException, BitronixSystemException, HeuristicMixedException {
-        if (transaction.timedOut())
-            throw new TransactionTimeoutException("transaction timed out before 2PC execution");
+    public Map prepare(BitronixTransaction transaction) throws RollbackException, BitronixSystemException, HeuristicMixedException {
         XAResourceManager resourceManager = transaction.getResourceManager();
         Map preparedResources = new HashMap();
         transaction.setStatus(Status.STATUS_PREPARING);
@@ -97,8 +95,6 @@ public class Preparer {
             Object future = job.getFuture();
             while (!executor.isDone(future)) {
                 executor.waitFor(future, 1000);
-                if (transaction.timedOut())
-                    throw new TransactionTimeoutException("transaction timed out during prepare on " + job.getResource() + "(prepared " + i + " out of " + jobs.size() + ")");
             }
             i++;
         }

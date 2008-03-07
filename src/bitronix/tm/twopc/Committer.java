@@ -44,7 +44,7 @@ public class Committer {
      * @throws javax.transaction.HeuristicRollbackException
      * @throws bitronix.tm.internal.BitronixSystemException
      */
-    public void commit(BitronixTransaction transaction, Map interestedResources) throws TransactionTimeoutException, HeuristicMixedException, HeuristicRollbackException, BitronixSystemException {
+    public void commit(BitronixTransaction transaction, Map interestedResources) throws HeuristicMixedException, HeuristicRollbackException, BitronixSystemException {
         XAResourceManager resourceManager = transaction.getResourceManager();
         if (resourceManager.size() == 0) {
             transaction.setStatus(Status.STATUS_COMMITTING);
@@ -67,7 +67,7 @@ public class Committer {
             // 1PC is when there is only one enlisted resource, not when there is only one participating one
             boolean onePhase = resourceManager.size() == 1;
             
-            CommitJob job = new CommitJob(transaction, resourceHolder, onePhase);
+            CommitJob job = new CommitJob(resourceHolder, onePhase);
             Object future = executor.submit(job);
             job.setFuture(future);
             jobs.add(job);
@@ -77,8 +77,6 @@ public class Committer {
         for (int i = 0; i < jobs.size(); ) {
             CommitJob job = (CommitJob) jobs.get(i);
             while (!executor.isDone(job.getFuture())) {
-                if (transaction.timedOut())
-                    throw new TransactionTimeoutException("transaction timed out during commit on " + job.getResource() + " (committed " + i + " out of " + jobs.size() + ")");
                 executor.waitFor(job.getFuture(), 1000);
             }
             i++;
@@ -91,7 +89,6 @@ public class Committer {
             CommitJob job = (CommitJob) jobs.get(i);
             XAException xaException = job.getXAException();
             RuntimeException runtimeException = job.getRuntimeException();
-            TransactionTimeoutException transactionTimeoutException = job.getTransactionTimeoutException();
 
             if (xaException != null) {
                 if (xaException.errorCode == XAException.XA_HEURHAZ)
@@ -101,9 +98,6 @@ public class Committer {
             }
             else if (runtimeException != null) {
                 throw runtimeException;
-            }
-            else if (transactionTimeoutException != null) {
-                throw transactionTimeoutException;
             }
         }
 
@@ -120,13 +114,11 @@ public class Committer {
 
     /**
      * commit the resource, retrying as many times as necessary
-     * @param transaction
      * @param resourceHolder
      * @param onePhase
      * @throws javax.transaction.xa.XAException if it is useless to retry, ie: heuristic happened
-     * @throws bitronix.tm.internal.TransactionTimeoutException
      */
-    private static void commitResource(BitronixTransaction transaction, XAResourceHolderState resourceHolder, boolean onePhase) throws XAException, TransactionTimeoutException {
+    private static void commitResource(XAResourceHolderState resourceHolder, boolean onePhase) throws XAException {
         if (log.isDebugEnabled()) log.debug("committing resource " + resourceHolder + (onePhase ? " (with one-phase optimization)" : ""));
         while (true) {
             try {
@@ -134,8 +126,6 @@ public class Committer {
             } catch (XAException ex) {
                 boolean fixed = handleXAException(resourceHolder, ex);
                 if (!fixed) {
-                    if (transaction.timedOut())
-                        throw new TransactionTimeoutException("time out during phase 2 commit of " + transaction, ex);
                     int transactionRetryInterval = TransactionManagerServices.getConfiguration().getTransactionRetryInterval();
                     log.error("cannot commit phase 2 resource " + resourceHolder + ", error=" + Decoder.decodeXAExceptionErrorCode(ex) + ", retrying in " + transactionRetryInterval + "s", ex);
                     try {
@@ -191,13 +181,10 @@ public class Committer {
     }
 
     private static class CommitJob extends Job {
-        private BitronixTransaction transaction;
         private boolean onePhase;
-        private TransactionTimeoutException transactionTimeoutException;
 
-        public CommitJob(BitronixTransaction transaction, XAResourceHolderState resourceHolder, boolean onePhase) {
+        public CommitJob(XAResourceHolderState resourceHolder, boolean onePhase) {
             super(resourceHolder);
-            this.transaction = transaction;
             this.onePhase = onePhase;
         }
 
@@ -209,19 +196,13 @@ public class Committer {
             return runtimeException;
         }
 
-        public TransactionTimeoutException getTransactionTimeoutException() {
-            return transactionTimeoutException;
-        }
-
         public void run() {
             try {
-                commitResource(transaction, getResource(), onePhase);
+                commitResource(getResource(), onePhase);
             } catch (RuntimeException ex) {
                 runtimeException = ex;
             } catch (XAException ex) {
                 xaException = ex;
-            } catch (TransactionTimeoutException ex) {
-                transactionTimeoutException = ex;
             }
         }
     }

@@ -226,7 +226,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
             tm.commit();
             fail("expected transaction to time out");
         } catch (RollbackException ex) {
-            assertEquals("transaction timed out during prepare", ex.getMessage());
+            assertEquals("transaction timed out and has been rolled back", ex.getMessage());
         }
         if (log.isDebugEnabled()) log.debug("*** TX is done");
 
