@@ -1,6 +1,9 @@
 package bitronix.tm;
 
 import bitronix.tm.internal.*;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.Service;
+import bitronix.tm.utils.InitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

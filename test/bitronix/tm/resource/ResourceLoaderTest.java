@@ -4,8 +4,7 @@ import bitronix.tm.mock.resource.jdbc.MockXADataSource;
 import bitronix.tm.mock.resource.jms.MockXAConnectionFactory;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import bitronix.tm.resource.jms.PoolingConnectionFactory;
-import bitronix.tm.resource.common.XAPool;
-import bitronix.tm.internal.PropertyUtils;
+import bitronix.tm.utils.PropertyUtils;
 import junit.framework.TestCase;
 
 import javax.sql.XADataSource;

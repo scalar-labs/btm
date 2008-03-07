@@ -1,4 +1,4 @@
-package bitronix.tm.internal;
+package bitronix.tm.utils;
 
 /**
  * Thrown at transaction manager startup when an error occurs.

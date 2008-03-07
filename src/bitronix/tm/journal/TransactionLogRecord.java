@@ -1,9 +1,8 @@
 package bitronix.tm.journal;
 
-import bitronix.tm.internal.Decoder;
-import bitronix.tm.internal.Encoder;
-import bitronix.tm.internal.UidGenerator;
-import bitronix.tm.internal.Uid;
+import bitronix.tm.utils.Encoder;
+import bitronix.tm.utils.UidGenerator;
+import bitronix.tm.utils.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

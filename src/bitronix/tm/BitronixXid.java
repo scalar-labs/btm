@@ -1,6 +1,6 @@
 package bitronix.tm;
 
-import bitronix.tm.internal.Uid;
+import bitronix.tm.utils.Uid;
 
 import javax.transaction.xa.Xid;
 
@@ -13,11 +13,11 @@ import javax.transaction.xa.Xid;
  * Each {@link bitronix.tm.BitronixTransaction} get assigned a GTRID at creation time and full XIDs are created and
  * assigned to every {@link bitronix.tm.internal.XAResourceHolderState} when enlisted in the transaction's
  * {@link bitronix.tm.internal.XAResourceManager}. Both GTRID and XIDs are generated
- * by the {@link bitronix.tm.internal.UidGenerator}.</p>
+ * by the {@link bitronix.tm.utils.UidGenerator}.</p>
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban
- * @see bitronix.tm.internal.UidGenerator
+ * @see bitronix.tm.utils.UidGenerator
  * @see bitronix.tm.BitronixTransaction
  * @see bitronix.tm.internal.XAResourceManager
  * @see <a href="http://jroller.com/page/pyrasun?entry=xa_exposed_part_iii_the">XA Exposed, Part III: The Implementor's Notebook</a>

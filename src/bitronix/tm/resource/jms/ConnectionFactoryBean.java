@@ -1,6 +1,6 @@
 package bitronix.tm.resource.jms;
 
-import bitronix.tm.internal.PropertyUtils;
+import bitronix.tm.utils.PropertyUtils;
 import bitronix.tm.resource.ResourceConfigurationException;
 import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.resource.common.XAResourceProducer;

@@ -1,6 +1,6 @@
 package bitronix.tm.gui;
 
-import bitronix.tm.internal.Decoder;
+import bitronix.tm.utils.Decoder;
 import bitronix.tm.journal.TransactionLogHeader;
 
 import javax.swing.*;

@@ -3,7 +3,7 @@ package bitronix.tm.gui;
 import bitronix.tm.BitronixXid;
 import bitronix.tm.Configuration;
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.internal.Uid;
+import bitronix.tm.utils.Uid;
 import bitronix.tm.journal.TransactionLogRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

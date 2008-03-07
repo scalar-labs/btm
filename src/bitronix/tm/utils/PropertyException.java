@@ -1,4 +1,4 @@
-package bitronix.tm.internal;
+package bitronix.tm.utils;
 
 /**
  * Thrown by {@link PropertyUtils} when some reflection error occurs.

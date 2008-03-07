@@ -5,6 +5,9 @@ import junit.framework.TestCase;
 import java.util.Properties;
 import java.util.Map;
 
+import bitronix.tm.utils.PropertyException;
+import bitronix.tm.utils.PropertyUtils;
+
 /**
  * <p></p>
  * <p>&copy; Bitronix 2005, 2006</p>

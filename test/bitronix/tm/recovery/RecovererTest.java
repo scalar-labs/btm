@@ -2,7 +2,7 @@ package bitronix.tm.recovery;
 
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.internal.Uid;
+import bitronix.tm.utils.Uid;
 import bitronix.tm.internal.BitronixXAException;
 import bitronix.tm.journal.Journal;
 import bitronix.tm.mock.resource.MockXAResource;

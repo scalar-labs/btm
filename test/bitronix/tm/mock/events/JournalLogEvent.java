@@ -1,7 +1,7 @@
 package bitronix.tm.mock.events;
 
-import bitronix.tm.internal.Decoder;
-import bitronix.tm.internal.Uid;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.Uid;
 
 import java.util.Set;
 

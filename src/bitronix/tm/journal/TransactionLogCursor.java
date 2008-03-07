@@ -9,7 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.Set;
 import java.util.HashSet;
 
-import bitronix.tm.internal.Uid;
+import bitronix.tm.utils.Uid;
 
 /**
  * Used to read {@link TransactionLogRecord} objects from a log file.

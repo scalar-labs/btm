@@ -1,4 +1,4 @@
-package bitronix.tm.internal;
+package bitronix.tm.utils;
 
 /**
  * Number to byte array encoder.

@@ -2,6 +2,10 @@ package bitronix.tm.recovery;
 
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.ManagementRegistrar;
+import bitronix.tm.utils.Uid;
+import bitronix.tm.utils.Service;
 import bitronix.tm.internal.*;
 import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.resource.ResourceLoader;

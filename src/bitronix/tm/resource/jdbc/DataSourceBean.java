@@ -3,7 +3,7 @@ package bitronix.tm.resource.jdbc;
 import bitronix.tm.resource.ResourceConfigurationException;
 import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.resource.common.XAResourceProducer;
-import bitronix.tm.internal.PropertyUtils;
+import bitronix.tm.utils.PropertyUtils;
 
 import java.util.Map;
 

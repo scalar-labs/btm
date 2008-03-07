@@ -1,10 +1,12 @@
-package bitronix.tm.internal;
+package bitronix.tm.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Constructor;
+
+import bitronix.tm.internal.BitronixRuntimeException;
 
 /**
  * Simple JMX facade. In case there is no JMX implementation available, calling methods of this class have no effect.

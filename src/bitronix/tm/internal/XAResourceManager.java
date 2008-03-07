@@ -1,6 +1,8 @@
 package bitronix.tm.internal;
 
 import bitronix.tm.BitronixTransaction;
+import bitronix.tm.utils.Uid;
+import bitronix.tm.utils.UidGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

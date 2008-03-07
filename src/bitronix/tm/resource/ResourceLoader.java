@@ -1,9 +1,9 @@
 package bitronix.tm.resource;
 
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.internal.InitializationException;
-import bitronix.tm.internal.PropertyUtils;
-import bitronix.tm.internal.Service;
+import bitronix.tm.utils.InitializationException;
+import bitronix.tm.utils.PropertyUtils;
+import bitronix.tm.utils.Service;
 import bitronix.tm.resource.common.XAResourceProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

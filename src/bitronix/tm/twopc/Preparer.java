@@ -2,6 +2,7 @@ package bitronix.tm.twopc;
 
 import bitronix.tm.BitronixTransaction;
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.utils.Decoder;
 import bitronix.tm.internal.*;
 import bitronix.tm.twopc.executor.Executor;
 import org.slf4j.Logger;

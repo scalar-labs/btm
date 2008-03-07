@@ -5,6 +5,10 @@ import bitronix.tm.journal.Journal;
 import bitronix.tm.twopc.*;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.XAResourceHolder;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.ManagementRegistrar;
+import bitronix.tm.utils.Uid;
+import bitronix.tm.utils.UidGenerator;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 

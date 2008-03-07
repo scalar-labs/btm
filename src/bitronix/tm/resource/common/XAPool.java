@@ -5,6 +5,9 @@ import org.slf4j.LoggerFactory;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.BitronixTransaction;
 import bitronix.tm.BitronixXid;
+import bitronix.tm.utils.CryptoEngine;
+import bitronix.tm.utils.PropertyUtils;
+import bitronix.tm.utils.Uid;
 import bitronix.tm.internal.*;
 
 import javax.transaction.xa.XAResource;

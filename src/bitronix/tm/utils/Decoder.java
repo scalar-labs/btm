@@ -1,4 +1,4 @@
-package bitronix.tm.internal;
+package bitronix.tm.utils;
 
 import bitronix.tm.journal.TransactionLogHeader;
 import bitronix.tm.resource.common.XAStatefulHolder;

@@ -1,6 +1,10 @@
 package bitronix.tm.resource.jdbc;
 
 import bitronix.tm.BitronixXid;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.LruEvictionListener;
+import bitronix.tm.utils.LruMap;
+import bitronix.tm.utils.ManagementRegistrar;
 import bitronix.tm.internal.*;
 import bitronix.tm.resource.common.*;
 import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;

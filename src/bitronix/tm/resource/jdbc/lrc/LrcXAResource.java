@@ -1,7 +1,7 @@
 package bitronix.tm.resource.jdbc.lrc;
 
 import bitronix.tm.internal.BitronixXAException;
-import bitronix.tm.internal.Decoder;
+import bitronix.tm.utils.Decoder;
 
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.XAException;

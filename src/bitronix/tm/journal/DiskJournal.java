@@ -2,8 +2,8 @@ package bitronix.tm.journal;
 
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.internal.Decoder;
-import bitronix.tm.internal.Uid;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

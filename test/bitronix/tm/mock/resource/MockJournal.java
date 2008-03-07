@@ -1,6 +1,6 @@
 package bitronix.tm.mock.resource;
 
-import bitronix.tm.internal.Uid;
+import bitronix.tm.utils.Uid;
 import bitronix.tm.journal.Journal;
 import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.mock.events.EventRecorder;

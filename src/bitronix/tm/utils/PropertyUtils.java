@@ -1,4 +1,4 @@
-package bitronix.tm.internal;
+package bitronix.tm.utils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

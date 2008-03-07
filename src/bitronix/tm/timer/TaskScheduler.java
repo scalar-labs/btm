@@ -4,7 +4,7 @@ import bitronix.tm.BitronixTransaction;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.recovery.Recoverer;
 import bitronix.tm.resource.common.XAPool;
-import bitronix.tm.internal.Service;
+import bitronix.tm.utils.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

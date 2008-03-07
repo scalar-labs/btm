@@ -1,4 +1,6 @@
-package bitronix.tm.internal;
+package bitronix.tm.utils;
+
+import bitronix.tm.internal.BitronixRuntimeException;
 
 import javax.crypto.*;
 import javax.crypto.spec.DESKeySpec;

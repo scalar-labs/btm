@@ -4,6 +4,10 @@ import junit.framework.TestCase;
 
 import java.util.HashSet;
 
+import bitronix.tm.utils.Encoder;
+import bitronix.tm.utils.Uid;
+import bitronix.tm.utils.UidGenerator;
+
 /**
  * <p></p>
  * <p>&copy; Bitronix 2005, 2006</p>

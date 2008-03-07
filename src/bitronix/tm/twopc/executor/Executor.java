@@ -1,7 +1,7 @@
 package bitronix.tm.twopc.executor;
 
 import bitronix.tm.internal.BitronixRuntimeException;
-import bitronix.tm.internal.Service;
+import bitronix.tm.utils.Service;
 
 /**
  * Thread pool interface required by the two-phase commit logic.

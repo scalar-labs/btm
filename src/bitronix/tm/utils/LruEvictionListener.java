@@ -1,4 +1,4 @@
-package bitronix.tm.internal;
+package bitronix.tm.utils;
 
 /**
  * Eviction listener interface for {@link LruMap}.

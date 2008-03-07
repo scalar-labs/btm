@@ -1,18 +1,8 @@
 package bitronix.tm.resource.common;
 
 import bitronix.tm.mock.resource.jdbc.MockXADataSource;
-import bitronix.tm.mock.resource.jms.MockXAConnectionFactory;
-import bitronix.tm.resource.jdbc.PoolingDataSource;
-import bitronix.tm.resource.jms.PoolingConnectionFactory;
-import bitronix.tm.resource.ResourceLoader;
-import bitronix.tm.resource.ResourceConfigurationException;
-import bitronix.tm.internal.CryptoEngine;
+import bitronix.tm.utils.CryptoEngine;
 import junit.framework.TestCase;
-
-import javax.sql.XADataSource;
-import java.util.Map;
-import java.util.Properties;
-import java.lang.reflect.Field;
 
 /**
  * Created by IntelliJ IDEA.

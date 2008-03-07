@@ -2,8 +2,8 @@ package bitronix.tm.resource.jms;
 
 import bitronix.tm.BitronixXid;
 import bitronix.tm.internal.BitronixSystemException;
-import bitronix.tm.internal.Decoder;
-import bitronix.tm.internal.ManagementRegistrar;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.ManagementRegistrar;
 import bitronix.tm.resource.common.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -184,7 +184,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     /**
      * {@link JmsPooledConnection} {@link bitronix.tm.resource.common.StateChangeListener}.
      * When state changes to STATE_CLOSED, the conenction is unregistered from
-     * {@link bitronix.tm.internal.ManagementRegistrar}.
+     * {@link bitronix.tm.utils.ManagementRegistrar}.
      */
     private class JmsPooledConnectionStateChangeListener implements StateChangeListener {
         public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
