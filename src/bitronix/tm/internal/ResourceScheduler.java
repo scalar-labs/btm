@@ -91,7 +91,7 @@ public class ResourceScheduler {
 
         public Object next() {
             if (!hasNext())
-                return null;
+                throw new NoSuchElementException("iterator bounds reached");
             return resourcesOfCurrentKey.get(resourcesOfCurrentKeyIndex++);
         }
     }
