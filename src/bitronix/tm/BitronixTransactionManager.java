@@ -44,7 +44,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
             if (log.isDebugEnabled()) log.debug("starting BitronixTransactionManager using " + configuration);
             TransactionManagerServices.getJournal().open();
-            TransactionManagerServices.getResourceLoader().bindAll();
+            TransactionManagerServices.getResourceLoader().init();
             TransactionManagerServices.getRecoverer().run();
             Exception completionException = TransactionManagerServices.getRecoverer().getCompletionException();
             if (completionException != null)
@@ -58,8 +58,6 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             }
         } catch (IOException ex) {
             throw new InitializationException("cannot open disk logger", ex);
-        } catch (NamingException ex) {
-            throw new InitializationException("cannot bind datasources", ex);
         }
     }
 

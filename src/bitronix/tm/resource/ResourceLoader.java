@@ -9,9 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jms.XAConnectionFactory;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.sql.XADataSource;
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,29 +32,12 @@ public class ResourceLoader implements Service {
 
     private final static Logger log = LoggerFactory.getLogger(ResourceLoader.class);
 
-    private final static String JDBC_RESOUCE_CLASSNAME = "bitronix.tm.resource.jdbc.PoolingDataSource";
-    private final static String JMS_RESOUCE_CLASSNAME = "bitronix.tm.resource.jms.PoolingConnectionFactory";
-    private static final String RESOURCE_BIND_PROPERTY_NAME = "bitronix.tm.resource.bind";
+    private final static String JDBC_RESOURCE_CLASSNAME = "bitronix.tm.resource.jdbc.PoolingDataSource";
+    private final static String JMS_RESOURCE_CLASSNAME = "bitronix.tm.resource.jms.PoolingConnectionFactory";
 
-    private boolean bindJndi;
     private Map resourcesByUniqueName;
 
-    /**
-     * Create a ResourceLoader and load the resources configuration file specified in
-     * <code>bitronix.tm.resource.configuration</code> property.
-     */
     public ResourceLoader() {
-        String filename = TransactionManagerServices.getConfiguration().getResourceConfigurationFilename();
-        if (filename != null) {
-            if (!new File(filename).exists())
-                throw new ResourceConfigurationException("cannot find resources configuration file '" + filename + "', missing or invalid value of property: bitronix.tm.resource.configuration");
-            log.info("reading resources configuration from " + filename);
-            init(filename);
-        }
-        else {
-            if (log.isDebugEnabled()) log.debug("no resource configuration file specified");
-            resourcesByUniqueName = Collections.EMPTY_MAP;
-        }
     }
 
     /**
@@ -69,38 +49,20 @@ public class ResourceLoader implements Service {
     }
 
     /**
-     * Bind all configured resources to JNDI if the <code>bitronix.tm.resource.bind</code> property has been set to true.
-     * Resources are bound under a JNDI name equals to their unique name.
-     * @throws NamingException if an error happens during binding.
+     * Initialize the ResourceLoader and load the resources configuration file specified in
+     * <code>bitronix.tm.resource.configuration</code> property.
      */
-    public void bindAll() throws NamingException {
-        if (!bindJndi) {
-            if (log.isDebugEnabled()) log.debug("JNDI resource binding disabled");
-            return;
+    public void init() {
+        String filename = TransactionManagerServices.getConfiguration().getResourceConfigurationFilename();
+        if (filename != null) {
+            if (!new File(filename).exists())
+                throw new ResourceConfigurationException("cannot find resources configuration file '" + filename + "', missing or invalid value of property: bitronix.tm.resource.configuration");
+            log.info("reading resources configuration from " + filename);
+            init(filename);
         }
-        if (resourcesByUniqueName.size() == 0) {
-            if (log.isDebugEnabled()) log.debug("no resource configuration file, nothing to bind");
-            return;
-        }
-
-        Context ctx = new InitialContext();
-        if (log.isDebugEnabled()) log.debug("binding resources to JNDI context " + ctx);
-
-        try {
-            // Bind resources to JNDI
-            Map resources = getResources();
-            if (resources != null) {
-                Iterator it = resources.entrySet().iterator();
-                while (it.hasNext()) {
-                    Map.Entry entry = (Map.Entry) it.next();
-                    XAResourceProducer producer = (XAResourceProducer) entry.getValue();
-                    bind(ctx, producer.getUniqueName());
-                }
-                log.info("bound " + resources.size() + " resource(s) to JNDI");
-            }
-        } finally {
-            if (log.isDebugEnabled()) log.debug("closing context");
-            ctx.close();
+        else {
+            if (log.isDebugEnabled()) log.debug("no resource configuration file specified");
+            resourcesByUniqueName = Collections.EMPTY_MAP;
         }
     }
 
@@ -140,10 +102,10 @@ public class ResourceLoader implements Service {
         // This allows using the TM with a 100% JDBC application without requiring JMS libraries.
 
         if (XADataSource.class.isAssignableFrom(clazz)) {
-            return (XAResourceProducer) Thread.currentThread().getContextClassLoader().loadClass(JDBC_RESOUCE_CLASSNAME).newInstance();
+            return (XAResourceProducer) Thread.currentThread().getContextClassLoader().loadClass(JDBC_RESOURCE_CLASSNAME).newInstance();
         }
         else if (XAConnectionFactory.class.isAssignableFrom(clazz)) {
-            return (XAResourceProducer) Thread.currentThread().getContextClassLoader().loadClass(JMS_RESOUCE_CLASSNAME).newInstance();
+            return (XAResourceProducer) Thread.currentThread().getContextClassLoader().loadClass(JMS_RESOURCE_CLASSNAME).newInstance();
         }
         else
             return null;
@@ -165,35 +127,10 @@ public class ResourceLoader implements Service {
                 if (fis != null) fis.close();
             }
 
-            bindJndi = Boolean.valueOf(properties.getProperty(RESOURCE_BIND_PROPERTY_NAME)).booleanValue();
             initXAResourceProducers(properties);
         } catch (IOException ex) {
             throw new InitializationException("cannot create resource binder", ex);
         }
-    }
-
-    private static void bind(Context ctx, String uniqueName) throws NamingException {
-        XAResourceProducer producer = ResourceRegistrar.get(uniqueName);
-
-        String[] names = uniqueName.split("/");
-        if (log.isDebugEnabled()) log.debug("binding " + uniqueName + " under " + (names.length -1) + " subcontext(s) to '" + ctx + "'");
-
-        for (int i = 0; i < names.length -1; i++) {
-            String name = names[i];
-            if (log.isDebugEnabled()) log.debug("subcontext " + i + ": " + name);
-            try {
-                Object obj = ctx.lookup(name);
-                if (!(obj instanceof Context))
-                    throw new InitializationException("cannot bind resource " + producer + " as JNDI subcontext name '" + name + "' is already taken by a non-context object");
-                ctx = (Context) obj;
-                if (log.isDebugEnabled()) log.debug("subcontext " + i + " exists");
-            } catch (NamingException ex) {
-                if (log.isDebugEnabled()) log.debug("subcontext " + i + " does not exist, creating it");
-                ctx = ctx.createSubcontext(name);
-            }
-        }
-
-        ctx.bind(names[names.length -1], producer);
     }
 
     /**
