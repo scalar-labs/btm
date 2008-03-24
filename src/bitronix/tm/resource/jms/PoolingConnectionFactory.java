@@ -46,7 +46,7 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
     /**
      * Initialize the pool by creating the initial amount of connections.
      */
-    public void init() {
+    public synchronized void init() {
         try {
             buildXAPool();
             buildServerSessionPool();

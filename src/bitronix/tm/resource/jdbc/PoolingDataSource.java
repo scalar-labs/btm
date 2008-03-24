@@ -43,7 +43,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     /**
      * Initializes the pool by creating the initial amount of connections.
      */
-    public void init() {
+    public synchronized void init() {
         try {
             buildXAPool();
         } catch (Exception ex) {
