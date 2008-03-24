@@ -106,10 +106,6 @@ public class ResourceSchedulerTest extends TestCase {
             return commitOrderingPosition;
         }
 
-        public XAResourceProducer createResource() {
-            return null;
-        }
-
         public String toString() {
             return "a MockResourceBean #" + number;
         }

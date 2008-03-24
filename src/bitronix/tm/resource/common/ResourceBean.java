@@ -119,13 +119,6 @@ public abstract class ResourceBean implements Serializable {
     }
 
     /**
-     * Create the resource wrapper described by this bean.
-     * @return the resource wrapper described by this bean.
-     * @deprecated superceded by init() method of {@link XAResourceProducer}.
-     */
-    public abstract XAResourceProducer createResource();
-
-    /**
      * @return the fixed amount of connections to be created in the pool.
      * @deprecated replaced with {@link #getMinPoolSize}.
      */

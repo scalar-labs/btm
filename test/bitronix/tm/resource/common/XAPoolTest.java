@@ -14,11 +14,7 @@ import junit.framework.TestCase;
 public class XAPoolTest extends TestCase {
 
     public void testBuildXAFactory() throws Exception {
-        ResourceBean rb = new ResourceBean() {
-            public XAResourceProducer createResource() {
-                return null;
-            }
-        };
+        ResourceBean rb = new ResourceBean() {};
 
         rb.setMaxPoolSize(1);
         rb.setClassName(MockXADataSource.class.getName());
