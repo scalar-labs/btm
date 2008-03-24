@@ -7,8 +7,6 @@ import bitronix.tm.resource.ResourceObjectFactory;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.*;
 import bitronix.tm.resource.jms.inbound.asf.BitronixServerSessionPool;
-import bitronix.tm.utils.PropertyUtils;
-import bitronix.tm.utils.PropertyException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -156,19 +154,7 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
     }
 
     public String toString() {
-        StringBuffer sb = new StringBuffer(128);
-        sb.append("a PoolingConnectionFactory with [");
-
-        try {
-            PropertyUtils.propertiesToString(sb);
-        } catch (PropertyException ex) {
-            sb.append("???");
-            if (log.isDebugEnabled()) log.debug("error accessing properties of PoolingConnectionFactory object", ex);
-        }
-
-        sb.append("] containing ");
-        sb.append(pool);
-        return sb.toString();
+        return "a PoolingConnectionFactory with " + pool;
     }
 
 

@@ -162,11 +162,11 @@ public class PropertyUtils {
      */
     public static String propertiesToString(Object obj) {
         StringBuffer sb = new StringBuffer();
-        Map properties = PropertyUtils.getProperties(obj);
+        Map properties = getProperties(obj);
         Iterator it = properties.keySet().iterator();
         while (it.hasNext()) {
             String property = (String) it.next();
-            Object val = PropertyUtils.getProperty(obj, property);
+            Object val = getProperty(obj, property);
             sb.append(property);
             sb.append("=");
             sb.append(val);
