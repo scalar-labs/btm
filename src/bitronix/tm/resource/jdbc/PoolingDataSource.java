@@ -51,15 +51,6 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         }
     }
 
-    /**
-     * @deprecated superceded by init().
-     * @return this.
-     */
-    public XAResourceProducer createResource() {
-        init();
-        return this;
-    }
-
     private void buildXAPool() throws Exception {
         if (this.pool != null)
             return;

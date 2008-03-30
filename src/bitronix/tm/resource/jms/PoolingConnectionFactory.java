@@ -79,15 +79,6 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
         }
     }
 
-    /**
-     * @deprecated superceded by init().
-     * @return this.
-     */
-    public XAResourceProducer createResource() {
-        init();
-        return this;
-    }
-
     public Properties getServerSessionPool() {
         return serverSessionPool;
     }
