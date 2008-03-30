@@ -437,7 +437,7 @@ public class Configuration implements Service {
         sb.append("a Configuration with [");
 
         try {
-            PropertyUtils.propertiesToString(sb);
+            sb.append(PropertyUtils.propertiesToString(this));
         } catch (PropertyException ex) {
             sb.append("???");
             if (log.isDebugEnabled()) log.debug("error accessing properties of Configuration object", ex);
