@@ -24,7 +24,7 @@ public class ResourceSchedulerTest extends TestCase {
         resourceScheduler.addResource(xarhs3);
         resourceScheduler.addResource(xarhs4);
 
-        assertEquals("a ResourceScheduler with 5 resource(s) in 3 priority(ies)", resourceScheduler.toString());
+        assertEquals("a ResourceScheduler with 5 resource(s) in 3 position(s)", resourceScheduler.toString());
 
         /* testing natural order priorities */
         assertEquals(5, resourceScheduler.size());
@@ -67,7 +67,7 @@ public class ResourceSchedulerTest extends TestCase {
         resourceScheduler.addResource(xarhs3);
         resourceScheduler.addResource(xarhs4);
 
-        assertEquals("a ResourceScheduler with 5 resource(s) in 3 priority(ies)", resourceScheduler.toString());
+        assertEquals("a ResourceScheduler with 5 resource(s) in 3 position(s)", resourceScheduler.toString());
 
         Set reverseOrderPriorities = resourceScheduler.getReverseOrderPositions();
         assertEquals(3, reverseOrderPriorities.size());
@@ -108,7 +108,7 @@ public class ResourceSchedulerTest extends TestCase {
         resourceScheduler.addResource(xarhs3);
         resourceScheduler.addResource(xarhs4);
 
-        assertEquals("a ResourceScheduler with 5 resource(s) in 3 priority(ies)", resourceScheduler.toString());
+        assertEquals("a ResourceScheduler with 5 resource(s) in 3 position(s)", resourceScheduler.toString());
 
         Iterator it = resourceScheduler.iterator();
         assertTrue(it.hasNext());
