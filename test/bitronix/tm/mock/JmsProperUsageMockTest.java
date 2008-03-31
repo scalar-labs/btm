@@ -14,10 +14,7 @@ import javax.jms.Session;
 import javax.jms.Queue;
 import javax.jms.MessageProducer;
 import java.util.List;
-import java.io.ObjectOutputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.FileInputStream;
+import java.io.*;
 
 /**
  * (c) Bitronix, 20-oct.-2005
@@ -76,11 +73,13 @@ public class JmsProperUsageMockTest extends AbstractMockJmsTest {
     }
 
     public void testSerialization() throws Exception {
-        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("test-jms-pool.ser"));
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
         oos.writeObject(poolingConnectionFactory1);
         oos.close();
 
-        ObjectInputStream ois = new ObjectInputStream(new FileInputStream("test-jms-pool.ser"));
+        ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+        ObjectInputStream ois = new ObjectInputStream(bais);
         poolingConnectionFactory1 = (PoolingConnectionFactory) ois.readObject();
         ois.close();
     }

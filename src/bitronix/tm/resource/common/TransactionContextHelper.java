@@ -32,8 +32,8 @@ public class TransactionContextHelper {
      * context for this thread.
      * @param xaResourceHolder the {@link XAResourceHolder} to enlist.
      * @param bean the {@link ResourceBean} of the {@link XAResourceHolder}.
-     * @throws SystemException
-     * @throws RollbackException
+     * @throws SystemException if an internal error happens.
+     * @throws RollbackException if the current transaction has been marked as rollback only.
      */
     public static void enlistInCurrentTransaction(XAResourceHolder xaResourceHolder, ResourceBean bean) throws SystemException, RollbackException {
         BitronixTransaction currentTransaction = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
@@ -67,7 +67,7 @@ public class TransactionContextHelper {
      * context for this thread.
      * @param xaResourceHolder the {@link XAResourceHolder} to delist.
      * @param bean the {@link ResourceBean} of the {@link XAResourceHolder}.
-     * @throws SystemException
+     * @throws SystemException if an internal error happens.
      */
     public static void delistFromCurrentTransaction(XAResourceHolder xaResourceHolder, ResourceBean bean) throws SystemException {
         BitronixTransaction currentTransaction = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
@@ -91,7 +91,7 @@ public class TransactionContextHelper {
      * <code>deferConnectionRelease</code> property and will be marked for release after 2PC execution in the latter case.
      * @param xaStatefulHolder the {@link XAStatefulHolder} to requeue.
      * @param bean the {@link ResourceBean} of the {@link XAResourceHolder}.
-     * @throws BitronixSystemException
+     * @throws BitronixSystemException if an internal error happens.
      */
     public static void requeue(XAStatefulHolder xaStatefulHolder, ResourceBean bean) throws BitronixSystemException {
         BitronixTransaction currentTransaction = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
@@ -204,7 +204,7 @@ public class TransactionContextHelper {
         if (xaResourceHolder.getXAResourceHolderState() != null && currentTransaction != null) {
             Uid currentTxGtrid = currentTransaction.getResourceManager().getGtrid();
             if (log.isDebugEnabled()) log.debug("current transaction GTRID is [" + currentTxGtrid + "]");
-            BitronixXid bitronixXid = (BitronixXid) xaResourceHolder.getXAResourceHolderState().getXid();
+            BitronixXid bitronixXid = xaResourceHolder.getXAResourceHolderState().getXid();
             Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
             if (log.isDebugEnabled()) log.debug("resource GTRID is [" + resourceGtrid + "]");
             globalTransactionMode = currentTxGtrid.equals(resourceGtrid);
@@ -231,7 +231,7 @@ public class TransactionContextHelper {
     private static XAResourceHolderState getAlreadyEnlistedXAResourceHolderState(XAResourceHolder xaResourceHolder, BitronixTransaction currentTransaction) {
         XAResourceHolderState xaResourceHolderState = xaResourceHolder.getXAResourceHolderState();
         if (xaResourceHolderState != null && xaResourceHolderState.getXid() != null && currentTransaction != null) {
-            BitronixXid bitronixXid = (BitronixXid) xaResourceHolderState.getXid();
+            BitronixXid bitronixXid = xaResourceHolderState.getXid();
             Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
             Uid currentTransactionGtrid = currentTransaction.getResourceManager().getGtrid();
             if (currentTransactionGtrid.equals(resourceGtrid))

@@ -37,10 +37,6 @@ public class RecoveryXAResourceHolder extends AbstractXAResourceHolder {
         return xaResourceHolder.getXAResource();
     }
 
-    public boolean isEmulatingXA() {
-        return false;
-    }
-
     public List getXAResourceHolders() {
         return null;
     }

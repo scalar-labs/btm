@@ -2,16 +2,14 @@ package bitronix.tm.internal;
 
 import junit.framework.TestCase;
 import bitronix.tm.resource.common.ResourceBean;
-import bitronix.tm.resource.common.XAResourceProducer;
 
 import java.util.Iterator;
 import java.util.Set;
 import java.util.List;
-import java.lang.reflect.Field;
 
 public class ResourceSchedulerTest extends TestCase {
     
-    public void testOrdering() throws Exception {
+    public void testNaturalOrdering() throws Exception {
         ResourceScheduler resourceScheduler = new ResourceScheduler();
 
         XAResourceHolderState xarhs0 = new XAResourceHolderState(null, new MockResourceBean(1));
@@ -28,31 +26,73 @@ public class ResourceSchedulerTest extends TestCase {
 
         assertEquals("a ResourceScheduler with 5 resource(s) in 3 priority(ies)", resourceScheduler.toString());
 
+        /* testing natural order priorities */
         assertEquals(5, resourceScheduler.size());
-        Set priorities = resourceScheduler.getPriorities();
+        Set priorities = resourceScheduler.getNaturalOrderPriorities();
         assertEquals(3, priorities.size());
-        
+
         Iterator it = priorities.iterator();
         Object key0 = it.next();
         Object key1 = it.next();
         Object key2 = it.next();
         assertFalse(it.hasNext());
 
-        List list0 = resourceScheduler.getResourcesForPriority(key0);
+        List list0 = resourceScheduler.getNaturalOrderResourcesForPriority(key0);
         assertEquals(1, list0.size());
         assertTrue(xarhs3 == list0.get(0));
 
-        List list1 = resourceScheduler.getResourcesForPriority(key1);
+        List list1 = resourceScheduler.getNaturalOrderResourcesForPriority(key1);
         assertEquals(3, list1.size());
         assertTrue(xarhs0 == list1.get(0));
         assertTrue(xarhs1 == list1.get(1));
         assertTrue(xarhs2 == list1.get(2));
 
-        List list2 = resourceScheduler.getResourcesForPriority(key2);
+        List list2 = resourceScheduler.getNaturalOrderResourcesForPriority(key2);
         assertEquals(1, list2.size());
         assertTrue(xarhs4 == list2.get(0));
     }
-    
+
+    public void testReverseOrdering() throws Exception {
+        ResourceScheduler resourceScheduler = new ResourceScheduler();
+
+        XAResourceHolderState xarhs0 = new XAResourceHolderState(null, new MockResourceBean(1));
+        XAResourceHolderState xarhs1 = new XAResourceHolderState(null, new MockResourceBean(1));
+        XAResourceHolderState xarhs2 = new XAResourceHolderState(null, new MockResourceBean(1));
+        XAResourceHolderState xarhs3 = new XAResourceHolderState(null, new MockResourceBean(0));
+        XAResourceHolderState xarhs4 = new XAResourceHolderState(null, new MockResourceBean(10));
+
+        resourceScheduler.addResource(xarhs0);
+        resourceScheduler.addResource(xarhs1);
+        resourceScheduler.addResource(xarhs2);
+        resourceScheduler.addResource(xarhs3);
+        resourceScheduler.addResource(xarhs4);
+
+        assertEquals("a ResourceScheduler with 5 resource(s) in 3 priority(ies)", resourceScheduler.toString());
+
+        Set reverseOrderPriorities = resourceScheduler.getReverseOrderPriorities();
+        assertEquals(3, reverseOrderPriorities.size());
+
+        Iterator itReverse = reverseOrderPriorities.iterator();
+        Object key0r = itReverse.next();
+        Object key1r = itReverse.next();
+        Object key2r = itReverse.next();
+        assertFalse(itReverse.hasNext());
+
+        List list0r = resourceScheduler.getReverseOrderResourcesForPriority(key0r);
+        assertEquals(1, list0r.size());
+        assertTrue(xarhs4 == list0r.get(0));
+
+        List list1r = resourceScheduler.getReverseOrderResourcesForPriority(key1r);
+        assertEquals(3, list1r.size());
+        assertTrue(xarhs2 == list1r.get(0));
+        assertTrue(xarhs1 == list1r.get(1));
+        assertTrue(xarhs0 == list1r.get(2));
+
+        List list2r = resourceScheduler.getReverseOrderResourcesForPriority(key2r);
+        assertEquals(1, list2r.size());
+        assertTrue(xarhs3 == list2r.get(0));
+    }
+
     public void testIterator() {
         ResourceScheduler resourceScheduler = new ResourceScheduler();
 
@@ -78,12 +118,6 @@ public class ResourceSchedulerTest extends TestCase {
         assertTrue(xarhs2 == it.next());
         assertTrue(xarhs4 == it.next());
         assertFalse(it.hasNext());
-    }
-
-    private MockResourceBean extractResourceBean(XAResourceHolderState xarhs) throws Exception {
-        Field f = xarhs.getClass().getDeclaredField("bean");
-        f.setAccessible(true);
-        return (MockResourceBean) f.get(xarhs);
     }
 
     private static int counter = 0;

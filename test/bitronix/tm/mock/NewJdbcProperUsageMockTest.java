@@ -23,10 +23,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.ArrayList;
 import java.lang.reflect.Field;
-import java.io.ObjectOutputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.FileInputStream;
+import java.io.*;
 
 /**
  * (c) Bitronix, 20-oct.-2005
@@ -88,6 +85,134 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         assertEquals(Status.STATUS_COMMITTING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(false, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
         assertEquals(false, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
+        assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+    }
+
+    public void testOrderedCommitResources() throws Exception {
+        poolingDataSource1.setCommitOrderingPosition(200);
+        poolingDataSource2.setCommitOrderingPosition(-1);
+
+        if (log.isDebugEnabled()) log.debug("*** getting TM");
+        BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) log.debug("*** before begin");
+        tm.setTransactionTimeout(10);
+        tm.begin();
+        if (log.isDebugEnabled()) log.debug("*** after begin");
+
+        if (log.isDebugEnabled()) log.debug("*** getting connection from DS1");
+        Connection connection1 = poolingDataSource1.getConnection();
+        if (log.isDebugEnabled()) log.debug("*** creating statement 1 on connection 1");
+        connection1.createStatement();
+        if (log.isDebugEnabled()) log.debug("*** creating statement 2 on connection 1");
+        connection1.createStatement();
+        if (log.isDebugEnabled()) log.debug("*** getting connection from DS2");
+        Connection connection2 = poolingDataSource2.getConnection();
+        if (log.isDebugEnabled()) log.debug("*** creating statement 1 on connection 2");
+        connection2.createStatement();
+        if (log.isDebugEnabled()) log.debug("*** creating statement 2 on connection 2");
+        connection2.createStatement();
+
+        if (log.isDebugEnabled()) log.debug("*** closing connection 1");
+        connection1.close();
+        if (log.isDebugEnabled()) log.debug("*** closing connection 2");
+        connection2.close();
+
+        if (log.isDebugEnabled()) log.debug("*** committing");
+        tm.commit();
+        if (log.isDebugEnabled()) log.debug("*** TX is done");
+
+        // check flow
+        List orderedEvents = EventRecorder.getOrderedEvents();
+        System.out.println(EventRecorder.dumpToString());
+
+        assertEquals(17, orderedEvents.size());
+        int i=0;
+        assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(DATASOURCE2_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        XAResourcePrepareEvent prepareEvent1 = (XAResourcePrepareEvent) orderedEvents.get(i++);
+        assertEquals(XAResource.XA_OK, prepareEvent1.getReturnCode());
+        XAResourcePrepareEvent prepareEvent2 = (XAResourcePrepareEvent) orderedEvents.get(i++);
+        assertEquals(XAResource.XA_OK, prepareEvent2.getReturnCode());
+        assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(Status.STATUS_COMMITTING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        XAResourceCommitEvent commitEvent1 = (XAResourceCommitEvent) orderedEvents.get(i++);
+        assertTrue(prepareEvent2.getSource() == commitEvent1.getSource());
+        assertEquals(false, commitEvent1.isOnePhase());
+        XAResourceCommitEvent commitEvent2 = (XAResourceCommitEvent) orderedEvents.get(i++);
+        assertTrue(prepareEvent1.getSource() == commitEvent2.getSource());
+        assertEquals(false, commitEvent2.isOnePhase());
+        assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+    }
+
+    public void testReversePhase2Order() throws Exception {
+        poolingDataSource1.setCommitOrderingPosition(1);
+        poolingDataSource2.setCommitOrderingPosition(1);
+
+        if (log.isDebugEnabled()) log.debug("*** getting TM");
+        BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) log.debug("*** before begin");
+        tm.setTransactionTimeout(10);
+        tm.begin();
+        if (log.isDebugEnabled()) log.debug("*** after begin");
+
+        if (log.isDebugEnabled()) log.debug("*** getting connection from DS1");
+        Connection connection1 = poolingDataSource1.getConnection();
+        if (log.isDebugEnabled()) log.debug("*** creating statement 1 on connection 1");
+        connection1.createStatement();
+        if (log.isDebugEnabled()) log.debug("*** creating statement 2 on connection 1");
+        connection1.createStatement();
+        if (log.isDebugEnabled()) log.debug("*** getting connection from DS2");
+        Connection connection2 = poolingDataSource2.getConnection();
+        if (log.isDebugEnabled()) log.debug("*** creating statement 1 on connection 2");
+        connection2.createStatement();
+        if (log.isDebugEnabled()) log.debug("*** creating statement 2 on connection 2");
+        connection2.createStatement();
+
+        if (log.isDebugEnabled()) log.debug("*** closing connection 1");
+        connection1.close();
+        if (log.isDebugEnabled()) log.debug("*** closing connection 2");
+        connection2.close();
+
+        if (log.isDebugEnabled()) log.debug("*** committing");
+        tm.commit();
+        if (log.isDebugEnabled()) log.debug("*** TX is done");
+
+        // check flow
+        List orderedEvents = EventRecorder.getOrderedEvents();
+        System.out.println(EventRecorder.dumpToString());
+
+        assertEquals(17, orderedEvents.size());
+        int i=0;
+        assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(DATASOURCE2_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        XAResourcePrepareEvent prepareEvent1 = (XAResourcePrepareEvent) orderedEvents.get(i++);
+        assertEquals(XAResource.XA_OK, prepareEvent1.getReturnCode());
+        XAResourcePrepareEvent prepareEvent2 = (XAResourcePrepareEvent) orderedEvents.get(i++);
+        assertEquals(XAResource.XA_OK, prepareEvent2.getReturnCode());
+        assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(Status.STATUS_COMMITTING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        XAResourceCommitEvent commitEvent1 = (XAResourceCommitEvent) orderedEvents.get(i++);
+        assertTrue(prepareEvent2.getSource() == commitEvent1.getSource());
+        assertEquals(false, commitEvent1.isOnePhase());
+        XAResourceCommitEvent commitEvent2 = (XAResourceCommitEvent) orderedEvents.get(i++);
+        assertTrue(prepareEvent1.getSource() == commitEvent2.getSource());
+        assertEquals(false, commitEvent2.isOnePhase());
         assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
@@ -916,11 +1041,13 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testSerialization() throws Exception {
-        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("test-jdbc-pool.ser"));
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
         oos.writeObject(poolingDataSource1);
         oos.close();
 
-        ObjectInputStream ois = new ObjectInputStream(new FileInputStream("test-jdbc-pool.ser"));
+        ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+        ObjectInputStream ois = new ObjectInputStream(bais);
         poolingDataSource1 = (PoolingDataSource) ois.readObject();
         ois.close();
     }

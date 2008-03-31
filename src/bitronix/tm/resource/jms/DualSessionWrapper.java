@@ -331,10 +331,6 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return xaResource;
     }
 
-    public boolean isEmulatingXA() {
-        return false; // Last Resource Commit not supported on JMS resources
-    }
-
     /* dumb wrapping of Session methods */
 
     public boolean getTransacted() throws JMSException {

@@ -3,7 +3,6 @@ package bitronix.tm.twopc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import bitronix.tm.BitronixTransaction;
-import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.twopc.executor.Executor;
 import bitronix.tm.twopc.executor.Job;
@@ -13,38 +12,36 @@ import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.Status;
 import javax.transaction.xa.XAException;
-import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
- * Phase 2 Commit logic holder.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * Phase 2 Commit logic engine.
+ * <p>&copy; Bitronix 2005, 2006, 2007, 2008</p>
  *
  * @author lorban
  */
-public class Committer {
+public class Committer extends AbstractPhaseEngine {
 
     private final static Logger log = LoggerFactory.getLogger(Committer.class);
 
-    private Executor executor;
+    private boolean onePhase;
+    private List interestedResources;
 
 
     public Committer(Executor executor) {
-        this.executor = executor;
+       super(executor);
     }
 
     /**
      * Execute phase 2 commit.
      * @param transaction the transaction wanting to commit phase 2
      * @param interestedResources a map of phase 1 prepared resources wanting to participate in phase 2 using Xids as keys
-     * @throws bitronix.tm.internal.TransactionTimeoutException
-     * @throws javax.transaction.HeuristicMixedException
-     * @throws javax.transaction.HeuristicRollbackException
-     * @throws bitronix.tm.internal.BitronixSystemException
+     * @throws HeuristicRollbackException when all resources committed instead.
+     * @throws HeuristicMixedException when some resources committed and some rolled back.
+     * @throws bitronix.tm.internal.BitronixSystemException when an internal error occured.
      */
-    public void commit(BitronixTransaction transaction, Map interestedResources) throws HeuristicMixedException, HeuristicRollbackException, BitronixSystemException {
+    public void commit(BitronixTransaction transaction, List interestedResources) throws HeuristicMixedException, HeuristicRollbackException, BitronixSystemException {
         XAResourceManager resourceManager = transaction.getResourceManager();
         if (resourceManager.size() == 0) {
             transaction.setStatus(Status.STATUS_COMMITTING);
@@ -55,130 +52,74 @@ public class Committer {
 
         transaction.setStatus(Status.STATUS_COMMITTING);
 
-        List jobs = new ArrayList();
+        this.interestedResources = interestedResources;
+        this.onePhase = resourceManager.size() == 1;
 
-        // start committing jobs
-        if (log.isDebugEnabled()) log.debug("executing commit phase, " + interestedResources.size() + " interested resource(s) left");
-        Iterator it = interestedResources.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            XAResourceHolderState resourceHolder = (XAResourceHolderState) entry.getValue();
-
-            // 1PC is when there is only one enlisted resource, not when there is only one participating one
-            boolean onePhase = resourceManager.size() == 1;
-            
-            CommitJob job = new CommitJob(resourceHolder, onePhase);
-            Object future = executor.submit(job);
-            job.setFuture(future);
-            jobs.add(job);
-        }
-
-        // wait for committing jobs to finish
-        for (int i = 0; i < jobs.size(); ) {
-            CommitJob job = (CommitJob) jobs.get(i);
-            while (!executor.isDone(job.getFuture())) {
-                executor.waitFor(job.getFuture(), 1000);
-            }
-            i++;
-        }
-
-        // check committing jobs return code
-        List heuristicExceptions = new ArrayList();
-        boolean hazard = false;
-        for (int i = 0; i < jobs.size(); i++) {
-            CommitJob job = (CommitJob) jobs.get(i);
-            XAException xaException = job.getXAException();
-            RuntimeException runtimeException = job.getRuntimeException();
-
-            if (xaException != null) {
-                if (xaException.errorCode == XAException.XA_HEURHAZ)
-                    hazard = true;
-                heuristicExceptions.add(xaException);
-                log.error("cannot commit resource " + job.getResource() + ", error=" + Decoder.decodeXAExceptionErrorCode(xaException) + ", will not retry", xaException);
-            }
-            else if (runtimeException != null) {
-                throw runtimeException;
-            }
-        }
-
-        // status can be marked as COMMITTED anyway for journal consistency, heuristic errors cannot be fixed and should only be reported
-        transaction.setStatus(Status.STATUS_COMMITTED);
-
-        if (heuristicExceptions.size() > 0) {
-            if (!hazard && heuristicExceptions.size() == resourceManager.size())
-                throw new BitronixHeuristicRollbackException("all " + resourceManager.size() + " resources improperly heuristically rolled back");
-            else
-                throw new BitronixHeuristicMixedException(heuristicExceptions.size() + " resource(s) out of " + resourceManager.size() + " improperly heuristically rolled back" + (hazard ? " (or maybe not)" : ""));
-        }
-    }
-
-    /**
-     * commit the resource, retrying as many times as necessary
-     * @param resourceHolder
-     * @param onePhase
-     * @throws javax.transaction.xa.XAException if it is useless to retry, ie: heuristic happened
-     */
-    private static void commitResource(XAResourceHolderState resourceHolder, boolean onePhase) throws XAException {
-        if (log.isDebugEnabled()) log.debug("committing resource " + resourceHolder + (onePhase ? " (with one-phase optimization)" : ""));
-        while (true) {
-            try {
-                resourceHolder.getXAResource().commit(resourceHolder.getXid(), onePhase);
-            } catch (XAException ex) {
-                boolean fixed = handleXAException(resourceHolder, ex);
-                if (!fixed) {
-                    int transactionRetryInterval = TransactionManagerServices.getConfiguration().getTransactionRetryInterval();
-                    log.error("cannot commit phase 2 resource " + resourceHolder + ", error=" + Decoder.decodeXAExceptionErrorCode(ex) + ", retrying in " + transactionRetryInterval + "s", ex);
-                    try {
-                        Thread.sleep(transactionRetryInterval * 1000L);
-                    } catch (InterruptedException iex) {
-                        // ignored
-                    }
-                    continue;
-                } // if
-            }
-            break;
-        } // while
-        if (log.isDebugEnabled()) log.debug("committed resource " + resourceHolder);
-    }
-
-    /**
-     * @throws javax.transaction.xa.XAException is the commit should not be retried, ie: non-commit heuristic happened
-     * @return true if the exception was about heuristic commit and was properly forgotten
-     * @param failedResourceHolder
-     * @param xaException
-     */
-    private static boolean handleXAException(XAResourceHolderState failedResourceHolder, XAException xaException) throws XAException {
-        switch (xaException.errorCode) {
-            case XAException.XA_HEURCOM:
-                forgetHeuristicCommit(failedResourceHolder);
-                // this exception has been fixed
-                return true;
-
-            case XAException.XAER_NOTA:
-                throw new BitronixXAException("resource reported XAER_NOTA when asked to commit transaction branch", XAException.XA_HEURHAZ, xaException);
-
-            case XAException.XA_HEURHAZ:
-            case XAException.XA_HEURMIX:
-            case XAException.XA_HEURRB:
-                // this exception has not been fixed, DO NOT try again
-                log.error("heuristic commit is incompatible with the global state of this transaction - guilty: " + failedResourceHolder);
-                throw xaException;
-
-            default:
-                // this exception has not been fixed, try again later
-                return false;
-        }
-    }
-
-    private static void forgetHeuristicCommit(XAResourceHolderState resourceHolder) {
-        if (log.isDebugEnabled()) log.debug("handling heuristic commit on resource " + resourceHolder.getXAResource());
         try {
-            resourceHolder.getXAResource().forget(resourceHolder.getXid());
-            if (log.isDebugEnabled()) log.debug("forgotten heuristically committed resource " + resourceHolder.getXAResource());
-        } catch (XAException ex) {
-            log.error("cannot forget " + resourceHolder.getXid() + " assigned to " + resourceHolder.getXAResource() + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+            executePhase(resourceManager, true);
+        } catch (PhaseException ex) {
+            logFailedResources(ex);
+            transaction.setStatus(Status.STATUS_UNKNOWN);
+            throwException("transaction failed during commit of " + transaction, ex, interestedResources.size());
         }
+
+        transaction.setStatus(Status.STATUS_COMMITTED);
     }
+
+    private void throwException(String message, PhaseException phaseException, int totalResourceCount) throws HeuristicMixedException, HeuristicRollbackException {
+        List exceptions = phaseException.getExceptions();
+        List resources = phaseException.getResources();
+
+        boolean hazard = false;
+        List heuristicResources = new ArrayList();
+        List errorResources = new ArrayList();
+
+        for (int i = 0; i < exceptions.size(); i++) {
+            Exception ex = (Exception) exceptions.get(i);
+            XAResourceHolderState resourceHolder = (XAResourceHolderState) resources.get(i);
+            if (ex instanceof XAException) {
+                XAException xaEx = (XAException) ex;
+                switch (xaEx.errorCode) {
+                    case XAException.XA_HEURHAZ:
+                        hazard = true;
+                    case XAException.XA_HEURCOM:
+                    case XAException.XA_HEURRB:
+                    case XAException.XA_HEURMIX:
+                        heuristicResources.add(resourceHolder);
+                        break;
+
+                    default:
+                        errorResources.add(resourceHolder);
+                }
+            }
+            else
+                errorResources.add(resourceHolder);
+        }
+
+        if (!hazard && heuristicResources.size() == totalResourceCount)
+            throw new BitronixHeuristicRollbackException(message + ":" + 
+                    " all resource(s) " + collectResourcesNames(heuristicResources) +
+                    " improperly unilaterally rolled back", phaseException);
+        else
+            throw new BitronixHeuristicMixedException(message + ":" +
+                    (errorResources.size() > 0 ? " resource(s) " + collectResourcesNames(errorResources) + " threw unexpected exception" : "") +
+                    (errorResources.size() > 0 && heuristicResources.size() > 0 ? " and" : "") +
+                    (heuristicResources.size() > 0 ? " resource(s) " + collectResourcesNames(heuristicResources) + " improperly unilaterally rolled back" + (hazard ? " (or hazard happened)" : "") : ""), phaseException);
+    }
+
+    protected Job createJob(XAResourceHolderState resourceHolder) {
+        return new CommitJob(resourceHolder, onePhase);
+    }
+
+    protected boolean isParticipating(XAResourceHolderState xaResourceHolderState) {
+        for (int i = 0; i < interestedResources.size(); i++) {
+            XAResourceHolderState resourceHolderState = (XAResourceHolderState) interestedResources.get(i);
+            if (xaResourceHolderState == resourceHolderState)
+                return true;
+        }
+        return false;
+    }
+
 
     private static class CommitJob extends Job {
         private boolean onePhase;
@@ -204,6 +145,47 @@ public class Committer {
             } catch (XAException ex) {
                 xaException = ex;
             }
+        }
+
+        private void commitResource(XAResourceHolderState resourceHolder, boolean onePhase) throws XAException {
+            try {
+                if (log.isDebugEnabled()) log.debug("committing resource " + resourceHolder + (onePhase ? " (with one-phase optimization)" : ""));
+                resourceHolder.getXAResource().commit(resourceHolder.getXid(), onePhase);
+                if (log.isDebugEnabled()) log.debug("committed resource " + resourceHolder);
+            } catch (XAException ex) {
+               handleXAException(resourceHolder, ex);
+            }
+        }
+
+        private void handleXAException(XAResourceHolderState failedResourceHolder, XAException xaException) throws XAException {
+            switch (xaException.errorCode) {
+                case XAException.XA_HEURCOM:
+                    forgetHeuristicCommit(failedResourceHolder);
+                    return;
+
+                case XAException.XA_HEURHAZ:
+                case XAException.XA_HEURMIX:
+                case XAException.XA_HEURRB:
+                    log.error("heuristic rollback is incompatible with the global state of this transaction - guilty: " + failedResourceHolder);
+                    throw xaException;
+
+                default:
+                    throw new BitronixXAException("resource reported " + Decoder.decodeXAExceptionErrorCode(xaException) + " when asked to commit transaction branch", XAException.XA_HEURHAZ, xaException);
+            }
+        }
+
+        private void forgetHeuristicCommit(XAResourceHolderState resourceHolder) {
+            try {
+                if (log.isDebugEnabled()) log.debug("handling heuristic commit on resource " + resourceHolder.getXAResource());
+                resourceHolder.getXAResource().forget(resourceHolder.getXid());
+                if (log.isDebugEnabled()) log.debug("forgotten heuristically committed resource " + resourceHolder.getXAResource());
+            } catch (XAException ex) {
+                log.error("cannot forget " + resourceHolder.getXid() + " assigned to " + resourceHolder.getXAResource() + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+            }
+        }
+
+        public String toString() {
+            return "a CommitJob " + (onePhase ? "(one phase) " : "") + "with " + getResource();
         }
     }
 

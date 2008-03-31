@@ -13,14 +13,11 @@ import bitronix.tm.resource.jdbc.PoolingDataSource;
 import bitronix.tm.resource.ResourceRegistrar;
 import junit.framework.TestCase;
 
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.Status;
+import javax.transaction.*;
 import javax.transaction.xa.XAException;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.Iterator;
 
 /**
@@ -30,44 +27,29 @@ import java.util.Iterator;
  * @author lorban
  */
 public class Phase2FailureTest extends TestCase {
+    private PoolingDataSource poolingDataSource1;
+    private PoolingDataSource poolingDataSource2;
+    private BitronixTransactionManager tm;
 
     /**
      * Test scenario:
      *
      * XAResources: 2
      * TX timeout: 10s
-     * TX resolution: commit
+     * TX resolution: heuristic mixed
      *
      * XAResource 1 resolution: successful
-     * XAResource 2 resolution: commit throws exception XAException.XAER_RMERR, fixed after 2s
+     * XAResource 2 resolution: commit throws exception XAException.XAER_RMERR
      *
      * Expected outcome:
-     *   TM fails on resource 2 commit and retries twice (once per second) then commit should succeed.
+     *   TM fails on resource 2 commit
      * Expected TM events:
-     *  2 XAResourcePrepareEvent, 4 XAResourceCommitEvent
+     *  2 XAResourcePrepareEvent, 2 XAResourceCommitEvent
      * Expected journal events:
-     *   ACTIVE, PREPARING, PREPARED, COMMITTING, COMMITTED
+     *   ACTIVE, PREPARING, PREPARED, COMMITTING, UNKNOWN
      * @throws Exception if any error happens.
      */
     public void test() throws Exception {
-        PoolingDataSource poolingDataSource1 = new PoolingDataSource();
-        poolingDataSource1.setClassName(MockXADataSource.class.getName());
-        poolingDataSource1.setUniqueName("pds1");
-        poolingDataSource1.setMinPoolSize(5);
-        poolingDataSource1.setMaxPoolSize(5);
-        poolingDataSource1.setAutomaticEnlistingEnabled(true);
-        poolingDataSource1.init();
-
-        PoolingDataSource poolingDataSource2 = new PoolingDataSource();
-        poolingDataSource2.setClassName(MockXADataSource.class.getName());
-        poolingDataSource2.setUniqueName("pds2");
-        poolingDataSource2.setMinPoolSize(5);
-        poolingDataSource2.setMaxPoolSize(5);
-        poolingDataSource2.setAutomaticEnlistingEnabled(true);
-        poolingDataSource2.init();
-
-        BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
-
         tm.begin();
         tm.setTransactionTimeout(10); // TX must not timeout
 
@@ -81,21 +63,18 @@ public class Phase2FailureTest extends TestCase {
         final MockXAResource mockXAResource2 = (MockXAResource) mockXAConnection2.getXAResource();
         mockXAResource2.setCommitException(createXAException("resource 2 commit failed with XAER_RMERR", XAException.XAER_RMERR));
 
-
-        // after 2 secs we 'fix' the commit problem
-        new Timer(true).schedule(new TimerTask() {
-            public void run() {
-                mockXAResource2.setCommitException(null);
-            }
-        }, 2000, 2000);
-
-        tm.commit();
+        try {
+            tm.commit();
+            fail("expected HeuristicMixedException");
+        } catch (HeuristicMixedException ex) {
+            assertEquals("transaction failed during commit of a Bitronix Transaction with GTRID [", ex.getMessage().substring(0, 71));
+            assertEquals("], status=UNKNOWN, 2 resource(s) enlisted (started ", ex.getMessage().substring(121, 172));
+            assertTrue("got message <" + ex.getMessage() + ">", ex.getMessage().endsWith("resource(s) [pds2] improperly unilaterally rolled back (or hazard happened)"));
+        }
 
         System.out.println(EventRecorder.dumpToString());
 
-        // we should find a COMMITTED status in the journal log
-        // and 4 commit tries (1 for resource 1, 2 failed for resource 2 and 1 successful for resource 2)
-        int journalCommittedEventCount = 0;
+        int journalUnknownEventCount = 0;
         int journalCommittingEventCount = 0;
         int commitEventCount = 0;
         List events = EventRecorder.getOrderedEvents();
@@ -106,8 +85,8 @@ public class Phase2FailureTest extends TestCase {
                 commitEventCount++;
 
             if (event instanceof JournalLogEvent) {
-                if (((JournalLogEvent) event).getStatus() == Status.STATUS_COMMITTED)
-                    journalCommittedEventCount++;
+                if (((JournalLogEvent) event).getStatus() == Status.STATUS_UNKNOWN)
+                    journalUnknownEventCount++;
             }
 
             if (event instanceof JournalLogEvent) {
@@ -116,11 +95,8 @@ public class Phase2FailureTest extends TestCase {
             }
         }
         assertEquals("TM should have logged a COMMITTING status", 1, journalCommittingEventCount);
-        assertEquals("TM should have logged a COMMITTED status", 1, journalCommittedEventCount);
-        assertEquals("TM haven't properly tried to commit", 4, commitEventCount);
-
-        poolingDataSource1.close();
-        poolingDataSource2.close();
+        assertEquals("TM should have logged a COMMITTED status", 1, journalUnknownEventCount);
+        assertEquals("TM haven't properly tried to commit", 2, commitEventCount);
     }
 
     /**
@@ -143,24 +119,6 @@ public class Phase2FailureTest extends TestCase {
      * @throws Exception if any error happens.
      */
     public void testHeuristicCommit() throws Exception {
-        PoolingDataSource poolingDataSource1 = new PoolingDataSource();
-        poolingDataSource1.setClassName(MockXADataSource.class.getName());
-        poolingDataSource1.setUniqueName("pds1");
-        poolingDataSource1.setMinPoolSize(5);
-        poolingDataSource1.setMaxPoolSize(5);
-        poolingDataSource1.setAutomaticEnlistingEnabled(true);
-        poolingDataSource1.init();
-
-        PoolingDataSource poolingDataSource2 = new PoolingDataSource();
-        poolingDataSource2.setClassName(MockXADataSource.class.getName());
-        poolingDataSource2.setUniqueName("pds2");
-        poolingDataSource2.setMinPoolSize(5);
-        poolingDataSource2.setMaxPoolSize(5);
-        poolingDataSource2.setAutomaticEnlistingEnabled(true);
-        poolingDataSource2.init();
-
-        BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
-
         tm.begin();
         tm.setTransactionTimeout(1); // TX timeout should have no effect here
 
@@ -200,9 +158,6 @@ public class Phase2FailureTest extends TestCase {
         assertEquals("TM should have logged a COMMITTED status", 1, journalCommittedEventCount);
         assertEquals("TM haven't properly tried to commit", 2, commitEventCount);
         assertEquals("TM haven't properly tried to forget", 1, forgetEventCount);
-
-        poolingDataSource1.close();
-        poolingDataSource2.close();
     }
 
     /**
@@ -225,24 +180,6 @@ public class Phase2FailureTest extends TestCase {
      * @throws Exception if any error happens.
      */
     public void testHeuristicMixed() throws Exception {
-        PoolingDataSource poolingDataSource1 = new PoolingDataSource();
-        poolingDataSource1.setClassName(MockXADataSource.class.getName());
-        poolingDataSource1.setUniqueName("pds1");
-        poolingDataSource1.setMinPoolSize(5);
-        poolingDataSource1.setMaxPoolSize(5);
-        poolingDataSource1.setAutomaticEnlistingEnabled(true);
-        poolingDataSource1.init();
-
-        PoolingDataSource poolingDataSource2 = new PoolingDataSource();
-        poolingDataSource2.setClassName(MockXADataSource.class.getName());
-        poolingDataSource2.setUniqueName("pds2");
-        poolingDataSource2.setMinPoolSize(5);
-        poolingDataSource2.setMaxPoolSize(5);
-        poolingDataSource2.setAutomaticEnlistingEnabled(true);
-        poolingDataSource2.init();
-
-        BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
-
         tm.begin();
         tm.setTransactionTimeout(1); // TX timeout should have no effect here
 
@@ -259,14 +196,14 @@ public class Phase2FailureTest extends TestCase {
             tm.commit();
             fail("TM should have thrown HeuristicMixedException");
         } catch (HeuristicMixedException ex) {
-            assertEquals("1 resource(s) out of 2 improperly heuristically rolled back", ex.getMessage());
+            assertEquals("transaction failed during commit of a Bitronix Transaction with GTRID [", ex.getMessage().substring(0, 71));
+            assertEquals("], status=UNKNOWN, 2 resource(s) enlisted (started ", ex.getMessage().substring(121, 172));
+            assertTrue("got message <" + ex.getMessage() + ">", ex.getMessage().endsWith("resource(s) [pds2] improperly unilaterally rolled back"));
         }
 
         System.out.println(EventRecorder.dumpToString());
 
-        // we should find a COMMITTED status in the journal log
-        // and 4 rollback tries (1 for resource 2, 2 failed for resource 1 and 1 successful for resource 1)
-        int journalCommittedEventCount = 0;
+        int journalUnknownEventCount = 0;
         int commitEventCount = 0;
         List events = EventRecorder.getOrderedEvents();
         for (int i = 0; i < events.size(); i++) {
@@ -276,15 +213,12 @@ public class Phase2FailureTest extends TestCase {
                 commitEventCount++;
 
             if (event instanceof JournalLogEvent) {
-                if (((JournalLogEvent) event).getStatus() == Status.STATUS_COMMITTED)
-                    journalCommittedEventCount++;
+                if (((JournalLogEvent) event).getStatus() == Status.STATUS_UNKNOWN)
+                    journalUnknownEventCount++;
             }
         }
-        assertEquals("TM should have logged a COMMITTED status", 1, journalCommittedEventCount);
+        assertEquals("TM should have logged a UNKNOWN status", 1, journalUnknownEventCount);
         assertEquals("TM haven't properly tried to commit", 2, commitEventCount);
-
-        poolingDataSource1.close();
-        poolingDataSource2.close();
     }
 
     protected void setUp() throws Exception {
@@ -305,6 +239,31 @@ public class Phase2FailureTest extends TestCase {
         field = TransactionManagerServices.getConfiguration().getClass().getDeclaredField("transactionRetryInterval");
         field.setAccessible(true);
         field.set(TransactionManagerServices.getConfiguration(), new Integer(1));
+
+
+        poolingDataSource1 = new PoolingDataSource();
+        poolingDataSource1.setClassName(MockXADataSource.class.getName());
+        poolingDataSource1.setUniqueName("pds1");
+        poolingDataSource1.setMinPoolSize(5);
+        poolingDataSource1.setMaxPoolSize(5);
+        poolingDataSource1.setAutomaticEnlistingEnabled(true);
+        poolingDataSource1.init();
+
+        poolingDataSource2 = new PoolingDataSource();
+        poolingDataSource2.setClassName(MockXADataSource.class.getName());
+        poolingDataSource2.setUniqueName("pds2");
+        poolingDataSource2.setMinPoolSize(5);
+        poolingDataSource2.setMaxPoolSize(5);
+        poolingDataSource2.setAutomaticEnlistingEnabled(true);
+        poolingDataSource2.init();
+
+        tm = TransactionManagerServices.getTransactionManager();
+    }
+
+    protected void tearDown() throws Exception {
+        poolingDataSource1.close();
+        poolingDataSource2.close();
+        tm.shutdown();
     }
 
     private XAException createXAException(String msg, int errorCode) {

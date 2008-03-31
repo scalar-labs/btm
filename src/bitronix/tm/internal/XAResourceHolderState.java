@@ -2,12 +2,12 @@ package bitronix.tm.internal;
 
 import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.resource.common.XAResourceHolder;
+import bitronix.tm.BitronixXid;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
-import javax.transaction.xa.Xid;
 
 /**
  * {@link XAResourceHolder} state container.
@@ -29,7 +29,7 @@ public class XAResourceHolderState {
     private final static Logger log = LoggerFactory.getLogger(XAResourceHolderState.class);
 
     private ResourceBean bean;
-    private Xid xid;
+    private BitronixXid xid;
     private XAResourceHolder xaResourceHolder;
     private boolean started;
     private boolean ended;
@@ -45,11 +45,11 @@ public class XAResourceHolderState {
         xid = null;
     }
 
-    public Xid getXid() {
+    public BitronixXid getXid() {
         return xid;
     }
 
-    public void setXid(Xid xid) throws BitronixSystemException {
+    public void setXid(BitronixXid xid) throws BitronixSystemException {
         if (log.isDebugEnabled()) log.debug("assigning <" + xid + "> to <" + this + ">");
         if (this.xid != null)
             throw new BitronixSystemException("a XID has already been assigned to " + this);

@@ -1,0 +1,174 @@
+package bitronix.tm.twopc;
+
+import bitronix.tm.internal.XAResourceManager;
+import bitronix.tm.internal.XAResourceHolderState;
+import bitronix.tm.twopc.executor.Job;
+import bitronix.tm.twopc.executor.Executor;
+import bitronix.tm.utils.Decoder;
+
+import javax.transaction.xa.XAException;
+import java.util.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Abstract phase execution engine.
+ * <p>&copy; Bitronix 2005, 2006, 2007, 2008</p>
+ *
+ * @author lorban
+ */
+public abstract class AbstractPhaseEngine {
+
+    private final static Logger log = LoggerFactory.getLogger(AbstractPhaseEngine.class);
+
+    private Executor executor;
+
+    protected AbstractPhaseEngine(Executor executor) {
+        this.executor = executor;
+    }
+
+    /**
+     * Execute the phase. Resources receive the phase command in priority order (reversed or not). If there is more than
+     * once resource in a priority, command is sent in enlistment order (again reversed or not).
+     * If {@link bitronix.tm.Configuration#isAsynchronous2Pc()} is true, all commands in a given priority are sent
+     * in parallel by using the detected {@link Executor} implementation.
+     * @param resourceManager the {@link XAResourceManager} containing the enlisted resources to execute the phase on.
+     * @param reverse true if jobs should be executed in reverse priority / enlistment order, false for natural priority / enlistment order.
+     * @throws PhaseException if one or more resource threw an exception during phase execution.
+     * @see bitronix.tm.twopc.executor.SyncExecutor
+     * @see bitronix.tm.twopc.executor.SimpleAsyncExecutor
+     * @see bitronix.tm.twopc.executor.ConcurrentExecutor
+     * @see bitronix.tm.twopc.executor.BackportConcurrentExecutor 
+     */
+    protected void executePhase(XAResourceManager resourceManager, boolean reverse) throws PhaseException {
+        SortedSet priorities;
+        if (reverse) {
+            priorities = resourceManager.getReverseOrderPriorities();
+            if (log.isDebugEnabled()) log.debug("executing phase on " + resourceManager.size() + " resource(s) enlisted in " + priorities.size() + " priority(ies) in reverse priority order");
+        }
+        else {
+            priorities = resourceManager.getNaturalOrderPriorities();
+            if (log.isDebugEnabled()) log.debug("executing phase on " + resourceManager.size() + " resource(s) enlisted in " + priorities.size() + " priority(ies) in natural priority order");
+        }
+
+        Iterator it = priorities.iterator();
+        while (it.hasNext()) {
+            Object priorityKey = it.next();
+            
+            List resources;
+            if (reverse) {
+                resources = resourceManager.getReverseOrderResourcesForPriority(priorityKey);
+            }
+            else {
+                resources = resourceManager.getNaturalOrderResourcesForPriority(priorityKey);
+            }
+
+            if (log.isDebugEnabled()) log.debug("running " + resources.size() + " job(s) for priority '" + priorityKey + "'");
+            runJobsForPriority(resources);
+            if (log.isDebugEnabled()) log.debug("ran " + resources.size() + " job(s) for priority '" + priorityKey + "'");
+        }
+
+    }
+
+    private void runJobsForPriority(List resources) throws PhaseException {
+        Iterator it = resources.iterator();
+        List jobs = new ArrayList();
+        List exceptions = new ArrayList();
+        List errorResources = new ArrayList();
+
+        // start threads
+        while (it.hasNext()) {
+            XAResourceHolderState resourceHolder = (XAResourceHolderState) it.next();
+            if (!isParticipating(resourceHolder)) {
+                if (log.isDebugEnabled()) log.debug("skipping non-participant resource " + resourceHolder);
+                continue;
+            }
+
+            Job job = createJob(resourceHolder);
+            Object future = executor.submit(job);
+            job.setFuture(future);
+            jobs.add(job);
+        }
+
+        // wait for threads to finish and check results
+        for (int i = 0; i < jobs.size(); i++) {
+            Job job = (Job) jobs.get(i);
+
+            Object future = job.getFuture();
+            while (!executor.isDone(future)) {
+                executor.waitFor(future, 1000L);
+            }
+
+            XAException xaException = job.getXAException();
+            RuntimeException runtimeException = job.getRuntimeException();
+
+            if (xaException != null) {
+                if (log.isDebugEnabled()) log.debug("error executing " + job + ", errorCode=" + Decoder.decodeXAExceptionErrorCode(xaException));
+                exceptions.add(xaException);
+                errorResources.add(job.getResource());
+            } else if (runtimeException != null) {
+                if (log.isDebugEnabled()) log.debug("error executing " + job);
+                exceptions.add(runtimeException);
+                errorResources.add(job.getResource());
+            }
+        }
+
+        if (log.isDebugEnabled()) log.debug("phase executed with " + exceptions.size() + " exception(s)");
+        if (exceptions.size() > 0)
+            throw new PhaseException(exceptions, errorResources);
+    }
+
+    /**
+     * Determine if a resource is participating in the phase or not. A participating resource gets
+     * a job created to execute the phase's command on it.
+     * @param xaResourceHolderState the resource to check for its participation.
+     * @return true if the resource must participate in the phase.
+     */
+    protected abstract boolean isParticipating(XAResourceHolderState xaResourceHolderState);
+
+    /**
+     * Create a {@link Job} that is going to execute the phase command on the given resource.
+     * @param xaResourceHolderState the resource that is going to receive a command.
+     * @return the {@link Job} that is going to execute the command.
+     */
+    protected abstract Job createJob(XAResourceHolderState xaResourceHolderState);
+
+    /**
+     * Create a String representation of a list of {@link bitronix.tm.resource.common.XAResourceHolder}s. This
+     * String will contain each resource's unique name.
+     * @param resources a list of {@link bitronix.tm.resource.common.XAResourceHolder}s.
+     * @return a String representation of the list.
+     */
+    protected String collectResourcesNames(List resources) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("[");
+
+        for (int i = 0; i < resources.size(); i++) {
+            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) resources.get(i);
+            sb.append(xaResourceHolderState.getUniqueName());
+
+            if (i+1 < resources.size())
+                sb.append(", ");
+        }
+
+        sb.append("]");
+        return sb.toString();
+    }
+
+    /**
+     * Log exceptions that happened during a phase failure.
+     * @param ex the phase exception.
+     */
+    protected void logFailedResources(PhaseException ex) {
+        List exceptions = ex.getExceptions();
+        List resources = ex.getResources();
+
+        for (int i = 0; i < exceptions.size(); i++) {
+            Throwable t = (Throwable) exceptions.get(i);
+            XAResourceHolderState holderState = (XAResourceHolderState) resources.get(i);
+            log.error("resource " + holderState.getUniqueName() + " failed on " + holderState.getXid(), t);
+        }
+    }
+
+}

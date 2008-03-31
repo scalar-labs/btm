@@ -1,21 +1,19 @@
 package bitronix.tm.internal;
 
-import bitronix.tm.BitronixTransaction;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;
+import bitronix.tm.BitronixXid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.transaction.SystemException;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
-import javax.transaction.xa.Xid;
 import java.util.*;
 
 /**
  * Every {@link bitronix.tm.BitronixTransaction} contains an instance of this class that is used to register
  * and keep track of resources enlisted in a transaction.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; Bitronix 2005, 2006, 2007, 2008</p>
  *
  * @author lorban
  */
@@ -47,13 +45,15 @@ public class XAResourceManager {
      * </ul>
      *
      * @param xaResourceHolderState the {@link XAResourceHolderState} to be enlisted.
-     * @throws XAException
-     * @throws BitronixSystemException
+     * @throws XAException if a resource error occured.
+     * @throws BitronixSystemException if an internal error occured.
      */
     public void enlist(XAResourceHolderState xaResourceHolderState) throws XAException, BitronixSystemException {
-        XAResourceHolderState emulatingXAResourceHolderState = findEmulatingXAResourceHolderState();
-        if (xaResourceHolderState.getXAResourceHolder().isEmulatingXA() && emulatingXAResourceHolderState != null)
-            throw new BitronixSystemException("cannot enlist more than one non-XA resource, tried enlisting " + xaResourceHolderState + ", already enlisted: " + emulatingXAResourceHolderState);
+        if (xaResourceHolderState.getCommitOrderingPosition() == ResourceScheduler.ALWAYS_LAST_POSITION) {
+            List alwaysLastResources = resources.getNaturalOrderResourcesForPriority(ResourceScheduler.ALWAYS_LAST_POSITION_KEY);
+            if (alwaysLastResources != null && alwaysLastResources.size() > 0)
+                throw new BitronixSystemException("cannot enlist more than one non-XA resource, tried enlisting " + xaResourceHolderState + ", already enlisted: " + alwaysLastResources.get(0));
+        }
 
         XAResourceHolderState alreadyEnlistedHolder = findXAResourceHolderState(xaResourceHolderState.getXAResource());
         if (alreadyEnlistedHolder != null && !alreadyEnlistedHolder.isEnded()) {
@@ -64,11 +64,11 @@ public class XAResourceManager {
 
         XAResourceHolderState toBeJoinedHolderState = null;
         if (alreadyEnlistedHolder != null) {
-            if (log.isDebugEnabled()) log.debug("resource already enlisted but has been ended: " + alreadyEnlistedHolder);
+            if (log.isDebugEnabled()) log.debug("resource already enlisted but has been ended eligible for join: " + alreadyEnlistedHolder);
             toBeJoinedHolderState = getManagedResourceWithSameRM(xaResourceHolderState);
         }
 
-        Xid xid;
+        BitronixXid xid;
         int flag;
 
         if (toBeJoinedHolderState != null) {
@@ -85,8 +85,11 @@ public class XAResourceManager {
         xaResourceHolderState.setXid(xid);
         xaResourceHolderState.start(flag);
 
-        // this has to be done only after start() successfully returned
-        resources.addResource(xaResourceHolderState);
+        // in case of a JOIN, the resource holder is already in the scheduler -> do not add it twice
+        if (toBeJoinedHolderState == null) {
+            // this must be done only after start() successfully returned
+            resources.addResource(xaResourceHolderState);
+        }
     }
 
     /**
@@ -94,8 +97,8 @@ public class XAResourceManager {
      * @param xaResourceHolderState the {@link XAResourceHolderState} to be delisted.
      * @param flag the delistment flag.
      * @return true if the resource could be delisted, false otherwise.
-     * @throws XAException
-     * @throws BitronixSystemException
+     * @throws XAException if the resource threw an exception during delistment.
+     * @throws BitronixSystemException if an internal error occured.
      */
     public boolean delist(XAResourceHolderState xaResourceHolderState, int flag) throws XAException, BitronixSystemException {
         if (findXAResourceHolderState(xaResourceHolderState.getXAResource()) != null) {
@@ -109,31 +112,8 @@ public class XAResourceManager {
     }
 
     /**
-     * Delist all {@link XAResourceHolderState}s enlisted in the current transaction that haven't been delisted yet.
-     * This method should be called by the transaction manager when commit() or rollback() is called, prior to
-     * run the two-phase commit protocol to ensure all non-closed connections that participated in the transaction
-     * are ended.
-     * @param transaction the transaction from which unclosed resources should be delisted.
-     * @throws SystemException
-     */
-    public void delistUnclosedResources(BitronixTransaction transaction) {
-        Iterator it = resources.iterator();
-        while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
-            if (!xaResourceHolderState.isEnded()) {
-                if (log.isDebugEnabled()) log.debug("found unclosed resource to delist: " + xaResourceHolderState);
-                try {
-                    transaction.delistResource(xaResourceHolderState.getXAResource(), XAResource.TMSUCCESS);
-                } catch (SystemException ex) {
-                    log.warn("error delisting resource: " + xaResourceHolderState, ex);
-                }
-            }
-        } // while
-    }
-
-    /**
-     * Suspend all enlisted resources.
-     * @throws XAException
+     * Suspend all enlisted resources from the current transaction context.
+     * @throws XAException if the resource threw an exception during suspend.
      */
     public void suspend() throws XAException {
         Iterator it = resources.iterator();
@@ -147,9 +127,8 @@ public class XAResourceManager {
     }
 
     /**
-     * Resume all enlisted resources.
-     *
-     * @throws XAException
+     * Resume all enlisted resources in the current transaction context.
+     * @throws XAException if the resource threw an exception during resume.
      */
     public void resume() throws XAException {
         Iterator it = resources.iterator();
@@ -164,7 +143,7 @@ public class XAResourceManager {
             // the link {@link XAResourceHolderState} <-> {@link XAResourceHolder} is bi-directional so we can just loop
             // over all enlisted {@link XAResourceHolderState} and set the {@link XAResourceHolder} they contain's
             // reference back to them.
-            // See: bitronix.tm.resource.common.XAResourceHolder#getXAResourceHolderState()
+            // See: {@link bitronix.tm.resource.common.XAResourceHolder#getXAResourceHolderState()}
             xaResourceHolderState.getXAResourceHolder().setXAResourceHolderState(xaResourceHolderState);
         }
     }
@@ -174,11 +153,11 @@ public class XAResourceManager {
      * @param xaResource the {@link XAResource} to look for.
      * @return the {@link XAResourceHolderState} of the enlisted resource or null if the {@link XAResource} has not
      *         been enlisted in this {@link XAResourceManager}.
-     * @throws BitronixSystemException
+     * @throws BitronixSystemException if an internal error happens.
      */
     public XAResourceHolderState findXAResourceHolderState(XAResource xaResource) throws BitronixSystemException {
         if (xaResource instanceof XAResourceHolderState) {
-            throw new BitronixSystemException("cannot find a wrapped resource using another wrapped resource, please report this");
+            throw new BitronixSystemException("cannot find a wrapped resource using another wrapped resource, bug?");
         }
 
         Iterator it = resources.iterator();
@@ -223,20 +202,6 @@ public class XAResourceManager {
     }
 
     /**
-     * Find the non-XA {@link XAResourceHolderState}.
-     * @return the non-XA {@link XAResourceHolderState} if one has been enlisted, null otherwise.
-     */
-    public XAResourceHolderState findEmulatingXAResourceHolderState() {
-        Iterator it = resources.iterator();
-        while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
-            if (xaResourceHolderState.getXAResourceHolder().isEmulatingXA())
-                return xaResourceHolderState;
-        }
-        return null;
-    }
-
-    /**
      * Get a {@link Set} of unique names of all the enlisted {@link XAResourceHolderState}s.
      * @return a {@link Set} of unique names of all the enlisted {@link XAResourceHolderState}s.
      */
@@ -250,13 +215,30 @@ public class XAResourceManager {
         return names;
     }
 
-    /**
-     * Get an {@link Iterator} of the {@link Xid} / {@link XAResourceHolderState} {@link java.util.Map.Entry} pairs registered in
-     * this instance.
-     * @return an {@link Iterator} of {@link XAResourceHolderState}s iterating them in priority order.
-     */
-    public Iterator iterator() {
-        return resources.iterator();
+    public SortedSet getNaturalOrderPriorities() {
+        return resources.getNaturalOrderPriorities();
+    }
+
+    public SortedSet getReverseOrderPriorities() {
+        return resources.getReverseOrderPriorities();
+    }
+
+    public List getNaturalOrderResourcesForPriority(Object priorityKey) {
+        return resources.getNaturalOrderResourcesForPriority(priorityKey);
+    }
+
+    public List getReverseOrderResourcesForPriority(Object priorityKey) {
+        return resources.getReverseOrderResourcesForPriority(priorityKey);
+    }
+
+    public List getAllResources() {
+        List result = new ArrayList();
+        Iterator it = resources.getNaturalOrderPriorities().iterator();
+        while (it.hasNext()) {
+            Object priorityKey = it.next();
+            result.addAll(resources.getNaturalOrderResourcesForPriority(priorityKey));
+        }
+        return result;
     }
 
     /**
@@ -280,7 +262,7 @@ public class XAResourceManager {
      * @return a human-readable representation of this object.
      */
     public String toString() {
-        return "a XAResourceManager with GTRID [" + gtrid + "] and " + resources.size() + " enlisted resource(s)";
+        return "a XAResourceManager with GTRID [" + gtrid + "] and " + resources;
     }
 
 }

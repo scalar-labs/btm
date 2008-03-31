@@ -5,16 +5,20 @@ import java.util.*;
 /**
  * Container of {@link XAResourceHolderState} ordering them by priorities. A {@link XAResourceHolderState}'s priority
  * depends on the value of the {@link XAResourceHolderState#getCommitOrderingPosition()}.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; Bitronix 2005, 2006, 2007, 2008</p>
  *
  * @author lorban
  */
 public class ResourceScheduler {
 
+    public static final int ALWAYS_FIRST_POSITION = Integer.MIN_VALUE;
     public static final int ALWAYS_LAST_POSITION = Integer.MAX_VALUE;
+    public static final Object ALWAYS_FIRST_POSITION_KEY = new Integer(Integer.MIN_VALUE);
+    public static final Object ALWAYS_LAST_POSITION_KEY = new Integer(Integer.MAX_VALUE);
 
     private Map resources = new TreeMap();
 
+    
     public ResourceScheduler() {
     }
 
@@ -33,13 +37,24 @@ public class ResourceScheduler {
         resourcesList.add(xaResourceHolderState);
     }
 
-    public Set getPriorities() {
-        return resources.keySet();
+    public SortedSet getNaturalOrderPriorities() {
+        return new TreeSet(resources.keySet());
     }
 
-    public List getResourcesForPriority(Object priorityKey) {
-        Integer key = (Integer) priorityKey;
-        return (List) resources.get(key);
+    public SortedSet getReverseOrderPriorities() {
+        TreeSet result = new TreeSet(Collections.reverseOrder());
+        result.addAll(getNaturalOrderPriorities());
+        return result;
+    }
+
+    public List getNaturalOrderResourcesForPriority(Object priorityKey) {
+        return (List) resources.get(priorityKey);
+    }
+
+    public List getReverseOrderResourcesForPriority(Object priorityKey) {
+        List result = new ArrayList(getNaturalOrderResourcesForPriority(priorityKey));
+        Collections.reverse(result);
+        return result;
     }
 
     public int size() {
@@ -58,7 +73,7 @@ public class ResourceScheduler {
     }
 
     public String toString() {
-        return "a ResourceScheduler with " + size() + " resource(s) in " + getPriorities().size() + " priority(ies)";
+        return "a ResourceScheduler with " + size() + " resource(s) in " + getNaturalOrderPriorities().size() + " priority(ies)";
     }
 
 

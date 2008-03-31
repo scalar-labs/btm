@@ -66,7 +66,7 @@ public class DiskJournal implements Journal {
             throw new IOException("cannot write log, disk logger is not open");
 
         if (TransactionManagerServices.getConfiguration().isFilterLogStatus()) {
-            if (status != Status.STATUS_ACTIVE && status != Status.STATUS_COMMITTING && status != Status.STATUS_COMMITTED && status != Status.STATUS_ROLLEDBACK) {
+            if (status != Status.STATUS_COMMITTING && status != Status.STATUS_COMMITTED && status != Status.STATUS_UNKNOWN) {
                 if (log.isDebugEnabled()) log.debug("filtered out write to log for status " + Decoder.decodeStatus(status));
                 return;
             }

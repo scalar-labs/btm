@@ -35,10 +35,4 @@ public interface XAResourceHolder extends XAStatefulHolder {
      */
     public void setXAResourceHolderState(XAResourceHolderState xaResourceHolderState);
 
-    /**
-     * Should the TM use the Last Resource Commit optimization with that resource ?
-     * @return true if Last Resource Commit should be used with that resource, false otherwise.
-     */
-    public boolean isEmulatingXA();
-
 }

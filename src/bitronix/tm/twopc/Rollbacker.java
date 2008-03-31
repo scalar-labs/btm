@@ -3,33 +3,32 @@ package bitronix.tm.twopc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import bitronix.tm.BitronixTransaction;
-import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.twopc.executor.Executor;
 import bitronix.tm.twopc.executor.Job;
 import bitronix.tm.internal.*;
 
 import javax.transaction.Status;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicCommitException;
 import javax.transaction.xa.XAException;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
- * Phase 1 & 2 Rollback logic holder.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * Phase 1 & 2 Rollback logic engine.
+ * <p>&copy; Bitronix 2005, 2006, 2007, 2008</p>
  *
  * @author lorban
  */
-public class Rollbacker {
+public class Rollbacker extends AbstractPhaseEngine {
 
     private final static Logger log = LoggerFactory.getLogger(Rollbacker.class);
 
-    private Executor executor;
-
+    private List interestedResources;
 
     public Rollbacker(Executor executor) {
-        this.executor = executor;
+        super(executor);
     }
 
     /**
@@ -38,145 +37,84 @@ public class Rollbacker {
      * cleanup as possible.
      *
      * @param transaction the transaction to rollback.
-     * @throws bitronix.tm.internal.BitronixHeuristicCommitException
-     * @throws bitronix.tm.internal.BitronixHeuristicMixedException
-     * @throws bitronix.tm.internal.BitronixSystemException
-     * @throws bitronix.tm.internal.TransactionTimeoutException
+     * @param interestedResources resources that should be rolled back.
+     * @throws HeuristicCommitException when all resources committed instead.
+     * @throws HeuristicMixedException when some resources committed and some rolled back.
+     * @throws bitronix.tm.internal.BitronixSystemException when an internal error occured.
      */
-    public void rollback(BitronixTransaction transaction) throws BitronixHeuristicMixedException, BitronixHeuristicCommitException, BitronixSystemException {
+    public void rollback(BitronixTransaction transaction, List interestedResources) throws HeuristicMixedException, HeuristicCommitException, BitronixSystemException {
         XAResourceManager resourceManager = transaction.getResourceManager();
         transaction.setStatus(Status.STATUS_ROLLING_BACK);
+        this.interestedResources = interestedResources;
 
-        List jobs = new ArrayList();
-
-        Iterator it = resourceManager.iterator();
-        while (it.hasNext()) {
-            XAResourceHolderState resourceHolder = (XAResourceHolderState) it.next();
-
-            RollbackJob job = new RollbackJob(resourceHolder);
-            Object future = executor.submit(job);
-            job.setFuture(future);
-            jobs.add(job);
+        try {
+            executePhase(resourceManager, true);
+        } catch (PhaseException ex) {
+            logFailedResources(ex);
+            transaction.setStatus(Status.STATUS_UNKNOWN);
+            throwException("transaction failed during rollback of " + transaction, ex, interestedResources.size());
         }
 
+        transaction.setStatus(Status.STATUS_ROLLEDBACK);
+    }
 
-        // wait for rollback jobs to finish
-        for (int i=0; i < jobs.size(); ) {
-            RollbackJob job = (RollbackJob) jobs.get(i);
-            Object future = job.getFuture();
-            while (!executor.isDone(future)) {
-                executor.waitFor(future, 1000);
-                // do not check for timeout during rollback
-            }
-            i++;
-        }
+    private void throwException(String message, PhaseException phaseException, int totalResourceCount) throws HeuristicMixedException, HeuristicCommitException {
+        List exceptions = phaseException.getExceptions();
+        List resources = phaseException.getResources();
 
-        // check rollback jobs return code
-        List exceptions = new ArrayList();
         boolean hazard = false;
-        for (int i = 0; i < jobs.size(); i++) {
-            RollbackJob job = (RollbackJob) jobs.get(i);
-            XAException xaException = job.getXAException();
-            RuntimeException runtimeException = job.getRuntimeException();
-            TransactionTimeoutException transactionTimeoutException = job.getTransactionTimeoutException();
+        List heuristicResources = new ArrayList();
+        List errorResources = new ArrayList();
 
-            if (xaException != null) {
-                if (xaException.errorCode == XAException.XA_HEURHAZ)
-                    hazard = true;
-                exceptions.add(xaException);
-                log.error("transaction failed during rollback, error=" + Decoder.decodeXAExceptionErrorCode(xaException), xaException);
-            }
-            if (runtimeException != null) {
-                exceptions.add(xaException);
-                log.error("transaction failed during rollback", runtimeException);
-            }
-            if (transactionTimeoutException != null) {
-                exceptions.add(xaException);
-                if (log.isDebugEnabled()) log.debug("ignored transaction timeout during rollback of " + job.getResource());
-            }
-        }
-
-        if (exceptions.size() > 0) {
-            if (!hazard && exceptions.size() == resourceManager.size()) {
-                throw new BitronixHeuristicCommitException("all " + resourceManager.size() + " resources improperly heuristically committed");
+        for (int i = 0; i < exceptions.size(); i++) {
+            Exception ex = (Exception) exceptions.get(i);
+            XAResourceHolderState resourceHolder = (XAResourceHolderState) resources.get(i);
+            if (ex instanceof XAException) {
+                XAException xaEx = (XAException) ex;
+                switch (xaEx.errorCode) {
+                    case XAException.XA_HEURHAZ:
+                        hazard = true;
+                    case XAException.XA_HEURCOM:
+                    case XAException.XA_HEURRB:
+                    case XAException.XA_HEURMIX:
+                        heuristicResources.add(resourceHolder);
+                        break;
+                    
+                    default:
+                        errorResources.add(resourceHolder);
+                }
             }
             else
-                throw new BitronixHeuristicMixedException(exceptions.size() + " resource(s) out of " + resourceManager.size() + " improperly heuristically committed" + (hazard ? " (or maybe not)" : ""));
+                errorResources.add(resourceHolder);
         }
+
+        if (!hazard && heuristicResources.size() == totalResourceCount)
+            throw new BitronixHeuristicCommitException(message + ":" +
+                    " all resource(s) " + collectResourcesNames(heuristicResources) +
+                    " improperly unilaterally committed", phaseException);
         else
-            transaction.setStatus(Status.STATUS_ROLLEDBACK);
+            throw new BitronixHeuristicMixedException(message + ":" +
+                    (errorResources.size() > 0 ? " resource(s) " + collectResourcesNames(errorResources) + " threw unexpected exception" : "") +
+                    (errorResources.size() > 0 && heuristicResources.size() > 0 ? " and" : "") +
+                    (heuristicResources.size() > 0 ? " resource(s) " + collectResourcesNames(heuristicResources) + " improperly unilaterally committed" + (hazard ? " (or hazard happened)" : "") : ""), phaseException);
     }
 
-    private static void rollbackResource(XAResourceHolderState resourceHolder) throws XAException, TransactionTimeoutException {
-        while (true) {
-            try {
-                if (log.isDebugEnabled()) log.debug("trying to rollback resource " + resourceHolder);
-                resourceHolder.getXAResource().rollback(resourceHolder.getXid());
-                if (log.isDebugEnabled()) log.debug("rolled back resource " + resourceHolder);
-            } catch (XAException ex) {
-                boolean fixed = handleXAException(resourceHolder, ex);
-                if (!fixed) {
-                    int transactionRetryInterval = TransactionManagerServices.getConfiguration().getTransactionRetryInterval();
-                    log.error("cannot rollback resource " + resourceHolder + ", error=" + Decoder.decodeXAExceptionErrorCode(ex) + ", retrying in " + transactionRetryInterval + "s", ex);
-                    try {
-                        Thread.sleep(transactionRetryInterval * 1000L);
-                    } catch (InterruptedException iex) {
-                        // ignored
-                    }
-                    continue;
-                } // if
-            }
-            break;
-        } // while
-
+    protected Job createJob(XAResourceHolderState resourceHolder) {
+        return new RollbackJob(resourceHolder);
     }
 
-    /**
-     * @param failedResourceHolder
-     * @param xaException
-     * @return true if the exception was about heuristic rollback and was properly forgotten
-     * @throws javax.transaction.xa.XAException is the rollback should not be retried, ie: non-rollback heuristic happened
-     */
-    private static boolean handleXAException(XAResourceHolderState failedResourceHolder, XAException xaException) throws XAException {
-          switch (xaException.errorCode) {
-              case XAException.XA_HEURRB:
-                  forgetHeuristicRollback(failedResourceHolder);
-                  return true;
-
-              case XAException.XAER_NOTA:
-                  throw new BitronixXAException("resource reported XAER_NOTA when asked to rollback transaction branch", XAException.XA_HEURHAZ, xaException);
-
-              case XAException.XA_HEURCOM:
-              case XAException.XA_HEURHAZ:
-              case XAException.XA_HEURMIX:
-                  log.error("heuristic rollback is incompatible with the global state of this transaction - guilty: " + failedResourceHolder);
-                  throw xaException;
-
-              default:
-                  return false;
-          }
-      }
-
-    private static void forgetHeuristicRollback(XAResourceHolderState resourceHolder) {
-        if (log.isDebugEnabled()) log.debug("handling heuristic rollback on resource " + resourceHolder.getXAResource());
-        try {
-            resourceHolder.getXAResource().forget(resourceHolder.getXid());
-            if (log.isDebugEnabled()) log.debug("forgotten heuristically rolled back resource " + resourceHolder.getXAResource());
-        } catch (XAException ex) {
-            log.error("cannot forget " + resourceHolder.getXid() + " assigned to " + resourceHolder.getXAResource() + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+    protected boolean isParticipating(XAResourceHolderState xaResourceHolderState) {
+        for (int i = 0; i < interestedResources.size(); i++) {
+            XAResourceHolderState resourceHolderState = (XAResourceHolderState) interestedResources.get(i);
+            if (xaResourceHolderState == resourceHolderState)
+                return true;
         }
+        return false;
     }
-
 
     private static class RollbackJob extends Job {
-        private TransactionTimeoutException transactionTimeoutException;
-
         public RollbackJob(XAResourceHolderState resourceHolder) {
             super(resourceHolder);
-        }
-
-        public TransactionTimeoutException getTransactionTimeoutException() {
-            return transactionTimeoutException;
         }
 
         public void run() {
@@ -186,9 +124,48 @@ public class Rollbacker {
                 runtimeException = ex;
             } catch (XAException ex) {
                 xaException = ex;
-            } catch (TransactionTimeoutException ex) {
-                transactionTimeoutException = ex;
             }
+        }
+
+        private void rollbackResource(XAResourceHolderState resourceHolder) throws XAException {
+            try {
+                if (log.isDebugEnabled()) log.debug("trying to rollback resource " + resourceHolder);
+                resourceHolder.getXAResource().rollback(resourceHolder.getXid());
+                if (log.isDebugEnabled()) log.debug("rolled back resource " + resourceHolder);
+            } catch (XAException ex) {
+                handleXAException(resourceHolder, ex);
+            }
+        }
+
+        private void handleXAException(XAResourceHolderState failedResourceHolder, XAException xaException) throws XAException {
+            switch (xaException.errorCode) {
+                case XAException.XA_HEURRB:
+                    forgetHeuristicRollback(failedResourceHolder);
+                    return;
+
+                case XAException.XA_HEURCOM:
+                case XAException.XA_HEURHAZ:
+                case XAException.XA_HEURMIX:
+                    log.error("heuristic rollback is incompatible with the global state of this transaction - guilty: " + failedResourceHolder);
+                    throw xaException;
+
+                default:
+                    throw new BitronixXAException("resource reported " + Decoder.decodeXAExceptionErrorCode(xaException) + " when asked to rollback transaction branch", XAException.XA_HEURHAZ, xaException);
+            }
+        }
+
+        private void forgetHeuristicRollback(XAResourceHolderState resourceHolder) {
+            try {
+                if (log.isDebugEnabled()) log.debug("handling heuristic rollback on resource " + resourceHolder.getXAResource());
+                resourceHolder.getXAResource().forget(resourceHolder.getXid());
+                if (log.isDebugEnabled()) log.debug("forgotten heuristically rolled back resource " + resourceHolder.getXAResource());
+            } catch (XAException ex) {
+                log.error("cannot forget " + resourceHolder.getXid() + " assigned to " + resourceHolder.getXAResource() + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+            }
+        }
+
+        public String toString() {
+            return "a RollbackJob with " + getResource();
         }
     }
 

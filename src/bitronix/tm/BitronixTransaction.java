@@ -33,9 +33,9 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     private List synchronizations = Collections.synchronizedList(new ArrayList());
     private boolean timeout = false;
 
-    private static Preparer preparer = new Preparer(TransactionManagerServices.getExecutor());
-    private static Committer committer = new Committer(TransactionManagerServices.getExecutor());
-    private static Rollbacker rollbacker = new Rollbacker(TransactionManagerServices.getExecutor());
+    private Preparer preparer = new Preparer(TransactionManagerServices.getExecutor());
+    private Committer committer = new Committer(TransactionManagerServices.getExecutor());
+    private Rollbacker rollbacker = new Rollbacker(TransactionManagerServices.getExecutor());
 
     /* management */
     private String threadName;
@@ -56,6 +56,8 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     }
 
     public boolean enlistResource(XAResource xaResource) throws RollbackException, IllegalStateException, SystemException {
+        if (status == Status.STATUS_NO_TRANSACTION)
+            throw new IllegalStateException("transaction hasn't started yet");
         if (status == Status.STATUS_MARKED_ROLLBACK)
             throw new BitronixRollbackException("transaction has been marked as rollback only");
         if (isDone())
@@ -129,27 +131,25 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             throw new BitronixRollbackException("transaction timed out and has been rolled back");
         }
 
-        resourceManager.delistUnclosedResources(this);
+        delistUnclosedResources(XAResource.TMSUCCESS);
 
+        List interestedResources = new ArrayList();
         try {
             if (log.isDebugEnabled()) log.debug("committing, " + resourceManager.size() + " enlisted resource(s)");
 
-            Map interestedResources = preparer.prepare(this);
-
+            preparer.prepare(this, interestedResources);
             if (log.isDebugEnabled()) log.debug(interestedResources.size() + " interested resource(s)");
-
             committer.commit(this, interestedResources);
 
             if (log.isDebugEnabled()) log.debug("successfully committed " + toString());
         }
-        catch (RuntimeException ex) {
-            if (log.isDebugEnabled()) log.debug("caught runtime exception during commit, trying to rollback before throwing RollbackException", ex);
-            try { lastChanceRollback(); } catch (BitronixSystemException ex2) { if (log.isDebugEnabled()) log.debug("last chance rollback failed", ex2);}
-            throw new BitronixRollbackException("caught runtime exception during commit", ex);
-        }
         catch (RollbackException ex) {
-            if (log.isDebugEnabled()) log.debug("caught rollback exception during prepare, trying to rollback before rethrowing it", ex);
-            try { lastChanceRollback(); } catch (BitronixSystemException ex2) { if (log.isDebugEnabled()) log.debug("last chance rollback failed", ex2);}
+            if (log.isDebugEnabled()) log.debug("caught rollback exception during prepare, trying to rollback");
+
+            // rollbackPreparedResources might throw a SystemException that will 'swallow' the RollbackException which is
+            // what we want in that case as the transaction has not been rolled back and some resources are now left in-doubt.
+            rollbackPreparedResources(interestedResources, ex);
+
             throw ex;
         }
         finally {
@@ -163,22 +163,17 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         if (isDone())
             throw new IllegalStateException("transaction is done, cannot roll it back");
 
-        resourceManager.delistUnclosedResources(this);
+        delistUnclosedResources(XAResource.TMSUCCESS);
 
         try {
             if (log.isDebugEnabled()) log.debug("rolling back, " + resourceManager.size() + " enlisted resource(s)");
 
-            rollbacker.rollback(this);
+            rollbacker.rollback(this, resourceManager.getAllResources());
 
             if (log.isDebugEnabled()) log.debug("successfully rolled back " + toString());
-        }
-        catch (RuntimeException ex) {
-            if (log.isDebugEnabled()) log.debug("caught runtime exception during rollback, trying to rollback again before throwing SystemException", ex);
-            try { lastChanceRollback(); } catch (BitronixSystemException ex2) { if (log.isDebugEnabled()) log.debug("last chance rollback failed", ex2);}
-            throw new BitronixSystemException("caught runtime exception during rollback", ex);
-        } catch (BitronixHeuristicMixedException ex) {
+        } catch (HeuristicMixedException ex) {
             throw new BitronixSystemException("transaction partly committed and partly rolled back. Resources are now inconsistent !", ex);
-        } catch (BitronixHeuristicCommitException ex) {
+        } catch (HeuristicCommitException ex) {
             throw new BitronixSystemException("transaction committed instead of rolled back. Resources are now inconsistent !", ex);
         } finally {
             fireAfterCompletionEvent();
@@ -253,14 +248,51 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     * Internal impl
     */
 
-    private void lastChanceRollback() throws BitronixSystemException {
+
+    /**
+     * Delist all resources that have not been closed before calling tm.commit(). This basically means calling
+     * XAResource.end() on all resource that has not been ended yet.
+     * @param flag the flag to pass to XAResource.end(). Either TMSUCCESS or TMFAIL.
+     */
+    private void delistUnclosedResources(int flag) {
+        List resources = resourceManager.getAllResources();
+        for (int i = 0; i < resources.size(); i++) {
+            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) resources.get(i);
+            if (!xaResourceHolderState.isEnded()) {
+                if (log.isDebugEnabled()) log.debug("found unclosed resource to delist: " + xaResourceHolderState);
+                try {
+                    delistResource(xaResourceHolderState.getXAResource(), flag);
+                } catch (SystemException ex) {
+                    log.warn("error delisting resource: " + xaResourceHolderState, ex);
+                }
+            }
+        } // for
+    }
+
+    /**
+     * Rollback resources that have been prepared after a phase 1 prepare failure.
+     * @param interestedResources resources to be rolled back.
+     * @param rbEx the thrown rollback exception.
+     * @throws BitronixSystemException when a resource could not rollback prepapared state.
+     */
+    private void rollbackPreparedResources(List interestedResources, RollbackException rbEx) throws BitronixSystemException {
         try {
-            rollbacker.rollback(this);
-            if (log.isDebugEnabled()) log.debug("last chance rollback succeeded");
-        } catch (BitronixHeuristicMixedException ex) {
-            throw new BitronixSystemException("transaction partly committed and partly rolled back. Global transaction state is now inconsistent !", ex);
-        } catch (BitronixHeuristicCommitException ex) {
-            throw new BitronixSystemException("transaction committed instead of rolled back. Global transaction state is now inconsistent !", ex);
+            rollbacker.rollback(this, interestedResources);
+            if (log.isDebugEnabled()) log.debug("rollback of prepared resources succeeded");
+        } catch (Exception ex) {
+            // let's merge both exceptions' PhaseException to report a complete error message
+            PhaseException preparePhaseEx = (PhaseException) rbEx.getCause();
+            PhaseException rollbackPhaseEx = (PhaseException) ex.getCause();
+
+            List exceptions = new ArrayList();
+            List resources = new ArrayList();
+
+            exceptions.addAll(preparePhaseEx.getExceptions());
+            exceptions.addAll(rollbackPhaseEx.getExceptions());
+            resources.addAll(preparePhaseEx.getResources());
+            resources.addAll(rollbackPhaseEx.getResources());
+
+            throw new BitronixSystemException("transaction partially prepared and only partially rolled back. Some resources are left in doubt !", new PhaseException(exceptions, resources));
         }
     }
 

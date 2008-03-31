@@ -34,7 +34,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     private Connection connection;
     private XAResource xaResource;
     private PoolingDataSource poolingDataSource;
-    private boolean emulateXa = false;
     private LruMap statementsCache;
 
     /* management */
@@ -63,8 +62,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         addStateChangeEventListener(this);
 
         if (poolingDataSource.getClassName().equals(LrcXADataSource.class.getName())) {
-            if (log.isDebugEnabled()) log.debug("emulating XA for resource " + poolingDataSource.getUniqueName());
-            emulateXa = true;
+            if (log.isDebugEnabled()) log.debug("emulating XA for resource " + poolingDataSource.getUniqueName() + " - changing CommitOrderingPosition to " + ResourceScheduler.ALWAYS_LAST_POSITION);
+            poolingDataSource.setCommitOrderingPosition(ResourceScheduler.ALWAYS_LAST_POSITION);
         }
 
         this.jmxName = "bitronix.tm:type=JdbcPooledConnection,UniqueName=" + poolingDataSource.getUniqueName() + ",Id=" + poolingDataSource.incCreatedResourcesCounter();
@@ -126,10 +125,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     public XAResource getXAResource() {
         return xaResource;
-    }
-
-    public boolean isEmulatingXA() {
-        return emulateXa;
     }
 
     /**
