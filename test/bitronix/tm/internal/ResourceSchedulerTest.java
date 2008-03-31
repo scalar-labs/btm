@@ -28,7 +28,7 @@ public class ResourceSchedulerTest extends TestCase {
 
         /* testing natural order priorities */
         assertEquals(5, resourceScheduler.size());
-        Set priorities = resourceScheduler.getNaturalOrderPriorities();
+        Set priorities = resourceScheduler.getNaturalOrderPositions();
         assertEquals(3, priorities.size());
 
         Iterator it = priorities.iterator();
@@ -37,17 +37,17 @@ public class ResourceSchedulerTest extends TestCase {
         Object key2 = it.next();
         assertFalse(it.hasNext());
 
-        List list0 = resourceScheduler.getNaturalOrderResourcesForPriority(key0);
+        List list0 = resourceScheduler.getNaturalOrderResourcesForPosition(key0);
         assertEquals(1, list0.size());
         assertTrue(xarhs3 == list0.get(0));
 
-        List list1 = resourceScheduler.getNaturalOrderResourcesForPriority(key1);
+        List list1 = resourceScheduler.getNaturalOrderResourcesForPosition(key1);
         assertEquals(3, list1.size());
         assertTrue(xarhs0 == list1.get(0));
         assertTrue(xarhs1 == list1.get(1));
         assertTrue(xarhs2 == list1.get(2));
 
-        List list2 = resourceScheduler.getNaturalOrderResourcesForPriority(key2);
+        List list2 = resourceScheduler.getNaturalOrderResourcesForPosition(key2);
         assertEquals(1, list2.size());
         assertTrue(xarhs4 == list2.get(0));
     }
@@ -69,7 +69,7 @@ public class ResourceSchedulerTest extends TestCase {
 
         assertEquals("a ResourceScheduler with 5 resource(s) in 3 priority(ies)", resourceScheduler.toString());
 
-        Set reverseOrderPriorities = resourceScheduler.getReverseOrderPriorities();
+        Set reverseOrderPriorities = resourceScheduler.getReverseOrderPositions();
         assertEquals(3, reverseOrderPriorities.size());
 
         Iterator itReverse = reverseOrderPriorities.iterator();
@@ -78,17 +78,17 @@ public class ResourceSchedulerTest extends TestCase {
         Object key2r = itReverse.next();
         assertFalse(itReverse.hasNext());
 
-        List list0r = resourceScheduler.getReverseOrderResourcesForPriority(key0r);
+        List list0r = resourceScheduler.getReverseOrderResourcesForPosition(key0r);
         assertEquals(1, list0r.size());
         assertTrue(xarhs4 == list0r.get(0));
 
-        List list1r = resourceScheduler.getReverseOrderResourcesForPriority(key1r);
+        List list1r = resourceScheduler.getReverseOrderResourcesForPosition(key1r);
         assertEquals(3, list1r.size());
         assertTrue(xarhs2 == list1r.get(0));
         assertTrue(xarhs1 == list1r.get(1));
         assertTrue(xarhs0 == list1r.get(2));
 
-        List list2r = resourceScheduler.getReverseOrderResourcesForPriority(key2r);
+        List list2r = resourceScheduler.getReverseOrderResourcesForPosition(key2r);
         assertEquals(1, list2r.size());
         assertTrue(xarhs3 == list2r.get(0));
     }
@@ -136,7 +136,7 @@ public class ResourceSchedulerTest extends TestCase {
         }
 
 
-        public int getCommitOrderingPosition() {
+        public int getTwoPcOrderingPosition() {
             return commitOrderingPosition;
         }
 

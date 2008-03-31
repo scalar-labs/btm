@@ -29,12 +29,12 @@ public abstract class AbstractPhaseEngine {
     }
 
     /**
-     * Execute the phase. Resources receive the phase command in priority order (reversed or not). If there is more than
-     * once resource in a priority, command is sent in enlistment order (again reversed or not).
-     * If {@link bitronix.tm.Configuration#isAsynchronous2Pc()} is true, all commands in a given priority are sent
+     * Execute the phase. Resources receive the phase command in position order (reversed or not). If there is more than
+     * once resource in a position, command is sent in enlistment order (again reversed or not).
+     * If {@link bitronix.tm.Configuration#isAsynchronous2Pc()} is true, all commands in a given position are sent
      * in parallel by using the detected {@link Executor} implementation.
      * @param resourceManager the {@link XAResourceManager} containing the enlisted resources to execute the phase on.
-     * @param reverse true if jobs should be executed in reverse priority / enlistment order, false for natural priority / enlistment order.
+     * @param reverse true if jobs should be executed in reverse position / enlistment order, false for natural position / enlistment order.
      * @throws PhaseException if one or more resource threw an exception during phase execution.
      * @see bitronix.tm.twopc.executor.SyncExecutor
      * @see bitronix.tm.twopc.executor.SimpleAsyncExecutor
@@ -42,36 +42,36 @@ public abstract class AbstractPhaseEngine {
      * @see bitronix.tm.twopc.executor.BackportConcurrentExecutor 
      */
     protected void executePhase(XAResourceManager resourceManager, boolean reverse) throws PhaseException {
-        SortedSet priorities;
+        SortedSet positions;
         if (reverse) {
-            priorities = resourceManager.getReverseOrderPriorities();
-            if (log.isDebugEnabled()) log.debug("executing phase on " + resourceManager.size() + " resource(s) enlisted in " + priorities.size() + " priority(ies) in reverse priority order");
+            positions = resourceManager.getReverseOrderPositions();
+            if (log.isDebugEnabled()) log.debug("executing phase on " + resourceManager.size() + " resource(s) enlisted in " + positions.size() + " position(s) in reverse position order");
         }
         else {
-            priorities = resourceManager.getNaturalOrderPriorities();
-            if (log.isDebugEnabled()) log.debug("executing phase on " + resourceManager.size() + " resource(s) enlisted in " + priorities.size() + " priority(ies) in natural priority order");
+            positions = resourceManager.getNaturalOrderPositions();
+            if (log.isDebugEnabled()) log.debug("executing phase on " + resourceManager.size() + " resource(s) enlisted in " + positions.size() + " position(s) in natural position order");
         }
 
-        Iterator it = priorities.iterator();
+        Iterator it = positions.iterator();
         while (it.hasNext()) {
-            Object priorityKey = it.next();
+            Object positionKey = it.next();
             
             List resources;
             if (reverse) {
-                resources = resourceManager.getReverseOrderResourcesForPriority(priorityKey);
+                resources = resourceManager.getReverseOrderResourcesForPosition(positionKey);
             }
             else {
-                resources = resourceManager.getNaturalOrderResourcesForPriority(priorityKey);
+                resources = resourceManager.getNaturalOrderResourcesForPosition(positionKey);
             }
 
-            if (log.isDebugEnabled()) log.debug("running " + resources.size() + " job(s) for priority '" + priorityKey + "'");
-            runJobsForPriority(resources);
-            if (log.isDebugEnabled()) log.debug("ran " + resources.size() + " job(s) for priority '" + priorityKey + "'");
+            if (log.isDebugEnabled()) log.debug("running " + resources.size() + " job(s) for position '" + positionKey + "'");
+            runJobsForPosition(resources);
+            if (log.isDebugEnabled()) log.debug("ran " + resources.size() + " job(s) for position '" + positionKey + "'");
         }
 
     }
 
-    private void runJobsForPriority(List resources) throws PhaseException {
+    private void runJobsForPosition(List resources) throws PhaseException {
         Iterator it = resources.iterator();
         List jobs = new ArrayList();
         List exceptions = new ArrayList();

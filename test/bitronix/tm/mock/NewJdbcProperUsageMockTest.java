@@ -91,8 +91,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testOrderedCommitResources() throws Exception {
-        poolingDataSource1.setCommitOrderingPosition(200);
-        poolingDataSource2.setCommitOrderingPosition(-1);
+        poolingDataSource1.setTwoPcOrderingPosition(200);
+        poolingDataSource2.setTwoPcOrderingPosition(-1);
 
         if (log.isDebugEnabled()) log.debug("*** getting TM");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
@@ -155,8 +155,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testReversePhase2Order() throws Exception {
-        poolingDataSource1.setCommitOrderingPosition(1);
-        poolingDataSource2.setCommitOrderingPosition(1);
+        poolingDataSource1.setTwoPcOrderingPosition(1);
+        poolingDataSource2.setTwoPcOrderingPosition(1);
 
         if (log.isDebugEnabled()) log.debug("*** getting TM");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();

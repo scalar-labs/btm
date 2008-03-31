@@ -49,8 +49,8 @@ public class XAResourceManager {
      * @throws BitronixSystemException if an internal error occured.
      */
     public void enlist(XAResourceHolderState xaResourceHolderState) throws XAException, BitronixSystemException {
-        if (xaResourceHolderState.getCommitOrderingPosition() == ResourceScheduler.ALWAYS_LAST_POSITION) {
-            List alwaysLastResources = resources.getNaturalOrderResourcesForPriority(ResourceScheduler.ALWAYS_LAST_POSITION_KEY);
+        if (xaResourceHolderState.getTwoPcOrderingPosition() == ResourceScheduler.ALWAYS_LAST_POSITION) {
+            List alwaysLastResources = resources.getNaturalOrderResourcesForPosition(ResourceScheduler.ALWAYS_LAST_POSITION_KEY);
             if (alwaysLastResources != null && alwaysLastResources.size() > 0)
                 throw new BitronixSystemException("cannot enlist more than one non-XA resource, tried enlisting " + xaResourceHolderState + ", already enlisted: " + alwaysLastResources.get(0));
         }
@@ -215,28 +215,28 @@ public class XAResourceManager {
         return names;
     }
 
-    public SortedSet getNaturalOrderPriorities() {
-        return resources.getNaturalOrderPriorities();
+    public SortedSet getNaturalOrderPositions() {
+        return resources.getNaturalOrderPositions();
     }
 
-    public SortedSet getReverseOrderPriorities() {
-        return resources.getReverseOrderPriorities();
+    public SortedSet getReverseOrderPositions() {
+        return resources.getReverseOrderPositions();
     }
 
-    public List getNaturalOrderResourcesForPriority(Object priorityKey) {
-        return resources.getNaturalOrderResourcesForPriority(priorityKey);
+    public List getNaturalOrderResourcesForPosition(Object positionKey) {
+        return resources.getNaturalOrderResourcesForPosition(positionKey);
     }
 
-    public List getReverseOrderResourcesForPriority(Object priorityKey) {
-        return resources.getReverseOrderResourcesForPriority(priorityKey);
+    public List getReverseOrderResourcesForPosition(Object positionKey) {
+        return resources.getReverseOrderResourcesForPosition(positionKey);
     }
 
     public List getAllResources() {
         List result = new ArrayList();
-        Iterator it = resources.getNaturalOrderPriorities().iterator();
+        Iterator it = resources.getNaturalOrderPositions().iterator();
         while (it.hasNext()) {
-            Object priorityKey = it.next();
-            result.addAll(resources.getNaturalOrderResourcesForPriority(priorityKey));
+            Object positionKey = it.next();
+            result.addAll(resources.getNaturalOrderResourcesForPosition(positionKey));
         }
         return result;
     }

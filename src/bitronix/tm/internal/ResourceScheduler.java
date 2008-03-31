@@ -3,8 +3,8 @@ package bitronix.tm.internal;
 import java.util.*;
 
 /**
- * Container of {@link XAResourceHolderState} ordering them by priorities. A {@link XAResourceHolderState}'s priority
- * depends on the value of the {@link XAResourceHolderState#getCommitOrderingPosition()}.
+ * Container of {@link XAResourceHolderState} ordering them by position. A {@link XAResourceHolderState}'s position
+ * depends on the value of the {@link XAResourceHolderState#getTwoPcOrderingPosition()}.
  * <p>&copy; Bitronix 2005, 2006, 2007, 2008</p>
  *
  * @author lorban
@@ -23,7 +23,7 @@ public class ResourceScheduler {
     }
 
     public void addResource(XAResourceHolderState xaResourceHolderState) {
-        int position = xaResourceHolderState.getCommitOrderingPosition();
+        int position = xaResourceHolderState.getTwoPcOrderingPosition();
         addAtPosition(xaResourceHolderState, position);
     }
 
@@ -37,22 +37,22 @@ public class ResourceScheduler {
         resourcesList.add(xaResourceHolderState);
     }
 
-    public SortedSet getNaturalOrderPriorities() {
+    public SortedSet getNaturalOrderPositions() {
         return new TreeSet(resources.keySet());
     }
 
-    public SortedSet getReverseOrderPriorities() {
+    public SortedSet getReverseOrderPositions() {
         TreeSet result = new TreeSet(Collections.reverseOrder());
-        result.addAll(getNaturalOrderPriorities());
+        result.addAll(getNaturalOrderPositions());
         return result;
     }
 
-    public List getNaturalOrderResourcesForPriority(Object priorityKey) {
-        return (List) resources.get(priorityKey);
+    public List getNaturalOrderResourcesForPosition(Object positionKey) {
+        return (List) resources.get(positionKey);
     }
 
-    public List getReverseOrderResourcesForPriority(Object priorityKey) {
-        List result = new ArrayList(getNaturalOrderResourcesForPriority(priorityKey));
+    public List getReverseOrderResourcesForPosition(Object positionKey) {
+        List result = new ArrayList(getNaturalOrderResourcesForPosition(positionKey));
         Collections.reverse(result);
         return result;
     }
@@ -73,7 +73,7 @@ public class ResourceScheduler {
     }
 
     public String toString() {
-        return "a ResourceScheduler with " + size() + " resource(s) in " + getNaturalOrderPriorities().size() + " priority(ies)";
+        return "a ResourceScheduler with " + size() + " resource(s) in " + getNaturalOrderPositions().size() + " position(s)";
     }
 
 

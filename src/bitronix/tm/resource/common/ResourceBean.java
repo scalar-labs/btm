@@ -25,7 +25,7 @@ public abstract class ResourceBean implements Serializable {
     private boolean deferConnectionRelease = true;
     private int acquisitionInterval = 1;
     private boolean allowLocalTransactions = false;
-    private int commitOrderingPosition = 1;
+    private int twoPcOrderingPosition = 1;
     private transient int createdResourcesCounter;
 
     /**
@@ -262,16 +262,16 @@ public abstract class ResourceBean implements Serializable {
     /**
      * @return the position at which this resource should stand during 2PC commit.
      */
-    public int getCommitOrderingPosition() {
-        return commitOrderingPosition;
+    public int getTwoPcOrderingPosition() {
+        return twoPcOrderingPosition;
     }
 
     /**
      * Set the position at which this resource should stand during 2PC commit.
-     * @param commitOrderingPosition the position at which this resource should stand during 2PC commit.
+     * @param twoPcOrderingPosition the position at which this resource should stand during 2PC commit.
      */
-    public void setCommitOrderingPosition(int commitOrderingPosition) {
-        this.commitOrderingPosition = commitOrderingPosition;
+    public void setTwoPcOrderingPosition(int twoPcOrderingPosition) {
+        this.twoPcOrderingPosition = twoPcOrderingPosition;
     }
 
     /**

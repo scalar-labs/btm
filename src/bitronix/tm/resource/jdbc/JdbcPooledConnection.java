@@ -63,7 +63,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
         if (poolingDataSource.getClassName().equals(LrcXADataSource.class.getName())) {
             if (log.isDebugEnabled()) log.debug("emulating XA for resource " + poolingDataSource.getUniqueName() + " - changing CommitOrderingPosition to " + ResourceScheduler.ALWAYS_LAST_POSITION);
-            poolingDataSource.setCommitOrderingPosition(ResourceScheduler.ALWAYS_LAST_POSITION);
+            poolingDataSource.setTwoPcOrderingPosition(ResourceScheduler.ALWAYS_LAST_POSITION);
         }
 
         this.jmxName = "bitronix.tm:type=JdbcPooledConnection,UniqueName=" + poolingDataSource.getUniqueName() + ",Id=" + poolingDataSource.incCreatedResourcesCounter();
