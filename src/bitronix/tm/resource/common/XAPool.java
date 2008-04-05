@@ -332,7 +332,8 @@ public class XAPool implements StateChangeListener {
             remainingTime -= (now - before);
             if (remainingTime <= 0) {
                 if (log.isDebugEnabled()) log.debug("connection pool dequeue timed out");
-                TransactionManagerServices.getTransactionManager().dumpTransactionContexts();
+                if (TransactionManagerServices.isTransactionManagerRunning())
+                    TransactionManagerServices.getTransactionManager().dumpTransactionContexts();
                 throw new Exception("XA pool of resource " + bean.getUniqueName() + " still empty after " + bean.getAcquisitionTimeout() + "s wait time");
             }
         } // while

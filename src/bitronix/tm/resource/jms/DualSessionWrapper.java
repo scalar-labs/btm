@@ -64,7 +64,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
             return createXASession();
         }
         else {
-            BitronixTransaction currentTransaction = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
+            BitronixTransaction currentTransaction = TransactionContextHelper.currentTransaction();
             if (currentTransaction != null) {
                 if (log.isDebugEnabled()) log.debug("choosing XA session");
                 return createXASession();
