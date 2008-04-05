@@ -342,14 +342,22 @@ public class DiskJournal implements Journal {
                 if (tlog == null)
                     break;
 
-                // we must use String-encoded GTRID as byte array cannot be used as a map key
                 if (tlog.getStatus() == Status.STATUS_COMMITTING) {
                     danglingRecords.put(tlog.getGtrid(), tlog);
                     committing++;
                 }
                 if (tlog.getStatus() == Status.STATUS_COMMITTED) {
-                    danglingRecords.remove(tlog.getGtrid());
-                    committed++;
+                    TransactionLogRecord rec = (TransactionLogRecord) danglingRecords.get(tlog.getGtrid());
+                    if (rec != null) {
+                        rec.getUniqueNames().removeAll(tlog.getUniqueNames());
+                        if (rec.getUniqueNames().size() == 0) {
+                            danglingRecords.remove(tlog.getGtrid());
+                            committed++;
+                        }
+                    }
+                    else {
+                        log.warn("ignoring orphan record: " + tlog);
+                    }
                 }
             }
 
