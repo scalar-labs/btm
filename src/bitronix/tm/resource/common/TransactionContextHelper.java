@@ -36,7 +36,7 @@ public class TransactionContextHelper {
      * @throws RollbackException if the current transaction has been marked as rollback only.
      */
     public static void enlistInCurrentTransaction(XAResourceHolder xaResourceHolder, ResourceBean bean) throws SystemException, RollbackException {
-        BitronixTransaction currentTransaction = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
+        BitronixTransaction currentTransaction = currentTransaction();
         if (log.isDebugEnabled()) log.debug("enlisting " + xaResourceHolder + " into " + currentTransaction);
 
         if (currentTransaction != null) {
@@ -70,7 +70,7 @@ public class TransactionContextHelper {
      * @throws SystemException if an internal error happens.
      */
     public static void delistFromCurrentTransaction(XAResourceHolder xaResourceHolder, ResourceBean bean) throws SystemException {
-        BitronixTransaction currentTransaction = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
+        BitronixTransaction currentTransaction = currentTransaction();
         if (log.isDebugEnabled()) log.debug("delisting " + xaResourceHolder + " from " + currentTransaction);
 
         // End resource as eagerly as possible. This allows to release connections to the pool much earlier
@@ -86,6 +86,16 @@ public class TransactionContextHelper {
     }
 
     /**
+     * Get the transaction running on the current thead context.
+     * @return null if there is no transaction on the current context or if the transaction manager is not running.
+     */
+    public static BitronixTransaction currentTransaction() {
+        if (!TransactionManagerServices.isTransactionManagerRunning())
+            return null;
+        return TransactionManagerServices.getTransactionManager().getCurrentTransaction();
+    }
+
+    /**
      * Switch the {@link XAStatefulHolder}'s state appropriately after the acquired resource handle has been closed.
      * The pooled resource will either be marked as closed or not accessible, depending on the value of the bean's
      * <code>deferConnectionRelease</code> property and will be marked for release after 2PC execution in the latter case.
@@ -94,7 +104,7 @@ public class TransactionContextHelper {
      * @throws BitronixSystemException if an internal error happens.
      */
     public static void requeue(XAStatefulHolder xaStatefulHolder, ResourceBean bean) throws BitronixSystemException {
-        BitronixTransaction currentTransaction = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
+        BitronixTransaction currentTransaction = currentTransaction();
         if (log.isDebugEnabled()) log.debug("requeuing " + xaStatefulHolder + " from " + currentTransaction);
 
         if (!TransactionContextHelper.isInEnlistingGlobalTransactionContext(xaStatefulHolder, currentTransaction)) {
@@ -128,7 +138,7 @@ public class TransactionContextHelper {
      * @param xaStatefulHolder the recycled {@link XAStatefulHolder}.
      */
     public static void markRecycled(XAStatefulHolder xaStatefulHolder) {
-        BitronixTransaction currentTransaction = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
+        BitronixTransaction currentTransaction = currentTransaction();
         if (log.isDebugEnabled()) log.debug("marking " + xaStatefulHolder + " as recycled in " + currentTransaction);
         List synchronizations = currentTransaction.getSynchronizations();
 
@@ -165,6 +175,11 @@ public class TransactionContextHelper {
 
     private static boolean isEnlistedInSomeTransaction(XAResourceHolder xaResourceHolder) throws BitronixSystemException {
         if (log.isDebugEnabled()) log.debug("looking in in-flight transactions for XAResourceHolderState of " + xaResourceHolder);
+
+        if (!TransactionManagerServices.isTransactionManagerRunning()) {
+            if (log.isDebugEnabled()) log.debug("transaction manager not running, there is no in-flight transaction");
+            return false;
+        }
 
         Map inFlights = TransactionManagerServices.getTransactionManager().getInFlightTransactions();
         Iterator it = inFlights.entrySet().iterator();

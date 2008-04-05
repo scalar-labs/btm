@@ -239,7 +239,7 @@ public class XAPool implements StateChangeListener {
 
     private XAStatefulHolder getNotAccessible() {
         if (log.isDebugEnabled()) log.debug("trying to recycle a NOT_ACCESSIBLE connection of " + this);
-        BitronixTransaction transaction = TransactionManagerServices.getTransactionManager().getCurrentTransaction();
+        BitronixTransaction transaction = TransactionContextHelper.currentTransaction();
         if (transaction == null) {
             if (log.isDebugEnabled()) log.debug("no current transaction, no connection can be in state NOT_ACCESSIBLE when there is no global transaction context");
             return null;
