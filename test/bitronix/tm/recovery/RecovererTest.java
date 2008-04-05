@@ -150,6 +150,8 @@ public class RecovererTest extends TestCase {
         pds.init();
 
         assertEquals(0, TransactionManagerServices.getJournal().collectDanglingRecords().size());
+
+        TransactionManagerServices.getTransactionManager().shutdown();
     }
 
     public void testRecoverError() throws Exception {
