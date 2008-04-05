@@ -90,12 +90,6 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      */
     public void run() {
         try {
-            if (ResourceRegistrar.getResourcesUniqueNames().size() == 0) {
-                log.warn("no recoverable resource found. Please check Resource Loader configuration or make sure you " +
-                        "created resources before starting the transaction manager.");
-                return;
-            }
-
             committedCount = 0;
             rolledbackCount = 0;
 
@@ -116,7 +110,8 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             // 3. rollback any remaining recovered transaction
             rolledbackCount = rollbackAbortedTransactions(committedGtrids);
 
-            log.info("recovery committed " + committedCount + " dangling transaction(s) and rolled back " + rolledbackCount + " aborted transaction(s) on resource(s) " + getResourcesUniqueNames());
+            log.info("recovery committed " + committedCount + " dangling transaction(s) and rolled back " + rolledbackCount +
+                    " aborted transaction(s) on " + registeredResources.size() + " resource(s) [" + getResourcesUniqueNames() + "]");
             this.completionException = null;
         } catch (Exception ex) {
             this.completionException = ex;
@@ -188,82 +183,14 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         if (producer == null)
             throw new IllegalArgumentException("recoverable resource cannot be null");
 
-        Set xids = new HashSet();
-
         if (log.isDebugEnabled()) log.debug("running recovery on " + producer);
-
+        XAResourceHolderState xaResourceHolderState = producer.startRecovery();
         try {
-            XAResourceHolderState xaResourceHolderState = producer.startRecovery();
-            if (log.isDebugEnabled()) log.debug("recovering with STARTRSCAN");
-            int xidCount = recover(xaResourceHolderState, xids, XAResource.TMSTARTRSCAN);
-            if (log.isDebugEnabled()) log.debug("STARTRSCAN recovered " + xidCount + " xid(s) on " + producer.getUniqueName());
-
-            try {
-                while (xidCount > 0) {
-                    if (log.isDebugEnabled()) log.debug("recovering with NOFLAGS");
-                    xidCount = recover(xaResourceHolderState, xids, XAResource.TMNOFLAGS);
-                    if (log.isDebugEnabled()) log.debug("NOFLAGS recovered " + xidCount + " xid(s) on " + producer.getUniqueName());
-                }
-            } catch (XAException ex) {
-                if (log.isDebugEnabled()) log.debug("NOFLAGS recovery call failed", ex);
-            }
-
-            try {
-                if (log.isDebugEnabled()) log.debug("recovering with ENDRSCAN");
-                xidCount = recover(xaResourceHolderState, xids, XAResource.TMENDRSCAN);
-                if (log.isDebugEnabled()) log.debug("ENDRSCAN recovered " + xidCount + " xid(s) on " + producer.getUniqueName());
-            } catch (XAException ex) {
-                if (log.isDebugEnabled()) log.debug("ENDRSCAN recovery call failed", ex);
-            }
+            return RecoveryHelper.recover(xaResourceHolderState);
         } finally {
             producer.endRecovery();
         }
-
-        return xids;
     }
-
-    /**
-     * Call recovery on the resource and fill the alreadyRecoveredXids Set with recovered BitronixXids.
-     * Step 1.
-     * @return the amount of recovered {@link Xid}.
-     * @param resourceHolderState the {@link XAResourceHolderState} to recover.
-     * @param alreadyRecoveredXids a set of {@link Xid}s already recovered from this resource in this recovery session.
-     * @param flags any combination of {@link XAResource#TMSTARTRSCAN}, {@link XAResource#TMNOFLAGS} or {@link XAResource#TMENDRSCAN}.
-     * @throws javax.transaction.xa.XAException if {@link XAResource#recover(int)} call fails.
-     */
-    private int recover(XAResourceHolderState resourceHolderState, Set alreadyRecoveredXids, int flags) throws XAException {
-        Xid[] xids = resourceHolderState.getXAResource().recover(flags);
-        if (xids == null)
-            return 0;
-
-        Set freshlyRecoveredXids = new HashSet();
-        for (int i = 0; i < xids.length; i++) {
-            Xid xid = xids[i];
-            if (xid.getFormatId() == BitronixXid.FORMAT_ID) {
-                BitronixXid bitronixXid = new BitronixXid(xid);
-                if (!alreadyRecoveredXids.contains(bitronixXid)) {
-                    if (!freshlyRecoveredXids.contains(bitronixXid)) {
-                        if (log.isDebugEnabled()) log.debug("recovered " + bitronixXid);
-                        freshlyRecoveredXids.add(bitronixXid);
-                    }
-                    else {
-                        log.warn("resource " + resourceHolderState.getUniqueName() + " recovered two identical XIDs within the same recover call: " + bitronixXid);
-                    }
-                }
-                else {
-                    if (log.isDebugEnabled()) log.debug("already recovered XID " + bitronixXid + ", skipping it");
-                }
-            }
-            else {
-                if (log.isDebugEnabled()) log.debug("skipped non-bitronix XID " + xid + "(format ID: " + xid.getFormatId() +
-                    " GTRID: " + new Uid(xid.getGlobalTransactionId()) + "BQUAL: " + new Uid(xid.getBranchQualifier()) + ")");
-            }
-        } // for i < xids.length
-
-        alreadyRecoveredXids.addAll(freshlyRecoveredXids);
-        return freshlyRecoveredXids.size();
-    }
-
 
     /**
      * Commit transactions that have a dangling COMMITTING record in the journal.
@@ -288,8 +215,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             commit(danglingTransactions);
             if (log.isDebugEnabled()) log.debug("committed dangling transaction with GTRID " + gtrid);
             committedGtrids.add(gtrid); 
-            if (log.isDebugEnabled()) log.debug("updating journal's transaction status to COMMITTED");
-            TransactionManagerServices.getJournal().log(Status.STATUS_COMMITTED, tlog.getGtrid(), uniqueNames);
+            Set participatingUniqueNames = filterParticipatingUniqueNamesInRecoveredXids(uniqueNames);
+            if (log.isDebugEnabled()) log.debug("updating journal's transaction status to COMMITTED for names [" + buildUniqueNamesString(participatingUniqueNames) + "]");
+            TransactionManagerServices.getJournal().log(Status.STATUS_COMMITTED, tlog.getGtrid(), participatingUniqueNames);
         }
         if (log.isDebugEnabled()) log.debug("committed " + committedGtrids.size() + " dangling transaction(s)");
         return committedGtrids;
@@ -313,9 +241,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             if (log.isDebugEnabled()) log.debug("finding dangling transaction(s) in recovered XID(s) of resource " + uniqueName);
             Set recoveredXids = (Set) recoveredXidSets.get(uniqueName);
             if (recoveredXids == null) {
-                throw new RecoveryException("Recoverer could not find resource '" + uniqueName + "' present in the " +
-                        "journal, please check ResourceLoader configuration file or make sure you manually created " +
-                        "this resource before starting the transaction manager");
+                continue;
             }
 
             Iterator it2 = recoveredXids.iterator();
@@ -329,6 +255,25 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         }
 
         return danglingTransactions;
+    }
+
+    private Set filterParticipatingUniqueNamesInRecoveredXids(Set uniqueNames) {
+        Set recoveredUniqueNames = new HashSet();
+
+        Iterator it = uniqueNames.iterator();
+        while (it.hasNext()) {
+            String uniqueName = (String) it.next();
+            if (log.isDebugEnabled()) log.debug("finding dangling transaction(s) in recovered XID(s) of resource " + uniqueName);
+            Set recoveredXids = (Set) recoveredXidSets.get(uniqueName);
+            if (recoveredXids == null) {
+                log.info("recoverer cannot find resource '" + uniqueName + "' present in the journal, leaving it for incremental recovery");
+            }
+            else {
+                recoveredUniqueNames.add(uniqueName);
+            }
+        }
+
+        return recoveredUniqueNames;
     }
 
     /**
@@ -360,40 +305,8 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     private boolean commit(String uniqueName, Xid xid) {
         XAResourceProducer producer = (XAResourceProducer) registeredResources.get(uniqueName);
         try {
-            boolean success = true;
-            boolean forget = false;
             XAResourceHolderState xaResourceHolderState = producer.startRecovery();
-            try {
-                xaResourceHolderState.getXAResource().commit(xid, false);
-            } catch (XAException ex) {
-                if (ex.errorCode == XAException.XAER_NOTA) {
-                    log.error("unable to commit in-doubt branch on resource " + uniqueName + " - error=XAER_NOTA. Forgotten heuristic ?", ex);
-                }
-                else if (ex.errorCode == XAException.XA_HEURCOM) {
-                    log.info("unable to commit in-doubt branch on resource " + uniqueName + " - error=" +
-                            Decoder.decodeXAExceptionErrorCode(ex) + ". Heuristic decision compatible with the global state of this transaction.");
-                    forget = true;
-                }
-                else if (ex.errorCode == XAException.XA_HEURHAZ || ex.errorCode == XAException.XA_HEURMIX || ex.errorCode == XAException.XA_HEURRB) {
-                    log.error("unable to commit in-doubt branch on resource " + uniqueName + " - error=" +
-                            Decoder.decodeXAExceptionErrorCode(ex) + ". Heuristic decision incompatible with the global state of this transaction !");
-                    forget = true;
-                    success = false;
-                }
-                else {
-                    log.error("unable to commit in-doubt branch on resource " + uniqueName + " - error=" + Decoder.decodeXAExceptionErrorCode(ex) + ".", ex);
-                    success = false;
-                }
-            }
-            if (forget) {
-                try {
-                    if (log.isDebugEnabled()) log.debug("forgetting XID " + xid + " on resource " + uniqueName);
-                    xaResourceHolderState.getXAResource().forget(xid);
-                } catch (XAException ex) {
-                    log.error("unable to forget XID " + xid + " on resource " + uniqueName + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
-                }
-            }
-            return success;
+            return RecoveryHelper.commit(xaResourceHolderState, xid);
         } finally {
             producer.endRecovery();
         }
@@ -455,47 +368,14 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * Rollback the specified branch of a dangling transaction.
      * Step 3.
      * @param uniqueName the unique name of the resource on which to rollback branches.
-     * @param recoveredXid the {@link BitronixXid} to rollback.
+     * @param xid the {@link Xid} to rollback.
      * @return true when rollback was successful.
      */
-    private boolean rollback(String uniqueName, BitronixXid recoveredXid) {
+    private boolean rollback(String uniqueName, Xid xid) {
         XAResourceProducer producer = (XAResourceProducer) registeredResources.get(uniqueName);
         try {
-            boolean success = true;
-            boolean forget = false;
             XAResourceHolderState xaResourceHolderState = producer.startRecovery();
-            try {
-                xaResourceHolderState.getXAResource().rollback(recoveredXid);
-            } catch (XAException ex) {
-                if (ex.errorCode == XAException.XAER_NOTA) {
-                    log.error("unable to rollback aborted in-doubt branch on resource " + uniqueName + " - error=XAER_NOTA. Forgotten heuristic ?", ex);
-                }
-                else if (ex.errorCode == XAException.XA_HEURRB) {
-                    log.info("unable to rollback aborted in-doubt branch on resource " + uniqueName + " - error=" +
-                            Decoder.decodeXAExceptionErrorCode(ex) + ". Heuristic decision compatible with the global state of this transaction.");
-                    forget = true;
-                }
-                else if (ex.errorCode == XAException.XA_HEURHAZ || ex.errorCode == XAException.XA_HEURMIX || ex.errorCode == XAException.XA_HEURCOM) {
-                    log.error("unable to rollback aborted in-doubt branch on resource " + uniqueName + " - error=" +
-                            Decoder.decodeXAExceptionErrorCode(ex) + ". Heuristic decision incompatible with the global state of this transaction !");
-                    forget = true;
-                    success = false;
-                }
-                else {
-                    log.error("unable to rollback aborted in-doubt branch on resource " + uniqueName + " - error=" +
-                            Decoder.decodeXAExceptionErrorCode(ex) + ".", ex);
-                    success = false;
-                }
-            }
-            if (forget) {
-                try {
-                    if (log.isDebugEnabled()) log.debug("forgetting XID " + recoveredXid + " on resource " + uniqueName);
-                    xaResourceHolderState.getXAResource().forget(recoveredXid);
-                } catch (XAException ex) {
-                    log.error("unable to forget XID " + recoveredXid + " on resource " + uniqueName + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
-                }
-            }
-            return success;
+            return RecoveryHelper.rollback(xaResourceHolderState, xid);
         } finally {
             producer.endRecovery();
         }
@@ -506,8 +386,12 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * @return the string.
      */
     private String getResourcesUniqueNames() {
+        return buildUniqueNamesString(registeredResources.keySet());
+    }
+
+    private static String buildUniqueNamesString(Set uniqueNames) {
         StringBuffer resourcesUniqueNames = new StringBuffer();
-        Iterator it = registeredResources.keySet().iterator();
+        Iterator it = uniqueNames.iterator();
         while (it.hasNext()) {
             String uniqueName = (String) it.next();
             resourcesUniqueNames.append(uniqueName);

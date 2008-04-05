@@ -3,14 +3,18 @@ package bitronix.tm.recovery;
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.utils.Uid;
+import bitronix.tm.utils.UidGenerator;
 import bitronix.tm.internal.BitronixXAException;
 import bitronix.tm.journal.Journal;
 import bitronix.tm.mock.resource.MockXAResource;
 import bitronix.tm.mock.resource.MockXid;
 import bitronix.tm.mock.resource.jdbc.MockXADataSource;
 import bitronix.tm.resource.ResourceRegistrar;
+import bitronix.tm.resource.common.XAStatefulHolder;
+import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
+import bitronix.tm.resource.jdbc.JdbcPooledConnection;
 import junit.framework.TestCase;
 
 import javax.transaction.Status;
@@ -112,22 +116,40 @@ public class RecovererTest extends TestCase {
     }
 
     public void testRecoverMissingResource() throws Exception {
-        Xid xid0 = new MockXid(0, 0, BitronixXid.FORMAT_ID);
+        final Xid xid0 = new MockXid(0, 0, BitronixXid.FORMAT_ID);
         xaResource.addInDoubtXid(xid0);
 
         Set names = new HashSet();
         names.add("no-such-registered-resource");
-        // recoverer needs the journal to be open to be run manually
         journal.log(Status.STATUS_COMMITTING, new Uid(xid0.getGlobalTransactionId()), names);
-        TransactionManagerServices.getRecoverer().run();
+        assertEquals(1, TransactionManagerServices.getJournal().collectDanglingRecords().size());
 
-        assertEquals("Recoverer could not find resource 'no-such-registered-resource' present in the journal, please " +
-                "check ResourceLoader configuration file or make sure you manually created this resource before " +
-                "starting the transaction manager", TransactionManagerServices.getRecoverer().getCompletionException().getMessage());
+        // the TM must run the recoverer in this scenario
+        TransactionManagerServices.getTransactionManager();
 
-        assertEquals(0, TransactionManagerServices.getRecoverer().getCommittedCount());
+        assertEquals(1, TransactionManagerServices.getJournal().collectDanglingRecords().size());
+        assertNull(TransactionManagerServices.getRecoverer().getCompletionException());
+        assertEquals(1, TransactionManagerServices.getRecoverer().getCommittedCount());
         assertEquals(0, TransactionManagerServices.getRecoverer().getRolledbackCount());
         assertEquals(1, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
+
+
+        // the TM is running, adding this resource will kick incremental recovery on it
+        PoolingDataSource pds = new PoolingDataSource() {
+            public XAStatefulHolder createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
+                JdbcPooledConnection pc = (JdbcPooledConnection) super.createPooledConnection(xaFactory, bean);
+                MockXAResource xaResource = (MockXAResource) pc.getXAResource();
+                xaResource.addInDoubtXid(UidGenerator.generateXid(new Uid(xid0.getGlobalTransactionId())));
+                return pc;
+            }
+        };
+        pds.setClassName(MockXADataSource.class.getName());
+        pds.setUniqueName("no-such-registered-resource");
+        pds.setMinPoolSize(1);
+        pds.setMaxPoolSize(1);
+        pds.init();
+
+        assertEquals(0, TransactionManagerServices.getJournal().collectDanglingRecords().size());
     }
 
     public void testRecoverError() throws Exception {

@@ -2,6 +2,9 @@ package bitronix.tm.resource;
 
 import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.resource.common.XAResourceProducer;
+import bitronix.tm.recovery.IncrementalRecoverer;
+import bitronix.tm.recovery.RecoveryException;
+import bitronix.tm.TransactionManagerServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,15 +42,25 @@ public class ResourceRegistrar {
     }
 
     /**
-     * Register a {@link XAResourceProducer}.
+     * Register a {@link XAResourceProducer}. If registration happens after the transaction manager started, incremental
+     * recovery is run on that resource.
      * @param producer the {@link XAResourceProducer}.
+     * @throws bitronix.tm.recovery.RecoveryException when an error happens during recovery.
      */
-    public synchronized static void register(XAResourceProducer producer) {
+    public synchronized static void register(XAResourceProducer producer) throws RecoveryException {
         String uniqueName = producer.getUniqueName();
         if (producer.getUniqueName() == null)
             throw new IllegalArgumentException("invalid resource with null uniqueName");
         if (resources.containsKey(uniqueName))
             throw new IllegalArgumentException("resource with uniqueName '" + producer.getUniqueName() + "' has already been registered");
+
+        if (TransactionManagerServices.isTransactionManagerRunning()) {
+            if (log.isDebugEnabled()) log.debug("transaction manager is running, recovering resource " + uniqueName);
+            boolean success = IncrementalRecoverer.recover(producer);
+            if (!success)
+                log.error("error recovering resource " + uniqueName + " due to an imcompatible heuristic decision");
+        }
+
         resources.put(uniqueName, producer);
     }
 
