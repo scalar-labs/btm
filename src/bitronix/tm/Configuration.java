@@ -45,7 +45,6 @@ public class Configuration implements Service {
     private boolean asynchronous2Pc;
     private boolean warnAboutZeroResourceTransaction;
     private int defaultTransactionTimeout;
-    private int transactionRetryInterval;
     private int gracefulShutdownInterval;
     private int backgroundRecoveryInterval;
     private String resourceConfigurationFilename;
@@ -84,7 +83,6 @@ public class Configuration implements Service {
             asynchronous2Pc = getBoolean(properties, "bitronix.tm.2pc.async", false);
             warnAboutZeroResourceTransaction = getBoolean(properties, "bitronix.tm.2pc.warnAboutZeroResourceTransactions", true);
             defaultTransactionTimeout = getInt(properties, "bitronix.tm.timer.defaultTransactionTimeout", 60);
-            transactionRetryInterval = getInt(properties, "bitronix.tm.timer.transactionRetryInterval", 10);
             gracefulShutdownInterval = getInt(properties, "bitronix.tm.timer.gracefulShutdownInterval", 60);
             backgroundRecoveryInterval = getInt(properties, "bitronix.tm.timer.backgroundRecoveryInterval", 0);
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
@@ -315,27 +313,6 @@ public class Configuration implements Service {
     public void setDefaultTransactionTimeout(int defaultTransactionTimeout) {
         checkNotStarted();
         this.defaultTransactionTimeout = defaultTransactionTimeout;
-    }
-
-    /**
-     * Default pause interval in seconds after a resource communication error has been detected in a transaction before
-     * retry.
-     * <p>Property name:<br/><b>bitronix.tm.timer.transactionRetryInterval -</b> <i>(defaults to 10)</i></p>
-     * @return the default pause interval in seconds.
-     */
-    public int getTransactionRetryInterval() {
-        return transactionRetryInterval;
-    }
-
-    /**
-     * Set the default pause interval in seconds after a resource communication error has been detected in a transaction
-     * before retry.
-     * @see #getTransactionRetryInterval()
-     * @param transactionRetryInterval the default pause interval in seconds.
-     */
-    public void setTransactionRetryInterval(int transactionRetryInterval) {
-        checkNotStarted();
-        this.transactionRetryInterval = transactionRetryInterval;
     }
 
     /**
