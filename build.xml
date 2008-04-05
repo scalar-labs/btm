@@ -39,7 +39,7 @@
         <path refid="javac.classpath"/>
     </path>
 
-    <target name="dist" depends="clean,build,doc" description="Generate distribution ZIP file">
+    <target name="dist" depends="clean,build,test,doc" description="Generate distribution ZIP file">
         <property name="destination" value="${dir.dist}/btm-dist-${jar.version}"/>
 
         <copy file="${jar.file}" todir="${destination}"/>
