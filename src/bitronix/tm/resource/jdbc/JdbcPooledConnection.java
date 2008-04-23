@@ -80,6 +80,9 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             PreparedStatement stmt = (PreparedStatement) entry.getValue();
             stmt.close();
         }
+
+        ManagementRegistrar.unregister(jmxName);
+
         connection.close();
         xaConnection.close();
     }
@@ -174,12 +177,17 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         if (oldState == STATE_NOT_ACCESSIBLE && newState == STATE_ACCESSIBLE) {
             TransactionContextHelper.markRecycled(this);
         }
-        if (newState == STATE_CLOSED) {
-            ManagementRegistrar.unregister(jmxName);
-        }
     }
 
     public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
+        if (futureState == STATE_IN_POOL) {
+            try {
+                if (log.isDebugEnabled()) log.debug("clearing warnings of " + connection);
+                connection.clearWarnings();
+            } catch (SQLException ex) {
+                if (log.isDebugEnabled()) log.debug("error cleaning warnings of " + connection, ex);
+            }
+        }
     }
 
     public PreparedStatement getCachedStatement(String sql) {
