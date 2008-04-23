@@ -74,8 +74,8 @@ public class LrcXADataSource implements XADataSource {
             Class driverClazz = Thread.currentThread().getContextClassLoader().loadClass(driverClassName);
             Driver driver = (Driver) driverClazz.newInstance();
             Properties props = new Properties();
-            props.setProperty("user", user);
-            props.setProperty("password", password);
+            if (user != null) props.setProperty("user", user);
+            if (password != null) props.setProperty("password", password);
             Connection connection = driver.connect(url, props);
             return new LrcXAConnection(connection);
         } catch (Exception ex) {
