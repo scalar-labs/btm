@@ -196,4 +196,32 @@ public class JdbcPoolTest extends TestCase {
         }
     }
 
+    public void testPoolNotStartingTransactionManager() throws Exception {
+        // make sure TM is not running
+        TransactionManagerServices.getTransactionManager().shutdown();
+        
+        PoolingDataSource pds = new PoolingDataSource();
+        pds.setMinPoolSize(1);
+        pds.setMaxPoolSize(2);
+        pds.setMaxIdleTime(1);
+        pds.setClassName(MockXADataSource.class.getName());
+        pds.setUniqueName("pds2");
+        pds.setAllowLocalTransactions(true);
+        pds.setAcquisitionTimeout(1);
+        pds.init();
+
+        assertFalse(TransactionManagerServices.isTransactionManagerRunning());
+
+        Connection c = pds.getConnection();
+        Statement stmt = c.createStatement();
+        stmt.close();
+        c.close();
+
+        assertFalse(TransactionManagerServices.isTransactionManagerRunning());
+
+        pds.close();
+
+        assertFalse(TransactionManagerServices.isTransactionManagerRunning());
+    }
+
 }
