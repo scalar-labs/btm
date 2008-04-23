@@ -67,6 +67,9 @@ public class RecovererTest extends TestCase {
 
 
     protected void tearDown() throws Exception {
+        if (TransactionManagerServices.isTransactionManagerRunning())
+            TransactionManagerServices.getTransactionManager().shutdown();
+        
         TransactionManagerServices.getConfiguration().setRetryUnrecoverableResourcesRegistrationInterval(0);
         journal.close();
         pds.close();
@@ -168,6 +171,24 @@ public class RecovererTest extends TestCase {
         assertEquals(0, TransactionManagerServices.getRecoverer().getRolledbackCount());
     }
 
+    public void testRecoverByTmBlockingStartup() throws Exception {
+        xaResource.setRecoverException(new BitronixXAException("let's pretend recovery failed", XAException.XAER_RMERR));
+        assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
+
+        try {
+            TransactionManagerServices.getTransactionManager();
+            fail("startup should have failed");
+        } catch (Exception ex) {
+            assertEquals("recovery failed, cannot safely start the transaction manager", ex.getMessage());
+            assertEquals("error running recovery on resource mock-xads (XAER_RMERR)", ex.getCause().getMessage());
+            assertEquals("let's pretend recovery failed", ex.getCause().getCause().getMessage());
+        }
+
+        assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
+        assertEquals(0, TransactionManagerServices.getRecoverer().getCommittedCount());
+        assertEquals(0, TransactionManagerServices.getRecoverer().getRolledbackCount());
+    }
+
     public void testRecoverNotBlockingStartup() throws Exception {
         xaResource.setRecoverException(new BitronixXAException("let's pretend recovery failed", XAException.XAER_RMERR));
         assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
@@ -175,6 +196,18 @@ public class RecovererTest extends TestCase {
         TransactionManagerServices.getConfiguration().setRetryUnrecoverableResourcesRegistrationInterval(1);
         TransactionManagerServices.getRecoverer().run();
         assertNull(TransactionManagerServices.getRecoverer().getCompletionException());
+
+        assertEquals(0, ResourceRegistrar.getResourcesUniqueNames().size());
+        assertEquals(0, TransactionManagerServices.getRecoverer().getCommittedCount());
+        assertEquals(0, TransactionManagerServices.getRecoverer().getRolledbackCount());
+    }
+
+    public void testRecoverByTmNotBlockingStartup() throws Exception {
+        xaResource.setRecoverException(new BitronixXAException("let's pretend recovery failed", XAException.XAER_RMERR));
+        assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
+
+        TransactionManagerServices.getConfiguration().setRetryUnrecoverableResourcesRegistrationInterval(1);
+        TransactionManagerServices.getTransactionManager();
 
         assertEquals(0, ResourceRegistrar.getResourcesUniqueNames().size());
         assertEquals(0, TransactionManagerServices.getRecoverer().getCommittedCount());
