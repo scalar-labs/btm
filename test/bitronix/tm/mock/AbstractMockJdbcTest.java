@@ -66,11 +66,6 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         XAPool p2 = getPool(this.poolingDataSource2);
         registerPoolEventListener(p2);
 
-        // change transactionRetryInterval to 1 second
-        Field transactionRetryIntervalField = TransactionManagerServices.getConfiguration().getClass().getDeclaredField("transactionRetryInterval");
-        transactionRetryIntervalField.setAccessible(true);
-        transactionRetryIntervalField.set(TransactionManagerServices.getConfiguration(), new Integer(1));
-
         // start TM
         TransactionManagerServices.getTransactionManager();
 

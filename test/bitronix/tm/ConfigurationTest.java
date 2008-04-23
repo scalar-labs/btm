@@ -66,12 +66,13 @@ public class ConfigurationTest extends TestCase {
     }
     
     public void testToString() {
-        String configString = new Configuration().toString();
-        assertEquals("a Configuration with [warnAboutZeroResourceTransaction=true, logPart1Filename=btm1.tlog, " +
-                "resourceConfigurationFilename=null, filterLogStatus=false, transactionRetryInterval=10, serverId=null, " +
-                "asynchronous2Pc=false, forcedWriteEnabled=true, defaultTransactionTimeout=60, forceBatchingEnabled=true, " +
-                "backgroundRecoveryInterval=0, skipCorruptedLogs=false, logPart2Filename=btm2.tlog, maxLogSizeInMb=2, " +
-                "gracefulShutdownInterval=10]", configString);
+        final String expectation = "a Configuration with [asynchronous2Pc=false, backgroundRecoveryInterval=0, defaultTransactionTimeout=60," +
+                " disableJmx=false, filterLogStatus=false, forceBatchingEnabled=true, forcedWriteEnabled=true, gracefulShutdownInterval=10," +
+                " logPart1Filename=btm1.tlog, logPart2Filename=btm2.tlog, maxLogSizeInMb=2, resourceConfigurationFilename=null," +
+                " retryUnrecoverableResourcesRegistrationInterval=0, serverId=null, skipCorruptedLogs=false," +
+                " warnAboutZeroResourceTransaction=true]";
+
+        assertEquals(expectation, new Configuration().toString());
     }
 
 }

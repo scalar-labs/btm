@@ -113,12 +113,6 @@ public class Phase1FailureTest extends TestCase {
         field.setAccessible(true);
         field.set(TransactionManagerServices.class, new MockJournal());
 
-        // change transactionRetryInterval to 1 second
-        field = TransactionManagerServices.getConfiguration().getClass().getDeclaredField("transactionRetryInterval");
-        field.setAccessible(true);
-        field.set(TransactionManagerServices.getConfiguration(), new Integer(1));
-
-
         poolingDataSource1 = new PoolingDataSource();
         poolingDataSource1.setClassName(MockXADataSource.class.getName());
         poolingDataSource1.setUniqueName("pds1");

@@ -50,11 +50,6 @@ public abstract class AbstractMockJmsTest extends TestCase {
         journalField.setAccessible(true);
         journalField.set(TransactionManagerServices.class, new MockJournal());
 
-        // change transactionRetryInterval to 1 second
-        Field transactionRetryIntervalField = TransactionManagerServices.getConfiguration().getClass().getDeclaredField("transactionRetryInterval");
-        transactionRetryIntervalField.setAccessible(true);
-        transactionRetryIntervalField.set(TransactionManagerServices.getConfiguration(), new Integer(1));
-
         // start TM
         TransactionManagerServices.getTransactionManager();
 
