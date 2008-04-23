@@ -296,6 +296,6 @@ public class LrcXAResource implements XAResource {
     }
 
     public String toString() {
-        return "a LrcXAResource in state " + xlatedState() + (xid == null ? "" : " with XID " + xid);
+        return "a LrcXAResource in state " + xlatedState();
     }
 }

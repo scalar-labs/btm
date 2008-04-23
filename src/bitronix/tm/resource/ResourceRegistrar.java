@@ -90,10 +90,10 @@ public class ResourceRegistrar {
             Map.Entry entry = (Map.Entry) it.next();
             XAResourceProducer producer = (XAResourceProducer) entry.getValue();
 
-            XAResourceHolder XAResourceHolder = producer.findXAResourceHolder(xaResource);
-            if (XAResourceHolder != null) {
-                if (log.isDebugEnabled()) log.debug("XAResource " + xaResource + " belongs to " + XAResourceHolder + " that itself belongs to " + producer);
-                return XAResourceHolder;
+            XAResourceHolder resourceHolder = producer.findXAResourceHolder(xaResource);
+            if (resourceHolder != null) {
+                if (log.isDebugEnabled()) log.debug("XAResource " + xaResource + " belongs to " + resourceHolder + " that itself belongs to " + producer);
+                return resourceHolder;
             }
             if (log.isDebugEnabled()) log.debug("XAResource " + xaResource + " does not belong to any resource of " + producer);
         }

@@ -63,10 +63,10 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         if (isDone())
             throw new IllegalStateException("transaction started or finished 2PC, cannot enlist any more resource");
 
-        XAResourceHolder XAResourceHolder = ResourceRegistrar.findXAResourceHolder(xaResource);
-        if (XAResourceHolder == null)
+        XAResourceHolder resourceHolder = ResourceRegistrar.findXAResourceHolder(xaResource);
+        if (resourceHolder == null)
             throw new BitronixSystemException("unknown XAResource " + xaResource + ", it does not belong to a registered resource");
-        XAResourceHolderState holder = XAResourceHolder.getXAResourceHolderState();
+        XAResourceHolderState holder = resourceHolder.getXAResourceHolderState();
 
         try {
             resourceManager.enlist(holder);
