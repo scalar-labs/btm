@@ -59,17 +59,17 @@ public class Configuration implements Service {
             try {
                 String configurationFilename = System.getProperty("bitronix.tm.configuration");
                 if (configurationFilename != null) {
-                    log.info("loading configuration file " + configurationFilename);
+                    if (log.isDebugEnabled()) log.debug("loading configuration file " + configurationFilename);
                     in = new FileInputStream(configurationFilename);
                 } else {
-                    log.info("loading default configuration");
+                    if (log.isDebugEnabled()) log.debug("loading default configuration");
                     in = Thread.currentThread().getContextClassLoader().getResourceAsStream("bitronix-default-config.properties");
                 }
                 properties = new Properties();
                 if (in != null)
                     properties.load(in);
                 else
-                    log.info("no configuration file found, using default settings");
+                     if (log.isDebugEnabled()) log.debug("no configuration file found, using default settings");
             } finally {
                 if (in != null) in.close();
             }

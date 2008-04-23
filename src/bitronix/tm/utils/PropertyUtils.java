@@ -3,10 +3,7 @@ package bitronix.tm.utils;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * Smart reflection helper.
@@ -162,7 +159,7 @@ public class PropertyUtils {
      */
     public static String propertiesToString(Object obj) {
         StringBuffer sb = new StringBuffer();
-        Map properties = getProperties(obj);
+        Map properties = new TreeMap(getProperties(obj));
         Iterator it = properties.keySet().iterator();
         while (it.hasNext()) {
             String property = (String) it.next();
