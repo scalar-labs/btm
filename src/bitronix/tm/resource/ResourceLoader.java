@@ -51,18 +51,20 @@ public class ResourceLoader implements Service {
     /**
      * Initialize the ResourceLoader and load the resources configuration file specified in
      * <code>bitronix.tm.resource.configuration</code> property.
+     * @return the number of resources which failed to initialize.
      */
-    public void init() {
+    public int init() {
         String filename = TransactionManagerServices.getConfiguration().getResourceConfigurationFilename();
         if (filename != null) {
             if (!new File(filename).exists())
                 throw new ResourceConfigurationException("cannot find resources configuration file '" + filename + "', missing or invalid value of property: bitronix.tm.resource.configuration");
             log.info("reading resources configuration from " + filename);
-            init(filename);
+            return init(filename);
         }
         else {
             if (log.isDebugEnabled()) log.debug("no resource configuration file specified");
             resourcesByUniqueName = Collections.EMPTY_MAP;
+            return 0;
         }
     }
 
@@ -114,8 +116,9 @@ public class ResourceLoader implements Service {
     /**
      * Read the resources properties file and create {@link XAResourceProducer} accordingly.
      * @param propertiesFilename the name of the properties file to load.
+     * @return the number of resources which failed to initialize.
      */
-    private void init(String propertiesFilename) {
+    private int init(String propertiesFilename) {
         try {
             FileInputStream fis = null;
             Properties properties;
@@ -127,7 +130,7 @@ public class ResourceLoader implements Service {
                 if (fis != null) fis.close();
             }
 
-            initXAResourceProducers(properties);
+            return initXAResourceProducers(properties);
         } catch (IOException ex) {
             throw new InitializationException("cannot create resource binder", ex);
         }
@@ -136,22 +139,37 @@ public class ResourceLoader implements Service {
     /**
      * Initialize {@link XAResourceProducer}s given a set of properties.
      * @param properties the properties to use for initialization.
+     * @return the number of resources which failed to initialize.
      */
-    void initXAResourceProducers(Properties properties) {
+    int initXAResourceProducers(Properties properties) {
         Map entries = buildConfigurationEntriesMap(properties);
+        int errorCount = 0;
 
         resourcesByUniqueName = new HashMap();
         for (Iterator it = entries.entrySet().iterator(); it.hasNext();) {
             Map.Entry entry = (Map.Entry) it.next();
-            String configuredName = (String) entry.getKey();
+            String uniqueName = (String) entry.getKey();
             List propertyPairs = (List) entry.getValue();
-            XAResourceProducer producer = buildXAResourceProducer(configuredName, propertyPairs);
+            XAResourceProducer producer = buildXAResourceProducer(uniqueName, propertyPairs);
+
+            if (ResourceRegistrar.get(producer.getUniqueName()) != null) {
+                if (log.isDebugEnabled()) log.debug("resource already registered, skipping it:" + producer.getUniqueName());
+                continue;
+            }
 
             if (log.isDebugEnabled()) log.debug("creating resource " + producer);
-            producer.init();
+            try {
+                producer.init();
+            } catch (ResourceConfigurationException ex) {
+                log.warn("unable to create resource with unique name " + producer.getUniqueName(), ex);
+                producer.close();
+                errorCount++;
+            }
 
             resourcesByUniqueName.put(producer.getUniqueName(), producer);
         }
+
+        return errorCount;
     }
 
     /**

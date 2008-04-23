@@ -72,8 +72,10 @@ public class ResourceRegistrar {
         String uniqueName = producer.getUniqueName();
         if (producer.getUniqueName() == null)
             throw new IllegalArgumentException("invalid resource with null uniqueName");
-        if (!resources.containsKey(uniqueName))
-            throw new IllegalArgumentException("resource with uniqueName '" + producer.getUniqueName() + "' has not been registered");
+        if (!resources.containsKey(uniqueName)) {
+            if (log.isDebugEnabled()) log.debug("resource with uniqueName '" + producer.getUniqueName() + "' has not been registered");
+            return;
+        }
         resources.remove(uniqueName);
     }
 

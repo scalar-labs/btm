@@ -101,7 +101,23 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             }
 
             // 1. call recover on all known resources
-            recoverAllResources();
+            Set unrecoverableResourceNames = recoverAllResources();
+
+            // 1.1. unregister unrecoverable resources
+            Iterator itUnrecoverable = unrecoverableResourceNames.iterator();
+            while (itUnrecoverable.hasNext()) {
+                String uniqueName = (String) itUnrecoverable.next();
+                if (log.isDebugEnabled()) log.debug("closing unrecoverable resource " + uniqueName);
+                XAResourceProducer producer = (XAResourceProducer) registeredResources.remove(uniqueName);
+                producer.close();
+            }
+
+            // 1.2. register a task to retry registration, if needed
+            int mins = TransactionManagerServices.getConfiguration().getRetryUnrecoverableResourcesRegistrationInterval();
+            if (mins > 0)
+                TransactionManagerServices.getTaskScheduler().scheduleRetryUnrecoverableResourcesRegistration(new Date(System.currentTimeMillis() + mins * 60 * 1000));
+            else
+                if (log.isDebugEnabled()) log.debug("not retrying unrecoverable resources registration");
 
             // 2. commit dangling COMMITTING transactions
             Set committedGtrids = commitDanglingTransactions();
@@ -111,11 +127,12 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             rolledbackCount = rollbackAbortedTransactions(committedGtrids);
 
             log.info("recovery committed " + committedCount + " dangling transaction(s) and rolled back " + rolledbackCount +
-                    " aborted transaction(s) on " + registeredResources.size() + " resource(s) [" + getResourcesUniqueNames() + "]");
+                    " aborted transaction(s) on " + registeredResources.size() + " resource(s) [" + getRegisteredResourcesUniqueNames() + "]" +
+                    ", closed " + unrecoverableResourceNames.size() + " unrecoverable resource(s) [" + buildUniqueNamesString(unrecoverableResourceNames) + "]");
             this.completionException = null;
         } catch (Exception ex) {
             this.completionException = ex;
-            if (log.isDebugEnabled()) log.debug("recovery failed, resource(s): " + getResourcesUniqueNames(), ex);
+            if (log.isDebugEnabled()) log.debug("recovery failed, registered resource(s): " + getRegisteredResourcesUniqueNames(), ex);
         }
         finally {
             recoveredXidSets.clear();
@@ -150,8 +167,11 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     /**
      * Recover all configured resources and fill the <code>recoveredXidSets</code> with all recovered XIDs.
      * Step 1.
+     * @return a Set of unique resource names that failed recovery.
      */
-    private void recoverAllResources() {
+    private Set recoverAllResources() {
+        Set unrecoverableResourceNames = new HashSet();
+
         Iterator it = registeredResources.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry entry = (Map.Entry) it.next();
@@ -164,12 +184,24 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 if (log.isDebugEnabled()) log.debug("recovered " + xids.size() + " XID(s) from resource " + uniqueName);
                 recoveredXidSets.put(uniqueName, xids);
             } catch (XAException ex) {
-                throw new RecoveryException("error running recovery on resource " + uniqueName + " (" + Decoder.decodeXAExceptionErrorCode(ex) + ")", ex);
+                boolean failFast = TransactionManagerServices.getConfiguration().getRetryUnrecoverableResourcesRegistrationInterval() < 1;
+                if (failFast)
+                    throw new RecoveryException("error running recovery on resource " + uniqueName + " (" + Decoder.decodeXAExceptionErrorCode(ex) + ")", ex);
+
+                unrecoverableResourceNames.add(uniqueName);
+                log.warn("error running recovery on resource " + uniqueName + " (" + Decoder.decodeXAExceptionErrorCode(ex) + ")", ex);
             } catch (Exception ex) {
-                throw new RecoveryException("error running recovery on resource " + uniqueName, ex);
+                boolean failFast = TransactionManagerServices.getConfiguration().getRetryUnrecoverableResourcesRegistrationInterval() < 1;
+                if (failFast)
+                    throw new RecoveryException("error running recovery on resource " + uniqueName, ex);
+
+                unrecoverableResourceNames.add(uniqueName);
+                log.warn("error running recovery on resource " + uniqueName, ex);
             }
         }
-        if (log.isDebugEnabled()) log.debug(registeredResources.size() + " resource(s) recovered");
+        if (log.isDebugEnabled()) log.debug((registeredResources.size() - unrecoverableResourceNames.size()) + " resource(s) recovered");
+
+        return unrecoverableResourceNames;
     }
 
     /**
@@ -241,6 +273,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             if (log.isDebugEnabled()) log.debug("finding dangling transaction(s) in recovered XID(s) of resource " + uniqueName);
             Set recoveredXids = (Set) recoveredXidSets.get(uniqueName);
             if (recoveredXids == null) {
+                if (log.isDebugEnabled()) log.debug("resource " + uniqueName + " did not recover, skipping commit");
                 continue;
             }
 
@@ -373,6 +406,11 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      */
     private boolean rollback(String uniqueName, Xid xid) {
         XAResourceProducer producer = (XAResourceProducer) registeredResources.get(uniqueName);
+        if (producer == null) {
+            if (log.isDebugEnabled()) log.debug("resource " + uniqueName + " has not recovered, skipping rollback");
+            return false;
+        }
+
         try {
             XAResourceHolderState xaResourceHolderState = producer.startRecovery();
             return RecoveryHelper.rollback(xaResourceHolderState, xid);
@@ -385,7 +423,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * Build a string with comma-separated resources unique names.
      * @return the string.
      */
-    private String getResourcesUniqueNames() {
+    private String getRegisteredResourcesUniqueNames() {
         return buildUniqueNamesString(registeredResources.keySet());
     }
 

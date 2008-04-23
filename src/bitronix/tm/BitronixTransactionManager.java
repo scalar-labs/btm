@@ -48,7 +48,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             TransactionManagerServices.getRecoverer().run();
             Exception completionException = TransactionManagerServices.getRecoverer().getCompletionException();
             if (completionException != null)
-                throw new InitializationException("recovery failed, cannot safely start the transaction manager", completionException);
+                throw completionException;
 
             int backgroundRecoveryInterval = TransactionManagerServices.getConfiguration().getBackgroundRecoveryInterval();
             if (backgroundRecoveryInterval > 0) {
@@ -57,7 +57,11 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
                 TransactionManagerServices.getTaskScheduler().scheduleRecovery(TransactionManagerServices.getRecoverer(), nextExecutionDate);
             }
         } catch (IOException ex) {
-            throw new InitializationException("cannot open disk logger", ex);
+            throw new InitializationException("cannot open disk journal", ex);
+        } catch (Exception ex) {
+            TransactionManagerServices.getJournal().shutdown();
+            TransactionManagerServices.getResourceLoader().shutdown();
+            throw new InitializationException("recovery failed, cannot safely start the transaction manager", ex);
         }
     }
 
