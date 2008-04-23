@@ -49,6 +49,7 @@ public class Configuration implements Service {
     private int backgroundRecoveryInterval;
     private int retryUnrecoverableResourcesRegistrationInterval;
     private String resourceConfigurationFilename;
+    private boolean disableJmx;
 
 
     protected Configuration() {
@@ -87,6 +88,7 @@ public class Configuration implements Service {
             gracefulShutdownInterval = getInt(properties, "bitronix.tm.timer.gracefulShutdownInterval", 60);
             backgroundRecoveryInterval = getInt(properties, "bitronix.tm.timer.backgroundRecoveryInterval", 0);
             retryUnrecoverableResourcesRegistrationInterval = getInt(properties, "bitronix.tm.timer.retryUnrecoverableResourcesRegistrationInterval", 0);
+            disableJmx = getBoolean(properties, "bitronix.tm.disableJmx", false);
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
         } catch (IOException ex) {
             throw new InitializationException("error loading configuration", ex);
@@ -370,12 +372,30 @@ public class Configuration implements Service {
     /**
      * Set the interval in minutes at which to retry unrecoverable resources registration in the background. Disabled
      * when set to 0.
-     * @see #getBackgroundRecoveryInterval()
+     * @see #getResourceConfigurationFilename()
      * @param retryUnrecoverableResourcesRegistrationInterval the interval in minutes.
      */
     public void setRetryUnrecoverableResourcesRegistrationInterval(int retryUnrecoverableResourcesRegistrationInterval) {
         checkNotStarted();
         this.retryUnrecoverableResourcesRegistrationInterval = retryUnrecoverableResourcesRegistrationInterval;
+    }
+
+    /**
+     * Should JMX Mbeans not be registered even if a JMX MBean server is detected ?
+     * <p>Property name:<br/><b>bitronix.tm.disableJmx -</b> <i>(defaults to false)</i></p>
+     * @return true if JMX MBeans should never be registered.
+     */
+    public boolean isDisableJmx() {
+        return disableJmx;
+    }
+
+    /**
+     * Set if JMX Mbeans should not be registered even if a JMX MBean server is detected.
+     * @see #isDisableJmx()
+     * @param disableJmx true if JMX MBeans should never be registered.
+     */
+    public void setDisableJmx(boolean disableJmx) {
+        this.disableJmx = disableJmx;
     }
 
     /**

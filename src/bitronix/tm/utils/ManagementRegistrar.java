@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Constructor;
 
 import bitronix.tm.internal.BitronixRuntimeException;
+import bitronix.tm.TransactionManagerServices;
 
 /**
  * Simple JMX facade. In case there is no JMX implementation available, calling methods of this class have no effect.
@@ -23,20 +24,24 @@ public class ManagementRegistrar {
     private static Constructor objectNameConstructor;
 
     static {
-        try {
-            Class managementFactoryClass = Thread.currentThread().getContextClassLoader().loadClass("java.lang.management.ManagementFactory");
-            Method getPlatformMBeanServerMethod = managementFactoryClass.getMethod("getPlatformMBeanServer", (Class[]) null);
-            mbeanServer = getPlatformMBeanServerMethod.invoke(managementFactoryClass, (Object[]) null);
+        boolean enableJmx = !TransactionManagerServices.getConfiguration().isDisableJmx();
 
-            Class objectNameClass = Thread.currentThread().getContextClassLoader().loadClass("javax.management.ObjectName");
-            objectNameConstructor = objectNameClass.getConstructor(new Class[] {String.class});
+        if (enableJmx) {
+            try {
+                Class managementFactoryClass = Thread.currentThread().getContextClassLoader().loadClass("java.lang.management.ManagementFactory");
+                Method getPlatformMBeanServerMethod = managementFactoryClass.getMethod("getPlatformMBeanServer", (Class[]) null);
+                mbeanServer = getPlatformMBeanServerMethod.invoke(managementFactoryClass, (Object[]) null);
 
-            registerMBeanMethod = mbeanServer.getClass().getMethod("registerMBean", new Class[] {Object.class, objectNameClass});
-            unregisterMBeanMethod = mbeanServer.getClass().getMethod("unregisterMBean", new Class[] {objectNameClass});
-        } catch (Exception ex) {
-            // no management in case an exception is thrown
-            mbeanServer = null;
-        }
+                Class objectNameClass = Thread.currentThread().getContextClassLoader().loadClass("javax.management.ObjectName");
+                objectNameConstructor = objectNameClass.getConstructor(new Class[] {String.class});
+
+                registerMBeanMethod = mbeanServer.getClass().getMethod("registerMBean", new Class[] {Object.class, objectNameClass});
+                unregisterMBeanMethod = mbeanServer.getClass().getMethod("unregisterMBean", new Class[] {objectNameClass});
+            } catch (Exception ex) {
+                // no management in case an exception is thrown
+                mbeanServer = null;
+            }
+        } // if (enableJmx)
     }
 
     /**
