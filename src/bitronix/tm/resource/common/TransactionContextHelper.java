@@ -45,11 +45,9 @@ public class TransactionContextHelper {
 
             XAResourceHolderState alreadyEnlistedXAResourceHolderState = TransactionContextHelper.getAlreadyEnlistedXAResourceHolderState(xaResourceHolder, currentTransaction);
             if (alreadyEnlistedXAResourceHolderState == null || alreadyEnlistedXAResourceHolderState.isEnded()) {
-                XAResourceHolderState xaResourceHolderState = new XAResourceHolderState(xaResourceHolder, bean);
-                if (log.isDebugEnabled()) log.debug("enlisting resource " + xaResourceHolderState + " into " + currentTransaction);
-                xaResourceHolder.setXAResourceHolderState(xaResourceHolderState);
-                currentTransaction.enlistResource(xaResourceHolderState.getXAResource());
-            } else if (log.isDebugEnabled()) log.debug("avoiding re-enlistment of already enlisted but not ended resource " + alreadyEnlistedXAResourceHolderState);
+                enlist(xaResourceHolder, bean, currentTransaction);
+            }
+            else if (log.isDebugEnabled()) log.debug("avoiding re-enlistment of already enlisted but not ended resource " + alreadyEnlistedXAResourceHolderState);
         } // if currentTransaction != null
         else {
             if (bean.getAllowLocalTransactions()) {
@@ -110,7 +108,7 @@ public class TransactionContextHelper {
         if (!TransactionContextHelper.isInEnlistingGlobalTransactionContext(xaStatefulHolder, currentTransaction)) {
             if (!TransactionContextHelper.isEnlistedInSomeTransaction(xaStatefulHolder)) {
                 // local mode, always requeue connection immediately
-                if (log.isDebugEnabled()) log.debug("not resource in enlisting global transaction context, immediately releasing to pool " + xaStatefulHolder);
+                if (log.isDebugEnabled()) log.debug("resource not in enlisting global transaction context, immediately releasing to pool " + xaStatefulHolder);
                 xaStatefulHolder.setState(XAResourceHolder.STATE_IN_POOL);
             } else {
                 throw new BitronixSystemException("cannot close a resource when its XAResource is taking part in an unfinished global transaction");
@@ -253,6 +251,27 @@ public class TransactionContextHelper {
                 return xaResourceHolderState;
         }
         return null;
+    }
+
+    private static void enlist(XAResourceHolder xaResourceHolder, ResourceBean bean, BitronixTransaction currentTransaction) throws RollbackException, SystemException {
+        try {
+            XAResourceHolderState xaResourceHolderState = new XAResourceHolderState(xaResourceHolder, bean);
+            if (log.isDebugEnabled()) log.debug("enlisting resource " + xaResourceHolderState + " into " + currentTransaction);
+            xaResourceHolder.setXAResourceHolderState(xaResourceHolderState);
+            currentTransaction.enlistResource(xaResourceHolderState.getXAResource());
+        }
+        catch (RollbackException e) {
+            xaResourceHolder.setXAResourceHolderState(null);
+            throw e;
+        }
+        catch (IllegalStateException e) {
+            xaResourceHolder.setXAResourceHolderState(null);
+            throw e;
+        }
+        catch (SystemException e) {
+            xaResourceHolder.setXAResourceHolderState(null);
+            throw e;
+        }
     }
 
 }
