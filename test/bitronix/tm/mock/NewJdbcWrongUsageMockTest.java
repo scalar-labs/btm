@@ -4,9 +4,13 @@ import bitronix.tm.BitronixTransactionManager;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.mock.events.*;
 import bitronix.tm.mock.resource.jdbc.MockXAConnection;
+import bitronix.tm.mock.resource.jdbc.MockXADataSource;
+import bitronix.tm.mock.resource.jdbc.MockDriver;
 import bitronix.tm.mock.resource.MockXAResource;
 import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
 import bitronix.tm.resource.jdbc.JdbcPooledConnection;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
 
 import javax.transaction.InvalidTransactionException;
 import javax.transaction.RollbackException;
@@ -15,6 +19,7 @@ import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -188,5 +193,50 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
             assertEquals("no transaction started on this thread", ex.getMessage());
         }
     }
+
+     public void testRegisterTwoLrc() throws Exception {
+         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+
+         PoolingDataSource lrcDs1 = new PoolingDataSource();
+         lrcDs1.setClassName(LrcXADataSource.class.getName());
+         lrcDs1.setUniqueName(DATASOURCE1_NAME + "_lrc");
+         lrcDs1.setMinPoolSize(POOL_SIZE);
+         lrcDs1.setMaxPoolSize(POOL_SIZE);
+         lrcDs1.setAllowLocalTransactions(true);
+         lrcDs1.getDriverProperties().setProperty("driverClassName", MockDriver.class.getName());
+         lrcDs1.getDriverProperties().setProperty("url", "");
+         lrcDs1.init();
+
+         PoolingDataSource lrcDs2 = new PoolingDataSource();
+         lrcDs2.setClassName(LrcXADataSource.class.getName());
+         lrcDs2.setUniqueName(DATASOURCE2_NAME + "_lrc");
+         lrcDs2.setMinPoolSize(POOL_SIZE);
+         lrcDs2.setMaxPoolSize(POOL_SIZE);
+         lrcDs2.setAllowLocalTransactions(true);
+         lrcDs2.getDriverProperties().setProperty("driverClassName", MockDriver.class.getName());
+         lrcDs2.getDriverProperties().setProperty("url", "");
+         lrcDs2.init();
+
+         tm.begin();
+
+         Connection c1 = lrcDs1.getConnection();
+         c1.createStatement();
+         c1.close();
+
+         Connection c2 = lrcDs2.getConnection();
+         try {
+             c2.createStatement();
+             fail("expected SQLException");
+         } catch (SQLException ex) {
+             assertEquals("error enlisting a JdbcConnectionHandle of a JdbcPooledConnection from datasource pds2_lrc in state ACCESSIBLE wrapping a LrcXAConnection on a LrcConnectionHandle of a LrcXAResource in state NO_TX", ex.getMessage());
+             assertTrue(ex.getCause().getMessage().startsWith("cannot enlist more than one non-XA resource, tried enlisting an XAResourceHolderState with uniqueName=pds2_lrc XAResource=a LrcXAResource in state NO_TX with XID null, already enlisted: an XAResourceHolderState with uniqueName=pds1_lrc XAResource=a LrcXAResource in state STARTED (started) with XID a Bitronix XID"));
+         }
+         c2.close();
+
+         tm.commit();
+
+         lrcDs2.close();
+         lrcDs1.close();
+     }
 
 }
