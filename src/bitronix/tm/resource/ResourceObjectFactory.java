@@ -22,16 +22,16 @@ public class ResourceObjectFactory implements ObjectFactory {
     private final static Logger log = LoggerFactory.getLogger(ResourceObjectFactory.class);
 
     public Object getObjectInstance(Object obj, Name jndiNameObject, Context nameCtx, Hashtable environment) throws Exception {
-        // first make sure the TM started so resources get a chance to be configured
-        TransactionManagerServices.getTransactionManager();
-
         Reference ref = (Reference) obj;
         if (log.isDebugEnabled()) log.debug("referencing resource with reference of type " + ref.getClass());
 
         RefAddr refAddr = ref.get("uniqueName");
         if (refAddr == null)
             throw new NamingException("no 'uniqueName' RefAddr found");
-        String uniqueName = (String) refAddr.getContent();
+        Object content = refAddr.getContent();
+        if (!(content instanceof String))
+            throw new NamingException("'uniqueName' RefAddr content is not of type java.lang.String");
+        String uniqueName = (String) content;
 
         if (log.isDebugEnabled()) log.debug("getting registered resource with uniqueName '" + uniqueName + "'");
         Referenceable resource = ResourceRegistrar.get(uniqueName);
