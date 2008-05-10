@@ -175,7 +175,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             acquisitionDate = new Date();
         }
         if (oldState == STATE_NOT_ACCESSIBLE && newState == STATE_ACCESSIBLE) {
-            TransactionContextHelper.markRecycled(this);
+            TransactionContextHelper.recycle(this);
         }
     }
 
@@ -196,10 +196,9 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         return stmt;
     }
 
-    public boolean putCachedStatement(String sql, PreparedStatement stmt) {
+    public PreparedStatement putCachedStatement(String sql, PreparedStatement stmt) {
         if (log.isDebugEnabled()) log.debug("caching statement <" + sql + "> in " + this);
-        statementsCache.put(sql, stmt);
-        return statementsCache.get(sql) == stmt;
+        return (PreparedStatement) statementsCache.put(sql, stmt);
     }
 
     public String toString() {

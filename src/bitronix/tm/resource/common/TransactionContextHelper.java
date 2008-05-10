@@ -135,7 +135,7 @@ public class TransactionContextHelper {
      * Ensure the {@link XAStatefulHolder}'s release won't be deferred anymore (when appropriate) as it has been recycled.
      * @param xaStatefulHolder the recycled {@link XAStatefulHolder}.
      */
-    public static void markRecycled(XAStatefulHolder xaStatefulHolder) {
+    public static void recycle(XAStatefulHolder xaStatefulHolder) {
         BitronixTransaction currentTransaction = currentTransaction();
         if (log.isDebugEnabled()) log.debug("marking " + xaStatefulHolder + " as recycled in " + currentTransaction);
         List synchronizations = currentTransaction.getSynchronizations();
