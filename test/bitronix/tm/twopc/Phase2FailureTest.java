@@ -68,7 +68,8 @@ public class Phase2FailureTest extends TestCase {
             fail("expected HeuristicMixedException");
         } catch (HeuristicMixedException ex) {
             assertEquals("transaction failed during commit of a Bitronix Transaction with GTRID [", ex.getMessage().substring(0, 71));
-            assertEquals("], status=UNKNOWN, 2 resource(s) enlisted (started ", ex.getMessage().substring(121, 172));
+            int idx = ex.getMessage().indexOf(']');
+            assertEquals("], status=UNKNOWN, 2 resource(s) enlisted (started ", ex.getMessage().substring(idx, idx + 51));
             assertTrue("got message <" + ex.getMessage() + ">", ex.getMessage().endsWith("resource(s) [pds2] improperly unilaterally rolled back (or hazard happened)"));
         }
 
@@ -197,7 +198,8 @@ public class Phase2FailureTest extends TestCase {
             fail("TM should have thrown HeuristicMixedException");
         } catch (HeuristicMixedException ex) {
             assertEquals("transaction failed during commit of a Bitronix Transaction with GTRID [", ex.getMessage().substring(0, 71));
-            assertEquals("], status=UNKNOWN, 2 resource(s) enlisted (started ", ex.getMessage().substring(121, 172));
+            int idx = ex.getMessage().indexOf(']');
+            assertEquals("], status=UNKNOWN, 2 resource(s) enlisted (started ", ex.getMessage().substring(idx, idx + 51));
             assertTrue("got message <" + ex.getMessage() + ">", ex.getMessage().endsWith("resource(s) [pds2] improperly unilaterally rolled back"));
         }
 
