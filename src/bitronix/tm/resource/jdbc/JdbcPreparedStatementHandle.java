@@ -21,12 +21,10 @@ public class JdbcPreparedStatementHandle implements PreparedStatement {
     private final static Logger log = LoggerFactory.getLogger(JdbcPreparedStatementHandle.class);
 
     private PreparedStatement delegate;
-    private boolean cached;
     private boolean pretendClosed = false;
 
-    public JdbcPreparedStatementHandle(PreparedStatement delegate, boolean cached) {
+    public JdbcPreparedStatementHandle(PreparedStatement delegate) {
         this.delegate = delegate;
-        this.cached = cached;
     }
 
     private PreparedStatement getDelegate() throws SQLException {
@@ -38,10 +36,6 @@ public class JdbcPreparedStatementHandle implements PreparedStatement {
     public void close() throws SQLException {
         if (log.isDebugEnabled()) log.debug("marking prepared statement handle as closed");
         pretendClosed = true;
-        if (!cached) {
-            if (log.isDebugEnabled()) log.debug("statement not cached, closing it");
-            delegate.close();
-        }
     }
 
 
