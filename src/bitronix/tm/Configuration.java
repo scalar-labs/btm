@@ -48,8 +48,9 @@ public class Configuration implements Service {
     private int gracefulShutdownInterval;
     private int backgroundRecoveryInterval;
     private int retryUnrecoverableResourcesRegistrationInterval;
-    private String resourceConfigurationFilename;
     private boolean disableJmx;
+    private String jndiUserTransactionName;
+    private String resourceConfigurationFilename;
 
 
     protected Configuration() {
@@ -89,6 +90,7 @@ public class Configuration implements Service {
             backgroundRecoveryInterval = getInt(properties, "bitronix.tm.timer.backgroundRecoveryInterval", 0);
             retryUnrecoverableResourcesRegistrationInterval = getInt(properties, "bitronix.tm.timer.retryUnrecoverableResourcesRegistrationInterval", 0);
             disableJmx = getBoolean(properties, "bitronix.tm.disableJmx", false);
+            jndiUserTransactionName = getString(properties, "bitronix.tm.jndi.jndiUserTransactionName", null);
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
         } catch (IOException ex) {
             throw new InitializationException("error loading configuration", ex);
@@ -396,6 +398,28 @@ public class Configuration implements Service {
      */
     public void setDisableJmx(boolean disableJmx) {
         this.disableJmx = disableJmx;
+    }
+
+    /**
+     * Get the name the {@link javax.transaction.UserTransaction} should be bound under in the
+     * {@link bitronix.tm.jndi.BitronixContext}.
+     * @return the name the {@link javax.transaction.UserTransaction} should
+     *         be bound under in the {@link bitronix.tm.jndi.BitronixContext}.
+     */
+    public String getJndiUserTransactionName() {
+        return jndiUserTransactionName;
+    }
+
+    /**
+     * Set the name the {@link javax.transaction.UserTransaction} should be bound under in the
+     * {@link bitronix.tm.jndi.BitronixContext}.
+     * @see #getJndiUserTransactionName()
+     * @param jndiUserTransactionName the name the {@link javax.transaction.UserTransaction} should
+     *        be bound under in the {@link bitronix.tm.jndi.BitronixContext}.
+     */
+    public void setJndiUserTransactionName(String jndiUserTransactionName) {
+        checkNotStarted();
+        this.jndiUserTransactionName = jndiUserTransactionName;
     }
 
     /**

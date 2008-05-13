@@ -20,15 +20,22 @@ import bitronix.tm.resource.jdbc.PoolingDataSource;
  */
 public class JndiTest extends TestCase {
 
-    public void test() throws Exception {
+    private BitronixTransactionManager transactionManager;
+
+    protected void setUp() throws Exception {
+        transactionManager = TransactionManagerServices.getTransactionManager();
+    }
+
+    protected void tearDown() throws Exception {
+        transactionManager.shutdown();
+    }
+
+    public void testDefaultUserTransactionAndResources() throws Exception {
         PoolingDataSource pds = new PoolingDataSource();
         pds.setMaxPoolSize(1);
         pds.setClassName(MockXADataSource.class.getName());
         pds.setUniqueName("jdbc/pds");
         pds.init();
-
-        BitronixTransactionManager transactionManager = TransactionManagerServices.getTransactionManager();
-
 
         Hashtable env = new Hashtable();
         env.put(Context.INITIAL_CONTEXT_FACTORY, BitronixInitialContextFactory.class.getName());
@@ -41,7 +48,22 @@ public class JndiTest extends TestCase {
         ctx.close();
 
         pds.close();
+    }
+
+    public void testSpecialUserTransactionName() throws Exception {
         transactionManager.shutdown();
+        TransactionManagerServices.getConfiguration().setJndiUserTransactionName("TM");
+        transactionManager = TransactionManagerServices.getTransactionManager();
+
+        Hashtable env = new Hashtable();
+        env.put(Context.INITIAL_CONTEXT_FACTORY, BitronixInitialContextFactory.class.getName());
+        Context ctx = new InitialContext(env);
+
+        assertNull(ctx.lookup("java:comp/UserTransaction"));
+        assertTrue(transactionManager == ctx.lookup("TM"));
+        assertNull(ctx.lookup("aaa"));
+
+        ctx.close();
     }
 
 }

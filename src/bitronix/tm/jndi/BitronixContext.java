@@ -18,11 +18,15 @@ import java.util.Hashtable;
  */
 public class BitronixContext implements Context {
 
-    private static final String USER_TRANSACTION_NAME = "java:comp/UserTransaction";
+    private static final String DEFAULT_USER_TRANSACTION_NAME = "java:comp/UserTransaction";
 
     private boolean closed = false;
+    private String userTransactionName;
 
     public BitronixContext() {
+        userTransactionName = TransactionManagerServices.getConfiguration().getJndiUserTransactionName();
+        if (userTransactionName == null)
+            userTransactionName = DEFAULT_USER_TRANSACTION_NAME;
     }
 
     private void checkClosed() throws ServiceUnavailableException {
@@ -40,7 +44,7 @@ public class BitronixContext implements Context {
     }
 
     public Object lookup(String s) throws NamingException {
-        if (USER_TRANSACTION_NAME.equals(s))
+        if (userTransactionName.equals(s))
             return TransactionManagerServices.getTransactionManager();
         return ResourceRegistrar.get(s);
     }
