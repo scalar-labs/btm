@@ -90,7 +90,7 @@ public class Configuration implements Service {
             backgroundRecoveryInterval = getInt(properties, "bitronix.tm.timer.backgroundRecoveryInterval", 0);
             retryUnrecoverableResourcesRegistrationInterval = getInt(properties, "bitronix.tm.timer.retryUnrecoverableResourcesRegistrationInterval", 0);
             disableJmx = getBoolean(properties, "bitronix.tm.disableJmx", false);
-            jndiUserTransactionName = getString(properties, "bitronix.tm.jndi.jndiUserTransactionName", null);
+            jndiUserTransactionName = getString(properties, "bitronix.tm.jndi.userTransactionName", null);
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
         } catch (IOException ex) {
             throw new InitializationException("error loading configuration", ex);
