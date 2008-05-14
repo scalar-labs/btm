@@ -54,7 +54,8 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
             fail("TM should have thrown rollback exception");
         } catch (RollbackException ex) {
             assertEquals("transaction failed during prepare of a Bitronix Transaction with GTRID [", ex.getMessage().substring(0, 72));
-            assertEquals("], status=UNKNOWN, 2 resource(s) enlisted (started ", ex.getMessage().substring(122, 173));
+            int idx = ex.getMessage().indexOf(']');
+            assertEquals("], status=UNKNOWN, 2 resource(s) enlisted (started ", ex.getMessage().substring(idx, idx + 51));
             assertTrue("got message <" + ex.getMessage() + ">", ex.getMessage().endsWith("resource(s) [pds1] threw unexpected exception"));
 
             assertEquals("collected 1 exception(s):" + System.getProperty("line.separator") +
@@ -109,7 +110,8 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
             fail("TM should have thrown exception");
         } catch (RollbackException ex) {
             assertEquals("transaction failed during prepare of a Bitronix Transaction with GTRID [", ex.getMessage().substring(0, 72));
-            assertEquals("], status=UNKNOWN, 2 resource(s) enlisted (started ", ex.getMessage().substring(122, 173));
+            int idx = ex.getMessage().indexOf(']');
+            assertEquals("], status=UNKNOWN, 2 resource(s) enlisted (started ", ex.getMessage().substring(idx, idx + 51));
             assertTrue("got message <" + ex.getMessage() + ">", ex.getMessage().endsWith("resource(s) [pds1] threw unexpected exception"));
 
             assertEquals("collected 1 exception(s):" + System.getProperty("line.separator") +
