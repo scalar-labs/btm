@@ -6,6 +6,9 @@ import bitronix.tm.resource.ResourceRegistrar;
 import javax.naming.*;
 import java.util.Hashtable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Implementation of {@link javax.naming.Context} that allows lookup of transaction manager
  * and registered resources.
@@ -18,6 +21,8 @@ import java.util.Hashtable;
  */
 public class BitronixContext implements Context {
 
+    private final static Logger log = LoggerFactory.getLogger(BitronixContext.class);
+    
     private static final String DEFAULT_USER_TRANSACTION_NAME = "java:comp/UserTransaction";
 
     private boolean closed = false;
@@ -27,6 +32,7 @@ public class BitronixContext implements Context {
         userTransactionName = TransactionManagerServices.getConfiguration().getJndiUserTransactionName();
         if (userTransactionName == null)
             userTransactionName = DEFAULT_USER_TRANSACTION_NAME;
+        if (log.isDebugEnabled()) log.debug("binding transaction manager under name '" + userTransactionName + "'");
     }
 
     private void checkClosed() throws ServiceUnavailableException {
@@ -44,13 +50,14 @@ public class BitronixContext implements Context {
     }
 
     public Object lookup(String s) throws NamingException {
+        if (log.isDebugEnabled()) log.debug("looking up '" + s + "'");
         if (userTransactionName.equals(s))
             return TransactionManagerServices.getTransactionManager();
         return ResourceRegistrar.get(s);
     }
 
     public String toString() {
-        return "a BitronixContext";
+        return "a BitronixContext with userTransactionName='" + userTransactionName + "'";
     }
 
     public void bind(Name name, Object o) throws NamingException {
