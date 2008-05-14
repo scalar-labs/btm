@@ -1,6 +1,7 @@
 package bitronix.tm.timer;
 
 import bitronix.tm.BitronixTransaction;
+import bitronix.tm.internal.BitronixSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +29,12 @@ public class TransactionTimeoutTask extends Task {
     }
 
     public void execute() throws TaskException {
-        if (log.isDebugEnabled()) log.debug("marking " + transaction + " as timed out");
-        transaction.timeout();
+        try {
+            if (log.isDebugEnabled()) log.debug("marking " + transaction + " as timed out");
+            transaction.timeout();
+        } catch (BitronixSystemException ex) {
+            throw new TaskException("failed to timeout " + transaction, ex);
+        }
     }
 
     public String toString() {

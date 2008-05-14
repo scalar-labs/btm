@@ -120,15 +120,15 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             throw new IllegalStateException("transaction is done, cannot commit it");
 
         fireBeforeCompletionEvent();
-        if (status == Status.STATUS_MARKED_ROLLBACK) {
-            if (log.isDebugEnabled()) log.debug("transaction marked as rollback only");
-            rollback();
-            throw new BitronixRollbackException("transaction was marked as rollback only and has been rolled back");
-        }
         if (timedOut()) {
             if (log.isDebugEnabled()) log.debug("transaction timed out");
             rollback();
             throw new BitronixRollbackException("transaction timed out and has been rolled back");
+        }
+        if (status == Status.STATUS_MARKED_ROLLBACK) {
+            if (log.isDebugEnabled()) log.debug("transaction marked as rollback only");
+            rollback();
+            throw new BitronixRollbackException("transaction was marked as rollback only and has been rolled back");
         }
 
         delistUnclosedResources(XAResource.TMSUCCESS);
@@ -193,8 +193,9 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         return resourceManager;
     }
 
-    public void timeout() {
+    public void timeout() throws BitronixSystemException {
         this.timeout = true;
+        setStatus(Status.STATUS_MARKED_ROLLBACK);
     }
 
     public boolean timedOut() {

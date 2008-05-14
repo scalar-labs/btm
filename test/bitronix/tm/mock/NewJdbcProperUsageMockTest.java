@@ -316,11 +316,12 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         List orderedEvents = EventRecorder.getOrderedEvents();
         System.out.println(EventRecorder.dumpToString());
 
-        assertEquals(8, orderedEvents.size());
+        assertEquals(9, orderedEvents.size());
         int i=0;
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(Status.STATUS_MARKED_ROLLBACK, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(Status.STATUS_ROLLING_BACK, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(XAResourceRollbackEvent.class, orderedEvents.get(i++).getClass());
@@ -359,11 +360,12 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         List orderedEvents = EventRecorder.getOrderedEvents();
         System.out.println(EventRecorder.dumpToString());
 
-        assertEquals(8, orderedEvents.size());
+        assertEquals(9, orderedEvents.size());
         int i=0;
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(Status.STATUS_MARKED_ROLLBACK, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(Status.STATUS_ROLLING_BACK, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(XAResourceRollbackEvent.class, orderedEvents.get(i++).getClass());
