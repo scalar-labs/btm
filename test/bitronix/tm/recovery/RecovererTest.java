@@ -194,6 +194,7 @@ public class RecovererTest extends TestCase {
         assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
 
         TransactionManagerServices.getConfiguration().setRetryUnrecoverableResourcesRegistrationInterval(1);
+        TransactionManagerServices.getConfiguration().setResourceConfigurationFilename("bitronix-res.properties");
         TransactionManagerServices.getRecoverer().run();
         assertNull(TransactionManagerServices.getRecoverer().getCompletionException());
 
@@ -207,9 +208,10 @@ public class RecovererTest extends TestCase {
         assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
 
         TransactionManagerServices.getConfiguration().setRetryUnrecoverableResourcesRegistrationInterval(1);
+        TransactionManagerServices.getConfiguration().setResourceConfigurationFilename("test/" + getClass().getName().replace('.', '/') + ".properties");
         TransactionManagerServices.getTransactionManager();
 
-        assertEquals(0, ResourceRegistrar.getResourcesUniqueNames().size());
+        assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
         assertEquals(0, TransactionManagerServices.getRecoverer().getCommittedCount());
         assertEquals(0, TransactionManagerServices.getRecoverer().getRolledbackCount());
     }

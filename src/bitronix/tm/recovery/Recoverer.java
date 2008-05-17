@@ -2,6 +2,7 @@ package bitronix.tm.recovery;
 
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.Configuration;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.ManagementRegistrar;
 import bitronix.tm.utils.Uid;
@@ -113,9 +114,10 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             }
 
             // 1.2. register a task to retry registration, if needed
-            int mins = TransactionManagerServices.getConfiguration().getRetryUnrecoverableResourcesRegistrationInterval();
-            if (mins > 0)
-                TransactionManagerServices.getTaskScheduler().scheduleRetryUnrecoverableResourcesRegistration(new Date(System.currentTimeMillis() + mins * 60 * 1000));
+            if (isRetryUnrecoverableResourcesRegistrationEnabled()) {
+                int intervalInMinutes = TransactionManagerServices.getConfiguration().getRetryUnrecoverableResourcesRegistrationInterval();
+                TransactionManagerServices.getTaskScheduler().scheduleRetryUnrecoverableResourcesRegistration(new Date(System.currentTimeMillis() + intervalInMinutes * 60 * 1000));
+            }
             else
                 if (log.isDebugEnabled()) log.debug("not retrying unrecoverable resources registration");
 
@@ -184,14 +186,14 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 if (log.isDebugEnabled()) log.debug("recovered " + xids.size() + " XID(s) from resource " + uniqueName);
                 recoveredXidSets.put(uniqueName, xids);
             } catch (XAException ex) {
-                boolean failFast = TransactionManagerServices.getConfiguration().getRetryUnrecoverableResourcesRegistrationInterval() < 1;
+                boolean failFast = !isRetryUnrecoverableResourcesRegistrationEnabled();
                 if (failFast)
                     throw new RecoveryException("error running recovery on resource " + uniqueName + " (" + Decoder.decodeXAExceptionErrorCode(ex) + ")", ex);
 
                 unrecoverableResourceNames.add(uniqueName);
                 log.warn("error running recovery on resource " + uniqueName + " (" + Decoder.decodeXAExceptionErrorCode(ex) + ")", ex);
             } catch (Exception ex) {
-                boolean failFast = TransactionManagerServices.getConfiguration().getRetryUnrecoverableResourcesRegistrationInterval() < 1;
+                boolean failFast = !isRetryUnrecoverableResourcesRegistrationEnabled();
                 if (failFast)
                     throw new RecoveryException("error running recovery on resource " + uniqueName, ex);
 
@@ -202,6 +204,13 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         if (log.isDebugEnabled()) log.debug((registeredResources.size() - unrecoverableResourceNames.size()) + " resource(s) recovered");
 
         return unrecoverableResourceNames;
+    }
+
+    private boolean isRetryUnrecoverableResourcesRegistrationEnabled() {
+        Configuration configuration = TransactionManagerServices.getConfiguration();
+
+        return configuration.getResourceConfigurationFilename() != null &&
+               configuration.getRetryUnrecoverableResourcesRegistrationInterval() > 0;
     }
 
     /**

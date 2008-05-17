@@ -31,8 +31,8 @@ public class RetryUnrecoverableResourcesRegistrationTask extends Task {
                 int errorCount = TransactionManagerServices.getResourceLoader().init();
                 if (errorCount > 0) {
                     if (log.isDebugEnabled()) log.debug("some resources still could not recover, rescheduling task");
-                    int mins = TransactionManagerServices.getConfiguration().getRetryUnrecoverableResourcesRegistrationInterval();
-                    TransactionManagerServices.getTaskScheduler().scheduleRetryUnrecoverableResourcesRegistration(new Date(System.currentTimeMillis() + mins * 60 * 1000));
+                    int intervalInMinutes = TransactionManagerServices.getConfiguration().getRetryUnrecoverableResourcesRegistrationInterval();
+                    TransactionManagerServices.getTaskScheduler().scheduleRetryUnrecoverableResourcesRegistration(new Date(System.currentTimeMillis() + intervalInMinutes * 60 * 1000));
                 }
             }
         }.start();
