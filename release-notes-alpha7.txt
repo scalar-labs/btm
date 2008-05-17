@@ -1,5 +1,0 @@
-* Fixed graceful shutdown so it now properly waits until pending transactions ended.
-* Added bitronix.tm.2pc.warnAboutZeroResourceTransactions config property to control if zero-resource transactions should result in a warning or not.
-* Added support for bitronix.tm.noShutdownHook system property. When set to true, no shutdown hook is registered and you have to manually call TransactionManagerServices.shutdown() to shutdown BTM.
-* Implement TM suspend/resume without using suspend/resume on resources (http://bugs.bitronix.be/task/11)
-* Implemented proper JMS XA connections pool, synchronous inbound and outbound should be quite stable but asynchonous inbound is still experimental.
