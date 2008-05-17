@@ -49,12 +49,6 @@ public class XAResourceManager {
      * @throws BitronixSystemException if an internal error occured.
      */
     public void enlist(XAResourceHolderState xaResourceHolderState) throws XAException, BitronixSystemException {
-        if (xaResourceHolderState.getTwoPcOrderingPosition() == ResourceScheduler.ALWAYS_LAST_POSITION) {
-            List alwaysLastResources = resources.getNaturalOrderResourcesForPosition(ResourceScheduler.ALWAYS_LAST_POSITION_KEY);
-            if (alwaysLastResources != null && alwaysLastResources.size() > 0)
-                throw new BitronixSystemException("cannot enlist more than one non-XA resource, tried enlisting " + xaResourceHolderState + ", already enlisted: " + alwaysLastResources.get(0));
-        }
-
         XAResourceHolderState alreadyEnlistedHolder = findXAResourceHolderState(xaResourceHolderState.getXAResource());
         if (alreadyEnlistedHolder != null && !alreadyEnlistedHolder.isEnded()) {
             xaResourceHolderState.setXid(alreadyEnlistedHolder.getXid());
@@ -80,6 +74,13 @@ public class XAResourceManager {
             xid = UidGenerator.generateXid(gtrid);
             if (log.isDebugEnabled()) log.debug("creating new branch with " + xid);
             flag = XAResource.TMNOFLAGS;
+        }
+
+        // check for enlistment of a 2nd LRC resource, forbid this if the 2nd resource cannot be joined with the 1st one
+        if (flag != XAResource.TMJOIN && xaResourceHolderState.getTwoPcOrderingPosition() == ResourceScheduler.ALWAYS_LAST_POSITION) {
+            List alwaysLastResources = resources.getNaturalOrderResourcesForPosition(ResourceScheduler.ALWAYS_LAST_POSITION_KEY);
+            if (alwaysLastResources != null && alwaysLastResources.size() > 0)
+                throw new BitronixSystemException("cannot enlist more than one non-XA resource, tried enlisting " + xaResourceHolderState + ", already enlisted: " + alwaysLastResources.get(0));
         }
 
         xaResourceHolderState.setXid(xid);
