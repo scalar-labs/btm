@@ -1,6 +1,6 @@
 <project default="build" name="btm">
 
-    <property name="jar.version" value="1.3"/>
+    <property name="jar.version" value="1.3-beta2"/>
 
     <property name="dir.src" value="src"/>
     <property name="dir.src.test" value="test"/>
@@ -14,6 +14,7 @@
     <property name="dir.lib.tools" value="tools-lib"/>
     <property name="dir.lib.test" value="test-lib"/>
     <property name="dir.test.report" value="test-reports"/>
+    <property name="dir.releasenotes" value="release-notes"/>
     <property name="jar.file" value="${dir.dist}/btm-${jar.version}.jar"/>
     <property name="zip.file" value="btm-dist-${jar.version}.zip"/>
     <property name="pom.file" value="pom.xml"/>
@@ -39,18 +40,20 @@
         <path refid="javac.classpath"/>
     </path>
 
-    <target name="dist" depends="clean,build,test,doc" description="Generate distribution ZIP file">
+    <target name="all" depends="clean,build,test,doc,dist" description="Run clean,build,test,doc,dist"/>
+
+    <target name="dist" depends="build,doc" description="Generate distribution ZIP file">
         <property name="destination" value="${dir.dist}/btm-dist-${jar.version}"/>
 
         <copy file="${jar.file}" todir="${destination}"/>
         <copy file="license.txt" todir="${destination}"/>
-        <copy file="release-notes-${jar.version}.txt" tofile="${destination}/release-notes.txt"/>
+        <copy file="${dir.releasenotes}/release-notes-${jar.version}.txt" tofile="${destination}/release-notes.txt"/>
         <copy todir="${destination}">
             <fileset dir="${basedir}">
                 <include name="lib/**/*"/>
                 <exclude name="lib/**/.svn"/>
-                <exclude name="lib/**/log4j-1.2.13.jar"/>
-                <exclude name="lib/**/slf4j-log4j12.jar"/>
+                <exclude name="lib/**/log4j-*.jar"/>
+                <exclude name="lib/**/slf4j-log4j12-*.jar"/>
             </fileset>
         </copy>
         <copy todir="${destination}">
@@ -197,11 +200,7 @@
         <fail message="Missing 'source' parameter." unless="source"/>
         <fail message="Missing 'target' parameter." unless="target"/>
         <fail message="Source file '${source}' does not exist.">
-            <condition>
-                <not>
-                    <available file="${source}"/>
-                </not>
-            </condition>
+            <condition><not><available file="${source}"/></not></condition>
         </fail>
         <fail message="Missing 'webdav.username' system property. Set it with -Dwebdav.username=... on the command line." unless="webdav.username"/>
         <fail message="Missing 'webdav.password' system property. Set it with -Dwebdav.password=... on the command line." unless="webdav.password"/>
@@ -212,15 +211,15 @@
         <checksum file="${source}" algorithm="SHA" fileext=".sha1"/>
 
         <taskdef resource="org/apache/webdav/ant/taskdefs.properties" classpathref="tools.classpath"/>
-        <davput url="${target}"
+        <davput url="${target}" file="${source}.md5"
                userid="${webdav.username}" password="${webdav.password}"
-               lock="false" overwrite="${overwrite}" file="${source}.md5" />
-        <davput url="${target}"
+               lock="false" overwrite="${overwrite}" />
+        <davput url="${target}" file="${source}.sha1"
                userid="${webdav.username}" password="${webdav.password}"
-               lock="false" overwrite="${overwrite}" file="${source}.sha1" />
-        <davput url="${target}"
+               lock="false" overwrite="${overwrite}" />
+        <davput url="${target}" file="${source}"
                userid="${webdav.username}" password="${webdav.password}"
-               lock="false" overwrite="${overwrite}" file="${source}" />
+               lock="false" overwrite="${overwrite}" />
 
         <delete file="${source}.md5"/>
         <delete file="${source}.sha1"/>
