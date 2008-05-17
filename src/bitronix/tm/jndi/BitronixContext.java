@@ -45,11 +45,11 @@ public class BitronixContext implements Context {
     }
 
     public Object lookup(Name name) throws NamingException {
-        checkClosed();
         return lookup(name.toString());
     }
 
     public Object lookup(String s) throws NamingException {
+        checkClosed();
         if (log.isDebugEnabled()) log.debug("looking up '" + s + "'");
         if (userTransactionName.equals(s))
             return TransactionManagerServices.getTransactionManager();
