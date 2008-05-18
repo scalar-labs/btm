@@ -267,6 +267,8 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
                     log.warn("error delisting resource: " + xaResourceHolderState, ex);
                 }
             }
+            else
+                if (log.isDebugEnabled()) log.debug("no need to delist already closed resource: " + xaResourceHolderState);
         } // for
     }
 

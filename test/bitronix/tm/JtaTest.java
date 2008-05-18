@@ -4,6 +4,12 @@ import junit.framework.TestCase;
 
 import javax.transaction.*;
 
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
+import bitronix.tm.mock.resource.jdbc.MockDriver;
+
+import java.sql.Connection;
+
 /**
  * <p></p>
  * <p>&copy; Bitronix 2005, 2006</p>
@@ -64,6 +70,42 @@ public class JtaTest extends TestCase {
         } catch (RollbackException ex) {
             assertEquals("transaction was marked as rollback only and has been rolled back", ex.getMessage());
         }
+    }
+
+    public void test() throws Exception {
+        PoolingDataSource pds = new PoolingDataSource();
+        pds.setClassName(LrcXADataSource.class.getName());
+        pds.setUniqueName("lrc-pds");
+        pds.setMaxPoolSize(2);
+        pds.getDriverProperties().setProperty("driverClassName", MockDriver.class.getName());
+        pds.init();
+
+        btm.begin();
+
+        Connection c1 = pds.getConnection();
+        c1.createStatement();
+        c1.close();
+
+        Transaction tx = btm.suspend();
+
+            btm.begin();
+
+            Connection c11 = pds.getConnection();
+            c11.createStatement();
+            c11.close();
+
+            btm.commit();
+
+
+        btm.resume(tx);
+
+        Connection c2 = pds.getConnection();
+        c2.createStatement();
+        c2.close();
+
+        btm.commit();
+
+        pds.close();
     }
 
 }

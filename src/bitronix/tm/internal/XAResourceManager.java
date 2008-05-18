@@ -2,6 +2,7 @@ package bitronix.tm.internal;
 
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;
+import bitronix.tm.utils.Decoder;
 import bitronix.tm.BitronixXid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,12 +86,15 @@ public class XAResourceManager {
 
         xaResourceHolderState.setXid(xid);
         xaResourceHolderState.start(flag);
+        if (log.isDebugEnabled()) log.debug("started " + xaResourceHolderState + " with " + Decoder.decodeXAResourceFlag(flag));
+
 
         // in case of a JOIN, the resource holder is already in the scheduler -> do not add it twice
-        if (toBeJoinedHolderState == null) {
-            // this must be done only after start() successfully returned
-            resources.addResource(xaResourceHolderState);
+        if (toBeJoinedHolderState != null) {
+            resources.removeResource(toBeJoinedHolderState);
         }
+        // this must be done only after start() successfully returned
+        resources.addResource(xaResourceHolderState);
     }
 
     /**

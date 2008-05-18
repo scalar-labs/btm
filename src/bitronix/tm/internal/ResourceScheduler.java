@@ -37,6 +37,35 @@ public class ResourceScheduler {
         resourcesList.add(xaResourceHolderState);
     }
 
+    public void removeResource(XAResourceHolderState xaResourceHolderState) {
+        int position = xaResourceHolderState.getTwoPcOrderingPosition();
+        removeFromPosition(xaResourceHolderState, position);
+    }
+
+    private void removeFromPosition(XAResourceHolderState xaResourceHolderState, int position) {
+        Integer key = new Integer(position);
+        List resourcesList = (List) resources.get(key);
+        if (resourcesList == null)
+            throw new BitronixRuntimeException("no XAResourceHolderState at position " + position);
+
+        boolean found = false;
+        for (int i = 0; i < resourcesList.size(); i++) {
+            XAResourceHolderState xarhs = (XAResourceHolderState) resourcesList.get(i);
+            if (xarhs == xaResourceHolderState) {
+                resourcesList.remove(i);
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
+            throw new BitronixRuntimeException("no such XAResourceHolderState found at position " + position + ": " + xaResourceHolderState);
+
+        if (resourcesList.size() == 0) {
+            resources.remove(key);
+        }
+    }
+
     public SortedSet getNaturalOrderPositions() {
         return new TreeSet(resources.keySet());
     }
