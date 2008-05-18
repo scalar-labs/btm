@@ -255,10 +255,18 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             if (log.isDebugEnabled()) log.debug("committing dangling transaction with GTRID " + gtrid);
             commit(danglingTransactions);
             if (log.isDebugEnabled()) log.debug("committed dangling transaction with GTRID " + gtrid);
-            committedGtrids.add(gtrid); 
+            committedGtrids.add(gtrid);
+
             Set participatingUniqueNames = filterParticipatingUniqueNamesInRecoveredXids(uniqueNames);
-            if (log.isDebugEnabled()) log.debug("updating journal's transaction status to COMMITTED for names [" + buildUniqueNamesString(participatingUniqueNames) + "]");
-            TransactionManagerServices.getJournal().log(Status.STATUS_COMMITTED, tlog.getGtrid(), participatingUniqueNames);
+
+            if (participatingUniqueNames.size() > 0) {
+                if (log.isDebugEnabled()) log.debug("updating journal's transaction with GTRID " + gtrid + " status to COMMITTED for names [" + buildUniqueNamesString(participatingUniqueNames) + "]");
+                TransactionManagerServices.getJournal().log(Status.STATUS_COMMITTED, tlog.getGtrid(), participatingUniqueNames);
+            }
+            else {
+                if (log.isDebugEnabled()) log.debug("not updating journal's transaction with GTRID " + gtrid + " status to COMMITTED as no resource could be found (incremental recovery will need to clean this)");
+                committedGtrids.remove(gtrid);
+            }
         }
         if (log.isDebugEnabled()) log.debug("committed " + committedGtrids.size() + " dangling transaction(s)");
         return committedGtrids;
@@ -308,7 +316,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             if (log.isDebugEnabled()) log.debug("finding dangling transaction(s) in recovered XID(s) of resource " + uniqueName);
             Set recoveredXids = (Set) recoveredXidSets.get(uniqueName);
             if (recoveredXids == null) {
-                log.info("recoverer cannot find resource '" + uniqueName + "' present in the journal, leaving it for incremental recovery");
+                if (log.isDebugEnabled()) log.debug("cannot find resource '" + uniqueName + "' present in the journal, leaving it for incremental recovery");
             }
             else {
                 recoveredUniqueNames.add(uniqueName);

@@ -133,9 +133,9 @@ public class RecovererTest extends TestCase {
 
         assertEquals(1, TransactionManagerServices.getJournal().collectDanglingRecords().size());
         assertNull(TransactionManagerServices.getRecoverer().getCompletionException());
-        assertEquals(1, TransactionManagerServices.getRecoverer().getCommittedCount());
-        assertEquals(0, TransactionManagerServices.getRecoverer().getRolledbackCount());
-        assertEquals(1, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
+        assertEquals(0, TransactionManagerServices.getRecoverer().getCommittedCount());
+        assertEquals(1, TransactionManagerServices.getRecoverer().getRolledbackCount());
+        assertEquals(0, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
 
 
         // the TM is running, adding this resource will kick incremental recovery on it
@@ -153,7 +153,14 @@ public class RecovererTest extends TestCase {
         pds.setMaxPoolSize(1);
         pds.init();
 
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) pds.getConnection();
+        XAResource xaResource = handle.getPooledConnection().getXAResource();
+        handle.close();
+
+        assertEquals(0, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
         assertEquals(0, TransactionManagerServices.getJournal().collectDanglingRecords().size());
+
+        pds.close();
 
         TransactionManagerServices.getTransactionManager().shutdown();
     }
