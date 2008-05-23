@@ -46,6 +46,7 @@ public class LrcConnectionHandle implements Connection {
     public void setAutoCommit(boolean autoCommit) throws SQLException {
         if (xaResource.getState() != LrcXAResource.NO_TX && autoCommit)
             throw new SQLException("XA transaction started, cannot enable autocommit mode");
+        getDelegate().setAutoCommit(autoCommit);
     }
 
     public void commit() throws SQLException {
