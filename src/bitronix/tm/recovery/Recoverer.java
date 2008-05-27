@@ -130,7 +130,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
 
             log.info("recovery committed " + committedCount + " dangling transaction(s) and rolled back " + rolledbackCount +
                     " aborted transaction(s) on " + registeredResources.size() + " resource(s) [" + getRegisteredResourcesUniqueNames() + "]" +
-                    ", discarded " + unrecoverableResourceNames.size() + " unrecoverable resource(s) [" + buildUniqueNamesString(unrecoverableResourceNames) + "]");
+                    (isRetryUnrecoverableResourcesRegistrationEnabled() ? ", discarded " + unrecoverableResourceNames.size() + " unrecoverable resource(s) [" + buildUniqueNamesString(unrecoverableResourceNames) + "]": ""));
             this.completionException = null;
         } catch (Exception ex) {
             this.completionException = ex;
