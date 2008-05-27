@@ -53,6 +53,8 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
     }
 
     public void testSimpleWorkingCase() throws Exception {
+        poolingDataSource1.setUseTmJoin(false);
+
         if (log.isDebugEnabled()) log.debug("*** getting TM");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         if (log.isDebugEnabled()) log.debug("*** before begin");
@@ -408,6 +410,91 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         assertEquals(true, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
         assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i)).getStatus());
             assertEquals(1, ((JournalLogEvent) orderedEvents.get(i++)).getJndiNames().size());
+        assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+    }
+
+    public void testJoinAfterSuspend() throws Exception {
+        BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        tm.begin();
+
+        if (log.isDebugEnabled()) log.debug("*** get C1");
+        Connection c1 = poolingDataSource1.getConnection();
+        c1.createStatement();
+        c1.close();
+
+        if (log.isDebugEnabled()) log.debug("*** get C2");
+        Connection c2 = poolingDataSource2.getConnection();
+        c2.createStatement();
+        c2.close();
+
+        Transaction tx = tm.suspend();
+        tm.resume(tx);
+
+        if (log.isDebugEnabled()) log.debug("*** get C3");
+        Connection c3 = poolingDataSource2.getConnection();
+        c3.createStatement();
+        c3.close();
+
+        if (log.isDebugEnabled()) log.debug("*** get C4");
+        Connection c4 = poolingDataSource1.getConnection();
+        c4.createStatement();
+        c4.close();
+
+        tm.commit();
+
+        // check flow
+        List orderedEvents = EventRecorder.getOrderedEvents();
+        System.out.println(EventRecorder.dumpToString());
+
+        assertEquals(26, orderedEvents.size());
+        int i=0;
+        assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(DATASOURCE2_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
+
+        // suspend happens here
+        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
+        // resume happens here
+
+        assertEquals(DATASOURCE2_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+
+        XAResourceIsSameRmEvent evt = (XAResourceIsSameRmEvent) orderedEvents.get(i++);
+        XAResource src = (XAResource) evt.getSource();
+        XAResource comp = evt.getXAResource();
+        assertTrue(poolingDataSource2.findXAResourceHolder(src) != null);
+        assertTrue(poolingDataSource1.findXAResourceHolder(comp) != null);
+
+        evt = (XAResourceIsSameRmEvent) orderedEvents.get(i++);
+        src = (XAResource) evt.getSource();
+        comp = evt.getXAResource();
+        assertTrue(poolingDataSource2.findXAResourceHolder(src) != null);
+        assertTrue(poolingDataSource2.findXAResourceHolder(comp) != null);
+
+        assertEquals(XAResource.TMJOIN, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+
+        evt = (XAResourceIsSameRmEvent) orderedEvents.get(i++);
+        src = (XAResource) evt.getSource();
+        comp = evt.getXAResource();
+        assertTrue(poolingDataSource1.findXAResourceHolder(src) != null);
+        assertTrue(poolingDataSource1.findXAResourceHolder(comp) != null);
+
+        assertEquals(XAResource.TMJOIN, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
+        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
+
+        assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(XAResource.XA_OK, ((XAResourcePrepareEvent) orderedEvents.get(i++)).getReturnCode());
+        assertEquals(XAResource.XA_OK, ((XAResourcePrepareEvent) orderedEvents.get(i++)).getReturnCode());
+        assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(Status.STATUS_COMMITTING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(false, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
+        assertEquals(false, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
+        assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
     }
 

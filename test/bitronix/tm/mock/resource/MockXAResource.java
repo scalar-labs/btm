@@ -56,7 +56,8 @@ public class MockXAResource implements XAResource {
     }
 
     public boolean isSameRM(XAResource xaResource) throws XAException {
-        return false;
+        getEventRecorder().addEvent(new XAResourceIsSameRmEvent(this, xaResource));
+        return xaResource == this;
     }
 
     public Xid[] recover(int flag) throws XAException {

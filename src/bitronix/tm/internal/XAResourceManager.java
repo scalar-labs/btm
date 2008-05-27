@@ -194,8 +194,11 @@ public class XAResourceManager {
         while (it.hasNext()) {
             XAResourceHolderState alreadyEnlistedHolderState = (XAResourceHolderState) it.next();
 
-            if (log.isDebugEnabled()) log.debug("checking joinability of " + alreadyEnlistedHolderState + " with " + alreadyEnlistedHolderState);
-            if (alreadyEnlistedHolderState.getXAResource().isSameRM(alreadyEnlistedHolderState.getXAResource()) && alreadyEnlistedHolderState.isEnded()) {
+
+            if (log.isDebugEnabled()) log.debug("checking joinability of " + xaResourceHolderState + " with " + alreadyEnlistedHolderState);
+            if ( alreadyEnlistedHolderState.isEnded() &&
+                 !alreadyEnlistedHolderState.isSuspended() &&
+                 xaResourceHolderState.getXAResource().isSameRM(alreadyEnlistedHolderState.getXAResource()) ) {
                 if (log.isDebugEnabled()) log.debug("resources are joinable");
                 return alreadyEnlistedHolderState;
             }
