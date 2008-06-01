@@ -3,6 +3,7 @@ package bitronix.tm.internal;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;
 import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.Scheduler;
 import bitronix.tm.BitronixXid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,7 @@ public class XAResourceManager {
     private final static Logger log = LoggerFactory.getLogger(XAResourceManager.class);
 
     private Uid gtrid;
-    private ResourceScheduler resources = new ResourceScheduler();
+    private Scheduler resources = new Scheduler();
 
     /**
      * Create a resource manager for the specified GTRID.
@@ -78,8 +79,8 @@ public class XAResourceManager {
         }
 
         // check for enlistment of a 2nd LRC resource, forbid this if the 2nd resource cannot be joined with the 1st one
-        if (flag != XAResource.TMJOIN && xaResourceHolderState.getTwoPcOrderingPosition() == ResourceScheduler.ALWAYS_LAST_POSITION) {
-            List alwaysLastResources = resources.getNaturalOrderResourcesForPosition(ResourceScheduler.ALWAYS_LAST_POSITION_KEY);
+        if (flag != XAResource.TMJOIN && xaResourceHolderState.getTwoPcOrderingPosition() == Scheduler.ALWAYS_LAST_POSITION) {
+            List alwaysLastResources = resources.getNaturalOrderResourcesForPosition(Scheduler.ALWAYS_LAST_POSITION_KEY);
             if (alwaysLastResources != null && alwaysLastResources.size() > 0)
                 throw new BitronixSystemException("cannot enlist more than one non-XA resource, tried enlisting " + xaResourceHolderState + ", already enlisted: " + alwaysLastResources.get(0));
         }
@@ -91,10 +92,10 @@ public class XAResourceManager {
 
         // in case of a JOIN, the resource holder is already in the scheduler -> do not add it twice
         if (toBeJoinedHolderState != null) {
-            resources.removeResource(toBeJoinedHolderState);
+            resources.remove(toBeJoinedHolderState);
         }
         // this must be done only after start() successfully returned
-        resources.addResource(xaResourceHolderState);
+        resources.add(xaResourceHolderState, xaResourceHolderState.getTwoPcOrderingPosition());
     }
 
     /**

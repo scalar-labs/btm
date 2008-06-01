@@ -4,6 +4,7 @@ import bitronix.tm.internal.*;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.Service;
 import bitronix.tm.utils.InitializationException;
+import bitronix.tm.utils.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionManager.class);
 
-    private final ThreadLocal threadLocalContexts = new ThreadLocal();
+    private final Map contexts = Collections.synchronizedMap(new HashMap());
     private final Map inFlightTransactions = Collections.synchronizedMap(new HashMap());
     private boolean shuttingDown;
 
@@ -82,6 +83,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             throw new NotSupportedException("nested transactions not supported");
         currentTx = createTransaction();
 
+        currentTx.getSynchronizationScheduler().add(new ClearContextSynchronization(currentTx), Scheduler.ALWAYS_LAST_POSITION);
         currentTx.setActive();
     }
 
@@ -91,11 +93,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         if (currentTx == null)
             throw new IllegalStateException("no transaction started on this thread");
 
-        try {
-            currentTx.commit();
-        } finally {
-            clearCurrentContext(true);
-        }
+        currentTx.commit();
     }
 
     public void rollback() throws IllegalStateException, SecurityException, SystemException {
@@ -104,11 +102,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         if (currentTx == null)
             throw new IllegalStateException("no transaction started on this thread");
 
-        try {
-            currentTx.rollback();
-        } finally {
-            clearCurrentContext(true);
-        }
+        currentTx.rollback();
     }
 
     public int getStatus() throws SystemException {
@@ -208,7 +202,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @return the current transaction or null if no transaction has been started on the current thread.
      */
     public BitronixTransaction getCurrentTransaction() {
-        if (threadLocalContexts.get() == null)
+        if (contexts.get(Thread.currentThread()) == null)
             return null;
         return getCurrentContext().getTransaction();
     }
@@ -363,7 +357,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             inFlightTransactions.remove(currentTransaction.getResourceManager().getGtrid());
             TransactionManagerServices.getTaskScheduler().cancelTransactionTimeout(currentTransaction);
         }
-        getCurrentContext().clear();
+        contexts.remove(Thread.currentThread());
         if (log.isDebugEnabled()) log.debug("cleared current thread context: " + getCurrentContext());
     }
 
@@ -373,11 +367,9 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      */
     private void setCurrentContext(ThreadContext context) {
         if (log.isDebugEnabled()) log.debug("changing current thread context to " + context);
-        if (context == null) {
-            log.error("setCurrentContext() should not be called with a null context, clearCurrentContext() should be used instead");
-            clearCurrentContext(true);
-        }
-        threadLocalContexts.set(context);
+        if (context == null)
+            throw new IllegalArgumentException("setCurrentContext() should not be called with a null context, clearCurrentContext() should be used instead");
+        contexts.put(Thread.currentThread(), context);
     }
 
     /**
@@ -385,13 +377,39 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @return the context.
      */
     private ThreadContext getCurrentContext() {
-        ThreadContext threadContext = (ThreadContext) threadLocalContexts.get();
+        ThreadContext threadContext = (ThreadContext) contexts.get(Thread.currentThread());
         if (threadContext == null) {
             if (log.isDebugEnabled()) log.debug("creating new thread context");
             threadContext = new ThreadContext();
             setCurrentContext(threadContext);
         }
         return threadContext;
+    }
+
+    private class ClearContextSynchronization implements Synchronization {
+        private BitronixTransaction currentTx;
+
+        public ClearContextSynchronization(BitronixTransaction currentTx) {
+            this.currentTx = currentTx;
+        }
+
+        public void beforeCompletion() {
+        }
+
+        public void afterCompletion(int status) {
+            synchronized (contexts) {
+                Iterator it = contexts.entrySet().iterator();
+                while (it.hasNext()) {
+                    Map.Entry entry = (Map.Entry) it.next();
+                    ThreadContext context = (ThreadContext) entry.getValue();
+                    if (context.getTransaction() == currentTx) {
+                        it.remove();
+                        break;
+                    }
+                }
+            }
+            inFlightTransactions.remove(currentTx.getResourceManager().getGtrid());
+        }
     }
 
 }

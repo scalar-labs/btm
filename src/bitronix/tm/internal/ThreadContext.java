@@ -32,16 +32,10 @@ public class ThreadContext {
      * @param transaction the transaction to link.
      */
     public void setTransaction(BitronixTransaction transaction) {
+        if (transaction == null)
+            throw new IllegalArgumentException("transaction parameter cannot be null");
         if (log.isDebugEnabled()) log.debug("assigning <" + transaction + "> to <" + this + ">");
         this.transaction = transaction;
-    }
-
-    /**
-     * Clear this thread context. The attached resource manager and transaction are dropped.
-     */
-    public void clear() {
-        if (log.isDebugEnabled()) log.debug("clearing " + this);
-        transaction = null;
     }
 
     /**

@@ -1,10 +1,7 @@
 package bitronix.tm.resource.jdbc;
 
 import bitronix.tm.BitronixXid;
-import bitronix.tm.utils.Decoder;
-import bitronix.tm.utils.LruEvictionListener;
-import bitronix.tm.utils.LruMap;
-import bitronix.tm.utils.ManagementRegistrar;
+import bitronix.tm.utils.*;
 import bitronix.tm.internal.*;
 import bitronix.tm.resource.common.*;
 import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
@@ -62,8 +59,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         addStateChangeEventListener(this);
 
         if (poolingDataSource.getClassName().equals(LrcXADataSource.class.getName())) {
-            if (log.isDebugEnabled()) log.debug("emulating XA for resource " + poolingDataSource.getUniqueName() + " - changing CommitOrderingPosition to " + ResourceScheduler.ALWAYS_LAST_POSITION);
-            poolingDataSource.setTwoPcOrderingPosition(ResourceScheduler.ALWAYS_LAST_POSITION);
+            if (log.isDebugEnabled()) log.debug("emulating XA for resource " + poolingDataSource.getUniqueName() + " - changing CommitOrderingPosition to " + Scheduler.ALWAYS_LAST_POSITION);
+            poolingDataSource.setTwoPcOrderingPosition(Scheduler.ALWAYS_LAST_POSITION);
         }
 
         this.jmxName = "bitronix.tm:type=JdbcPooledConnection,UniqueName=" + poolingDataSource.getUniqueName() + ",Id=" + poolingDataSource.incCreatedResourcesCounter();

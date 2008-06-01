@@ -72,7 +72,7 @@ public class JtaTest extends TestCase {
         }
     }
 
-    public void test() throws Exception {
+    public void testRecycleAfterSuspend() throws Exception {
         PoolingDataSource pds = new PoolingDataSource();
         pds.setClassName(LrcXADataSource.class.getName());
         pds.setUniqueName("lrc-pds");
@@ -106,6 +106,32 @@ public class JtaTest extends TestCase {
         btm.commit();
 
         pds.close();
+    }
+
+    public void testTransactionContextCleanup() throws Exception {
+        assertEquals(Status.STATUS_NO_TRANSACTION, btm.getStatus());
+
+        btm.begin();
+        assertEquals(Status.STATUS_ACTIVE, btm.getStatus());
+        
+        final Transaction tx = btm.getTransaction();
+
+        // commit on a different thread
+        Thread t = new Thread() {
+            public void run() {
+                try {
+                    tx.commit();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    fail();
+                }
+            }
+        };
+
+        t.start();
+        t.join();
+
+        assertNull(btm.getTransaction());
     }
 
 }

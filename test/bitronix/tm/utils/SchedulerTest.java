@@ -1,16 +1,17 @@
-package bitronix.tm.internal;
+package bitronix.tm.utils;
 
 import junit.framework.TestCase;
 import bitronix.tm.resource.common.ResourceBean;
+import bitronix.tm.internal.XAResourceHolderState;
 
 import java.util.Iterator;
 import java.util.Set;
 import java.util.List;
 
-public class ResourceSchedulerTest extends TestCase {
-    
+public class SchedulerTest extends TestCase {
+
     public void testNaturalOrdering() throws Exception {
-        ResourceScheduler resourceScheduler = new ResourceScheduler();
+        Scheduler resourceScheduler = new Scheduler();
 
         XAResourceHolderState xarhs0 = new XAResourceHolderState(null, new MockResourceBean(1));
         XAResourceHolderState xarhs1 = new XAResourceHolderState(null, new MockResourceBean(1));
@@ -18,13 +19,13 @@ public class ResourceSchedulerTest extends TestCase {
         XAResourceHolderState xarhs3 = new XAResourceHolderState(null, new MockResourceBean(0));
         XAResourceHolderState xarhs4 = new XAResourceHolderState(null, new MockResourceBean(10));
 
-        resourceScheduler.addResource(xarhs0);
-        resourceScheduler.addResource(xarhs1);
-        resourceScheduler.addResource(xarhs2);
-        resourceScheduler.addResource(xarhs3);
-        resourceScheduler.addResource(xarhs4);
+        resourceScheduler.add(xarhs0, xarhs0.getTwoPcOrderingPosition());
+        resourceScheduler.add(xarhs1, xarhs1.getTwoPcOrderingPosition());
+        resourceScheduler.add(xarhs2, xarhs2.getTwoPcOrderingPosition());
+        resourceScheduler.add(xarhs3, xarhs3.getTwoPcOrderingPosition());
+        resourceScheduler.add(xarhs4, xarhs4.getTwoPcOrderingPosition());
 
-        assertEquals("a ResourceScheduler with 5 resource(s) in 3 position(s)", resourceScheduler.toString());
+        assertEquals("a Scheduler with 5 object(s) in 3 position(s)", resourceScheduler.toString());
 
         /* testing natural order priorities */
         assertEquals(5, resourceScheduler.size());
@@ -53,7 +54,7 @@ public class ResourceSchedulerTest extends TestCase {
     }
 
     public void testReverseOrdering() throws Exception {
-        ResourceScheduler resourceScheduler = new ResourceScheduler();
+        Scheduler resourceScheduler = new Scheduler();
 
         XAResourceHolderState xarhs0 = new XAResourceHolderState(null, new MockResourceBean(1));
         XAResourceHolderState xarhs1 = new XAResourceHolderState(null, new MockResourceBean(1));
@@ -61,13 +62,13 @@ public class ResourceSchedulerTest extends TestCase {
         XAResourceHolderState xarhs3 = new XAResourceHolderState(null, new MockResourceBean(0));
         XAResourceHolderState xarhs4 = new XAResourceHolderState(null, new MockResourceBean(10));
 
-        resourceScheduler.addResource(xarhs0);
-        resourceScheduler.addResource(xarhs1);
-        resourceScheduler.addResource(xarhs2);
-        resourceScheduler.addResource(xarhs3);
-        resourceScheduler.addResource(xarhs4);
+        resourceScheduler.add(xarhs0, xarhs0.getTwoPcOrderingPosition());
+        resourceScheduler.add(xarhs1, xarhs1.getTwoPcOrderingPosition());
+        resourceScheduler.add(xarhs2, xarhs2.getTwoPcOrderingPosition());
+        resourceScheduler.add(xarhs3, xarhs3.getTwoPcOrderingPosition());
+        resourceScheduler.add(xarhs4, xarhs4.getTwoPcOrderingPosition());
 
-        assertEquals("a ResourceScheduler with 5 resource(s) in 3 position(s)", resourceScheduler.toString());
+        assertEquals("a Scheduler with 5 object(s) in 3 position(s)", resourceScheduler.toString());
 
         Set reverseOrderPriorities = resourceScheduler.getReverseOrderPositions();
         assertEquals(3, reverseOrderPriorities.size());
@@ -94,7 +95,7 @@ public class ResourceSchedulerTest extends TestCase {
     }
 
     public void testIterator() {
-        ResourceScheduler resourceScheduler = new ResourceScheduler();
+        Scheduler resourceScheduler = new Scheduler();
 
         XAResourceHolderState xarhs0 = new XAResourceHolderState(null, new MockResourceBean(1));
         XAResourceHolderState xarhs1 = new XAResourceHolderState(null, new MockResourceBean(1));
@@ -102,13 +103,13 @@ public class ResourceSchedulerTest extends TestCase {
         XAResourceHolderState xarhs3 = new XAResourceHolderState(null, new MockResourceBean(0));
         XAResourceHolderState xarhs4 = new XAResourceHolderState(null, new MockResourceBean(10));
 
-        resourceScheduler.addResource(xarhs0);
-        resourceScheduler.addResource(xarhs1);
-        resourceScheduler.addResource(xarhs2);
-        resourceScheduler.addResource(xarhs3);
-        resourceScheduler.addResource(xarhs4);
+        resourceScheduler.add(xarhs0, xarhs0.getTwoPcOrderingPosition());
+        resourceScheduler.add(xarhs1, xarhs1.getTwoPcOrderingPosition());
+        resourceScheduler.add(xarhs2, xarhs2.getTwoPcOrderingPosition());
+        resourceScheduler.add(xarhs3, xarhs3.getTwoPcOrderingPosition());
+        resourceScheduler.add(xarhs4, xarhs4.getTwoPcOrderingPosition());
 
-        assertEquals("a ResourceScheduler with 5 resource(s) in 3 position(s)", resourceScheduler.toString());
+        assertEquals("a Scheduler with 5 object(s) in 3 position(s)", resourceScheduler.toString());
 
         Iterator it = resourceScheduler.iterator();
         assertTrue(it.hasNext());
@@ -118,6 +119,21 @@ public class ResourceSchedulerTest extends TestCase {
         assertTrue(xarhs2 == it.next());
         assertTrue(xarhs4 == it.next());
         assertFalse(it.hasNext());
+
+        it = resourceScheduler.iterator();
+        assertTrue(it.hasNext());
+        assertTrue(xarhs3 == it.next());
+        it.remove();
+        assertTrue(xarhs0 == it.next());
+        it.remove();
+        assertTrue(xarhs1 == it.next());
+        it.remove();
+        assertTrue(xarhs2 == it.next());
+        it.remove();
+        assertTrue(xarhs4 == it.next());
+        it.remove();
+        assertFalse(it.hasNext());
+        assertEquals(0, resourceScheduler.size());
     }
 
     private static int counter = 0;

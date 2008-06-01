@@ -5,10 +5,7 @@ import bitronix.tm.journal.Journal;
 import bitronix.tm.twopc.*;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.XAResourceHolder;
-import bitronix.tm.utils.Decoder;
-import bitronix.tm.utils.ManagementRegistrar;
-import bitronix.tm.utils.Uid;
-import bitronix.tm.utils.UidGenerator;
+import bitronix.tm.utils.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -30,7 +27,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
     private int status = Status.STATUS_NO_TRANSACTION;
     private XAResourceManager resourceManager;
-    private List synchronizations = Collections.synchronizedList(new ArrayList());
+    private Scheduler synchronizationScheduler = new Scheduler();
     private boolean timeout = false;
 
     private Preparer preparer = new Preparer(TransactionManagerServices.getExecutor());
@@ -106,11 +103,11 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             throw new IllegalStateException("transaction is done, cannot register any more synchronization");
 
         if (log.isDebugEnabled()) log.debug("registering synchronization " + synchronization);
-        synchronizations.add(synchronization);
+        synchronizationScheduler.add(synchronization, Scheduler.DEFAULT_POSITION);
     }
 
-    public List getSynchronizations() {
-        return synchronizations;
+    public Scheduler getSynchronizationScheduler() {
+        return synchronizationScheduler;
     }
 
     public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, SystemException {
@@ -306,9 +303,10 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
      *         exception fails.
      */
     private void fireBeforeCompletionEvent() throws BitronixSystemException {
-        if (log.isDebugEnabled()) log.debug("before completion, " + synchronizations.size() + " synchronization(s) to execute");
-        for (int i = 0; i < synchronizations.size(); i++) {
-            Synchronization synchronization = (Synchronization) synchronizations.get(i);
+        if (log.isDebugEnabled()) log.debug("before completion, " + synchronizationScheduler.size() + " synchronization(s) to execute");
+        Iterator it = synchronizationScheduler.iterator();
+        while (it.hasNext()) {
+            Synchronization synchronization = (Synchronization) it.next();
             try {
                 if (log.isDebugEnabled()) log.debug("executing synchronization " + synchronization);
                 synchronization.beforeCompletion();
@@ -321,9 +319,10 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     }
 
     private void fireAfterCompletionEvent() {
-        if (log.isDebugEnabled()) log.debug("after completion, " + synchronizations.size() + " synchronization(s) to execute");
-        for (int i = 0; i < synchronizations.size(); i++) {
-            Synchronization synchronization = (Synchronization) synchronizations.get(i);
+        if (log.isDebugEnabled()) log.debug("after completion, " + synchronizationScheduler.size() + " synchronization(s) to execute");
+        Iterator it = synchronizationScheduler.iterator();
+        while (it.hasNext()) {
+            Synchronization synchronization = (Synchronization) it.next();
             try {
                 if (log.isDebugEnabled()) log.debug("executing synchronization " + synchronization + " with status=" + Decoder.decodeStatus(status));
                 synchronization.afterCompletion(status);

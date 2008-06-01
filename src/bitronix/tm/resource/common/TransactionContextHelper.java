@@ -4,6 +4,7 @@ import bitronix.tm.BitronixTransaction;
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.utils.Uid;
+import bitronix.tm.utils.Scheduler;
 import bitronix.tm.internal.BitronixSystemException;
 import bitronix.tm.internal.XAResourceHolderState;
 import org.slf4j.Logger;
@@ -121,7 +122,7 @@ public class TransactionContextHelper {
             if (!TransactionContextHelper.isAlreadyRegisteredForDeferredRelease(xaStatefulHolder, currentTransaction)) {
                 if (log.isDebugEnabled()) log.debug("registering DeferredReleaseSynchronization for " + xaStatefulHolder);
                 DeferredReleaseSynchronization synchronization = new DeferredReleaseSynchronization(xaStatefulHolder);
-                currentTransaction.getSynchronizations().add(synchronization);
+                currentTransaction.getSynchronizationScheduler().add(synchronization, Scheduler.DEFAULT_POSITION);
             }
             else if (log.isDebugEnabled()) log.debug("already registered DeferredReleaseSynchronization for " + xaStatefulHolder);
         } else {
@@ -138,12 +139,12 @@ public class TransactionContextHelper {
     public static void recycle(XAStatefulHolder xaStatefulHolder) {
         BitronixTransaction currentTransaction = currentTransaction();
         if (log.isDebugEnabled()) log.debug("marking " + xaStatefulHolder + " as recycled in " + currentTransaction);
-        List synchronizations = currentTransaction.getSynchronizations();
+        Scheduler synchronizationScheduler = currentTransaction.getSynchronizationScheduler();
 
         DeferredReleaseSynchronization deferredReleaseSynchronization = findDeferredRelease(xaStatefulHolder, currentTransaction);
         if (deferredReleaseSynchronization != null) {
             if (log.isDebugEnabled()) log.debug(xaStatefulHolder + " has been recycled, unregistering deferred release from " + currentTransaction);
-            synchronizations.remove(deferredReleaseSynchronization);
+            synchronizationScheduler.remove(deferredReleaseSynchronization);
         }
     }
 
@@ -157,9 +158,11 @@ public class TransactionContextHelper {
     }
 
     private static DeferredReleaseSynchronization findDeferredRelease(XAStatefulHolder xaStatefulHolder, BitronixTransaction currentTransaction) {
-        List synchronizations = currentTransaction.getSynchronizations();
-        for (int i = 0; i < synchronizations.size(); i++) {
-            Synchronization synchronization = (Synchronization) synchronizations.get(i);
+        Scheduler synchronizationScheduler = currentTransaction.getSynchronizationScheduler();
+        Iterator it = synchronizationScheduler.iterator();
+
+        while (it.hasNext()) {
+            Synchronization synchronization = (Synchronization) it.next();
             if (synchronization instanceof DeferredReleaseSynchronization) {
                 DeferredReleaseSynchronization deferredReleaseSynchronization = (DeferredReleaseSynchronization) synchronization;
                 if (deferredReleaseSynchronization.getXAStatefulHolder() == xaStatefulHolder) {
