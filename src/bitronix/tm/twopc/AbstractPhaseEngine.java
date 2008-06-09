@@ -52,6 +52,8 @@ public abstract class AbstractPhaseEngine {
             if (log.isDebugEnabled()) log.debug("executing phase on " + resourceManager.size() + " resource(s) enlisted in " + positions.size() + " position(s) in natural position order");
         }
 
+        List positionErrorReports = new ArrayList();
+
         Iterator it = positions.iterator();
         while (it.hasNext()) {
             Object positionKey = it.next();
@@ -65,13 +67,30 @@ public abstract class AbstractPhaseEngine {
             }
 
             if (log.isDebugEnabled()) log.debug("running " + resources.size() + " job(s) for position '" + positionKey + "'");
-            runJobsForPosition(resources);
+            JobsExecutionReport report = runJobsForPosition(resources);
+            if (report.getExceptions().size() > 0) {
+                if (log.isDebugEnabled()) log.debug(report.getExceptions().size() + " error(s) happened during execution of position '" + positionKey + "'");
+                positionErrorReports.add(report);
+            }
             if (log.isDebugEnabled()) log.debug("ran " + resources.size() + " job(s) for position '" + positionKey + "'");
         }
 
+        if (positionErrorReports.size() > 0) {
+            // merge all resources and exceptions lists
+            List exceptions = new ArrayList();
+            List resources = new ArrayList();
+
+            for (int i = 0; i < positionErrorReports.size(); i++) {
+                JobsExecutionReport report = (JobsExecutionReport) positionErrorReports.get(i);
+                exceptions.addAll(report.getExceptions());
+                resources.addAll(report.getResources());
+            }
+
+            throw new PhaseException(exceptions, resources);
+        }
     }
 
-    private void runJobsForPosition(List resources) throws PhaseException {
+    private JobsExecutionReport runJobsForPosition(List resources) {
         Iterator it = resources.iterator();
         List jobs = new ArrayList();
         List exceptions = new ArrayList();
@@ -115,8 +134,7 @@ public abstract class AbstractPhaseEngine {
         }
 
         if (log.isDebugEnabled()) log.debug("phase executed with " + exceptions.size() + " exception(s)");
-        if (exceptions.size() > 0)
-            throw new PhaseException(exceptions, errorResources);
+        return new JobsExecutionReport(exceptions, errorResources);
     }
 
     /**
@@ -168,6 +186,24 @@ public abstract class AbstractPhaseEngine {
             Throwable t = (Throwable) exceptions.get(i);
             XAResourceHolderState holderState = (XAResourceHolderState) resources.get(i);
             log.error("resource " + holderState.getUniqueName() + " failed on " + holderState.getXid(), t);
+        }
+    }
+
+    private class JobsExecutionReport {
+        private List exceptions;
+        private List resources;
+
+        private JobsExecutionReport(List exceptions, List resources) {
+            this.exceptions = exceptions;
+            this.resources = resources;
+        }
+
+        public List getExceptions() {
+            return exceptions;
+        }
+
+        public List getResources() {
+            return resources;
         }
     }
 
