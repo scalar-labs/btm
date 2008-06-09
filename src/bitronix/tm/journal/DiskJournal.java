@@ -355,9 +355,6 @@ public class DiskJournal implements Journal {
                             committed++;
                         }
                     }
-                    else {
-                        log.warn("ignoring orphan record: " + tlog);
-                    }
                 }
             }
 
