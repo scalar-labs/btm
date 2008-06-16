@@ -4,7 +4,6 @@ import bitronix.tm.BitronixTransactionManager;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.mock.events.*;
 import bitronix.tm.mock.resource.jdbc.MockXAConnection;
-import bitronix.tm.mock.resource.jdbc.MockXADataSource;
 import bitronix.tm.mock.resource.jdbc.MockDriver;
 import bitronix.tm.mock.resource.MockXAResource;
 import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
@@ -231,7 +230,7 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
              fail("expected SQLException");
          } catch (SQLException ex) {
              assertEquals("error enlisting a JdbcConnectionHandle of a JdbcPooledConnection from datasource pds2_lrc in state ACCESSIBLE wrapping a LrcXAConnection on a LrcConnectionHandle of a LrcXAResource in state NO_TX", ex.getMessage());
-             assertTrue(ex.getCause().getMessage().startsWith("cannot enlist more than one non-XA resource, tried enlisting an XAResourceHolderState with uniqueName=pds2_lrc XAResource=a LrcXAResource in state NO_TX with XID null, already enlisted: an XAResourceHolderState with uniqueName=pds1_lrc XAResource=a LrcXAResource in state STARTED (started) with XID a Bitronix XID"));
+             assertTrue(ex.getCause().getMessage().matches("cannot enlist more than one non-XA resource, tried enlisting an XAResourceHolderState with uniqueName=pds2_lrc XAResource=a LrcXAResource in state NO_TX with XID null, already enlisted: an XAResourceHolderState with uniqueName=pds1_lrc XAResource=a LrcXAResource in state STARTED \\(started\\) with XID a Bitronix XID .*"));
          }
          c2.close();
 

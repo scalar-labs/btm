@@ -29,6 +29,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     private XAResourceManager resourceManager;
     private Scheduler synchronizationScheduler = new Scheduler();
     private boolean timeout = false;
+    private Date timeoutDate;
 
     private Preparer preparer = new Preparer(TransactionManagerServices.getExecutor());
     private Committer committer = new Committer(TransactionManagerServices.getExecutor());
@@ -39,13 +40,16 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     private Date startDate;
 
 
-    public BitronixTransaction() {
+    public BitronixTransaction(int timeout) {
         Uid gtrid = UidGenerator.generateUid();
         if (log.isDebugEnabled()) log.debug("creating new transaction with GTRID [" + gtrid + "]");
         this.resourceManager = new XAResourceManager(gtrid);
 
         this.threadName = Thread.currentThread().getName();
         this.startDate = new Date();
+        this.timeoutDate = new Date(System.currentTimeMillis() + (timeout * 1000L));
+
+        TransactionManagerServices.getTaskScheduler().scheduleTransactionTimeout(this, timeoutDate);
     }
 
     public int getStatus() throws SystemException {
@@ -117,6 +121,8 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             throw new IllegalStateException("transaction is done, cannot commit it");
 
         fireBeforeCompletionEvent();
+        TransactionManagerServices.getTaskScheduler().cancelTransactionTimeout(this);
+
         if (timedOut()) {
             if (log.isDebugEnabled()) log.debug("transaction timed out");
             rollback();
@@ -160,6 +166,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         if (isDone())
             throw new IllegalStateException("transaction is done, cannot roll it back");
 
+        TransactionManagerServices.getTaskScheduler().cancelTransactionTimeout(this);
         delistUnclosedResources(XAResource.TMSUCCESS);
 
         try {
@@ -197,6 +204,10 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
     public boolean timedOut() {
         return timeout;
+    }
+
+    public Date getTimeoutDate() {
+        return timeoutDate;
     }
 
     public void setActive() throws IllegalStateException, SystemException {

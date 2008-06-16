@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
+import java.util.Date;
 
 /**
  * {@link XAResourceHolder} state container.
@@ -34,14 +35,22 @@ public class XAResourceHolderState {
     private boolean started;
     private boolean ended;
     private boolean suspended;
+    private Date transactionTimeoutDate;
+    private boolean isTimeoutAlreadySet;
 
-    public XAResourceHolderState(XAResourceHolder XAResourceHolder, ResourceBean bean) {
+    public XAResourceHolderState(XAResourceHolder resourceHolder, ResourceBean bean) {
+        this(resourceHolder, bean, null);
+    }
+
+    public XAResourceHolderState(XAResourceHolder resourceHolder, ResourceBean bean, Date transactionTimeoutDate) {
         this.bean = bean;
-        this.xaResourceHolder = XAResourceHolder;
+        this.xaResourceHolder = resourceHolder;
+        this.transactionTimeoutDate = transactionTimeoutDate;
 
         started = false;
         ended = false;
         suspended = false;
+        isTimeoutAlreadySet = false;
         xid = null;
     }
 
@@ -146,6 +155,13 @@ public class XAResourceHolderState {
 
             if (log.isDebugEnabled()) log.debug("starting " + this);
             started = true;
+        }
+
+        if (!isTimeoutAlreadySet && transactionTimeoutDate != null && bean.getApplyTransactionTimeout()) {
+            int timeoutInSeconds = (int) ((transactionTimeoutDate.getTime() - System.currentTimeMillis() + 999L) / 1000L);
+            if (log.isDebugEnabled()) log.debug("applying resource timeout of " + timeoutInSeconds + "s on " + this);
+            getXAResource().setTransactionTimeout(timeoutInSeconds);
+            isTimeoutAlreadySet = true;
         }
 
         getXAResource().start(xid, flags);

@@ -26,6 +26,7 @@ public abstract class ResourceBean implements Serializable {
     private int acquisitionInterval = 1;
     private boolean allowLocalTransactions = false;
     private int twoPcOrderingPosition = 1;
+    private boolean applyTransactionTimeout = false;
     private transient int createdResourcesCounter;
 
     /**
@@ -272,6 +273,22 @@ public abstract class ResourceBean implements Serializable {
      */
     public void setTwoPcOrderingPosition(int twoPcOrderingPosition) {
         this.twoPcOrderingPosition = twoPcOrderingPosition;
+    }
+
+    /**
+     * @return true if the transaction-timeout should be set on the XAResource.
+     */
+    public boolean getApplyTransactionTimeout() {
+        return applyTransactionTimeout;
+    }
+
+    /**
+     * Set if the transaction-timeout should be set on the XAResource when the XAResource is
+     * enlisted.
+     * @param applyTransactionTimeout true if the transaction-timeout should be set.
+     */
+    public void setApplyTransactionTimeout(boolean applyTransactionTimeout) {
+        this.applyTransactionTimeout = applyTransactionTimeout;
     }
 
     /**

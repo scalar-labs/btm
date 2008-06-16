@@ -336,9 +336,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @return the created transaction.
      */
     private BitronixTransaction createTransaction() {
-        BitronixTransaction transaction = new BitronixTransaction();
-        Date timeoutDate = new Date(System.currentTimeMillis() + (getCurrentContext().getTimeout() * 1000L));
-        TransactionManagerServices.getTaskScheduler().scheduleTransactionTimeout(transaction, timeoutDate);
+        BitronixTransaction transaction = new BitronixTransaction(getCurrentContext().getTimeout());
         getCurrentContext().setTransaction(transaction);
         inFlightTransactions.put(transaction.getResourceManager().getGtrid(), transaction);
         return transaction;
@@ -355,7 +353,6 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         if (currentTransaction != null && unregisterTransaction) {
             if (log.isDebugEnabled()) log.debug("unregistering in-flight transaction " + currentTransaction);
             inFlightTransactions.remove(currentTransaction.getResourceManager().getGtrid());
-            TransactionManagerServices.getTaskScheduler().cancelTransactionTimeout(currentTransaction);
         }
         contexts.remove(Thread.currentThread());
         if (log.isDebugEnabled()) log.debug("cleared current thread context: " + getCurrentContext());
@@ -409,6 +406,10 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
                 }
             }
             inFlightTransactions.remove(currentTx.getResourceManager().getGtrid());
+        }
+
+        public String toString() {
+            return "a ClearContextSynchronization for " + currentTx;
         }
     }
 
