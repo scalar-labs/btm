@@ -119,10 +119,13 @@ public class DiskJournal implements Journal {
             createLogfile(file1, TransactionManagerServices.getConfiguration().getMaxLogSizeInMb());
         }
 
-        if (file1.length() != file2.length())
-            throw new IOException("transaction log files are not of the same length, assuming they're corrupt");
+        if (file1.length() != file2.length()) {
+            if (!TransactionManagerServices.getConfiguration().isSkipCorruptedLogs())
+                throw new IOException("transaction log files are not of the same length, assuming they're corrupt");
+            log.error("transaction log files are not of the same length: corrupted files ?");
+        }
 
-        long maxFileLength = file1.length();
+        long maxFileLength = Math.max(file1.length(), file2.length());
         if (log.isDebugEnabled()) log.debug("disk journal files max length: " + maxFileLength);
 
         tla1 = new TransactionLogAppender(file1, maxFileLength);
