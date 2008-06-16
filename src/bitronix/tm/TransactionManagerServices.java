@@ -2,10 +2,12 @@ package bitronix.tm;
 
 import bitronix.tm.journal.DiskJournal;
 import bitronix.tm.journal.Journal;
+import bitronix.tm.journal.NullJournal;
 import bitronix.tm.recovery.Recoverer;
 import bitronix.tm.resource.ResourceLoader;
 import bitronix.tm.timer.TaskScheduler;
 import bitronix.tm.twopc.executor.*;
+import bitronix.tm.utils.InitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,8 +59,22 @@ public class TransactionManagerServices {
      * @return the transactions journal.
      */
     public synchronized static Journal getJournal() {
-        if (journal == null)
-            journal = new DiskJournal();
+        if (journal == null) {
+            String configuredJounal = getConfiguration().getJournal();
+            if ("disk".equals(configuredJounal))
+                journal = new DiskJournal();
+            else if ("null".equals(configuredJounal))
+                journal = new NullJournal();
+            else {
+                try {
+                    Class clazz = Thread.currentThread().getContextClassLoader().loadClass(configuredJounal);
+                    journal = (Journal) clazz.newInstance();
+                } catch (Exception ex) {
+                    throw new InitializationException("invalid journal implementation '" + configuredJounal + "'", ex);
+                }
+            }
+            if (log.isDebugEnabled()) log.debug("using journal " + configuredJounal);
+        }
         return journal;
     }
 

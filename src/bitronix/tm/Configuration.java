@@ -50,6 +50,7 @@ public class Configuration implements Service {
     private int retryUnrecoverableResourcesRegistrationInterval;
     private boolean disableJmx;
     private String jndiUserTransactionName;
+    private String journal;
     private String resourceConfigurationFilename;
 
 
@@ -91,6 +92,7 @@ public class Configuration implements Service {
             retryUnrecoverableResourcesRegistrationInterval = getInt(properties, "bitronix.tm.timer.retryUnrecoverableResourcesRegistrationInterval", 0);
             disableJmx = getBoolean(properties, "bitronix.tm.disableJmx", false);
             jndiUserTransactionName = getString(properties, "bitronix.tm.jndi.userTransactionName", null);
+            journal = getString(properties, "bitronix.tm.journal", "disk");
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
         } catch (IOException ex) {
             throw new InitializationException("error loading configuration", ex);
@@ -420,6 +422,23 @@ public class Configuration implements Service {
     public void setJndiUserTransactionName(String jndiUserTransactionName) {
         checkNotStarted();
         this.jndiUserTransactionName = jndiUserTransactionName;
+    }
+
+    /**
+     * Get the journal implementation. Can be <code>disk</code>, <code>null</code> or a class name.
+     * @return the journal name.
+     */
+    public String getJournal() {
+        return journal;
+    }
+
+    /**
+     * Set the journal name. Can be <code>disk</code>, <code>null</code> or a class name.
+     * @see #getJournal()
+     * @param journal the journal name.
+     */
+    public void setJournal(String journal) {
+        this.journal = journal;
     }
 
     /**
