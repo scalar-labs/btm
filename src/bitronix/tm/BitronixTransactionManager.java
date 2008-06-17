@@ -140,7 +140,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
         try {
             currentTx.getResourceManager().suspend();
-            clearCurrentContext(false);
+            clearCurrentContext();
             return currentTx;
         } catch (XAException ex) {
             throw new BitronixSystemException("cannot suspend " + currentTx + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
@@ -344,16 +344,9 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
     /**
      * Unlink the transaction from the current thread's context.
-     * @param unregisterTransaction true if you want to get rid of this transaction, false if you want to save it for
-     *        later and just unlink it from the current context
      */
-    private void clearCurrentContext(boolean unregisterTransaction) {
+    private void clearCurrentContext() {
         if (log.isDebugEnabled()) log.debug("clearing current thread context: " + getCurrentContext());
-        BitronixTransaction currentTransaction = getCurrentTransaction();
-        if (currentTransaction != null && unregisterTransaction) {
-            if (log.isDebugEnabled()) log.debug("unregistering in-flight transaction " + currentTransaction);
-            inFlightTransactions.remove(currentTransaction.getResourceManager().getGtrid());
-        }
         contexts.remove(Thread.currentThread());
         if (log.isDebugEnabled()) log.debug("cleared current thread context: " + getCurrentContext());
     }
@@ -400,10 +393,11 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
                     Map.Entry entry = (Map.Entry) it.next();
                     ThreadContext context = (ThreadContext) entry.getValue();
                     if (context.getTransaction() == currentTx) {
+                        if (log.isDebugEnabled()) log.debug("clearing thread context: " + context);
                         it.remove();
                         break;
                     }
-                }
+                } // while
             }
             inFlightTransactions.remove(currentTx.getResourceManager().getGtrid());
         }
