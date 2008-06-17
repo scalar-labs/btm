@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.transaction.Status;
-import javax.transaction.HeuristicMixedException;
 import javax.transaction.RollbackException;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
@@ -37,11 +36,10 @@ public class Preparer extends AbstractPhaseEngine {
      * @param transaction the transaction to prepare.
      * @param interestedResources a list that will be filled with all resources that received the prepare command
      *  and replied with {@link javax.transaction.xa.XAResource#XA_OK}.
-     * @throws HeuristicMixedException when a mixed heuristic occured.
      * @throws RollbackException when an error occured that can be fixed with a rollback.
      * @throws bitronix.tm.internal.BitronixSystemException when an internal error occured.
      */
-    public void prepare(BitronixTransaction transaction, List interestedResources) throws HeuristicMixedException, RollbackException, BitronixSystemException {
+    public void prepare(BitronixTransaction transaction, List interestedResources) throws RollbackException, BitronixSystemException {
         XAResourceManager resourceManager = transaction.getResourceManager();
         transaction.setStatus(Status.STATUS_PREPARING);
         this.preparedResources = interestedResources;
@@ -78,7 +76,7 @@ public class Preparer extends AbstractPhaseEngine {
         if (log.isDebugEnabled()) log.debug("successfully prepared " + preparedResources.size() + " resource(s)");
     }
 
-    private void throwException(String message, PhaseException phaseException) throws HeuristicMixedException, BitronixRollbackException {
+    private void throwException(String message, PhaseException phaseException) throws BitronixRollbackException {
         List exceptions = phaseException.getExceptions();
         List resources = phaseException.getResources();
 
@@ -105,7 +103,7 @@ public class Preparer extends AbstractPhaseEngine {
         }
 
         if (heuristicResources.size() > 0)
-            throw new BitronixHeuristicMixedException(message + ":" +
+            throw new BitronixRollbackException(message + ":" +
                     " resource(s) " + collectResourcesNames(heuristicResources) +
                     " unilaterally finished transaction branch before being asked to prepare", phaseException);
         else
