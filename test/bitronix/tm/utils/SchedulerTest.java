@@ -38,17 +38,17 @@ public class SchedulerTest extends TestCase {
         Object key2 = it.next();
         assertFalse(it.hasNext());
 
-        List list0 = resourceScheduler.getNaturalOrderResourcesForPosition(key0);
+        List list0 = resourceScheduler.getByNaturalOrderForPosition(key0);
         assertEquals(1, list0.size());
         assertTrue(xarhs3 == list0.get(0));
 
-        List list1 = resourceScheduler.getNaturalOrderResourcesForPosition(key1);
+        List list1 = resourceScheduler.getByNaturalOrderForPosition(key1);
         assertEquals(3, list1.size());
         assertTrue(xarhs0 == list1.get(0));
         assertTrue(xarhs1 == list1.get(1));
         assertTrue(xarhs2 == list1.get(2));
 
-        List list2 = resourceScheduler.getNaturalOrderResourcesForPosition(key2);
+        List list2 = resourceScheduler.getByNaturalOrderForPosition(key2);
         assertEquals(1, list2.size());
         assertTrue(xarhs4 == list2.get(0));
     }
@@ -79,17 +79,17 @@ public class SchedulerTest extends TestCase {
         Object key2r = itReverse.next();
         assertFalse(itReverse.hasNext());
 
-        List list0r = resourceScheduler.getReverseOrderResourcesForPosition(key0r);
+        List list0r = resourceScheduler.getByReverseOrderForPosition(key0r);
         assertEquals(1, list0r.size());
         assertTrue(xarhs4 == list0r.get(0));
 
-        List list1r = resourceScheduler.getReverseOrderResourcesForPosition(key1r);
+        List list1r = resourceScheduler.getByReverseOrderForPosition(key1r);
         assertEquals(3, list1r.size());
         assertTrue(xarhs2 == list1r.get(0));
         assertTrue(xarhs1 == list1r.get(1));
         assertTrue(xarhs0 == list1r.get(2));
 
-        List list2r = resourceScheduler.getReverseOrderResourcesForPosition(key2r);
+        List list2r = resourceScheduler.getByReverseOrderForPosition(key2r);
         assertEquals(1, list2r.size());
         assertTrue(xarhs3 == list2r.get(0));
     }
