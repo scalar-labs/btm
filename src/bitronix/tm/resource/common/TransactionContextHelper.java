@@ -258,7 +258,7 @@ public class TransactionContextHelper {
 
     private static void enlist(XAResourceHolder xaResourceHolder, ResourceBean bean, BitronixTransaction currentTransaction) throws RollbackException, SystemException {
         try {
-            XAResourceHolderState xaResourceHolderState = new XAResourceHolderState(xaResourceHolder, bean, currentTransaction.getTimeoutDate());
+            XAResourceHolderState xaResourceHolderState = new XAResourceHolderState(xaResourceHolder, bean);
             if (log.isDebugEnabled()) log.debug("enlisting resource " + xaResourceHolderState + " into " + currentTransaction);
             xaResourceHolder.setXAResourceHolderState(xaResourceHolderState);
             currentTransaction.enlistResource(xaResourceHolderState.getXAResource());

@@ -67,12 +67,15 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         XAResourceHolder resourceHolder = ResourceRegistrar.findXAResourceHolder(xaResource);
         if (resourceHolder == null)
             throw new BitronixSystemException("unknown XAResource " + xaResource + ", it does not belong to a registered resource");
-        XAResourceHolderState holder = resourceHolder.getXAResourceHolderState();
+        XAResourceHolderState resourceHolderState = resourceHolder.getXAResourceHolderState();
+
+        // resource timeout must be set here for manually enlisted resources to properly receive it
+        resourceHolderState.setTransactionTimeoutDate(timeoutDate);
 
         try {
-            resourceManager.enlist(holder);
+            resourceManager.enlist(resourceHolderState);
         } catch (XAException ex) {
-            throw new BitronixSystemException("cannot enlist " + holder + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+            throw new BitronixSystemException("cannot enlist " + resourceHolderState + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
         }
 
         return true;
@@ -89,12 +92,12 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         XAResourceHolder XAResourceHolder = ResourceRegistrar.findXAResourceHolder(xaResource);
         if (XAResourceHolder == null)
             throw new BitronixSystemException("unknown XAResource " + xaResource + ", it does not belong to a registered resource");
-        XAResourceHolderState holder = XAResourceHolder.getXAResourceHolderState();
+        XAResourceHolderState resourceHolderState = XAResourceHolder.getXAResourceHolderState();
 
         try {
-            return resourceManager.delist(holder, flag);
+            return resourceManager.delist(resourceHolderState, flag);
         } catch (XAException ex) {
-            throw new BitronixSystemException("cannot delist " + holder + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+            throw new BitronixSystemException("cannot delist " + resourceHolderState + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
         }
     }
 
@@ -206,10 +209,6 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         return timeout;
     }
 
-    public Date getTimeoutDate() {
-        return timeoutDate;
-    }
-
     public void setActive() throws IllegalStateException, SystemException {
         if (status != Status.STATUS_NO_TRANSACTION)
             throw new IllegalStateException("transaction has already started");
@@ -266,17 +265,17 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     private void delistUnclosedResources(int flag) {
         List resources = resourceManager.getAllResources();
         for (int i = 0; i < resources.size(); i++) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) resources.get(i);
-            if (!xaResourceHolderState.isEnded()) {
-                if (log.isDebugEnabled()) log.debug("found unclosed resource to delist: " + xaResourceHolderState);
+            XAResourceHolderState resourceHolderState = (XAResourceHolderState) resources.get(i);
+            if (!resourceHolderState.isEnded()) {
+                if (log.isDebugEnabled()) log.debug("found unclosed resource to delist: " + resourceHolderState);
                 try {
-                    delistResource(xaResourceHolderState.getXAResource(), flag);
+                    delistResource(resourceHolderState.getXAResource(), flag);
                 } catch (SystemException ex) {
-                    log.warn("error delisting resource: " + xaResourceHolderState, ex);
+                    log.warn("error delisting resource: " + resourceHolderState, ex);
                 }
             }
             else
-                if (log.isDebugEnabled()) log.debug("no need to delist already closed resource: " + xaResourceHolderState);
+                if (log.isDebugEnabled()) log.debug("no need to delist already closed resource: " + resourceHolderState);
         } // for
     }
 

@@ -39,13 +39,8 @@ public class XAResourceHolderState {
     private boolean isTimeoutAlreadySet;
 
     public XAResourceHolderState(XAResourceHolder resourceHolder, ResourceBean bean) {
-        this(resourceHolder, bean, null);
-    }
-
-    public XAResourceHolderState(XAResourceHolder resourceHolder, ResourceBean bean, Date transactionTimeoutDate) {
         this.bean = bean;
         this.xaResourceHolder = resourceHolder;
-        this.transactionTimeoutDate = transactionTimeoutDate;
 
         started = false;
         ended = false;
@@ -71,6 +66,14 @@ public class XAResourceHolderState {
 
     public XAResourceHolder getXAResourceHolder() {
         return xaResourceHolder;
+    }
+
+    public Date getTransactionTimeoutDate() {
+        return transactionTimeoutDate;
+    }
+
+    public void setTransactionTimeoutDate(Date transactionTimeoutDate) {
+        this.transactionTimeoutDate = transactionTimeoutDate;
     }
 
     public String getUniqueName() {
