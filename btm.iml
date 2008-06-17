@@ -11,10 +11,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library" exported="">
+    <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/geronimo-spec-jta-1.0.1B-rc4.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/geronimo-jms_1.1_spec-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -23,7 +23,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/geronimo-spec-jms-1.1-rc4.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/geronimo-jta_1.0.1B_spec-1.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
