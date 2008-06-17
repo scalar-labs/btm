@@ -3,6 +3,9 @@ package bitronix.tm.utils;
 import java.util.*;
 
 /**
+ * Positional object container. Objects can be added to a scheduler at a certain position (or priority) and can be
+ * retrieved later on in their position + added order. All the objects of a scheduler can be iterated in order or
+ * objects of a cetain position can be retrieved for iteration.
  * <p>&copy; Bitronix 2005, 2006, 2007, 2008</p>
  *
  * @author lorban
@@ -49,23 +52,19 @@ public class Scheduler {
         return new TreeSet(objects.keySet());
     }
 
-    public List getNaturalOrderSynchronizationsForPosition(Object positionKey) {
-        return (List) objects.get(positionKey);
-    }
-
-    public List getNaturalOrderResourcesForPosition(Object positionKey) {
-        return (List) objects.get(positionKey);
-    }
-
-    public List getReverseOrderResourcesForPosition(Object positionKey) {
-        List result = new ArrayList(getNaturalOrderResourcesForPosition(positionKey));
-        Collections.reverse(result);
-        return result;
-    }
-
     public SortedSet getReverseOrderPositions() {
         TreeSet result = new TreeSet(Collections.reverseOrder());
         result.addAll(getNaturalOrderPositions());
+        return result;
+    }
+
+    public List getByNaturalOrderForPosition(Object positionKey) {
+        return (List) objects.get(positionKey);
+    }
+
+    public List getByReverseOrderForPosition(Object positionKey) {
+        List result = new ArrayList(getByNaturalOrderForPosition(positionKey));
+        Collections.reverse(result);
         return result;
     }
 
@@ -130,6 +129,5 @@ public class Scheduler {
             return objectsOfCurrentKey.get(objectsOfCurrentKeyIndex++);
         }
     }
-
 
 }

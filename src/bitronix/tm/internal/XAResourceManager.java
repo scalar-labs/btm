@@ -80,7 +80,7 @@ public class XAResourceManager {
 
         // check for enlistment of a 2nd LRC resource, forbid this if the 2nd resource cannot be joined with the 1st one
         if (flag != XAResource.TMJOIN && xaResourceHolderState.getTwoPcOrderingPosition() == Scheduler.ALWAYS_LAST_POSITION) {
-            List alwaysLastResources = resources.getNaturalOrderResourcesForPosition(Scheduler.ALWAYS_LAST_POSITION_KEY);
+            List alwaysLastResources = resources.getByNaturalOrderForPosition(Scheduler.ALWAYS_LAST_POSITION_KEY);
             if (alwaysLastResources != null && alwaysLastResources.size() > 0)
                 throw new BitronixSystemException("cannot enlist more than one non-XA resource, tried enlisting " + xaResourceHolderState + ", already enlisted: " + alwaysLastResources.get(0));
         }
@@ -233,11 +233,11 @@ public class XAResourceManager {
     }
 
     public List getNaturalOrderResourcesForPosition(Object positionKey) {
-        return resources.getNaturalOrderResourcesForPosition(positionKey);
+        return resources.getByNaturalOrderForPosition(positionKey);
     }
 
     public List getReverseOrderResourcesForPosition(Object positionKey) {
-        return resources.getReverseOrderResourcesForPosition(positionKey);
+        return resources.getByReverseOrderForPosition(positionKey);
     }
 
     public List getAllResources() {
@@ -245,7 +245,7 @@ public class XAResourceManager {
         Iterator it = resources.getNaturalOrderPositions().iterator();
         while (it.hasNext()) {
             Object positionKey = it.next();
-            result.addAll(resources.getNaturalOrderResourcesForPosition(positionKey));
+            result.addAll(resources.getByNaturalOrderForPosition(positionKey));
         }
         return result;
     }
