@@ -6,7 +6,6 @@ import bitronix.tm.resource.ResourceConfigurationException;
 import bitronix.tm.resource.ResourceObjectFactory;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.*;
-import bitronix.tm.resource.jms.inbound.asf.BitronixServerSessionPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +14,6 @@ import javax.naming.NamingException;
 import javax.naming.Reference;
 import javax.naming.StringRefAddr;
 import javax.transaction.xa.XAResource;
-import java.util.Properties;
 
 /**
  * Implementation of a JMS {@link ConnectionFactory} wrapping vendor's {@link XAConnectionFactory} implementation.
@@ -30,9 +28,7 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
     private transient XAPool pool;
     private transient JmsPooledConnection recoveryPooledConnection;
     private transient RecoveryXAResourceHolder recoveryXAResourceHolder;
-    private transient BitronixServerSessionPool ssPool;
-    
-    private Properties serverSessionPool = new Properties();
+
     private boolean cacheProducersConsumers = true;
     private boolean testConnections = false;
     private String user;
@@ -49,42 +45,10 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
     public synchronized void init() {
         try {
             buildXAPool();
-            buildServerSessionPool();
         }
         catch (Exception ex) {
             throw new ResourceConfigurationException("cannot create JMS connection factory named " + getUniqueName(), ex);
         }
-    }
-
-    private void buildServerSessionPool() throws ClassNotFoundException, JMSException {
-        if (ssPool != null)
-            return;
-
-        Properties serverSessionPool = getServerSessionPool();
-        if (serverSessionPool.size() > 0) {
-            setMaxPoolSize(getMaxPoolSize() + 1);
-            if (log.isDebugEnabled()) log.debug("configuring server session pool, increasing connection pool size by 1 to " + getMaxPoolSize());
-        }
-
-        int inboundPoolSize = 0;
-        String poolSizeString = getServerSessionPool().getProperty("poolSize");
-        if (poolSizeString != null)
-            inboundPoolSize = Integer.parseInt(poolSizeString);
-
-        if (inboundPoolSize > 0) {
-            String listenerClassName = serverSessionPool.getProperty("listenerClassName");
-            if (log.isDebugEnabled()) log.debug("configuring server session pool, listenerClassName=" + listenerClassName);
-            Class clazz = Thread.currentThread().getContextClassLoader().loadClass(listenerClassName);
-            this.ssPool = new BitronixServerSessionPool(this, clazz, inboundPoolSize);
-        }
-    }
-
-    public Properties getServerSessionPool() {
-        return serverSessionPool;
-    }
-
-    public void setServerSessionPool(Properties serverSessionPool) {
-        this.serverSessionPool = serverSessionPool;
     }
 
     public boolean getCacheProducersConsumers() {
@@ -187,16 +151,6 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
         if (log.isDebugEnabled()) log.debug("closing " + pool);
         pool.close();
         pool = null;
-
-        if (ssPool != null) {
-            try {
-                if (log.isDebugEnabled()) log.debug("closing " + ssPool);
-                ssPool.close();
-            } catch (JMSException ex) {
-                log.error("error closing server session pool", ex);
-            }
-            ssPool = null;
-        }
 
         ResourceRegistrar.unregister(this);
     }
