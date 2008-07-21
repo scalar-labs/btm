@@ -1,6 +1,5 @@
 package bitronix.tm.resource.jdbc;
 
-import bitronix.tm.BitronixXid;
 import bitronix.tm.utils.*;
 import bitronix.tm.internal.*;
 import bitronix.tm.resource.common.*;
@@ -133,9 +132,10 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
      */
     public boolean isParticipatingInActiveGlobalTransaction() {
         XAResourceHolderState xaResourceHolderState = getXAResourceHolderState();
-        if (xaResourceHolderState == null)
-            return false;
-        return (xaResourceHolderState.isStarted()) && (!xaResourceHolderState.isSuspended()) && (!xaResourceHolderState.isEnded());
+        return xaResourceHolderState != null &&
+                xaResourceHolderState.isStarted() &&
+                !xaResourceHolderState.isSuspended() &&
+                !xaResourceHolderState.isEnded();
     }
 
     public PoolingDataSource getPoolingDataSource() {
@@ -217,7 +217,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     }
 
     public String getTransactionGtridCurrentlyHoldingThis() {
-        return ((BitronixXid) getXAResourceHolderState().getXid()).getGlobalTransactionIdUid().toString();
+        return getXAResourceHolderState().getXid().getGlobalTransactionIdUid().toString();
     }
 
 }
