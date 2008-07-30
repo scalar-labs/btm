@@ -52,13 +52,11 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
             tm.commit();
             fail("TM should have thrown rollback exception");
         } catch (RollbackException ex) {
-            assertEquals("transaction failed during prepare of a Bitronix Transaction with GTRID [", ex.getMessage().substring(0, 72));
-            int idx = ex.getMessage().indexOf(']');
-            assertEquals("], status=UNKNOWN, 2 resource(s) enlisted (started ", ex.getMessage().substring(idx, idx + 51));
-            assertTrue("got message <" + ex.getMessage() + ">", ex.getMessage().endsWith("resource(s) [pds1] threw unexpected exception"));
+            assertTrue("Got: " + ex.getMessage(), ex.getMessage().matches("transaction failed to prepare: a Bitronix Transaction with GTRID (.*?) status=ROLLEDBACK, 2 resource\\(s\\) enlisted (.*?)"));
+            assertTrue("Got: " + ex.getCause().getMessage(), ex.getCause().getMessage().matches("transaction failed during prepare of a Bitronix Transaction with GTRID (.*?) status=PREPARING, 2 resource\\(s\\) enlisted (.*?) resource\\(s\\) \\[pds1\\] threw unexpected exception"));
 
             assertEquals("collected 1 exception(s):" + System.getProperty("line.separator") +
-                    " [pds1 - javax.transaction.xa.XAException(XAER_RMERR) - resource failed]", ex.getCause().getMessage());
+                    " [pds1 - javax.transaction.xa.XAException(XAER_RMERR) - resource failed]", ex.getCause().getCause().getMessage());
         }
 
         // check flow
@@ -75,13 +73,15 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
-        assertEquals("resource failed", ((XAResourcePrepareEvent) orderedEvents.get(i++)).getException().getMessage());
-        XAResourcePrepareEvent prepareEvent = (XAResourcePrepareEvent) orderedEvents.get(i++);
-        assertEquals(XAResource.XA_OK, prepareEvent.getReturnCode());
-        assertEquals(Status.STATUS_UNKNOWN, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        XAResourcePrepareEvent prepareEvent1 = (XAResourcePrepareEvent) orderedEvents.get(i++);
+        assertEquals("resource failed", prepareEvent1.getException().getMessage());
+        XAResourcePrepareEvent prepareEvent2 = (XAResourcePrepareEvent) orderedEvents.get(i++);
+        assertEquals(XAResource.XA_OK, prepareEvent2.getReturnCode());
         assertEquals(Status.STATUS_ROLLING_BACK, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
-        XAResourceRollbackEvent rollbackEvent = (XAResourceRollbackEvent) orderedEvents.get(i++);
-        assertTrue(prepareEvent.getSource() == rollbackEvent.getSource());
+        XAResourceRollbackEvent rollbackEvent1 = (XAResourceRollbackEvent) orderedEvents.get(i++);
+        assertTrue(prepareEvent2.getSource() == rollbackEvent1.getSource());
+        XAResourceRollbackEvent rollbackEvent2 = (XAResourceRollbackEvent) orderedEvents.get(i++);
+        assertTrue(prepareEvent1.getSource() == rollbackEvent2.getSource());
         assertEquals(Status.STATUS_ROLLEDBACK, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
@@ -108,13 +108,11 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
             tm.commit();
             fail("TM should have thrown exception");
         } catch (RollbackException ex) {
-            assertEquals("transaction failed during prepare of a Bitronix Transaction with GTRID [", ex.getMessage().substring(0, 72));
-            int idx = ex.getMessage().indexOf(']');
-            assertEquals("], status=UNKNOWN, 2 resource(s) enlisted (started ", ex.getMessage().substring(idx, idx + 51));
-            assertTrue("got message <" + ex.getMessage() + ">", ex.getMessage().endsWith("resource(s) [pds1] threw unexpected exception"));
+            assertTrue("Got: " + ex.getMessage(), ex.getMessage().matches("transaction failed to prepare: a Bitronix Transaction with GTRID (.*?) status=ROLLEDBACK, 2 resource\\(s\\) enlisted (.*?)"));
+            assertTrue("Got: " + ex.getCause().getMessage(), ex.getCause().getMessage().matches("transaction failed during prepare of a Bitronix Transaction with GTRID (.*?) status=PREPARING, 2 resource\\(s\\) enlisted (.*?) resource\\(s\\) \\[pds1\\] threw unexpected exception"));
 
             assertEquals("collected 1 exception(s):" + System.getProperty("line.separator") +
-                    " [pds1 - java.lang.RuntimeException - driver error]", ex.getCause().getMessage());
+                    " [pds1 - java.lang.RuntimeException - driver error]", ex.getCause().getCause().getMessage());
         }
 
         // check flow
@@ -131,13 +129,15 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
-        assertEquals("driver error", ((XAResourcePrepareEvent) orderedEvents.get(i++)).getException().getMessage());
-        XAResourcePrepareEvent prepareEvent = (XAResourcePrepareEvent) orderedEvents.get(i++);
-        assertEquals(XAResource.XA_OK, prepareEvent.getReturnCode());
-        assertEquals(Status.STATUS_UNKNOWN, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+        XAResourcePrepareEvent prepareEvent1 = (XAResourcePrepareEvent) orderedEvents.get(i++);
+        assertEquals("driver error", prepareEvent1.getException().getMessage());
+        XAResourcePrepareEvent prepareEvent2 = (XAResourcePrepareEvent) orderedEvents.get(i++);
+        assertEquals(XAResource.XA_OK, prepareEvent2.getReturnCode());
         assertEquals(Status.STATUS_ROLLING_BACK, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
-        XAResourceRollbackEvent rollbackEvent = (XAResourceRollbackEvent) orderedEvents.get(i++);
-        assertTrue(prepareEvent.getSource() == rollbackEvent.getSource());
+        XAResourceRollbackEvent rollbackEvent1 = (XAResourceRollbackEvent) orderedEvents.get(i++);
+        assertTrue(prepareEvent2.getSource() == rollbackEvent1.getSource());
+        XAResourceRollbackEvent rollbackEvent2 = (XAResourceRollbackEvent) orderedEvents.get(i++);
+        assertTrue(prepareEvent1.getSource() == rollbackEvent2.getSource());
         assertEquals(Status.STATUS_ROLLEDBACK, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
