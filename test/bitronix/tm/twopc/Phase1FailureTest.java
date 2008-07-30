@@ -194,7 +194,7 @@ public class Phase1FailureTest extends TestCase {
         } catch (RollbackException ex) {
             assertEquals("unilateral resource rollback caused transaction rollback", ex.getMessage());
 
-            assertEquals("resource(s) unilaterally rolled back: [pds2]", ex.getCause().getMessage());
+            assertEquals("resource(s) [pds2] unilaterally rolled back", ex.getCause().getMessage());
         }
 
         System.out.println(EventRecorder.dumpToString());
