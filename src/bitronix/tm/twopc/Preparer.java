@@ -68,7 +68,6 @@ public class Preparer extends AbstractPhaseEngine {
             executePhase(resourceManager, false);
         } catch (PhaseException ex) {
             logFailedResources(ex);
-            transaction.setStatus(Status.STATUS_UNKNOWN);
             throwException("transaction failed during prepare of " + transaction, ex);
         }
 

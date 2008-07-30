@@ -96,7 +96,7 @@ public class Phase2FailureTest extends TestCase {
             }
         }
         assertEquals("TM should have logged a COMMITTING status", 1, journalCommittingEventCount);
-        assertEquals("TM should have logged a COMMITTED status", 1, journalUnknownEventCount);
+        assertEquals("TM should have logged a UNKNOWN status", 1, journalUnknownEventCount);
         assertEquals("TM haven't properly tried to commit", 2, commitEventCount);
     }
 

@@ -139,24 +139,31 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
         delistUnclosedResources(XAResource.TMSUCCESS);
 
-        List interestedResources = new ArrayList();
         try {
-            if (log.isDebugEnabled()) log.debug("committing, " + resourceManager.size() + " enlisted resource(s)");
+            List interestedResources = new ArrayList();
 
-            preparer.prepare(this, interestedResources);
+            // prepare phase
+            try {
+                if (log.isDebugEnabled()) log.debug("committing, " + resourceManager.size() + " enlisted resource(s)");
+
+                preparer.prepare(this, interestedResources);
+            }
+            catch (RollbackException ex) {
+                if (log.isDebugEnabled()) log.debug("caught rollback exception during prepare, trying to rollback");
+
+                // rollbackPrepareFailure might throw a SystemException that will 'swallow' the RollbackException which is
+                // what we want in that case as the transaction has not been rolled back and some resources are now left in-doubt.
+                rollbackPrepareFailure(ex);
+
+                throw new BitronixRollbackException("transaction failed to prepare: " + this, ex);
+            }
+
+            // commit phase
             if (log.isDebugEnabled()) log.debug(interestedResources.size() + " interested resource(s)");
+
             committer.commit(this, interestedResources);
 
             if (log.isDebugEnabled()) log.debug("successfully committed " + toString());
-        }
-        catch (RollbackException ex) {
-            if (log.isDebugEnabled()) log.debug("caught rollback exception during prepare, trying to rollback");
-
-            // rollbackPreparedResources might throw a SystemException that will 'swallow' the RollbackException which is
-            // what we want in that case as the transaction has not been rolled back and some resources are now left in-doubt.
-            rollbackPreparedResources(interestedResources, ex);
-
-            throw ex;
         }
         finally {
             fireAfterCompletionEvent();
@@ -280,15 +287,16 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     }
 
     /**
-     * Rollback resources that have been prepared after a phase 1 prepare failure.
-     * @param interestedResources resources to be rolled back.
+     * Rollback resources after a phase 1 prepare failure. All resources must be rolled back as prepared ones
+     * are in-doubt and non-prepared ones have started/ended work done that must also be cleaned.
      * @param rbEx the thrown rollback exception.
      * @throws BitronixSystemException when a resource could not rollback prepapared state.
      */
-    private void rollbackPreparedResources(List interestedResources, RollbackException rbEx) throws BitronixSystemException {
+    private void rollbackPrepareFailure(RollbackException rbEx) throws BitronixSystemException {
+        List interestedResources = resourceManager.getAllResources();
         try {
             rollbacker.rollback(this, interestedResources);
-            if (log.isDebugEnabled()) log.debug("rollback of prepared resources succeeded");
+            if (log.isDebugEnabled()) log.debug("rollback after prepare failure succeeded");
         } catch (Exception ex) {
             // let's merge both exceptions' PhaseException to report a complete error message
             PhaseException preparePhaseEx = (PhaseException) rbEx.getCause();
@@ -302,7 +310,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             resources.addAll(preparePhaseEx.getResources());
             resources.addAll(rollbackPhaseEx.getResources());
 
-            throw new BitronixSystemException("transaction partially prepared and only partially rolled back. Some resources are left in doubt !", new PhaseException(exceptions, resources));
+            throw new BitronixSystemException("transaction partially prepared and only partially rolled back. Some resources might be left in doubt !", new PhaseException(exceptions, resources));
         }
     }
 
