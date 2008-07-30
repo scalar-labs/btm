@@ -75,6 +75,11 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         try {
             resourceManager.enlist(resourceHolderState);
         } catch (XAException ex) {
+            if (BitronixXAException.isUnilateralRollback(ex)) {
+                // if the resource unilaterally rolled back, the transaction will never be able to commit -> mark it as rollback only
+                setStatus(Status.STATUS_MARKED_ROLLBACK);
+                throw new BitronixRollbackException("resource " + resourceHolderState + " unilaterally rolled back", ex);
+            }
             throw new BitronixSystemException("cannot enlist " + resourceHolderState + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
         }
 
@@ -97,6 +102,14 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         try {
             return resourceManager.delist(resourceHolderState, flag);
         } catch (XAException ex) {
+            if (BitronixXAException.isUnilateralRollback(ex)) {
+                // The resource unilaterally rolled back here. We have to throw an exception to indicate this but
+                // The signature of this method is inherited from javax.transaction.Transaction. Thereof, we have choice
+                // between creating a sub-exception of SystemException or using a RuntimeException. Is that the best way
+                // forward as this 'hidden' exception can be left throw out at unexpected locations where SystemException
+                // should be rethrown but the exception thrown here should be catched & handled... ?
+                throw new BitronixRollbackSystemException("resource " + resourceHolderState + " unilaterally rolled back", ex);
+            }
             throw new BitronixSystemException("cannot delist " + resourceHolderState + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
         }
     }
@@ -137,9 +150,14 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             throw new BitronixRollbackException("transaction was marked as rollback only and has been rolled back");
         }
 
-        delistUnclosedResources(XAResource.TMSUCCESS);
-
         try {
+            try {
+                delistUnclosedResources(XAResource.TMSUCCESS);
+            } catch (BitronixRollbackException ex) {
+                rollbackPrepareFailure(ex);
+                throw new BitronixRollbackException("unilateral resource rollback caused transaction rollback", ex);
+            }
+
             List interestedResources = new ArrayList();
 
             // prepare phase
@@ -154,7 +172,6 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
                 // rollbackPrepareFailure might throw a SystemException that will 'swallow' the RollbackException which is
                 // what we want in that case as the transaction has not been rolled back and some resources are now left in-doubt.
                 rollbackPrepareFailure(ex);
-
                 throw new BitronixRollbackException("transaction failed to prepare: " + this, ex);
             }
 
@@ -163,7 +180,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
             committer.commit(this, interestedResources);
 
-            if (log.isDebugEnabled()) log.debug("successfully committed " + toString());
+            if (log.isDebugEnabled()) log.debug("successfully committed " + this);
         }
         finally {
             fireAfterCompletionEvent();
@@ -177,18 +194,26 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             throw new IllegalStateException("transaction is done, cannot roll it back");
 
         TransactionManagerServices.getTaskScheduler().cancelTransactionTimeout(this);
-        delistUnclosedResources(XAResource.TMSUCCESS);
 
         try {
-            if (log.isDebugEnabled()) log.debug("rolling back, " + resourceManager.size() + " enlisted resource(s)");
+            try {
+                delistUnclosedResources(XAResource.TMSUCCESS);
+            } catch (BitronixRollbackException ex) {
+                if (log.isDebugEnabled()) log.debug("some resource(s) unilaterally rolled back", ex);
+            }
 
-            rollbacker.rollback(this, resourceManager.getAllResources());
+            try {
+                if (log.isDebugEnabled()) log.debug("rolling back, " + resourceManager.size() + " enlisted resource(s)");
 
-            if (log.isDebugEnabled()) log.debug("successfully rolled back " + toString());
-        } catch (HeuristicMixedException ex) {
-            throw new BitronixSystemException("transaction partly committed and partly rolled back. Resources are now inconsistent !", ex);
-        } catch (HeuristicCommitException ex) {
-            throw new BitronixSystemException("transaction committed instead of rolled back. Resources are now inconsistent !", ex);
+                // TODO: should resources which unilaterally rolled back be rolled back again ?
+                rollbacker.rollback(this, resourceManager.getAllResources());
+
+                if (log.isDebugEnabled()) log.debug("successfully rolled back " + this);
+            } catch (HeuristicMixedException ex) {
+                throw new BitronixSystemException("transaction partly committed and partly rolled back. Resources are now inconsistent !", ex);
+            } catch (HeuristicCommitException ex) {
+                throw new BitronixSystemException("transaction committed instead of rolled back. Resources are now inconsistent !", ex);
+            }
         } finally {
             fireAfterCompletionEvent();
         }
@@ -268,15 +293,21 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
      * Delist all resources that have not been closed before calling tm.commit(). This basically means calling
      * XAResource.end() on all resource that has not been ended yet.
      * @param flag the flag to pass to XAResource.end(). Either TMSUCCESS or TMFAIL.
+     * @throws bitronix.tm.internal.BitronixRollbackException if some resources unilaterally rolled back before end() call.
      */
-    private void delistUnclosedResources(int flag) {
+    private void delistUnclosedResources(int flag) throws BitronixRollbackException {
         List resources = resourceManager.getAllResources();
+        List rolledBackResources = new ArrayList();
+
         for (int i = 0; i < resources.size(); i++) {
             XAResourceHolderState resourceHolderState = (XAResourceHolderState) resources.get(i);
             if (!resourceHolderState.isEnded()) {
                 if (log.isDebugEnabled()) log.debug("found unclosed resource to delist: " + resourceHolderState);
                 try {
                     delistResource(resourceHolderState.getXAResource(), flag);
+                } catch (BitronixRollbackSystemException ex) {
+                    rolledBackResources.add(resourceHolderState);
+                    if (log.isDebugEnabled()) log.debug("resource unilaterally rolled back: " + resourceHolderState, ex);
                 } catch (SystemException ex) {
                     log.warn("error delisting resource: " + resourceHolderState, ex);
                 }
@@ -284,6 +315,9 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             else
                 if (log.isDebugEnabled()) log.debug("no need to delist already closed resource: " + resourceHolderState);
         } // for
+
+        if (rolledBackResources.size() > 0)
+          throw new BitronixRollbackException("resource(s) " + BitronixRollbackException.buildResourceNamesString(rolledBackResources) + " unilaterally rolled back");
     }
 
     /**

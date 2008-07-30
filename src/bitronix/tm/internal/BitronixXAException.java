@@ -21,4 +21,8 @@ public class BitronixXAException extends XAException {
         initCause(t);
     }
 
+    public static boolean isUnilateralRollback(XAException ex) {
+        return (ex.errorCode >= XAException.XA_RBBASE && ex.errorCode <= XAException.XA_RBEND) || ex.errorCode == XAException.XAER_NOTA;
+    }
+    
 }

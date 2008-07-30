@@ -19,6 +19,7 @@ public class MockXAResource implements XAResource {
     private int transactiontimeout;
     private MockXADataSource xads;
 
+    private XAException endException;
     private XAException prepareException;
     private XAException commitException;
     private XAException rollbackException;
@@ -99,6 +100,8 @@ public class MockXAResource implements XAResource {
 
     public void end(Xid xid, int flag) throws XAException {
         getEventRecorder().addEvent(new XAResourceEndEvent(this, xid, flag));
+        if (endException != null)
+            throw endException;
     }
 
     public void start(Xid xid, int flag) throws XAException {
@@ -110,6 +113,10 @@ public class MockXAResource implements XAResource {
         if (commitException != null)
             throw commitException;
         if (xads != null) xads.removeInDoubtXid(xid);
+    }
+
+    public void setEndException(XAException endException) {
+        this.endException = endException;
     }
 
     public void setPrepareException(XAException prepareException) {

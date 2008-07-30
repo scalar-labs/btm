@@ -174,6 +174,101 @@ public class Phase1FailureTest extends TestCase {
         assertEquals("TM haven't properly tried to rollback", 3, rollbackEventCount);
     }
 
+    public void testUnilateralRollbackOnCommitDelist() throws Exception {
+        tm.begin();
+        tm.setTransactionTimeout(10); // TX must not timeout
+
+        Connection connection1 = poolingDataSource1.getConnection();
+        connection1.createStatement();
+
+        Connection connection2 = poolingDataSource2.getConnection();
+        MockXAConnection mockXAConnection2 = (MockXAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(((JdbcConnectionHandle) connection2).getPooledConnection());
+        connection2.createStatement();
+
+        MockXAResource mockXAResource2 = (MockXAResource) mockXAConnection2.getXAResource();
+        mockXAResource2.setEndException(createXAException("resource 2 end failed", XAException.XAER_NOTA));
+
+        try {
+            tm.commit();
+            fail("TM should have thrown an exception");
+        } catch (RollbackException ex) {
+            assertEquals("unilateral resource rollback caused transaction rollback", ex.getMessage());
+
+            assertEquals("resource(s) unilaterally rolled back: [pds2]", ex.getCause().getMessage());
+        }
+
+        System.out.println(EventRecorder.dumpToString());
+
+        // we should find a ROLLEDBACK status in the journal log
+        // and 0 prepare try
+        // and 2 rollback tries (1 for each resource)
+        int journalRollbackEventCount = 0;
+        int prepareEventCount = 0;
+        int rollbackEventCount = 0;
+        List events = EventRecorder.getOrderedEvents();
+        for (int i = 0; i < events.size(); i++) {
+            Event event = (Event) events.get(i);
+
+            if (event instanceof XAResourceRollbackEvent)
+                rollbackEventCount++;
+
+            if (event instanceof XAResourcePrepareEvent)
+                prepareEventCount++;
+
+            if (event instanceof JournalLogEvent) {
+                if (((JournalLogEvent) event).getStatus() == Status.STATUS_ROLLEDBACK)
+                    journalRollbackEventCount++;
+            }
+        }
+        assertEquals("TM should have journaled 1 ROLLEDBACK status", 1, journalRollbackEventCount);
+        assertEquals("TM has tried to prepare", 0, prepareEventCount);
+        assertEquals("TM haven't properly tried to rollback", 2, rollbackEventCount);
+    }
+
+    public void testUnilateralRollbackOnRollbackDelist() throws Exception {
+        tm.begin();
+        tm.setTransactionTimeout(10); // TX must not timeout
+
+        Connection connection1 = poolingDataSource1.getConnection();
+        connection1.createStatement();
+
+        Connection connection2 = poolingDataSource2.getConnection();
+        MockXAConnection mockXAConnection2 = (MockXAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(((JdbcConnectionHandle) connection2).getPooledConnection());
+        connection2.createStatement();
+
+        MockXAResource mockXAResource2 = (MockXAResource) mockXAConnection2.getXAResource();
+        mockXAResource2.setEndException(createXAException("resource 2 end failed", XAException.XAER_NOTA));
+
+        tm.rollback();
+
+        System.out.println(EventRecorder.dumpToString());
+
+        // we should find a ROLLEDBACK status in the journal log
+        // and 0 prepare try
+        // and 2 rollback tries (1 for each resource)
+        int journalRollbackEventCount = 0;
+        int prepareEventCount = 0;
+        int rollbackEventCount = 0;
+        List events = EventRecorder.getOrderedEvents();
+        for (int i = 0; i < events.size(); i++) {
+            Event event = (Event) events.get(i);
+
+            if (event instanceof XAResourceRollbackEvent)
+                rollbackEventCount++;
+
+            if (event instanceof XAResourcePrepareEvent)
+                prepareEventCount++;
+
+            if (event instanceof JournalLogEvent) {
+                if (((JournalLogEvent) event).getStatus() == Status.STATUS_ROLLEDBACK)
+                    journalRollbackEventCount++;
+            }
+        }
+        assertEquals("TM should have journaled 1 ROLLEDBACK status", 1, journalRollbackEventCount);
+        assertEquals("TM has tried to prepare", 0, prepareEventCount);
+        assertEquals("TM haven't properly tried to rollback", 2, rollbackEventCount);
+    }
+
     protected void setUp() throws Exception {
         EventRecorder.clear();
 

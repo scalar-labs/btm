@@ -109,6 +109,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         // delisting
         try {
             TransactionContextHelper.delistFromCurrentTransaction(this, poolingDataSource);
+        } catch (BitronixRollbackSystemException ex) {
+            throw (SQLException) new SQLException("unilateral rollback of " + this).initCause(ex);
         } catch (SystemException ex) {
             throw (SQLException) new SQLException("error delisting " + this).initCause(ex);
         }

@@ -127,7 +127,16 @@ public class XAResourceHolderState {
             ended = true;
         }
 
-        getXAResource().end(xid, flags);
+        try {
+            getXAResource().end(xid, flags);
+        } catch (XAException ex) {
+            // if the resource unilaterally rolled back, its state should nevertheless be set to ended.
+            if (BitronixXAException.isUnilateralRollback(ex)) {
+                this.ended = true;
+                this.started = false;
+            }
+            throw ex;
+        }
         this.suspended = suspended;
         this.ended = ended;
         this.started = false;

@@ -1,8 +1,8 @@
 package bitronix.tm.resource.jms;
 
 import bitronix.tm.BitronixTransaction;
-import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.internal.BitronixRollbackSystemException;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.resource.common.*;
 import org.slf4j.Logger;
@@ -117,6 +117,8 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         // delisting
         try {
             TransactionContextHelper.delistFromCurrentTransaction(this, pooledConnection.getPoolingConnectionFactory());
+        } catch (BitronixRollbackSystemException ex) {
+            throw (JMSException) new JMSException("resource rolled back: " + xaResourceHolderState).initCause(ex);
         } catch (SystemException ex) {
             throw (JMSException) new JMSException("cannot delist resource " + xaResourceHolderState).initCause(ex);
         }
@@ -133,13 +135,10 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return null;
     }
 
-    /**
+    /*
      * When the session is closed (directly or deferred) the action is to change its state to IN_POOL.
      * There is no such state for JMS sessions, this just means that it has been closed -> force a
      * state switch to CLOSED then clean up.
-     * @param source
-     * @param oldState
-     * @param newState
      */
     public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
         if (newState == STATE_IN_POOL) {

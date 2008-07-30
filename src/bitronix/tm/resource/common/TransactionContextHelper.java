@@ -78,6 +78,9 @@ public class TransactionContextHelper {
             XAResourceHolderState xaResourceHolderState = xaResourceHolder.getXAResourceHolderState();
             if (!xaResourceHolderState.isEnded()) {
                 if (log.isDebugEnabled()) log.debug("delisting resource " + xaResourceHolderState + " from " + currentTransaction);
+
+                // Watch out: the delistResource() call might throw a BitronixRollbackSystemException to indicate a unilateral rollback.
+                // Is there something that should be done here in this regard ?
                 currentTransaction.delistResource(xaResourceHolderState.getXAResource(), XAResource.TMSUCCESS);
             }
             else if (log.isDebugEnabled()) log.debug("avoiding delistment of not enlisted resource " + xaResourceHolderState);
