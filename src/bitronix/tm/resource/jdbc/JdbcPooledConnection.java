@@ -10,11 +10,9 @@ import org.slf4j.LoggerFactory;
 import javax.sql.XAConnection;
 import javax.transaction.SystemException;
 import javax.transaction.xa.XAResource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
+import java.util.Date;
 
 /**
  * Implementation of a JDBC pooled connection wrapping vendor's {@link XAConnection} implementation.
@@ -31,6 +29,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     private XAResource xaResource;
     private PoolingDataSource poolingDataSource;
     private LruMap statementsCache;
+    private List statements = new ArrayList();
 
     /* management */
     private String jmxName;
@@ -105,6 +104,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     protected void release() throws SQLException {
         if (log.isDebugEnabled()) log.debug("releasing to pool " + this);
 
+        //TODO: even if delisting fails, requeuing should be done or we'll have a connection leak here
+
         // delisting
         try {
             TransactionContextHelper.delistFromCurrentTransaction(this, poolingDataSource);
@@ -178,6 +179,18 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
         if (futureState == STATE_IN_POOL) {
+            // close all statements
+            for (int i = 0; i < statements.size(); i++) {
+                Statement statement = (Statement) statements.get(i);
+                try {
+                    statement.close();
+                } catch (SQLException ex) {
+                    log.warn("error closing statement " + statement, ex);
+                }
+            }
+            statements.clear();
+
+            // clear SQL warnings
             try {
                 if (log.isDebugEnabled()) log.debug("clearing warnings of " + connection);
                 connection.clearWarnings();
@@ -187,15 +200,19 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         }
     }
 
-    public PreparedStatement getCachedStatement(String sql) {
+    protected PreparedStatement getCachedStatement(String sql) {
         PreparedStatement stmt = (PreparedStatement) statementsCache.get(sql);
         if (log.isDebugEnabled()) log.debug("statement cache lookup of <" + sql + "> in " + this + ": " + stmt);
         return stmt;
     }
 
-    public PreparedStatement putCachedStatement(String sql, PreparedStatement stmt) {
+    protected PreparedStatement putCachedStatement(String sql, PreparedStatement stmt) {
         if (log.isDebugEnabled()) log.debug("caching statement <" + sql + "> in " + this);
         return (PreparedStatement) statementsCache.put(sql, stmt);
+    }
+
+    protected void registerStatement(Statement stmt) {
+        statements.add(stmt);
     }
 
     public String toString() {

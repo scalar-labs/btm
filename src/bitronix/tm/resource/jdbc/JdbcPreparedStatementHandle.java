@@ -11,7 +11,7 @@ import java.net.URL;
 import java.util.Calendar;
 
 /**
- * Caching PreparedStatement wrapper.
+ * Caching {@link PreparedStatement} wrapper.
  * <p>&copy; Bitronix 2005, 2006, 2007</p>
  *
  * @author lorban
@@ -101,6 +101,9 @@ public class JdbcPreparedStatementHandle implements PreparedStatement {
         getDelegate().setBinaryStream(parameterIndex, x, length);
     }
 
+    /**
+     * @deprecated
+     */
     public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
         getDelegate().setUnicodeStream(parameterIndex, x, length);
     }
