@@ -32,10 +32,12 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
     private XASession xaSession;
     private Session session;
     private XAResource xaResource;
+    private MessageListener listener;
+
+    //TODO: shouldn't producers/consumers/subscribers be separated between XA and non-XA session ?
     private Map messageProducers = new HashMap();
     private Map messageConsumers = new HashMap();
     private Map topicSubscribers = new HashMap();
-    private MessageListener listener;
 
     public DualSessionWrapper(JmsPooledConnection pooledConnection, boolean transacted, int acknowledgeMode) {
         this.pooledConnection = pooledConnection;
@@ -114,6 +116,8 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
         if (log.isDebugEnabled()) log.debug("closing " + this);
 
+        //TODO: even if delisting fails, requeuing should be done or we'll have a session leak here 
+
         // delisting
         try {
             TransactionContextHelper.delistFromCurrentTransaction(this, pooledConnection.getPoolingConnectionFactory());
@@ -125,7 +129,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
         // requeuing
         try {
-            TransactionContextHelper.requeue(this,  pooledConnection.getPoolingConnectionFactory());
+            TransactionContextHelper.requeue(this, pooledConnection.getPoolingConnectionFactory());
         } catch (BitronixSystemException ex) {
             throw (JMSException) new JMSException("cannot delist resource " + xaResourceHolderState).initCause(ex);
         }
