@@ -119,7 +119,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 TransactionManagerServices.getTaskScheduler().scheduleRetryUnrecoverableResourcesRegistration(new Date(System.currentTimeMillis() + intervalInMinutes * 60 * 1000));
             }
             else
-                if (log.isDebugEnabled()) log.debug("not retrying unrecoverable resources registration");
+                if (log.isDebugEnabled()) log.debug("will not retry unrecoverable resources registration");
 
             // 2. commit dangling COMMITTING transactions
             Set committedGtrids = commitDanglingTransactions();
