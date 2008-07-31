@@ -29,7 +29,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     private XAResource xaResource;
     private PoolingDataSource poolingDataSource;
     private LruMap statementsCache;
-    private List statements = new ArrayList();
+    private List uncachedStatements = new ArrayList();
 
     /* management */
     private String jmxName;
@@ -181,16 +181,17 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
         if (futureState == STATE_IN_POOL) {
-            // close all statements
-            for (int i = 0; i < statements.size(); i++) {
-                Statement statement = (Statement) statements.get(i);
+            // close all uncached statements
+            if (log.isDebugEnabled()) log.debug("closing " + uncachedStatements.size() + " uncached statement(s)");
+            for (int i = 0; i < uncachedStatements.size(); i++) {
+                Statement statement = (Statement) uncachedStatements.get(i);
                 try {
                     statement.close();
                 } catch (SQLException ex) {
-                    log.warn("error closing statement " + statement, ex);
+                    if (log.isDebugEnabled()) log.debug("error trying to close uncached statement " + statement, ex);
                 }
             }
-            statements.clear();
+            uncachedStatements.clear();
 
             // clear SQL warnings
             try {
@@ -202,19 +203,36 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         }
     }
 
+    /**
+     * Get a PreparedStatement from cache.
+     * @param sql the key that has been used to cache the statement.
+     * @return the cached statement corresponding to the key or null if no statement is cached under that key.
+     */
     protected PreparedStatement getCachedStatement(String sql) {
         PreparedStatement stmt = (PreparedStatement) statementsCache.get(sql);
         if (log.isDebugEnabled()) log.debug("statement cache lookup of <" + sql + "> in " + this + ": " + stmt);
         return stmt;
     }
 
+    /**
+     * Put a PreparedStatement in the cache.
+     * @param sql the key that is used to cache the statement.
+     * @param stmt the statement to cache.
+     * @return the cached statement.
+     */
     protected PreparedStatement putCachedStatement(String sql, PreparedStatement stmt) {
         if (log.isDebugEnabled()) log.debug("caching statement <" + sql + "> in " + this);
         return (PreparedStatement) statementsCache.put(sql, stmt);
     }
 
-    protected void registerStatement(Statement stmt) {
-        statements.add(stmt);
+    /**
+     * Register uncached statement so that it can be closed when the connection is put back in the pool.
+     * @param stmt the statement to register.
+     * @return the registered statement.
+     */
+    protected Statement registerUncachedStatement(Statement stmt) {
+        uncachedStatements.add(stmt);
+        return stmt;
     }
 
     public String toString() {
