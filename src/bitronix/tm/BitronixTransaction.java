@@ -108,7 +108,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
                 // between creating a sub-exception of SystemException or using a RuntimeException. Is that the best way
                 // forward as this 'hidden' exception can be left throw out at unexpected locations where SystemException
                 // should be rethrown but the exception thrown here should be catched & handled... ?
-                throw new BitronixRollbackSystemException("resource " + resourceHolderState + " unilaterally rolled back", ex);
+                throw new BitronixRollbackSystemException("resource " + resourceHolderState + " unilaterally rolled back, error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
             }
             throw new BitronixSystemException("cannot delist " + resourceHolderState + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
         }
