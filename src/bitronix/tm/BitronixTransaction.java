@@ -78,7 +78,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             if (BitronixXAException.isUnilateralRollback(ex)) {
                 // if the resource unilaterally rolled back, the transaction will never be able to commit -> mark it as rollback only
                 setStatus(Status.STATUS_MARKED_ROLLBACK);
-                throw new BitronixRollbackException("resource " + resourceHolderState + " unilaterally rolled back", ex);
+                throw new BitronixRollbackException("resource " + resourceHolderState + " unilaterally rolled back, error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
             }
             throw new BitronixSystemException("cannot enlist " + resourceHolderState + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
         }
@@ -103,6 +103,9 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             return resourceManager.delist(resourceHolderState, flag);
         } catch (XAException ex) {
             if (BitronixXAException.isUnilateralRollback(ex)) {
+                // if the resource unilaterally rolled back, the transaction will never be able to commit -> mark it as rollback only
+                setStatus(Status.STATUS_MARKED_ROLLBACK);
+
                 // The resource unilaterally rolled back here. We have to throw an exception to indicate this but
                 // The signature of this method is inherited from javax.transaction.Transaction. Thereof, we have choice
                 // between creating a sub-exception of SystemException or using a RuntimeException. Is that the best way
@@ -139,18 +142,17 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         fireBeforeCompletionEvent();
         TransactionManagerServices.getTaskScheduler().cancelTransactionTimeout(this);
 
-        if (timedOut()) {
-            if (log.isDebugEnabled()) log.debug("transaction timed out");
-            rollback();
-            throw new BitronixRollbackException("transaction timed out and has been rolled back");
-        }
-        if (status == Status.STATUS_MARKED_ROLLBACK) {
-            if (log.isDebugEnabled()) log.debug("transaction marked as rollback only");
-            rollback();
-            throw new BitronixRollbackException("transaction was marked as rollback only and has been rolled back");
-        }
-
         try {
+            if (timedOut()) {
+                if (log.isDebugEnabled()) log.debug("transaction timed out");
+                rollback();
+                throw new BitronixRollbackException("transaction timed out and has been rolled back");
+            }
+            if (status == Status.STATUS_MARKED_ROLLBACK) {
+                if (log.isDebugEnabled()) log.debug("transaction marked as rollback only");
+                rollback();
+                throw new BitronixRollbackException("transaction was marked as rollback only and has been rolled back");
+            }
             try {
                 delistUnclosedResources(XAResource.TMSUCCESS);
             } catch (BitronixRollbackException ex) {
