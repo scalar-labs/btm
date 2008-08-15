@@ -35,7 +35,7 @@ public class ResourceLoader implements Service {
     private final static String JDBC_RESOURCE_CLASSNAME = "bitronix.tm.resource.jdbc.PoolingDataSource";
     private final static String JMS_RESOURCE_CLASSNAME = "bitronix.tm.resource.jms.PoolingConnectionFactory";
 
-    private Map resourcesByUniqueName;
+    private Map resourcesByUniqueName = Collections.EMPTY_MAP;
 
     public ResourceLoader() {
     }
@@ -63,7 +63,6 @@ public class ResourceLoader implements Service {
         }
         else {
             if (log.isDebugEnabled()) log.debug("no resource configuration file specified");
-            resourcesByUniqueName = Collections.EMPTY_MAP;
             return 0;
         }
     }
