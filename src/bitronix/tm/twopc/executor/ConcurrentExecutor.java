@@ -9,7 +9,7 @@ import java.lang.reflect.Method;
 
 /**
  * Abstraction of the <code>java.util.concurrent</code> JDK 1.5+ implementation.
- * <p>&copy; Bitronix 2005, 2006</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

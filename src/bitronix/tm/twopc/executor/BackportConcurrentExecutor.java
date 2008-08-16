@@ -3,7 +3,7 @@ package bitronix.tm.twopc.executor;
 /**
  * Abstraction of the <code>java.util.concurrent</code>
  * <a href="http://www.dcl.mathcs.emory.edu/util/backport-util-concurrent/">backport</a> implementation.
- * <p>&copy; Bitronix 2005, 2006</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

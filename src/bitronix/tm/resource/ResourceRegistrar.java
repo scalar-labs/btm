@@ -14,7 +14,7 @@ import java.util.*;
 /**
  * Collection of initialized {@link XAResourceProducer}s. All resources must be registered in the {@link ResourceRegistrar}
  * before they can be used by the transaction manager.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

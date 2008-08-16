@@ -6,7 +6,7 @@ import java.util.Properties;
 /**
  * Abstract javabean container for all common properties of a {@link bitronix.tm.resource.common.XAResourceProducer} as configured in the
  * resources configuration file.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

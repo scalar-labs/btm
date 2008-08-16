@@ -10,7 +10,7 @@ import javax.jms.JMSException;
 /**
  * JMS destination wrapper optimized for use with hashed collections where it is the key and a
  * {@link javax.jms.MessageProducer} or a {@link javax.jms.MessageConsumer} is the value.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 
 /**
  * <p></p>
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

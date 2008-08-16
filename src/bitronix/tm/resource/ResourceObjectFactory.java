@@ -12,7 +12,7 @@ import bitronix.tm.TransactionManagerServices;
 
 /**
  * {@link bitronix.tm.resource.common.XAResourceProducer} object factory for JNDI references.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @see bitronix.tm.resource.common.ResourceBean
  * @author lorban

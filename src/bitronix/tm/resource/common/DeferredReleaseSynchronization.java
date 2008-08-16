@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * {@link Synchronization} used to release a {@link XAStatefulHolder} object after 2PC has executed.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

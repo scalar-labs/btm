@@ -20,7 +20,7 @@ import java.util.Date;
  * start / end state...</p>
  * <p>There is exactly one {@link XAResourceHolderState} object per {@link XAResourceHolder} per
  * {@link javax.transaction.Transaction}.</p>
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @see bitronix.tm.resource.common.ResourceBean
  * @author lorban

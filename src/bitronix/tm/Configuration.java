@@ -23,7 +23,7 @@ import java.util.Properties;
  * Also, all properties are reset to their default value after the transaction manager has shut down.</p>
  * <p>All those properties can refer to other defined ones or to system properties using the Ant notation:
  * <code>${some.property.name}</code>.</p>
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

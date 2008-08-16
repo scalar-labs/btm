@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Transactional context of a thread. It contains both the active transaction (if any) and all default parameters
  * that a transaction running on a thread must inherit.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

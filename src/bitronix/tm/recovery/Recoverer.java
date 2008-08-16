@@ -61,7 +61,7 @@ import java.util.*;
  *   <li>commit dangling COMMITTING transactions (Mike's step 6)</li>
  *   <li>rollback any remaining recovered transaction (Mike's step 7)</li>
  * </ul></p>
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

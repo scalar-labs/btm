@@ -4,7 +4,7 @@ import bitronix.tm.internal.BitronixRuntimeException;
 
 /**
  * This implementation spawns a new thread per request.
- * <p>&copy; Bitronix 2005, 2006</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

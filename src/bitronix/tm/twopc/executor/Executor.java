@@ -5,7 +5,7 @@ import bitronix.tm.utils.Service;
 
 /**
  * Thread pool interface required by the two-phase commit logic.
- * <p>&copy; Bitronix 2005, 2006</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

@@ -10,7 +10,7 @@ import java.util.Hashtable;
 
 /**
  * {@link BitronixTransactionManager} object factory for JNDI references.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

@@ -7,7 +7,7 @@ import javax.transaction.xa.XAResource;
 /**
  * {@link XAResource} wrappers must implement this interface. It defines a way to get access to the transactional
  * state of this {@link XAResourceHolder}.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @see XAResourceHolderState
  * @author lorban

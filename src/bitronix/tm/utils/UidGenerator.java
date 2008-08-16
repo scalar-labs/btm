@@ -10,7 +10,7 @@ import bitronix.tm.TransactionManagerServices;
  * <p>The reliance on the system clock is critical to the uniqueness of the UID in the network so you have to make sure
  * all servers of the network running this transaction manager have their clock reasonably in sync. An order of 1
  * second synchronicity is generally fine.</p>
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

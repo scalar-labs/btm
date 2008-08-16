@@ -17,7 +17,7 @@ import java.util.*;
  * Generic XA pool. {@link XAStatefulHolder} instances are created by the {@link XAPool} out of a
  * {@link XAResourceProducer}. Those objects are then pooled and can be retrieved and/or recycled by the pool
  * depending on the running XA transaction's and the {@link XAStatefulHolder}'s states.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

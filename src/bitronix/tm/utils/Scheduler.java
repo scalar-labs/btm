@@ -6,7 +6,7 @@ import java.util.*;
  * Positional object container. Objects can be added to a scheduler at a certain position (or priority) and can be
  * retrieved later on in their position + added order. All the objects of a scheduler can be iterated in order or
  * objects of a cetain position can be retrieved for iteration.
- * <p>&copy; Bitronix 2005, 2006, 2007, 2008</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

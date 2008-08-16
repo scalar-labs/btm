@@ -15,7 +15,7 @@ import java.util.*;
 /**
  * Every {@link bitronix.tm.BitronixTransaction} contains an instance of this class that is used to register
  * and keep track of resources enlisted in a transaction.
- * <p>&copy; Bitronix 2005, 2006, 2007, 2008</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

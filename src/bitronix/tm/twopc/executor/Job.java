@@ -6,7 +6,7 @@ import javax.transaction.xa.XAException;
 
 /**
  * Abstract job definition executable by the 2PC thread pools.
- * <p>&copy; Bitronix 2005, 2006</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

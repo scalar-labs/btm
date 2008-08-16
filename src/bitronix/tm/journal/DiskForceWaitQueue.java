@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * {@link TransactionLogAppender}s waiting for a disk force get enqueued here.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

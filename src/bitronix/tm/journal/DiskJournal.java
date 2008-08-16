@@ -20,7 +20,7 @@ import java.util.*;
  * <p>This implementation is not highly efficient but quite robust and simple. It is based on one of the implementations
  * proposed by Mike Spille.</p>
  * <p>Configurable properties are all starting with <code>bitronix.tm.journal.disk</code>.</p>
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @see bitronix.tm.Configuration
  * @see <a href="http://jroller.com/page/pyrasun?entry=xa_exposed_part_iii_the">XA Exposed, Part III: The Implementor's Notebook</a>

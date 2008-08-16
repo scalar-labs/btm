@@ -14,7 +14,7 @@ import javax.transaction.xa.Xid;
  * assigned to every {@link bitronix.tm.internal.XAResourceHolderState} when enlisted in the transaction's
  * {@link bitronix.tm.internal.XAResourceManager}. Both GTRID and XIDs are generated
  * by the {@link bitronix.tm.utils.UidGenerator}.</p>
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  * @see bitronix.tm.utils.UidGenerator

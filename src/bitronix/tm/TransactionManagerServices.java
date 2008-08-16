@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
  * of the TM so they must be globally reachable.</p>
  * <p>A shutdown hook is registered when this class is loaded to perform graceful shutdown if not yet done by a call
  * to {@link BitronixTransactionManager#shutdown}.</p>
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

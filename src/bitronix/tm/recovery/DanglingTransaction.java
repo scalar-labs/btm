@@ -4,7 +4,7 @@ import javax.transaction.xa.Xid;
 
 /**
  * Simple bean containing a unique resource name paired with a XID corresponding to a branch on that resource.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

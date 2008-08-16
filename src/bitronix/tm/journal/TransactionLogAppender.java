@@ -12,7 +12,7 @@ import java.nio.channels.FileLock;
 
 /**
  * Used to write {@link TransactionLogRecord} objects to a log file.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

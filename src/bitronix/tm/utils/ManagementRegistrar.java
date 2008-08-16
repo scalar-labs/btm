@@ -11,7 +11,7 @@ import bitronix.tm.TransactionManagerServices;
 
 /**
  * Simple JMX facade. In case there is no JMX implementation available, calling methods of this class have no effect.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

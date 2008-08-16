@@ -10,7 +10,7 @@ import java.util.Date;
 /**
  * {@link XAResourceHolder} created by an {@link bitronix.tm.resource.common.XAResourceProducer} that is
  * used to perform recovery. Objects of this class cannot be used outside recovery scope.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

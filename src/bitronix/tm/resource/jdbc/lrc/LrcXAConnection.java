@@ -14,7 +14,7 @@ import java.util.ArrayList;
 
 /**
  * XAConnection implementation for a non-XA JDBC resource emulating XA with Last Resource Commit.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

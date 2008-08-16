@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
  * and registered resources.
  * <p>This implementation is tivial as only the <code>lookup</code> methods are implemented,
  * all the other ones will throw a {@link OperationNotSupportedException}.</p>
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  * @see bitronix.tm.jndi.BitronixInitialContextFactory

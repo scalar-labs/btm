@@ -7,7 +7,7 @@ import java.util.Date;
  * Any pooled connection class must implement the {@link XAStatefulHolder} interface. It defines all the services
  * that must be implemented by the connection as well as the pooling lifecycle states.
  * Instances of this interface have to create and manage {@link XAResourceHolder}s.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

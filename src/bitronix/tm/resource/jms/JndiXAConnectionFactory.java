@@ -12,7 +12,7 @@ import java.util.Hashtable;
 /**
  * {@link XAConnectionFactory} implementation that wraps another {@link XAConnectionFactory} implementation available
  * in some JNDI tree.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

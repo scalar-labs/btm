@@ -12,7 +12,7 @@ import java.util.Calendar;
 
 /**
  * Caching {@link PreparedStatement} wrapper.
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

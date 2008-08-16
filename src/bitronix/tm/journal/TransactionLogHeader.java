@@ -11,7 +11,7 @@ import java.io.RandomAccessFile;
  * Used to control a log file's header.
  * <p>The physical data is read when this object is created then cached. Calling setter methods sets the header field
  * then moves the file pointer back to the previous location.</p>
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

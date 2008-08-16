@@ -9,7 +9,7 @@ import java.util.ArrayList;
 
 /**
  * Thrown when a phase exection has thrown one or more exception(s).  
- * <p>&copy; Bitronix 2005, 2006, 2007, 2008</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

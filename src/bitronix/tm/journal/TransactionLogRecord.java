@@ -33,7 +33,7 @@ import java.util.zip.CRC32;
  * which makes a major difference with Mike's proposed format because here a record can vary in length: the GTRID size
  * is A bytes long (A being the GTRID length) and there can be X unique names that are Y characters long, Y being eventually
  * different for each name.</p>
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @see <a href="http://jroller.com/page/pyrasun?entry=xa_exposed_part_iii_the">XA Exposed, Part III: The Implementor's Notebook</a>
  * @author lorban

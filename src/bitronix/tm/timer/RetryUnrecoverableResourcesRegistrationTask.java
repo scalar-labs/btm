@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This task is used to retry initializing unrecoverable resources registered in the resource loader.
- * <p>&copy; Bitronix 2005, 2006, 2007, 2008</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */

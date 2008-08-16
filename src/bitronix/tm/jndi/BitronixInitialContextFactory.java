@@ -24,7 +24,7 @@ import java.util.Hashtable;
  * while resources can be looked up using their unique name as set in 
  * {@link bitronix.tm.resource.common.ResourceBean#getUniqueName()}.
  * </p>
- * <p>&copy; Bitronix 2005, 2006, 2007</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  * @see bitronix.tm.jndi.BitronixContext

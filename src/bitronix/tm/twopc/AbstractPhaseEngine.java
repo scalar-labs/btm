@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Abstract phase execution engine.
- * <p>&copy; Bitronix 2005, 2006, 2007, 2008</p>
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
  */
