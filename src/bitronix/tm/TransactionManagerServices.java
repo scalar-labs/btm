@@ -16,8 +16,6 @@ import org.slf4j.LoggerFactory;
  * <p>The different services available are: {@link BitronixTransactionManager}, {@link Configuration}, {@link Journal},
  * {@link TaskScheduler}, {@link ResourceLoader}, {@link Recoverer} and {@link Executor}. They are used in all places
  * of the TM so they must be globally reachable.</p>
- * <p>A shutdown hook is registered when this class is loaded to perform graceful shutdown if not yet done by a call
- * to {@link BitronixTransactionManager#shutdown}.</p>
  * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
