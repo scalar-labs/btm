@@ -83,7 +83,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             throw new NotSupportedException("nested transactions not supported");
         currentTx = createTransaction();
 
-        currentTx.getSynchronizationScheduler().add(new ClearContextSynchronization(currentTx), Scheduler.ALWAYS_LAST_POSITION);
+        currentTx.getSynchronizationScheduler().add(new ClearContextSynchronization(currentTx), Scheduler.ALWAYS_LAST_POSITION -1);
         currentTx.setActive();
     }
 
