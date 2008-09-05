@@ -6,8 +6,8 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import bitronix.tm.utils.Uid;
 
@@ -100,7 +100,7 @@ public class TransactionLogCursor {
             randomAccessFile.readFully(gtridArray);
             Uid gtrid = new Uid(gtridArray);
             int uniqueNamesCount = randomAccessFile.readInt();
-            Set uniqueNames = new HashSet();
+            SortedSet uniqueNames = new TreeSet();
             int currentReadCount = 4 + 8 + 4 + 4 + 1 + gtridSize + 4;
 
             for (int i=0; i<uniqueNamesCount ;i++) {

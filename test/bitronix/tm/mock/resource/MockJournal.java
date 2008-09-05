@@ -10,7 +10,7 @@ import javax.transaction.Status;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
+import java.util.SortedSet;
 
 /**
  * <p></p>
@@ -26,7 +26,7 @@ public class MockJournal implements Journal {
         return EventRecorder.getEventRecorder(this);
     }
 
-    public void log(int status, Uid gtrid, Set uniqueNames) throws IOException {
+    public void log(int status, Uid gtrid, SortedSet uniqueNames) throws IOException {
         TransactionLogRecord record = new TransactionLogRecord(status, gtrid, uniqueNames);
         if (status == Status.STATUS_COMMITTING) {
             danglingRecords.put(gtrid, record);

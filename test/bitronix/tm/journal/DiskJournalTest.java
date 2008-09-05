@@ -4,10 +4,7 @@ import junit.framework.TestCase;
 
 import java.io.IOException;
 import java.io.File;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Collections;
-import java.util.Arrays;
+import java.util.*;
 
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.utils.Uid;
@@ -132,8 +129,34 @@ public class DiskJournalTest extends TestCase {
         journal.close();
     }
 
-    private Set csvToSet(String s) {
-        Set result = new HashSet();
+    public void testCrc32Value() throws Exception {
+        SortedSet names = new TreeSet();
+        names.add("ActiveMQ");
+        names.add("com.mysql.jdbc.jdbc2.optional.MysqlXADataSource");
+
+        String uidString = "626974726F6E697853657276657249440000011C31FD45510000955B";
+        byte[] uidArray = new byte[uidString.length()/2];
+        for (int i=0; i<uidString.length()/2 ;i++) {
+            String substr = uidString.substring(i*2, i*2+2);
+            byte b = (byte)Integer.parseInt(substr, 16);
+
+            uidArray[i] = b;
+        }
+        Uid uid = new Uid(uidArray);
+
+        TransactionLogRecord tlr = new TransactionLogRecord(Status.STATUS_COMMITTED, 116, 28, 1220609394845L, 38266, -1380478121, uid, names, TransactionLogAppender.END_RECORD);
+        assertTrue(tlr.isCrc32Correct());
+
+        names = new TreeSet();
+        names.add("com.mysql.jdbc.jdbc2.optional.MysqlXADataSource");
+        names.add("ActiveMQ");
+
+        tlr = new TransactionLogRecord(Status.STATUS_COMMITTED, 116, 28, 1220609394845L, 38266, -1380478121, uid, names, TransactionLogAppender.END_RECORD);
+        assertTrue(tlr.isCrc32Correct());
+    }
+
+    private SortedSet csvToSet(String s) {
+        SortedSet result = new TreeSet();
         String[] names = s.split("\\,");
         for (int i = 0; i < names.length; i++) {
             String name = names[i];

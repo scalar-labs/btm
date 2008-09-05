@@ -214,8 +214,8 @@ public class XAResourceManager {
      * Get a {@link Set} of unique names of all the enlisted {@link XAResourceHolderState}s.
      * @return a {@link Set} of unique names of all the enlisted {@link XAResourceHolderState}s.
      */
-    public Set collectUniqueNames() {
-        Set names = new HashSet();
+    public SortedSet collectUniqueNames() {
+        SortedSet names = new TreeSet();
         Iterator it = resources.iterator();
         while (it.hasNext()) {
             XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();

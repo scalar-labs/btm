@@ -250,14 +250,14 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             Uid gtrid = (Uid) entry.getKey();
             TransactionLogRecord tlog = (TransactionLogRecord) entry.getValue();
 
-            Set uniqueNames = tlog.getUniqueNames();
+            SortedSet uniqueNames = tlog.getUniqueNames();
             Set danglingTransactions = getDanglingTransactionsInRecoveredXids(uniqueNames, tlog.getGtrid());
             if (log.isDebugEnabled()) log.debug("committing dangling transaction with GTRID " + gtrid);
             commit(danglingTransactions);
             if (log.isDebugEnabled()) log.debug("committed dangling transaction with GTRID " + gtrid);
             committedGtrids.add(gtrid);
 
-            Set participatingUniqueNames = filterParticipatingUniqueNamesInRecoveredXids(uniqueNames);
+            SortedSet participatingUniqueNames = filterParticipatingUniqueNamesInRecoveredXids(uniqueNames);
 
             if (participatingUniqueNames.size() > 0) {
                 if (log.isDebugEnabled()) log.debug("updating journal's transaction with GTRID " + gtrid + " status to COMMITTED for names [" + buildUniqueNamesString(participatingUniqueNames) + "]");
@@ -307,8 +307,8 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         return danglingTransactions;
     }
 
-    private Set filterParticipatingUniqueNamesInRecoveredXids(Set uniqueNames) {
-        Set recoveredUniqueNames = new HashSet();
+    private SortedSet filterParticipatingUniqueNamesInRecoveredXids(SortedSet uniqueNames) {
+        SortedSet recoveredUniqueNames = new TreeSet();
 
         Iterator it = uniqueNames.iterator();
         while (it.hasNext()) {
