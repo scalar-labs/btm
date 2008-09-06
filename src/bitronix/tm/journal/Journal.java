@@ -5,7 +5,7 @@ import bitronix.tm.utils.Service;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.SortedSet;
+import java.util.Set;
 
 /**
  * Transaction logs journal implementations must implement this interface to provide functionality required by the
@@ -24,7 +24,7 @@ public interface Journal extends Service {
      * @param uniqueNames unique names of the RecoverableXAResourceProducers participating in the transaction.
      * @throws IOException
      */
-    public void log(int status, Uid gtrid, SortedSet uniqueNames) throws IOException;
+    public void log(int status, Uid gtrid, Set uniqueNames) throws IOException;
 
     /**
      * Open the journal. Integrity should be checked and an exception should be thrown in case the journal is corrupt.

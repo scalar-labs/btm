@@ -8,7 +8,9 @@ import org.slf4j.Logger;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.zip.CRC32;
 
 /**
@@ -64,7 +66,7 @@ public class TransactionLogRecord {
      * @param uniqueNames unique names of XA data sources used in this transaction
      * @param endRecord end of record marker
      */
-    public TransactionLogRecord(int status, int recordLength, int headerLength, long time, int sequenceNumber, int crc32, Uid gtrid, SortedSet uniqueNames, int endRecord) {
+    public TransactionLogRecord(int status, int recordLength, int headerLength, long time, int sequenceNumber, int crc32, Uid gtrid, Set uniqueNames, int endRecord) {
         this.status = status;
         this.recordLength = recordLength;
         this.headerLength = headerLength;
@@ -72,7 +74,7 @@ public class TransactionLogRecord {
         this.sequenceNumber = sequenceNumber;
         this.crc32 = crc32;
         this.gtrid = gtrid;
-        this.uniqueNames = uniqueNames;
+        this.uniqueNames = new TreeSet(uniqueNames);
         this.endRecord = endRecord;
     }
 
@@ -82,12 +84,12 @@ public class TransactionLogRecord {
      * @param gtrid global transaction id
      * @param uniqueNames unique names of XA data sources used in this transaction
      */
-    public TransactionLogRecord(int status, Uid gtrid, SortedSet uniqueNames) {
+    public TransactionLogRecord(int status, Uid gtrid, Set uniqueNames) {
         this.status = status;
         time = System.currentTimeMillis();
         sequenceNumber = UidGenerator.getNextSequenceNumber();
         this.gtrid = gtrid;
-        this.uniqueNames = uniqueNames;
+        this.uniqueNames = new TreeSet(uniqueNames);
         endRecord = TransactionLogAppender.END_RECORD;
 
         recordLength = calculateRecordLength(uniqueNames);
@@ -124,7 +126,7 @@ public class TransactionLogRecord {
         return gtrid;
     }
 
-    public SortedSet getUniqueNames() {
+    public Set getUniqueNames() {
         return uniqueNames;
     }
 
@@ -195,10 +197,9 @@ public class TransactionLogRecord {
 
     /**
      * this is the value needed by field recordLength in the TransactionLog.
-     * @param uniqueNames the unique names of this record.
      * @return recordLength
      */
-    private int calculateRecordLength(SortedSet uniqueNames) {
+    private int calculateRecordLength(Set uniqueNames) {
         int totalSize = 0;
 
         Iterator it = uniqueNames.iterator();

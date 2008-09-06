@@ -130,7 +130,7 @@ public class DiskJournalTest extends TestCase {
     }
 
     public void testCrc32Value() throws Exception {
-        SortedSet names = new TreeSet();
+        Set names = new HashSet();
         names.add("ActiveMQ");
         names.add("com.mysql.jdbc.jdbc2.optional.MysqlXADataSource");
 

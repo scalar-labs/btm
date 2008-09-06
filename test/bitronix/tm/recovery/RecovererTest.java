@@ -22,7 +22,9 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 import javax.transaction.xa.XAException;
 import java.io.File;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * <p></p>
@@ -67,7 +69,7 @@ public class RecovererTest extends TestCase {
     protected void tearDown() throws Exception {
         if (TransactionManagerServices.isTransactionManagerRunning())
             TransactionManagerServices.getTransactionManager().shutdown();
-        
+
         TransactionManagerServices.getConfiguration().setRetryUnrecoverableResourcesRegistrationInterval(0);
         journal.close();
         pds.close();
@@ -105,7 +107,7 @@ public class RecovererTest extends TestCase {
         Xid xid2 = new MockXid(2, 2, BitronixXid.FORMAT_ID);
         xaResource.addInDoubtXid(xid2);
 
-        SortedSet names = new TreeSet();
+        Set names = new HashSet();
         names.add(pds.getUniqueName());
         journal.log(Status.STATUS_COMMITTING, new Uid(xid0.getGlobalTransactionId()), names);
         journal.log(Status.STATUS_COMMITTING, new Uid(xid1.getGlobalTransactionId()), names);
@@ -121,7 +123,7 @@ public class RecovererTest extends TestCase {
         final Xid xid0 = new MockXid(0, 0, BitronixXid.FORMAT_ID);
         xaResource.addInDoubtXid(xid0);
 
-        SortedSet names = new TreeSet();
+        Set names = new HashSet();
         names.add("no-such-registered-resource");
         journal.log(Status.STATUS_COMMITTING, new Uid(xid0.getGlobalTransactionId()), names);
         assertEquals(1, TransactionManagerServices.getJournal().collectDanglingRecords().size());

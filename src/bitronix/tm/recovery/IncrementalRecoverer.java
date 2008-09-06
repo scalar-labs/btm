@@ -8,7 +8,10 @@ import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.Decoder;
 
-import java.util.*;
+import java.util.Set;
+import java.util.Map;
+import java.util.Iterator;
+import java.util.HashSet;
 import java.io.IOException;
 
 import org.slf4j.Logger;
@@ -83,7 +86,7 @@ public class IncrementalRecoverer {
 
     private static void updateJournal(Uid gtrid, String uniqueName, int status) throws IOException {
         if (log.isDebugEnabled()) log.debug("updating journal, adding " + Decoder.decodeStatus(status) + " entry for [" + uniqueName + "] on GTRID [" +  gtrid + "]");
-        SortedSet participatingUniqueNames = new TreeSet();
+        Set participatingUniqueNames = new HashSet();
         participatingUniqueNames.add(uniqueName);
         TransactionManagerServices.getJournal().log(status, gtrid, participatingUniqueNames);
     }

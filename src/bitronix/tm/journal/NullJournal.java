@@ -5,7 +5,7 @@ import bitronix.tm.utils.Uid;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
-import java.util.SortedSet;
+import java.util.Set;
 
 
 /**
@@ -19,7 +19,7 @@ public class NullJournal implements Journal {
     public NullJournal() {
     }
 
-    public void log(int status, Uid gtrid, SortedSet uniqueNames) throws IOException {
+    public void log(int status, Uid gtrid, Set uniqueNames) throws IOException {
     }
 
     public void open() throws IOException {

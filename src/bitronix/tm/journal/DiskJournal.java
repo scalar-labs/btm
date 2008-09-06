@@ -61,7 +61,7 @@ public class DiskJournal implements Journal {
      * @param uniqueNames unique names of the {@link javax.sql.XADataSource}s participating in this transaction
      * @throws IOException
      */
-    public void log(int status, Uid gtrid, SortedSet uniqueNames) throws IOException {
+    public void log(int status, Uid gtrid, Set uniqueNames) throws IOException {
         if (activeTla == null)
             throw new IOException("cannot write log, disk logger is not open");
 
