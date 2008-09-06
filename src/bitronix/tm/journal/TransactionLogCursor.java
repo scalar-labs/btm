@@ -21,14 +21,14 @@ public class TransactionLogCursor {
 
     private final static Logger log = LoggerFactory.getLogger(TransactionLogCursor.class);
 
-    private RandomAccessFile randomAccessFile;
+    private final RandomAccessFile randomAccessFile;
     private long endPosition;
 
     /**
      * Create a TransactionLogCursor that will read from the specified file.
      * This opens a new read-only file descriptor.
      * @param file the file to read logs from
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public TransactionLogCursor(File file) throws IOException {
         this.randomAccessFile = new RandomAccessFile(file, "r");
@@ -40,7 +40,7 @@ public class TransactionLogCursor {
      * Fetch the next TransactionLogRecord from log, recalculating the CRC and checking it against the stored one.
      * InvalidChecksumException is thrown if the check fails.
      * @return the TransactionLogRecord or null if the end of the log file has been reached
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public TransactionLogRecord readLog() throws IOException {
         return readLog(false);
@@ -51,7 +51,7 @@ public class TransactionLogCursor {
      * @param skipCrcCheck if set to false, the method will thow an InvalidChecksumException if the CRC on disk does
      *        not match the recalculated one. Otherwise, the CRC is not recalculated nor checked agains the stored one.
      * @return the TransactionLogRecord or null if the end of the log file has been reached
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public TransactionLogRecord readLog(boolean skipCrcCheck) throws IOException {
         synchronized (randomAccessFile) {
@@ -136,7 +136,7 @@ public class TransactionLogCursor {
 
     /**
      * Close the cursor and the underlying file
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public void close() throws IOException {
         synchronized (randomAccessFile) {

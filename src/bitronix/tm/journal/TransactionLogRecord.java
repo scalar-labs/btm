@@ -197,6 +197,7 @@ public class TransactionLogRecord {
 
     /**
      * this is the value needed by field recordLength in the TransactionLog.
+     * @param uniqueNames the unique names ofthe record.
      * @return recordLength
      */
     private int calculateRecordLength(Set uniqueNames) {

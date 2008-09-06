@@ -27,20 +27,21 @@ public class TransactionLogAppender {
      */
     public static final int END_RECORD = 0x786e7442;
 
-    private File file;
-    private RandomAccessFile randomAccessFile;
-    private FileLock lock;
-    private TransactionLogHeader header;
+    private final File file;
+    private final RandomAccessFile randomAccessFile;
+    private final FileLock lock;
+    private final TransactionLogHeader header;
+    
     private long maxFileLength;
 
     private static DiskForceBatcherThread diskForceBatcherThread;
 
     /**
-     * Creates an appender that will write to specified file up to the specified maximum length
+     * Create an appender that will write to specified file up to the specified maximum length.
      * All disk access are synchronized arround the RandomAccessFile object, including header calls.
-     * @param file the underlying File used to write to disk
-     * @param maxFileLength size of the file on disk that can never be bypassed
-     * @throws IOException
+     * @param file the underlying File used to write to disk.
+     * @param maxFileLength size of the file on disk that can never be bypassed.
+     * @throws IOException if an I/O error occurs.
      */
     public TransactionLogAppender(File file, long maxFileLength) throws IOException {
         this.maxFileLength = maxFileLength;
@@ -55,7 +56,7 @@ public class TransactionLogAppender {
     }
 
     /**
-     * return a TransactionLogHeader object that allows reading and controlling the log file's header.
+     * Return a {@link TransactionLogHeader} that allows reading and controlling the log file's header.
      * @return this log file's TransactionLogHeader
      */
     public TransactionLogHeader getHeader() {
@@ -63,10 +64,10 @@ public class TransactionLogAppender {
     }
 
     /**
-     * Writes a TransactionLogRecord object to disk
-     * @param tlog
-     * @return true if there was room in the log file and the log was written, false otherwise
-     * @throws IOException
+     * Write a {@link TransactionLogRecord} to disk.
+     * @param tlog the record to write to disk.
+     * @return true if there was room in the log file and the log was written, false otherwise.
+     * @throws IOException if an I/O error occurs.
      */
     public boolean writeLog(TransactionLogRecord tlog) throws IOException {
         synchronized (randomAccessFile) {
@@ -102,8 +103,8 @@ public class TransactionLogAppender {
     }
 
     /**
-     * Close the appender and the underlying file
-     * @throws IOException
+     * Close the appender and the underlying file.
+     * @throws IOException if an I/O error occurs.
      */
     public void close() throws IOException {
         synchronized (randomAccessFile) {
@@ -120,8 +121,8 @@ public class TransactionLogAppender {
      * Creates a cursor on this journal file allowing iteration of its records.
      * This opens a new read-only file descriptor independent of the write-only one
      * still used for writing transaction logs.
-     * @return a TransactionLogCursor
-     * @throws IOException
+     * @return a TransactionLogCursor.
+     * @throws IOException if an I/O error occurs.
      */
     public TransactionLogCursor getCursor() throws IOException {
         return new TransactionLogCursor(file);
@@ -129,7 +130,7 @@ public class TransactionLogAppender {
 
     /**
      * Force flushing the logs to disk
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public void force() throws IOException {
         if (!TransactionManagerServices.getConfiguration().isForcedWriteEnabled()) {
