@@ -24,6 +24,11 @@ public final class Uid {
         return array;
     }
 
+    public String extractServerId() {
+        int serverIdLength = array.length - 8 - 4;
+        return new String(array, 0, serverIdLength);
+    }
+
     public boolean equals(Object obj) {
         if (obj instanceof Uid) {
             Uid otherUid = (Uid) obj;

@@ -2,6 +2,7 @@ package bitronix.tm.recovery;
 
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.BitronixXid;
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.Decoder;
 
@@ -76,25 +77,32 @@ public class RecoveryHelper {
         Set freshlyRecoveredXids = new HashSet();
         for (int i = 0; i < xids.length; i++) {
             Xid xid = xids[i];
-            if (xid.getFormatId() == BitronixXid.FORMAT_ID) {
-                BitronixXid bitronixXid = new BitronixXid(xid);
-                if (!alreadyRecoveredXids.contains(bitronixXid)) {
-                    if (!freshlyRecoveredXids.contains(bitronixXid)) {
-                        if (log.isDebugEnabled()) log.debug("recovered " + bitronixXid);
-                        freshlyRecoveredXids.add(bitronixXid);
-                    }
-                    else {
-                        log.warn("resource " + resourceHolderState.getUniqueName() + " recovered two identical XIDs within the same recover call: " + bitronixXid);
-                    }
-                }
-                else {
-                    if (log.isDebugEnabled()) log.debug("already recovered XID " + bitronixXid + ", skipping it");
-                }
+            if (xid.getFormatId() != BitronixXid.FORMAT_ID) {
+                if (log.isDebugEnabled()) log.debug("skipping non-bitronix XID " + xid + "(format ID: " + xid.getFormatId() +
+                     " GTRID: " + new Uid(xid.getGlobalTransactionId()) + "BQUAL: " + new Uid(xid.getBranchQualifier()) + ")");
+                continue;
+             }
+
+            BitronixXid bitronixXid = new BitronixXid(xid);
+            String extractedServerId = bitronixXid.getGlobalTransactionIdUid().extractServerId();
+            String jvmUniqueId = TransactionManagerServices.getConfiguration().getServerId();
+            if (!extractedServerId.equals(jvmUniqueId)) {
+                if (log.isDebugEnabled()) log.debug("skipping XID " + bitronixXid + " as its GTRID's serverId <" + extractedServerId + "> does not match this JVM unique ID <" + jvmUniqueId + ">");
+                continue;
             }
-            else {
-                if (log.isDebugEnabled()) log.debug("skipped non-bitronix XID " + xid + "(format ID: " + xid.getFormatId() +
-                    " GTRID: " + new Uid(xid.getGlobalTransactionId()) + "BQUAL: " + new Uid(xid.getBranchQualifier()) + ")");
+
+            if (alreadyRecoveredXids.contains(bitronixXid)) {
+                if (log.isDebugEnabled()) log.debug("already recovered XID " + bitronixXid + ", skipping it");
+                continue;
             }
+
+            if (freshlyRecoveredXids.contains(bitronixXid)) {
+                log.warn("resource " + resourceHolderState.getUniqueName() + " recovered two identical XIDs within the same recover call: " + bitronixXid);
+                continue;
+            }
+
+            if (log.isDebugEnabled()) log.debug("recovered " + bitronixXid);
+            freshlyRecoveredXids.add(bitronixXid);
         } // for i < xids.length
 
         alreadyRecoveredXids.addAll(freshlyRecoveredXids);
