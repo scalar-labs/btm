@@ -54,6 +54,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             }
         });
         connection = xaConnection.getConnection();
+        applyIsolationLevel();
         addStateChangeEventListener(this);
 
         if (poolingDataSource.getClassName().equals(LrcXADataSource.class.getName())) {
@@ -63,6 +64,28 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
         this.jmxName = "bitronix.tm:type=JdbcPooledConnection,UniqueName=" + poolingDataSource.getUniqueName().replaceAll("[\\:\\,\\=,\\.]", "_") + ",Id=" + poolingDataSource.incCreatedResourcesCounter();
         ManagementRegistrar.register(jmxName, this);
+    }
+
+    private void applyIsolationLevel() throws SQLException {
+        String isolationLevel = getPoolingDataSource().getIsolationLevel();
+        if (isolationLevel != null) {
+            int level = translateIsolationLevel(isolationLevel);
+            if (level < 0) {
+                log.warn("invalid transaction isolation level '" + isolationLevel + "' configured, keeping the default isolation level.");
+            }
+            else {
+                if (log.isDebugEnabled()) log.debug("setting connection's isolation level to " + isolationLevel);
+                connection.setTransactionIsolation(level);
+            }
+        }
+    }
+
+    private static int translateIsolationLevel(String isolationLevelGuarantee) {
+        if ("READ_COMMITTED".equals(isolationLevelGuarantee)) return Connection.TRANSACTION_READ_COMMITTED;
+        if ("READ_UNCOMMITTED".equals(isolationLevelGuarantee)) return Connection.TRANSACTION_READ_UNCOMMITTED;
+        if ("REPEATABLE_READ".equals(isolationLevelGuarantee)) return Connection.TRANSACTION_REPEATABLE_READ;
+        if ("SERIALIZABLE".equals(isolationLevelGuarantee)) return Connection.TRANSACTION_SERIALIZABLE;
+        return -1;
     }
 
     public void close() throws SQLException {
@@ -162,6 +185,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         else {
             if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state " + Decoder.decodeXAStatefulHolderState(oldState) + ", no need to test it");
         }
+
         if (log.isDebugEnabled()) log.debug("got connection handle from " + this);
         return new JdbcConnectionHandle(this, connection);
     }

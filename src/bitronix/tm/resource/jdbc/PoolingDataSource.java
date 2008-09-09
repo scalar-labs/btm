@@ -35,10 +35,10 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     private transient JdbcConnectionHandle recoveryConnectionHandle;
     private String testQuery;
     private int preparedStatementCacheSize = 0;
+    private String isolationLevel;
 
     public PoolingDataSource() {
     }
-
 
     /**
      * Initializes the pool by creating the initial amount of connections.
@@ -83,6 +83,14 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
 
     public void setPreparedStatementCacheSize(int preparedStatementCacheSize) {
         this.preparedStatementCacheSize = preparedStatementCacheSize;
+    }
+
+    public String getIsolationLevel() {
+        return isolationLevel;
+    }
+
+    public void setIsolationLevel(String isolationLevel) {
+        this.isolationLevel = isolationLevel;
     }
 
     public Connection getConnection() throws SQLException {
