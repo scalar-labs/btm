@@ -52,13 +52,56 @@ public class PropertyUtilsTest extends TestCase {
 
         Map map = PropertyUtils.getProperties(destination);
 
-        assertEquals(6, map.size());
+        assertEquals(12, map.size());
         assertEquals("one", map.get("props.number1"));
         assertEquals("two", map.get("props.number2"));
         assertEquals(new Integer(10), map.get("anInteger"));
         assertEquals(new Boolean(true), map.get("aBoolean"));
         assertEquals(new Boolean(false), map.get("anotherBoolean"));
         assertNull(map.get("subDestination"));
+    }
+
+    public void testSetPrimitiveTypes() throws Exception {
+        Destination destination = new Destination();
+
+        PropertyUtils.setProperty(destination, "aString", "this is my string");
+        PropertyUtils.setProperty(destination, "aBoolean", "true");
+        PropertyUtils.setProperty(destination, "aByte", "100");
+        PropertyUtils.setProperty(destination, "aShort", "20000");
+        PropertyUtils.setProperty(destination, "anInteger", "300000");
+        PropertyUtils.setProperty(destination, "aLong", "4000000");
+        PropertyUtils.setProperty(destination, "aFloat", "3.14");
+        PropertyUtils.setProperty(destination, "aDouble", "0.654987");
+
+        assertEquals("this is my string", destination.getAString());
+        assertEquals(true, destination.getABoolean());
+        assertEquals(100, destination.getAByte());
+        assertEquals(20000, destination.getAShort());
+        assertEquals(300000, destination.getAnInteger());
+        assertEquals(4000000, destination.getALong());
+        assertEquals(3.14f, destination.getAFloat(), 0.01f);
+        assertEquals(0.654987, destination.getADouble(), 0.000001);
+    }
+
+    public void testGetPrimitiveTypes() throws Exception {
+        Destination destination = new Destination();
+        destination.setAString("this is my string");
+        destination.setABoolean(true);
+        destination.setAByte((byte) 100);
+        destination.setAShort((short) 20000);
+        destination.setAnInteger(300000);
+        destination.setALong(4000000L);
+        destination.setAFloat(3.14f);
+        destination.setADouble(0.654987);
+
+        assertEquals("this is my string", PropertyUtils.getProperty(destination, "aString"));
+        assertEquals(Boolean.TRUE, PropertyUtils.getProperty(destination, "aBoolean"));
+        assertEquals(new Byte((byte) 100), PropertyUtils.getProperty(destination, "aByte"));
+        assertEquals(new Short((short) 20000), PropertyUtils.getProperty(destination, "aShort"));
+        assertEquals(new Integer(300000), PropertyUtils.getProperty(destination, "anInteger"));
+        assertEquals(new Long(4000000L), PropertyUtils.getProperty(destination, "aLong"));
+        assertEquals(new Float(3.14f), PropertyUtils.getProperty(destination, "aFloat"));
+        assertEquals(new Double(0.654987), PropertyUtils.getProperty(destination, "aDouble"));
     }
 
     public static class Destination {
@@ -68,6 +111,12 @@ public class PropertyUtilsTest extends TestCase {
         private int aWriteOnlyInt;
         private boolean aBoolean;
         private boolean anotherBoolean;
+        private String aString;
+        private byte aByte;
+        private short aShort;
+        private long aLong;
+        private float aFloat;
+        private double aDouble;
 
         public Properties getProps() {
             return props;
@@ -111,6 +160,54 @@ public class PropertyUtilsTest extends TestCase {
 
         public void setAnotherBoolean(boolean anotherBoolean) {
             this.anotherBoolean = anotherBoolean;
+        }
+
+        public String getAString() {
+            return aString;
+        }
+
+        public void setAString(String aString) {
+            this.aString = aString;
+        }
+
+        public byte getAByte() {
+            return aByte;
+        }
+
+        public void setAByte(byte aByte) {
+            this.aByte = aByte;
+        }
+
+        public short getAShort() {
+            return aShort;
+        }
+
+        public void setAShort(short aShort) {
+            this.aShort = aShort;
+        }
+
+        public long getALong() {
+            return aLong;
+        }
+
+        public void setALong(long aLong) {
+            this.aLong = aLong;
+        }
+
+        public float getAFloat() {
+            return aFloat;
+        }
+
+        public void setAFloat(float aFloat) {
+            this.aFloat = aFloat;
+        }
+
+        public double getADouble() {
+            return aDouble;
+        }
+
+        public void setADouble(double aDouble) {
+            this.aDouble = aDouble;
         }
     }
 

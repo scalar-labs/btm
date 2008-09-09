@@ -215,15 +215,42 @@ public class PropertyUtils {
         if (value.getClass() == destinationClass)
             return value;
 
-        if (value.getClass() == int.class || value.getClass() == Integer.class || value.getClass() == boolean.class || value.getClass() == Boolean.class)
+        if (    value.getClass() == boolean.class || value.getClass() == Boolean.class ||
+                value.getClass() == byte.class || value.getClass() == Byte.class ||
+                value.getClass() == short.class || value.getClass() == Short.class ||
+                value.getClass() == int.class || value.getClass() == Integer.class ||
+                value.getClass() == long.class || value.getClass() == Long.class ||
+                value.getClass() == float.class || value.getClass() == Float.class ||
+                value.getClass() == double.class || value.getClass() == Double.class
+            )
             return value;
+
+        if ((destinationClass == boolean.class || destinationClass == Boolean.class)  &&  value.getClass() == String.class) {
+            return Boolean.valueOf((String) value);
+        }
+
+        if ((destinationClass == byte.class || destinationClass == Byte.class)  &&  value.getClass() == String.class) {
+            return new Byte((String) value);
+        }
+
+        if ((destinationClass == short.class || destinationClass == Short.class)  &&  value.getClass() == String.class) {
+            return new Short((String) value);
+        }
 
         if ((destinationClass == int.class || destinationClass == Integer.class)  &&  value.getClass() == String.class) {
             return new Integer((String) value);
         }
 
-        if ((destinationClass == boolean.class || destinationClass == Boolean.class)  &&  value.getClass() == String.class) {
-            return Boolean.valueOf((String) value);
+        if ((destinationClass == long.class || destinationClass == Long.class)  &&  value.getClass() == String.class) {
+            return new Long((String) value);
+        }
+
+        if ((destinationClass == float.class || destinationClass == Float.class)  &&  value.getClass() == String.class) {
+            return new Float((String) value);
+        }
+
+        if ((destinationClass == double.class || destinationClass == Double.class)  &&  value.getClass() == String.class) {
+            return new Double((String) value);
         }
 
         throw new PropertyException("cannot convert values of type '" + value.getClass().getName() + "' into type '" + destinationClass + "'");
