@@ -83,10 +83,11 @@ public class RecovererTest extends TestCase {
      * @throws Exception
      */
     public void testRecoverPresumedAbort() throws Exception {
-        xaResource.addInDoubtXid(new MockXid(0, 0, BitronixXid.FORMAT_ID));
-        xaResource.addInDoubtXid(new MockXid(1, 1, BitronixXid.FORMAT_ID));
-        xaResource.addInDoubtXid(new MockXid(2, 2, BitronixXid.FORMAT_ID));
+        byte[] gtrid = UidGenerator.generateUid().getArray();
 
+        xaResource.addInDoubtXid(new MockXid(0, gtrid, BitronixXid.FORMAT_ID));
+        xaResource.addInDoubtXid(new MockXid(1, gtrid, BitronixXid.FORMAT_ID));
+        xaResource.addInDoubtXid(new MockXid(2, gtrid, BitronixXid.FORMAT_ID));
 
         TransactionManagerServices.getRecoverer().run();
 
@@ -100,11 +101,11 @@ public class RecovererTest extends TestCase {
      * @throws Exception
      */
     public void testRecoverCommitting() throws Exception {
-        Xid xid0 = new MockXid(0, 0, BitronixXid.FORMAT_ID);
+        Xid xid0 = new MockXid(0, UidGenerator.generateUid().getArray(), BitronixXid.FORMAT_ID);
         xaResource.addInDoubtXid(xid0);
-        Xid xid1 = new MockXid(1, 1, BitronixXid.FORMAT_ID);
+        Xid xid1 = new MockXid(1, UidGenerator.generateUid().getArray(), BitronixXid.FORMAT_ID);
         xaResource.addInDoubtXid(xid1);
-        Xid xid2 = new MockXid(2, 2, BitronixXid.FORMAT_ID);
+        Xid xid2 = new MockXid(2, UidGenerator.generateUid().getArray(), BitronixXid.FORMAT_ID);
         xaResource.addInDoubtXid(xid2);
 
         Set names = new HashSet();
@@ -120,7 +121,7 @@ public class RecovererTest extends TestCase {
     }
 
     public void testRecoverMissingResource() throws Exception {
-        final Xid xid0 = new MockXid(0, 0, BitronixXid.FORMAT_ID);
+        final Xid xid0 = new MockXid(0, UidGenerator.generateUid().getArray(), BitronixXid.FORMAT_ID);
         xaResource.addInDoubtXid(xid0);
 
         Set names = new HashSet();

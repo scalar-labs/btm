@@ -11,6 +11,7 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,10 +85,20 @@ public class RecoveryHelper {
              }
 
             BitronixXid bitronixXid = new BitronixXid(xid);
-            String extractedServerId = bitronixXid.getGlobalTransactionIdUid().extractServerId();
-            String jvmUniqueId = TransactionManagerServices.getConfiguration().getServerId();
-            if (!extractedServerId.equals(jvmUniqueId)) {
-                if (log.isDebugEnabled()) log.debug("skipping XID " + bitronixXid + " as its GTRID's serverId <" + extractedServerId + "> does not match this JVM unique ID <" + jvmUniqueId + ">");
+            byte[] extractedServerId = bitronixXid.getGlobalTransactionIdUid().extractServerId();
+            byte[] jvmUniqueId = TransactionManagerServices.getConfiguration().buildServerIdArray();
+
+            if (extractedServerId == null) {
+                log.warn("skipping XID " + bitronixXid + " as its GTRID's serverId is null. It loooks like the disk journal is corrupted !");
+                continue;
+            }
+
+            if (!Arrays.equals(jvmUniqueId, extractedServerId)) {
+                String extractedServerIdString = new String(extractedServerId);
+                String jvmUniqueIdString = new String(jvmUniqueId);
+
+                log.info("skipping XID " + bitronixXid + " as its GTRID's serverId <" + extractedServerIdString + "> does not match this JVM unique ID <" + jvmUniqueIdString + ">. " +
+                        "Make sure this XID is picked up by the node with serverId <" + extractedServerIdString + ">.");
                 continue;
             }
 

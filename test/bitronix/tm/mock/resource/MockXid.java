@@ -18,6 +18,13 @@ public class MockXid implements Xid {
         this.formatId = formatId;
     }
 
+    public MockXid(long bqual0, byte[] gtrid0, int formatId) {
+        this.bqual = new byte[8];
+        System.arraycopy(longToBytes(bqual0), 0, bqual, 0, 8);
+        this.gtrid = gtrid0;
+        this.formatId = formatId;
+    }
+
     public MockXid(long bqual0, long gtrid0) {
         this.bqual = new byte[8];
         this.gtrid = new byte[8];
@@ -40,10 +47,6 @@ public class MockXid implements Xid {
 
     public byte[] getGlobalTransactionId() {
         return gtrid;
-    }
-
-    public String toString() {
-        return gtrid + " - " + bqual;
     }
 
     private static byte[] longToBytes(long aLong) {

@@ -24,9 +24,14 @@ public final class Uid {
         return array;
     }
 
-    public String extractServerId() {
+    public byte[] extractServerId() {
         int serverIdLength = array.length - 8 - 4;
-        return new String(array, 0, serverIdLength);
+        if (serverIdLength < 1)
+            return null;
+
+        byte[] result = new byte[serverIdLength];
+        System.arraycopy(array, 0, result, 0, serverIdLength);
+        return result;
     }
 
     public boolean equals(Object obj) {
