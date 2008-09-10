@@ -66,7 +66,7 @@ public class ConfigurationTest extends TestCase {
     }
     
     public void testToString() {
-        final String expectation = "a Configuration with [asynchronous2Pc=false, backgroundRecoveryInterval=0, defaultTransactionTimeout=60," +
+        final String expectation = "a Configuration with [asynchronous2Pc=false, backgroundRecoveryInterval=0, currentNodeOnlyRecovery=false, defaultTransactionTimeout=60," +
                 " disableJmx=false, filterLogStatus=false, forceBatchingEnabled=true, forcedWriteEnabled=true, gracefulShutdownInterval=10," +
                 " jndiUserTransactionName=null, journal=disk, logPart1Filename=btm1.tlog, logPart2Filename=btm2.tlog, maxLogSizeInMb=2," +
                 " resourceConfigurationFilename=null, retryUnrecoverableResourcesRegistrationInterval=0, serverId=null, skipCorruptedLogs=false," +

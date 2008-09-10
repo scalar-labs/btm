@@ -51,6 +51,7 @@ public class Configuration implements Service {
     private boolean disableJmx;
     private String jndiUserTransactionName;
     private String journal;
+    private boolean currentNodeOnlyRecovery;
     private String resourceConfigurationFilename;
 
 
@@ -93,6 +94,7 @@ public class Configuration implements Service {
             disableJmx = getBoolean(properties, "bitronix.tm.disableJmx", false);
             jndiUserTransactionName = getString(properties, "bitronix.tm.jndi.userTransactionName", null);
             journal = getString(properties, "bitronix.tm.journal", "disk");
+            currentNodeOnlyRecovery = getBoolean(properties, "bitronix.tm.currentNodeOnlyRecovery", false);
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
         } catch (IOException ex) {
             throw new InitializationException("error loading configuration", ex);
@@ -394,7 +396,7 @@ public class Configuration implements Service {
     }
 
     /**
-     * Set if JMX Mbeans should not be registered even if a JMX MBean server is detected.
+     * Set to true if JMX Mbeans should not be registered even if a JMX MBean server is detected.
      * @see #isDisableJmx()
      * @param disableJmx true if JMX MBeans should never be registered.
      */
@@ -439,6 +441,25 @@ public class Configuration implements Service {
      */
     public void setJournal(String journal) {
         this.journal = journal;
+    }
+
+    /**
+     * Should the recovery process <b>not</b> recover XIDs generated with another JVM unique ID ? Setting this property to true
+     * is useful in clustered environments where multiple instances of BTM are running on different nodes.
+     * @see #getServerId() contains the value used as the JVM unique ID.
+     * @return true if recovery should filter out recovered XIDs that do not contain this JVM's unique ID, false otherwise.
+     */
+    public boolean isCurrentNodeOnlyRecovery() {
+        return currentNodeOnlyRecovery;
+    }
+
+    /**
+     * Set to true if recovery should filter out recovered XIDs that do not contain this JVM's unique ID, false otherwise.
+     * @see #isCurrentNodeOnlyRecovery()
+     * @param currentNodeOnlyRecovery true if recovery should filter out recovered XIDs that do not contain this JVM's unique ID, false otherwise.
+     */
+    public void setCurrentNodeOnlyRecovery(boolean currentNodeOnlyRecovery) {
+        this.currentNodeOnlyRecovery = currentNodeOnlyRecovery;
     }
 
     /**

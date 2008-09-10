@@ -60,6 +60,9 @@ public class RecovererTest extends TestCase {
         xaResource = (MockXAResource) handle.getPooledConnection().getXAResource();
         handle.close();
 
+        // test the clustered recovery as its logic is more complex and covers the non-clustered logic
+        TransactionManagerServices.getConfiguration().setCurrentNodeOnlyRecovery(true);
+
         // recoverer needs the journal to be open to be run manually
         journal = TransactionManagerServices.getJournal();
         journal.open();
