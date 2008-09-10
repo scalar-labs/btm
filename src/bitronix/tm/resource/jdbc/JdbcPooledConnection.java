@@ -54,7 +54,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             }
         });
         connection = xaConnection.getConnection();
-        applyIsolationLevel();
         addStateChangeEventListener(this);
 
         if (poolingDataSource.getClassName().equals(LrcXADataSource.class.getName())) {
@@ -181,6 +180,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         if (oldState == STATE_IN_POOL) {
             if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state STATE_IN_POOL, testing it");
             testConnection(connection);
+            applyIsolationLevel();
         }
         else {
             if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state " + Decoder.decodeXAStatefulHolderState(oldState) + ", no need to test it");
