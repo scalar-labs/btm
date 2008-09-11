@@ -162,10 +162,6 @@ public class XAResourceManager {
      * @throws BitronixSystemException if an internal error happens.
      */
     public XAResourceHolderState findXAResourceHolderState(XAResource xaResource) throws BitronixSystemException {
-        if (xaResource instanceof XAResourceHolderState) {
-            throw new BitronixSystemException("cannot find a wrapped resource using another wrapped resource, bug?");
-        }
-
         Iterator it = resources.iterator();
         while (it.hasNext()) {
             XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
