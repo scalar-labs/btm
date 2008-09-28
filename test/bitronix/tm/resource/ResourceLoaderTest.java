@@ -130,7 +130,7 @@ public class ResourceLoaderTest extends TestCase {
 
         p.setProperty("resource.ds2.className", MockXADataSource.class.getName());
         p.setProperty("resource.ds2.uniqueName", "some.unique.Name");
-        p.setProperty("resource.ds2.poolSize", "123");
+        p.setProperty("resource.ds2.maxPoolSize", "123");
 
         loader.initXAResourceProducers(p);
         Map dataSources = loader.getResources();
@@ -190,7 +190,7 @@ public class ResourceLoaderTest extends TestCase {
         Properties p = new Properties();
         p.setProperty("resource.ds2.className", MockXADataSource.class.getName());
         p.setProperty("resource.ds2.uniqueName", "some.other.unique.Name");
-        p.setProperty("resource.ds2.poolSize", "123");
+        p.setProperty("resource.ds2.maxPoolSize", "123");
 
         loader.initXAResourceProducers(p);
     }
@@ -201,18 +201,18 @@ public class ResourceLoaderTest extends TestCase {
         Properties p = new Properties();
         p.setProperty("resource.ds2.className", MockXADataSource.class.getName());
         p.setProperty("resource.ds2.uniqueName", "some.more.unique.Name");
-        p.setProperty("resource.ds2.poolSize", "abc"); // incorrect format
+        p.setProperty("resource.ds2.maxPoolSize", "abc"); // incorrect format
 
         try {
             loader.initXAResourceProducers(p);
             fail("expected ResourceConfigurationException");
         } catch (ResourceConfigurationException ex) {
-            assertEquals("cannot configure resource for configuration entries with name <ds2> - failing property is <poolSize>", ex.getMessage());
+            assertEquals("cannot configure resource for configuration entries with name <ds2> - failing property is <maxPoolSize>", ex.getMessage());
         }
 
         p.setProperty("resource.ds2.className", MockXADataSource.class.getName());
         p.setProperty("resource.ds2.uniqueName", "some.also.other.unique.Name");
-        p.setProperty("resource.ds2.poolSize", "123");
+        p.setProperty("resource.ds2.maxPoolSize", "123");
         p.setProperty("resource.ds2.useTmJoin", "unknown"); // incorrect format, will default to false
         loader.initXAResourceProducers(p);
 
