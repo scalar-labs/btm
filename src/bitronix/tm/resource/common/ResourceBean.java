@@ -120,24 +120,6 @@ public abstract class ResourceBean implements Serializable {
     }
 
     /**
-     * @return the fixed amount of connections to be created in the pool.
-     * @deprecated replaced with {@link #getMinPoolSize}.
-     */
-    public int getPoolSize() {
-        return minPoolSize;
-    }
-
-    /**
-     * Define the fixed amount of connections that should be created in the pool.
-     * @param poolSize a fixed amount of connections to be created in the pool.
-     * @deprecated replaced with {@link #setMinPoolSize} and {@link #setMaxPoolSize}.
-     */
-    public void setPoolSize(int poolSize) {
-        this.minPoolSize = poolSize;
-        this.maxPoolSize = poolSize;
-    }
-
-    /**
      * @return the maximum amount of connections that can be in the pool.
      */
     public int getMaxPoolSize() {
