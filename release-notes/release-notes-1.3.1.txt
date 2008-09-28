@@ -1,6 +1,6 @@
 BTM - Bitronix's JTA transaction manager
 ========================================
-version 1.3.1, ???
+version 1.3.1, September 28, 2008
 
  * BTM-23  Add the ability to set guarantee the isolation level of resource
  * BTM-24  recovery engine does not fully supports clustering
@@ -9,7 +9,8 @@ version 1.3.1, ???
  * BTM-28  Race condition when mixing global and local transactions
  * BTM-29  Random CorruptedTransactionLogException thrown during swapJournalFiles under JDK 1.6
  * BTM-30  Resource creation cannot map long primitives to vendor's XADataSource
-
+ * Removed deprecated poolsize property of ResourceBean
+ * Enforced mandatory parameters when LrcXADataSource is used
 
 Using BTM
 ---------
