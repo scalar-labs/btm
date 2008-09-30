@@ -136,6 +136,26 @@ public class SchedulerTest extends TestCase {
         assertEquals(0, resourceScheduler.size());
     }
 
+    public void testRemove() {
+        Scheduler resourceScheduler = new Scheduler();
+
+        XAResourceHolderState xarhs0 = new XAResourceHolderState(null, new MockResourceBean(0));
+        XAResourceHolderState xarhs1 = new XAResourceHolderState(null, new MockResourceBean(1));
+
+        resourceScheduler.add(xarhs0, xarhs0.getTwoPcOrderingPosition());
+        resourceScheduler.add(xarhs1, xarhs1.getTwoPcOrderingPosition());
+
+        resourceScheduler.remove(xarhs0);
+        resourceScheduler.add(xarhs0, xarhs0.getTwoPcOrderingPosition());
+
+        Iterator it = resourceScheduler.iterator();
+        assertTrue(it.hasNext());
+        assertTrue(xarhs0 == it.next());
+        it.remove();
+        assertTrue(xarhs1 == it.next());
+        it.remove();
+    }
+
     private static int counter = 0;
     private static int incCounter() {
         return counter++;

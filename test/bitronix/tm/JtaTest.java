@@ -134,4 +134,39 @@ public class JtaTest extends TestCase {
         assertNull(btm.getTransaction());
     }
 
+    public void testBeforeCompletionAddsExtraSynchronizationInDifferentPriority() throws Exception {
+        btm.begin();
+        
+        btm.getCurrentTransaction().getSynchronizationScheduler().add(new SynchronizationRegisteringSynchronization(btm.getCurrentTransaction()), 5);
+
+        btm.commit();
+    }
+
+    private class SynchronizationRegisteringSynchronization implements Synchronization {
+
+        private BitronixTransaction transaction;
+
+        public SynchronizationRegisteringSynchronization(BitronixTransaction transaction) {
+            this.transaction = transaction;
+        }
+
+        public void beforeCompletion() {
+            try {
+                transaction.getSynchronizationScheduler().add(new Synchronization() {
+
+                    public void beforeCompletion() {
+                    }
+
+                    public void afterCompletion(int i) {
+                    }
+                }, 10);
+            } catch (Exception e) {
+                fail("unexpected exception: " + e);
+            }
+        }
+
+        public void afterCompletion(int i) {
+        }
+    }
+
 }

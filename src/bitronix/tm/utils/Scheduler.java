@@ -20,9 +20,10 @@ public class Scheduler {
     public static final Object ALWAYS_FIRST_POSITION_KEY = new Integer(ALWAYS_FIRST_POSITION);
     public static final Object ALWAYS_LAST_POSITION_KEY = new Integer(ALWAYS_LAST_POSITION);
 
+    private List keys = new ArrayList();
     private Map objects = new TreeMap();
 
-    
+
     public Scheduler() {
     }
 
@@ -30,6 +31,10 @@ public class Scheduler {
         Integer key = new Integer(position);
         List synchronizationsList = (List) objects.get(key);
         if (synchronizationsList == null) {
+            if (!keys.contains(key)) {
+                keys.add(key);
+                Collections.sort(keys);
+            }
             synchronizationsList = new ArrayList();
             objects.put(key, synchronizationsList);
         }
@@ -89,13 +94,13 @@ public class Scheduler {
 
     private class SchedulerIterator implements Iterator {
         private Scheduler scheduler;
-        private Iterator schedulerKeysIterator;
+        private int nextKeyIndex;
         private List objectsOfCurrentKey;
         private int objectsOfCurrentKeyIndex;
 
         private SchedulerIterator(Scheduler scheduler) {
             this.scheduler = scheduler;
-            schedulerKeysIterator = scheduler.objects.keySet().iterator();
+            this.nextKeyIndex = 0;
         }
 
         public void remove() {
@@ -105,21 +110,34 @@ public class Scheduler {
             objectsOfCurrentKeyIndex--;
             objectsOfCurrentKey.remove(objectsOfCurrentKeyIndex);
             if (objectsOfCurrentKey.size() == 0) {
-                schedulerKeysIterator.remove();
+                // there are no more objects in the current position's list -> remove it
+                nextKeyIndex--;
+                Object key = scheduler.keys.get(nextKeyIndex);
+                scheduler.keys.remove(nextKeyIndex);
+                scheduler.objects.remove(key);
                 objectsOfCurrentKey = null;
             }
         }
 
         public boolean hasNext() {
             if (objectsOfCurrentKey == null || objectsOfCurrentKeyIndex >= objectsOfCurrentKey.size()) {
-                if (schedulerKeysIterator.hasNext()) {
-                    Integer currentKey = (Integer) schedulerKeysIterator.next();
+                // we reached the end of the current position's list
+
+                if (nextKeyIndex < scheduler.keys.size()) {
+                    // there is another position after this one
+                    Integer currentKey = (Integer) scheduler.keys.get(nextKeyIndex++);
                     objectsOfCurrentKey = (List) scheduler.objects.get(currentKey);
                     objectsOfCurrentKeyIndex = 0;
                     return true;
                 }
-                return false;
+                else {
+                    // there is no other position after this one
+                    return false;
+                }
+                
             }
+
+            // there are still objects in the current position's list
             return true;
         }
 
