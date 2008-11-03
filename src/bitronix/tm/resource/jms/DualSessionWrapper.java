@@ -334,22 +334,53 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return xaResource;
     }
 
+    /* XAStatefulHolder implementation */
+
+    public List getXAResourceHolders() {
+        List holders = new ArrayList(1);
+        holders.add(this);
+        return holders;
+    }
+
+    public Object getConnectionHandle() throws Exception {
+        return null;
+    }
+
     /* dumb wrapping of Session methods */
 
     public boolean getTransacted() throws JMSException {
+        if (isParticipatingInActiveGlobalTransaction())
+            return true; // for consistency with EJB 2.1 spec (17.3.5)
+
         return getSession().getTransacted();
     }
 
     public int getAcknowledgeMode() throws JMSException {
+        if (isParticipatingInActiveGlobalTransaction())
+            return 0; // for consistency with EJB 2.1 spec (17.3.5)
+
         return getSession().getAcknowledgeMode();
     }
 
     public void commit() throws JMSException {
+        if (isParticipatingInActiveGlobalTransaction())
+            throw new JMSException("cannot commit a resource enlisted in a global transaction");
+
         getSession().commit();
     }
 
     public void rollback() throws JMSException {
+        if (isParticipatingInActiveGlobalTransaction())
+            throw new JMSException("cannot rollback a resource enlisted in a global transaction");
+
         getSession().rollback();
+    }
+
+    public void recover() throws JMSException {
+        if (isParticipatingInActiveGlobalTransaction())
+            throw new JMSException("cannot recover a resource enlisted in a global transaction");
+
+        getSession().recover();
     }
 
     public BytesMessage createBytesMessage() throws JMSException {
@@ -384,10 +415,6 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return getSession().createTextMessage(text);
     }
 
-    public void recover() throws JMSException {
-        getSession().recover();
-    }
-
     public javax.jms.Queue createQueue(String queueName) throws JMSException {
         return getSession().createQueue(queueName);
     }
@@ -416,13 +443,4 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         getSession().unsubscribe(name);
     }
 
-    public List getXAResourceHolders() {
-        List holders = new ArrayList(1);
-        holders.add(this);
-        return holders;
-    }
-
-    public Object getConnectionHandle() throws Exception {
-        return null;
-    }
 }
