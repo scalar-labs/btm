@@ -92,7 +92,7 @@ public class ManagementRegistrar {
         try {
             method.invoke(mbeanServer, params);
         } catch (Exception ex) {
-            throw new BitronixRuntimeException("cannot call" + method.getName(), ex);
+            throw new BitronixRuntimeException("cannot call method '" + method.getName() + "'", ex);
         }
     }
 
