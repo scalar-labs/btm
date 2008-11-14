@@ -122,16 +122,16 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         try {
             TransactionContextHelper.delistFromCurrentTransaction(this, pooledConnection.getPoolingConnectionFactory());
         } catch (BitronixRollbackSystemException ex) {
-            throw (JMSException) new JMSException("unilateral rollback of  " + xaResourceHolderState).initCause(ex);
+            throw (JMSException) new JMSException("unilateral rollback of  " + getXAResourceHolderState()).initCause(ex);
         } catch (SystemException ex) {
-            throw (JMSException) new JMSException("error delisting " + xaResourceHolderState).initCause(ex);
+            throw (JMSException) new JMSException("error delisting " + getXAResourceHolderState()).initCause(ex);
         }
 
         // requeuing
         try {
             TransactionContextHelper.requeue(this, pooledConnection.getPoolingConnectionFactory());
         } catch (BitronixSystemException ex) {
-            throw (JMSException) new JMSException("error delisting " + xaResourceHolderState).initCause(ex);
+            throw (JMSException) new JMSException("error delisting " + getXAResourceHolderState()).initCause(ex);
         }
     }
 
