@@ -139,7 +139,6 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         if (isDone())
             throw new IllegalStateException("transaction is done, cannot commit it");
 
-        fireBeforeCompletionEvent();
         TransactionManagerServices.getTaskScheduler().cancelTransactionTimeout(this);
 
         // These two if statements must not be included in the try-catch block below as they call rollback().
@@ -154,7 +153,10 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             rollback();
             throw new BitronixRollbackException("transaction was marked as rollback only and has been rolled back");
         }
-        
+
+        // beforeCompletion is not called in case of a forced rollback
+        fireBeforeCompletionEvent();
+
         try {
             try {
                 delistUnclosedResources(XAResource.TMSUCCESS);

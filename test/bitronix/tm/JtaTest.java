@@ -46,7 +46,10 @@ public class JtaTest extends TestCase {
     public void testTimeout() throws Exception {
         btm.setTransactionTimeout(1);
         btm.begin();
-        Thread.sleep(1100);
+        CountingSynchronization sync = new CountingSynchronization();
+        btm.getTransaction().registerSynchronization(sync);
+
+        Thread.sleep(2000);
         assertEquals(Status.STATUS_MARKED_ROLLBACK, btm.getTransaction().getStatus());
 
         try {
@@ -55,11 +58,14 @@ public class JtaTest extends TestCase {
         } catch (RollbackException ex) {
             assertEquals("transaction timed out and has been rolled back", ex.getMessage());
         }
+        assertEquals(0, sync.beforeCount);
+        assertEquals(1, sync.afterCount);
     }
 
     public void testMarkedRollback() throws Exception {
         btm.begin();
-
+        CountingSynchronization sync = new CountingSynchronization();
+        btm.getTransaction().registerSynchronization(sync);
         btm.setRollbackOnly();
 
         assertEquals(Status.STATUS_MARKED_ROLLBACK, btm.getTransaction().getStatus());
@@ -70,6 +76,8 @@ public class JtaTest extends TestCase {
         } catch (RollbackException ex) {
             assertEquals("transaction was marked as rollback only and has been rolled back", ex.getMessage());
         }
+        assertEquals(0, sync.beforeCount);
+        assertEquals(1, sync.afterCount);
     }
 
     public void testRecycleAfterSuspend() throws Exception {
@@ -166,6 +174,19 @@ public class JtaTest extends TestCase {
         }
 
         public void afterCompletion(int i) {
+        }
+    }
+
+    private class CountingSynchronization implements Synchronization {
+        public int beforeCount = 0;
+        public int afterCount = 0;
+
+        public void beforeCompletion() {
+            beforeCount++;
+        }
+
+        public void afterCompletion(int i) {
+            afterCount++;
         }
     }
 
