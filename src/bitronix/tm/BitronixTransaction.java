@@ -141,6 +141,10 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
         TransactionManagerServices.getTaskScheduler().cancelTransactionTimeout(this);
 
+        // beforeCompletion must be called before the check to STATUS_MARKED_ROLLBACK as the synchronization
+        // can still set the status to STATUS_MARKED_ROLLBACK.
+        fireBeforeCompletionEvent();
+
         // These two if statements must not be included in the try-catch block below as they call rollback().
         // Doing so would call fireAfterCompletionEvent() twice in case one of those conditions are true.
         if (timedOut()) {
@@ -153,9 +157,6 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             rollback();
             throw new BitronixRollbackException("transaction was marked as rollback only and has been rolled back");
         }
-
-        // beforeCompletion is not called in case of a forced rollback
-        fireBeforeCompletionEvent();
 
         try {
             try {

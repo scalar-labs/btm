@@ -58,7 +58,7 @@ public class JtaTest extends TestCase {
         } catch (RollbackException ex) {
             assertEquals("transaction timed out and has been rolled back", ex.getMessage());
         }
-        assertEquals(0, sync.beforeCount);
+        assertEquals(1, sync.beforeCount);
         assertEquals(1, sync.afterCount);
     }
 
@@ -76,7 +76,7 @@ public class JtaTest extends TestCase {
         } catch (RollbackException ex) {
             assertEquals("transaction was marked as rollback only and has been rolled back", ex.getMessage());
         }
-        assertEquals(0, sync.beforeCount);
+        assertEquals(1, sync.beforeCount);
         assertEquals(1, sync.afterCount);
     }
 
