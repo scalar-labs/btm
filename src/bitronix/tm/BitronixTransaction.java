@@ -142,17 +142,20 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         fireBeforeCompletionEvent();
         TransactionManagerServices.getTaskScheduler().cancelTransactionTimeout(this);
 
+        // These two if statements must not be included in the try-catch block below as they call rollback().
+        // Doing so would call fireAfterCompletionEvent() twice in case one of those conditions are true.
+        if (timedOut()) {
+            if (log.isDebugEnabled()) log.debug("transaction timed out");
+            rollback();
+            throw new BitronixRollbackException("transaction timed out and has been rolled back");
+        }
+        if (status == Status.STATUS_MARKED_ROLLBACK) {
+            if (log.isDebugEnabled()) log.debug("transaction marked as rollback only");
+            rollback();
+            throw new BitronixRollbackException("transaction was marked as rollback only and has been rolled back");
+        }
+        
         try {
-            if (timedOut()) {
-                if (log.isDebugEnabled()) log.debug("transaction timed out");
-                rollback();
-                throw new BitronixRollbackException("transaction timed out and has been rolled back");
-            }
-            if (status == Status.STATUS_MARKED_ROLLBACK) {
-                if (log.isDebugEnabled()) log.debug("transaction marked as rollback only");
-                rollback();
-                throw new BitronixRollbackException("transaction was marked as rollback only and has been rolled back");
-            }
             try {
                 delistUnclosedResources(XAResource.TMSUCCESS);
             } catch (BitronixRollbackException ex) {
@@ -384,6 +387,9 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
                 log.warn("Synchronization.afterCompletion() call failed for " + synchronization, ex);
             }
         }
+
+        // this TX is no longer in-flight -> remove this transaction's state from all XAResourceHolders
+        resourceManager.clearXAResourceHolderStates();
 
         ManagementRegistrar.unregister("bitronix.tm:type=Transaction,Gtrid=" + resourceManager.getGtrid());
     }

@@ -207,6 +207,19 @@ public class XAResourceManager {
     }
 
     /**
+     * Remove this transaction's {@link XAResourceHolderState} from all enlisted
+     * {@link bitronix.tm.resource.common.XAResourceHolder}s.
+     */
+    public void clearXAResourceHolderStates() {
+        Iterator it = resources.iterator();
+        while (it.hasNext()) {
+            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
+            xaResourceHolderState.getXAResourceHolder().getAllXAResourceHolderStates().remove(xaResourceHolderState);
+            it.remove();
+        }
+    }
+
+    /**
      * Get a {@link Set} of unique names of all the enlisted {@link XAResourceHolderState}s.
      * @return a {@link Set} of unique names of all the enlisted {@link XAResourceHolderState}s.
      */

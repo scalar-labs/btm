@@ -16,7 +16,6 @@ import javax.transaction.SystemException;
 import javax.transaction.xa.XAResource;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Helper class that contains static logic common accross all resource types.
@@ -185,15 +184,11 @@ public class TransactionContextHelper {
             return false;
         }
 
-        Map inFlights = TransactionManagerServices.getTransactionManager().getInFlightTransactions();
-        Iterator it = inFlights.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            BitronixTransaction tx = (BitronixTransaction) entry.getValue();
-
-            XAResourceHolderState holder = tx.getResourceManager().findXAResourceHolderState(xaResourceHolder.getXAResource());
-            if (holder != null) {
-                if (log.isDebugEnabled()) log.debug("resource " + xaResourceHolder + " is enlisted in " + tx);
+        List xaResourceHolderStates = xaResourceHolder.getAllXAResourceHolderStates();
+        for (int i = 0; i < xaResourceHolderStates.size(); i++) {
+            XAResourceHolderState otherXaResourceHolderState = (XAResourceHolderState) xaResourceHolderStates.get(i);
+            if (otherXaResourceHolderState.getXAResource() == xaResourceHolder.getXAResource()) {
+                if (log.isDebugEnabled()) log.debug("resource " + xaResourceHolder + " is enlisted in another transaction");
                 return true;
             }
         }

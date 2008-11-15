@@ -182,6 +182,27 @@ public class XAResourceHolderState {
         this.ended = false;
     }
 
+    public int hashCode() {
+        return 17 * (bean.hashCode() + xid.hashCode());
+    }
+
+    public boolean equals(Object obj) {
+        if (!(obj instanceof XAResourceHolderState))
+            return false;
+
+        XAResourceHolderState other = (XAResourceHolderState) obj;
+        return equals(other.bean, bean) && equals(other.xid, xid);
+    }
+
+    private boolean equals(Object obj1, Object obj2) {
+        if (obj1 == obj2)
+            return true;
+        if (obj1 == null || obj2 == null)
+            return false;
+
+        return obj1.equals(obj2);
+    }
+
     public String toString() {
         return "an XAResourceHolderState with uniqueName=" + bean.getUniqueName() +
                 " XAResource=" + getXAResource() +

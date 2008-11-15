@@ -3,6 +3,7 @@ package bitronix.tm.resource.common;
 import bitronix.tm.internal.XAResourceHolderState;
 
 import javax.transaction.xa.XAResource;
+import java.util.List;
 
 /**
  * {@link XAResource} wrappers must implement this interface. It defines a way to get access to the transactional
@@ -34,5 +35,12 @@ public interface XAResourceHolder extends XAStatefulHolder {
      * @param xaResourceHolderState the {@link XAResourceHolderState}.
      */
     public void setXAResourceHolderState(XAResourceHolderState xaResourceHolderState);
+
+    /**
+     * Get a {@link List} of all existing {@link XAResourceHolderState}s for this {@link XAResourceHolder}. Basically
+     * there is one entry in the list per in-flight transaction in which this {@link XAResource} is enlisted.
+     * @return a {@link List} of all existing {@link XAResourceHolderState}s for this {@link XAResourceHolder}.
+     */
+    public List getAllXAResourceHolderStates();
 
 }
