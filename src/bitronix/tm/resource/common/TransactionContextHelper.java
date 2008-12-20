@@ -188,7 +188,7 @@ public class TransactionContextHelper {
         for (int i = 0; i < xaResourceHolderStates.size(); i++) {
             XAResourceHolderState otherXaResourceHolderState = (XAResourceHolderState) xaResourceHolderStates.get(i);
             if (otherXaResourceHolderState.getXAResource() == xaResourceHolder.getXAResource()) {
-                if (log.isDebugEnabled()) log.debug("resource " + xaResourceHolder + " is enlisted in another transaction");
+                if (log.isDebugEnabled()) log.debug("resource " + xaResourceHolder + " is enlisted in another transaction with " + otherXaResourceHolderState.getXid().toString());
                 return true;
             }
         }
