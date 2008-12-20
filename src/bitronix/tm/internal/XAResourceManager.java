@@ -191,7 +191,6 @@ public class XAResourceManager {
         while (it.hasNext()) {
             XAResourceHolderState alreadyEnlistedHolderState = (XAResourceHolderState) it.next();
 
-
             if (log.isDebugEnabled()) log.debug("checking joinability of " + xaResourceHolderState + " with " + alreadyEnlistedHolderState);
             if ( alreadyEnlistedHolderState.isEnded() &&
                  !alreadyEnlistedHolderState.isSuspended() &&
@@ -214,7 +213,15 @@ public class XAResourceManager {
         Iterator it = resources.iterator();
         while (it.hasNext()) {
             XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
-            xaResourceHolderState.getXAResourceHolder().getAllXAResourceHolderStates().remove(xaResourceHolderState);
+
+            // After a JOIN happened, the same xaResourceHolderState is inserted twice.
+            // This is because the xaResourceHolderState is inserted once normally during the 1st half of the transaction
+            // and right after the transaction is resumed, another xaResourceHolderState with a null XID is inserted
+            // then the XID is changed.
+            boolean mightHaveMore = true;
+            while (mightHaveMore)
+                mightHaveMore = xaResourceHolderState.getXAResourceHolder().getAllXAResourceHolderStates().remove(xaResourceHolderState);
+
             it.remove();
         }
     }
