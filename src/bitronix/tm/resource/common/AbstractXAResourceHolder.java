@@ -5,6 +5,9 @@ import bitronix.tm.internal.XAResourceHolderState;
 import java.util.List;
 import java.util.ArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Implementation of all services required by a {@link XAResourceHolder}. This class keeps a list of all
  * {@link XAResourceHolderState}s of the {@link XAResourceHolder} plus the currently active one. There is
@@ -16,6 +19,8 @@ import java.util.ArrayList;
  */
 public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder implements XAResourceHolder {
 
+    private final static Logger log = LoggerFactory.getLogger(AbstractXAResourceHolder.class);
+
     private XAResourceHolderState currentXaResourceHolderState;
     private List xaResourceHolderStates = new ArrayList();
 
@@ -24,14 +29,21 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
     }
 
     public void setXAResourceHolderState(XAResourceHolderState xaResourceHolderState) {
+        if (log.isDebugEnabled()) log.debug("setting default XAResourceHolderState [" + xaResourceHolderState + "] on " + this);
         if (xaResourceHolderState != null) {
             this.currentXaResourceHolderState = xaResourceHolderState;
-            if (!xaResourceHolderStates.contains(xaResourceHolderState))
+            if (!xaResourceHolderStates.contains(xaResourceHolderState)) {
+                if (log.isDebugEnabled()) log.debug("XAResourceHolderState previously unknown, adding it to the list");
                 this.xaResourceHolderStates.add(xaResourceHolderState);
+            }
         }
         else {
-            xaResourceHolderStates.remove(currentXaResourceHolderState);
-            this.currentXaResourceHolderState = null;
+            if (currentXaResourceHolderState != null) {
+                xaResourceHolderStates.remove(currentXaResourceHolderState);
+                this.currentXaResourceHolderState = null;
+            }
+            else
+                log.warn("currentXaResourceHolderState is already null! Bug ?");
         }
     }
 
