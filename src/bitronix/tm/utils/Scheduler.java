@@ -22,12 +22,13 @@ public class Scheduler {
 
     private List keys = new ArrayList();
     private Map objects = new TreeMap();
+    private int size = 0;
 
 
     public Scheduler() {
     }
 
-    public void add(Object obj, int position) {
+    public synchronized void add(Object obj, int position) {
         Integer key = new Integer(position);
         List synchronizationsList = (List) objects.get(key);
         if (synchronizationsList == null) {
@@ -39,49 +40,44 @@ public class Scheduler {
             objects.put(key, synchronizationsList);
         }
         synchronizationsList.add(obj);
+        size++;
     }
 
-    public void remove(Object obj) {
+    public synchronized void remove(Object obj) {
         Iterator it = iterator();
         while (it.hasNext()) {
             Object o = it.next();
             if (o == obj) {
                 it.remove();
+                size--;
                 return;
             }
         }
         throw new NoSuchElementException("no such element: " + obj);
     }
 
-    public SortedSet getNaturalOrderPositions() {
+    public synchronized SortedSet getNaturalOrderPositions() {
         return new TreeSet(objects.keySet());
     }
 
-    public SortedSet getReverseOrderPositions() {
+    public synchronized SortedSet getReverseOrderPositions() {
         TreeSet result = new TreeSet(Collections.reverseOrder());
         result.addAll(getNaturalOrderPositions());
         return result;
     }
 
-    public List getByNaturalOrderForPosition(Object positionKey) {
+    public synchronized List getByNaturalOrderForPosition(Object positionKey) {
         return (List) objects.get(positionKey);
     }
 
-    public List getByReverseOrderForPosition(Object positionKey) {
+    public synchronized List getByReverseOrderForPosition(Object positionKey) {
         List result = new ArrayList(getByNaturalOrderForPosition(positionKey));
         Collections.reverse(result);
         return result;
     }
 
-    public int size() {
-        int totalSize = 0;
-        Iterator it = objects.keySet().iterator();
-        while (it.hasNext()) {
-            Integer key = (Integer) it.next();
-            List list = (List) objects.get(key);
-            totalSize += list.size();
-        }
-        return totalSize;
+    public synchronized int size() {
+        return size;
     }
 
     public Iterator iterator() {
