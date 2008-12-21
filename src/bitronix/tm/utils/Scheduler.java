@@ -113,6 +113,7 @@ public class Scheduler {
                 scheduler.objects.remove(key);
                 objectsOfCurrentKey = null;
             }
+            scheduler.size--;
         }
 
         public boolean hasNext() {
