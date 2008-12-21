@@ -49,7 +49,6 @@ public class Scheduler {
             Object o = it.next();
             if (o == obj) {
                 it.remove();
-                size--;
                 return;
             }
         }
