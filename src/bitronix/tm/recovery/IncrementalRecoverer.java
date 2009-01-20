@@ -60,13 +60,13 @@ public class IncrementalRecoverer {
                 if (tlog != null) {
                     if (log.isDebugEnabled()) log.debug("committing " + xid);
                     success &= RecoveryHelper.commit(xarhs, xid);
-                    updateJournal(tlog.getGtrid(), uniqueName, Status.STATUS_COMMITTED);
+                    updateJournal(xid.getGlobalTransactionIdUid(), uniqueName, Status.STATUS_COMMITTED);
                     commitCount++;
                 }
                 else {
                     if (log.isDebugEnabled()) log.debug("rolling back " + xid);
                     success &= RecoveryHelper.rollback(xarhs, xid);
-                    updateJournal(tlog.getGtrid(), uniqueName, Status.STATUS_ROLLEDBACK);
+                    updateJournal(xid.getGlobalTransactionIdUid(), uniqueName, Status.STATUS_ROLLEDBACK);
                     rollbackCount++;
                 }
             }

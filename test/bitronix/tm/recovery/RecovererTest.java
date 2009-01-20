@@ -100,6 +100,23 @@ public class RecovererTest extends TestCase {
     }
 
     /**
+     * Create 3 XIDs on the resource that are not in the journal -> recoverer presumes they have aborted and rolls
+     * them back.
+     * @throws Exception
+     */
+    public void testIncrementalRecoverPresumedAbort() throws Exception {
+        byte[] gtrid = UidGenerator.generateUid().getArray();
+
+        xaResource.addInDoubtXid(new MockXid(0, gtrid, BitronixXid.FORMAT_ID));
+        xaResource.addInDoubtXid(new MockXid(1, gtrid, BitronixXid.FORMAT_ID));
+        xaResource.addInDoubtXid(new MockXid(2, gtrid, BitronixXid.FORMAT_ID));
+
+        IncrementalRecoverer.recover(pds);
+
+        assertEquals(0, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
+    }
+
+    /**
      * Create 3 XIDs on the resource that are in the journal -> recoverer commits them.
      * @throws Exception
      */
@@ -120,6 +137,29 @@ public class RecovererTest extends TestCase {
 
         assertEquals(3, TransactionManagerServices.getRecoverer().getCommittedCount());
         assertEquals(0, TransactionManagerServices.getRecoverer().getRolledbackCount());
+        assertEquals(0, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
+    }
+
+    /**
+     * Create 3 XIDs on the resource that are in the journal -> recoverer commits them.
+     * @throws Exception
+     */
+    public void testIncrementalRecoverCommitting() throws Exception {
+        Xid xid0 = new MockXid(0, UidGenerator.generateUid().getArray(), BitronixXid.FORMAT_ID);
+        xaResource.addInDoubtXid(xid0);
+        Xid xid1 = new MockXid(1, UidGenerator.generateUid().getArray(), BitronixXid.FORMAT_ID);
+        xaResource.addInDoubtXid(xid1);
+        Xid xid2 = new MockXid(2, UidGenerator.generateUid().getArray(), BitronixXid.FORMAT_ID);
+        xaResource.addInDoubtXid(xid2);
+
+        Set names = new HashSet();
+        names.add(pds.getUniqueName());
+        journal.log(Status.STATUS_COMMITTING, new Uid(xid0.getGlobalTransactionId()), names);
+        journal.log(Status.STATUS_COMMITTING, new Uid(xid1.getGlobalTransactionId()), names);
+        journal.log(Status.STATUS_COMMITTING, new Uid(xid2.getGlobalTransactionId()), names);
+
+        IncrementalRecoverer.recover(pds);
+
         assertEquals(0, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
     }
 
