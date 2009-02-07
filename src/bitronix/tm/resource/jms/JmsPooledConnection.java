@@ -68,8 +68,20 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     }
 
     public Object getConnectionHandle() throws Exception {
+        if (log.isDebugEnabled()) log.debug("getting connection handle from " + this);
+        int oldState = getState();
+
         setState(STATE_ACCESSIBLE);
-        testXAConnection();
+
+        if (oldState == STATE_IN_POOL) {
+            if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state IN_POOL, testing it");
+            testXAConnection();
+        }
+        else {
+            if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state " + Decoder.decodeXAStatefulHolderState(oldState) + ", no need to test it");
+        }
+
+        if (log.isDebugEnabled()) log.debug("got connection handle from " + this);
         return new JmsConnectionHandle(this, xaConnection);
     }
 
