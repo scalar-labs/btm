@@ -166,13 +166,13 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
                 throw new BitronixRollbackException("unilateral resource rollback caused transaction rollback", ex);
             }
 
-            List interestedResources = new ArrayList();
+            List interestedResources;
 
             // prepare phase
             try {
                 if (log.isDebugEnabled()) log.debug("committing, " + resourceManager.size() + " enlisted resource(s)");
 
-                preparer.prepare(this, interestedResources);
+                interestedResources = preparer.prepare(this);
             }
             catch (RollbackException ex) {
                 if (log.isDebugEnabled()) log.debug("caught rollback exception during prepare, trying to rollback");

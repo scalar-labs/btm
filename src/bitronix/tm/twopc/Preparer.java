@@ -34,15 +34,15 @@ public class Preparer extends AbstractPhaseEngine {
     /**
      * Execute phase 1 prepare.
      * @param transaction the transaction to prepare.
-     * @param interestedResources a list that will be filled with all resources that received the prepare command
+     * @return a list that will be filled with all resources that received the prepare command
      *  and replied with {@link javax.transaction.xa.XAResource#XA_OK}.
      * @throws RollbackException when an error occured that can be fixed with a rollback.
      * @throws bitronix.tm.internal.BitronixSystemException when an internal error occured.
      */
-    public void prepare(BitronixTransaction transaction, List interestedResources) throws RollbackException, BitronixSystemException {
+    public List prepare(BitronixTransaction transaction) throws RollbackException, BitronixSystemException {
         XAResourceManager resourceManager = transaction.getResourceManager();
         transaction.setStatus(Status.STATUS_PREPARING);
-        this.preparedResources = interestedResources;
+        this.preparedResources = new ArrayList();
 
         if (resourceManager.size() == 0) {
             if (TransactionManagerServices.getConfiguration().isWarnAboutZeroResourceTransaction())
@@ -51,7 +51,7 @@ public class Preparer extends AbstractPhaseEngine {
                 if (log.isDebugEnabled()) log.debug("0 resource enlisted, no prepare needed");
 
             transaction.setStatus(Status.STATUS_PREPARED);
-            return;
+            return preparedResources;
         }
 
         // 1PC optimization
@@ -61,7 +61,7 @@ public class Preparer extends AbstractPhaseEngine {
             preparedResources.add(resourceHolder);
             if (log.isDebugEnabled()) log.debug("1 resource enlisted, no prepare needed (1PC)");
             transaction.setStatus(Status.STATUS_PREPARED);
-            return;
+            return preparedResources;
         }
 
         try {
@@ -73,6 +73,7 @@ public class Preparer extends AbstractPhaseEngine {
 
         transaction.setStatus(Status.STATUS_PREPARED);
         if (log.isDebugEnabled()) log.debug("successfully prepared " + preparedResources.size() + " resource(s)");
+        return preparedResources;
     }
 
     private void throwException(String message, PhaseException phaseException) throws BitronixRollbackException {
