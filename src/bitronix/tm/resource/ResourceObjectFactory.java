@@ -6,9 +6,8 @@ import org.slf4j.LoggerFactory;
 import javax.naming.spi.ObjectFactory;
 import javax.naming.*;
 import java.util.Hashtable;
-import java.util.Iterator;
 
-import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.utils.Decoder;
 
 /**
  * {@link bitronix.tm.resource.common.XAResourceProducer} object factory for JNDI references.
@@ -36,25 +35,9 @@ public class ResourceObjectFactory implements ObjectFactory {
         if (log.isDebugEnabled()) log.debug("getting registered resource with uniqueName '" + uniqueName + "'");
         Referenceable resource = ResourceRegistrar.get(uniqueName);
         if (resource == null)
-            throw new NamingException("no resource registered with uniqueName '" + uniqueName + "', available resources: " + availableResourcesAsString());
+            throw new NamingException("no resource registered with uniqueName '" + uniqueName + "', available resources: " + Decoder.collectResourcesNames(ResourceRegistrar.getResourcesUniqueNames()));
 
         return resource;
-    }
-
-    private String availableResourcesAsString() {
-        StringBuffer sb = new StringBuffer();
-        sb.append("[");
-
-        Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
-        while (it.hasNext()) {
-            String name = (String) it.next();
-            sb.append(name);
-            if (it.hasNext())
-                sb.append(", ");
-        }
-
-        sb.append("]");
-        return sb.toString();
     }
 
 }

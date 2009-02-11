@@ -153,28 +153,6 @@ public abstract class AbstractPhaseEngine {
     protected abstract Job createJob(XAResourceHolderState xaResourceHolderState);
 
     /**
-     * Create a String representation of a list of {@link bitronix.tm.resource.common.XAResourceHolder}s. This
-     * String will contain each resource's unique name.
-     * @param resources a list of {@link bitronix.tm.resource.common.XAResourceHolder}s.
-     * @return a String representation of the list.
-     */
-    protected String collectResourcesNames(List resources) {
-        StringBuffer sb = new StringBuffer();
-        sb.append("[");
-
-        for (int i = 0; i < resources.size(); i++) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) resources.get(i);
-            sb.append(xaResourceHolderState.getUniqueName());
-
-            if (i+1 < resources.size())
-                sb.append(", ");
-        }
-
-        sb.append("]");
-        return sb.toString();
-    }
-
-    /**
      * Log exceptions that happened during a phase failure.
      * @param ex the phase exception.
      */

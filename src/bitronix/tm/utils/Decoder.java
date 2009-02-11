@@ -2,10 +2,13 @@ package bitronix.tm.utils;
 
 import bitronix.tm.journal.TransactionLogHeader;
 import bitronix.tm.resource.common.XAStatefulHolder;
+import bitronix.tm.internal.XAResourceHolderState;
 
 import javax.transaction.Status;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
+import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * Constant to string decoder.
@@ -102,6 +105,29 @@ public class Decoder {
             case XAStatefulHolder.STATE_NOT_ACCESSIBLE: return "NOT_ACCESSIBLE";
             default: return "!invalid state (" + state + ")!";
         }
+    }
+
+    /**
+     * Create a String representation of a list of {@link bitronix.tm.resource.common.XAResourceHolder}s. This
+     * String will contain each resource's unique name.
+     * @param resources a list of {@link bitronix.tm.resource.common.XAResourceHolder}s.
+     * @return a String representation of the list.
+     */
+    public static String collectResourcesNames(Collection resources) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("[");
+
+        Iterator it = resources.iterator();
+        while (it.hasNext()) {
+            XAResourceHolderState resourceHolderState = (XAResourceHolderState) it.next();
+            sb.append(resourceHolderState.getUniqueName());
+
+            if (it.hasNext())
+                sb.append(", ");
+        }
+
+        sb.append("]");
+        return sb.toString();
     }
 
 }

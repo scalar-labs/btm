@@ -325,7 +325,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         } // for
 
         if (rolledBackResources.size() > 0)
-          throw new BitronixRollbackException("resource(s) " + BitronixRollbackException.buildResourceNamesString(rolledBackResources) + " unilaterally rolled back");
+          throw new BitronixRollbackException("resource(s) " + Decoder.collectResourcesNames(rolledBackResources) + " unilaterally rolled back");
     }
 
     /**

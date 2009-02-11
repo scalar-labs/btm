@@ -98,13 +98,13 @@ public class Committer extends AbstractPhaseEngine {
 
         if (!hazard && heuristicResources.size() == totalResourceCount)
             throw new BitronixHeuristicRollbackException(message + ":" + 
-                    " all resource(s) " + collectResourcesNames(heuristicResources) +
+                    " all resource(s) " + Decoder.collectResourcesNames(heuristicResources) +
                     " improperly unilaterally rolled back", phaseException);
         else
             throw new BitronixHeuristicMixedException(message + ":" +
-                    (errorResources.size() > 0 ? " resource(s) " + collectResourcesNames(errorResources) + " threw unexpected exception" : "") +
+                    (errorResources.size() > 0 ? " resource(s) " + Decoder.collectResourcesNames(errorResources) + " threw unexpected exception" : "") +
                     (errorResources.size() > 0 && heuristicResources.size() > 0 ? " and" : "") +
-                    (heuristicResources.size() > 0 ? " resource(s) " + collectResourcesNames(heuristicResources) + " improperly unilaterally rolled back" + (hazard ? " (or hazard happened)" : "") : ""), phaseException);
+                    (heuristicResources.size() > 0 ? " resource(s) " + Decoder.collectResourcesNames(heuristicResources) + " improperly unilaterally rolled back" + (hazard ? " (or hazard happened)" : "") : ""), phaseException);
     }
 
     protected Job createJob(XAResourceHolderState resourceHolder) {

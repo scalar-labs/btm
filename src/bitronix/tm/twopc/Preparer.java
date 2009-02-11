@@ -103,11 +103,11 @@ public class Preparer extends AbstractPhaseEngine {
 
         if (heuristicResources.size() > 0)
             throw new BitronixRollbackException(message + ":" +
-                    " resource(s) " + collectResourcesNames(heuristicResources) +
+                    " resource(s) " + Decoder.collectResourcesNames(heuristicResources) +
                     " unilaterally finished transaction branch before being asked to prepare", phaseException);
         else
             throw new BitronixRollbackException(message + ":" +
-                    " resource(s) " + collectResourcesNames(errorResources) +
+                    " resource(s) " + Decoder.collectResourcesNames(errorResources) +
                     " threw unexpected exception", phaseException);
     }
 
