@@ -14,6 +14,7 @@ import javax.transaction.Status;
 import javax.transaction.xa.XAException;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * Phase 2 Commit logic engine.
@@ -27,6 +28,7 @@ public class Committer extends AbstractPhaseEngine {
 
     private boolean onePhase;
     private List interestedResources;
+    private List committedResources = new ArrayList();
 
 
     public Committer(Executor executor) {
@@ -44,7 +46,7 @@ public class Committer extends AbstractPhaseEngine {
     public void commit(BitronixTransaction transaction, List interestedResources) throws HeuristicMixedException, HeuristicRollbackException, BitronixSystemException {
         XAResourceManager resourceManager = transaction.getResourceManager();
         if (resourceManager.size() == 0) {
-            transaction.setStatus(Status.STATUS_COMMITTING);
+            transaction.setStatus(Status.STATUS_COMMITTING); //TODO: there is a disk force here that could be avoided
             transaction.setStatus(Status.STATUS_COMMITTED);
             if (log.isDebugEnabled()) log.debug("phase 2 commit succeeded with no interested resource");
             return;
@@ -63,7 +65,21 @@ public class Committer extends AbstractPhaseEngine {
             throwException("transaction failed during commit of " + transaction, ex, interestedResources.size());
         }
 
-        transaction.setStatus(Status.STATUS_COMMITTED);
+        if (log.isDebugEnabled()) log.debug("phase 2 commit executed on resources " + Decoder.collectResourcesNames(committedResources));
+
+        List committedAndNotInterestedUniqueNames = new ArrayList();
+        committedAndNotInterestedUniqueNames.addAll(collectResourcesUniqueNames(committedResources));
+        List notInterestedResources = collectNotInterestedResources(resourceManager.getAllResources(), interestedResources);
+        committedAndNotInterestedUniqueNames.addAll(collectResourcesUniqueNames(notInterestedResources));
+
+        List committedAndNotInterestedResources = new ArrayList();
+        committedAndNotInterestedResources.addAll(committedResources);
+        committedAndNotInterestedResources.addAll(notInterestedResources);
+
+
+        if (log.isDebugEnabled()) log.debug("phase 2 commit succeeded on resources " + Decoder.collectResourcesNames(committedAndNotInterestedResources));
+
+        transaction.setStatus(Status.STATUS_COMMITTED, new HashSet(committedAndNotInterestedUniqueNames));
     }
 
     private void throwException(String message, PhaseException phaseException, int totalResourceCount) throws HeuristicMixedException, HeuristicRollbackException {
@@ -97,7 +113,7 @@ public class Committer extends AbstractPhaseEngine {
         }
 
         if (!hazard && heuristicResources.size() == totalResourceCount)
-            throw new BitronixHeuristicRollbackException(message + ":" + 
+            throw new BitronixHeuristicRollbackException(message + ":" +
                     " all resource(s) " + Decoder.collectResourcesNames(heuristicResources) +
                     " improperly unilaterally rolled back", phaseException);
         else
@@ -108,7 +124,7 @@ public class Committer extends AbstractPhaseEngine {
     }
 
     protected Job createJob(XAResourceHolderState resourceHolder) {
-        return new CommitJob(resourceHolder, onePhase);
+        return new CommitJob(resourceHolder, committedResources, onePhase);
     }
 
     protected boolean isParticipating(XAResourceHolderState xaResourceHolderState) {
@@ -123,9 +139,11 @@ public class Committer extends AbstractPhaseEngine {
 
     private static class CommitJob extends Job {
         private boolean onePhase;
+        private List committedResources;
 
-        public CommitJob(XAResourceHolderState resourceHolder, boolean onePhase) {
+        public CommitJob(XAResourceHolderState resourceHolder, List committedResources, boolean onePhase) {
             super(resourceHolder);
+            this.committedResources = committedResources;
             this.onePhase = onePhase;
         }
 
@@ -151,6 +169,7 @@ public class Committer extends AbstractPhaseEngine {
             try {
                 if (log.isDebugEnabled()) log.debug("committing resource " + resourceHolder + (onePhase ? " (with one-phase optimization)" : ""));
                 resourceHolder.getXAResource().commit(resourceHolder.getXid(), onePhase);
+                committedResources.add(resourceHolder);
                 if (log.isDebugEnabled()) log.debug("committed resource " + resourceHolder);
             } catch (XAException ex) {
                handleXAException(resourceHolder, ex);
@@ -170,7 +189,7 @@ public class Committer extends AbstractPhaseEngine {
                     throw xaException;
 
                 default:
-                    throw new BitronixXAException("resource reported " + Decoder.decodeXAExceptionErrorCode(xaException) + " when asked to commit transaction branch", XAException.XA_HEURHAZ, xaException);
+                    log.error("resource '" + failedResourceHolder.getUniqueName() + "' reported " + Decoder.decodeXAExceptionErrorCode(xaException) + " when asked to commit transaction branch", xaException);
             }
         }
 

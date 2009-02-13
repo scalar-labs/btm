@@ -255,14 +255,19 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         setStatus(Status.STATUS_ACTIVE);
     }
 
+
     public void setStatus(int status) throws BitronixSystemException {
+        setStatus(status, resourceManager.collectUniqueNames());
+    }
+
+    public void setStatus(int status, Set uniqueNames) throws BitronixSystemException {
         try {
             boolean force = (resourceManager.size() > 1) && (status == Status.STATUS_COMMITTING);
             if (log.isDebugEnabled()) log.debug("changing transaction status to " + Decoder.decodeStatus(status) + (force ? " (forced)" : ""));
 
             this.status = status;
             Journal journal = TransactionManagerServices.getJournal();
-            journal.log(status, resourceManager.getGtrid(), resourceManager.collectUniqueNames());
+            journal.log(status, resourceManager.getGtrid(), uniqueNames);
             if (force) {
                 journal.force();
             }

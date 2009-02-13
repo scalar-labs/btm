@@ -167,6 +167,31 @@ public abstract class AbstractPhaseEngine {
         }
     }
 
+    protected static Set collectResourcesUniqueNames(List resources) {
+        Set uniqueNames = new HashSet();
+
+        for (int i = 0; i < resources.size(); i++) {
+            XAResourceHolderState resourceHolderState = (XAResourceHolderState) resources.get(i);
+            String uniqueName = resourceHolderState.getUniqueName();
+            uniqueNames.add(uniqueName);
+        }
+
+        return uniqueNames;
+    }
+
+    protected static List collectNotInterestedResources(List allResources, List interestedResources) {
+        List result = new ArrayList();
+
+        for (int i = 0; i < allResources.size(); i++) {
+            XAResourceHolderState resourceHolderState = (XAResourceHolderState) allResources.get(i);
+
+            if (!interestedResources.contains(resourceHolderState))
+                result.add(resourceHolderState);
+        }
+
+        return result;
+    }
+
     private class JobsExecutionReport {
         private List exceptions;
         private List resources;

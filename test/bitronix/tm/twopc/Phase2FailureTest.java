@@ -42,14 +42,15 @@ public class Phase2FailureTest extends TestCase {
      * XAResource 2 resolution: commit throws exception XAException.XAER_RMERR
      *
      * Expected outcome:
-     *   TM fails on resource 2 commit
+     *   TM fails on resource 2 commit but does not report that via an exception
+     *   as the recoverer will clean that up
      * Expected TM events:
      *  2 XAResourcePrepareEvent, 2 XAResourceCommitEvent
      * Expected journal events:
-     *   ACTIVE, PREPARING, PREPARED, COMMITTING, UNKNOWN
+     *   ACTIVE, PREPARING, PREPARED, COMMITTING, COMMITTED
      * @throws Exception if any error happens.
      */
-    public void test() throws Exception {
+    public void testExpectNoHeuristic() throws Exception {
         tm.begin();
         tm.setTransactionTimeout(10); // TX must not timeout
 
@@ -63,20 +64,13 @@ public class Phase2FailureTest extends TestCase {
         final MockXAResource mockXAResource2 = (MockXAResource) mockXAConnection2.getXAResource();
         mockXAResource2.setCommitException(createXAException("resource 2 commit failed with XAER_RMERR", XAException.XAER_RMERR));
 
-        try {
-            tm.commit();
-            fail("expected HeuristicMixedException");
-        } catch (HeuristicMixedException ex) {
-            assertEquals("transaction failed during commit of a Bitronix Transaction with GTRID [", ex.getMessage().substring(0, 71));
-            int idx = ex.getMessage().indexOf(']');
-            assertEquals("], status=UNKNOWN, 2 resource(s) enlisted (started ", ex.getMessage().substring(idx, idx + 51));
-            assertTrue("got message <" + ex.getMessage() + ">", ex.getMessage().endsWith("resource(s) [pds2] improperly unilaterally rolled back (or hazard happened)"));
-        }
+        tm.commit();
 
         System.out.println(EventRecorder.dumpToString());
 
         int journalUnknownEventCount = 0;
         int journalCommittingEventCount = 0;
+        int journalCommittedEventCount = 0;
         int commitEventCount = 0;
         List events = EventRecorder.getOrderedEvents();
         for (int i = 0; i < events.size(); i++) {
@@ -94,9 +88,15 @@ public class Phase2FailureTest extends TestCase {
                 if (((JournalLogEvent) event).getStatus() == Status.STATUS_COMMITTING)
                     journalCommittingEventCount++;
             }
+
+            if (event instanceof JournalLogEvent) {
+                if (((JournalLogEvent) event).getStatus() == Status.STATUS_COMMITTED)
+                    journalCommittedEventCount++;
+            }
         }
         assertEquals("TM should have logged a COMMITTING status", 1, journalCommittingEventCount);
-        assertEquals("TM should have logged a UNKNOWN status", 1, journalUnknownEventCount);
+        assertEquals("TM should have logged a COMMITTED status", 1, journalCommittedEventCount);
+        assertEquals("TM should not have logged ant UNKNOWN status", 0, journalUnknownEventCount);
         assertEquals("TM haven't properly tried to commit", 2, commitEventCount);
     }
 

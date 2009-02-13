@@ -13,7 +13,6 @@ import bitronix.tm.resource.jdbc.PoolingDataSource;
 import junit.framework.TestCase;
 
 import javax.transaction.Status;
-import javax.transaction.SystemException;
 import javax.transaction.RollbackException;
 import javax.transaction.xa.XAException;
 import java.lang.reflect.Field;
@@ -72,19 +71,19 @@ public class Phase1FailureTest extends TestCase {
         try {
             tm.commit();
             fail("TM should have thrown an exception");
-        } catch (SystemException ex) {
-            assertEquals("transaction partially prepared and only partially rolled back. Some resources might be left in doubt !", ex.getMessage());
-
-            assertEquals("collected 2 exception(s):" + System.getProperty("line.separator") +
-                    " [pds2 - javax.transaction.xa.XAException(XAER_RMERR) - resource 2 prepare failed]" + System.getProperty("line.separator") +
-                    " [pds1 - bitronix.tm.internal.BitronixXAException(XA_HEURHAZ) - resource reported XAER_INVAL when asked to rollback transaction branch]", ex.getCause().getMessage());
+        } catch (RollbackException ex) {
+            assertTrue(ex.getMessage().matches("transaction failed to prepare: a Bitronix Transaction with GTRID \\[.*\\], status=ROLLEDBACK, 2 resource\\(s\\) enlisted .*"));
+            assertEquals("collected 1 exception(s):" + System.getProperty("line.separator") +
+                    " [pds2 - javax.transaction.xa.XAException(XAER_RMERR) - resource 2 prepare failed]", ex.getCause().getCause().getMessage());
         }
 
         System.out.println(EventRecorder.dumpToString());
 
-        // we should find a UNKNOWN status in the journal log
-        // and 2 prepare tries (1 successful for resource 1, 1 failed for resource 2)
-        // and 2 rollback tries (1 failed for resource 1, 1 successful for resource 2)
+        // we should find in the journal log:
+        //  2 prepare tries (1 successful for resource 1, 1 failed for resource 2)
+        //  2 rollback tries (1 failed for resource 1, 1 successful for resource 2)
+        // the rollabck error on resource 1 should not be reported to the code as it is the job
+        // of the recovery engine to clean it up and eventually report the heuristic
         int journalUnknownEventCount = 0;
         int prepareEventCount = 0;
         int rollbackEventCount = 0;
@@ -103,7 +102,7 @@ public class Phase1FailureTest extends TestCase {
                     journalUnknownEventCount++;
             }
         }
-        assertEquals("TM should have journaled 2 UNKNOWN status", 1, journalUnknownEventCount);
+        assertEquals("TM should have journaled 0 UNKNOWN status", 0, journalUnknownEventCount);
         assertEquals("TM haven't properly tried to prepare", 2, prepareEventCount);
         assertEquals("TM haven't properly tried to rollback", 2, rollbackEventCount);
     }

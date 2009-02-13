@@ -14,6 +14,7 @@ import javax.transaction.HeuristicCommitException;
 import javax.transaction.xa.XAException;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * Phase 1 & 2 Rollback logic engine.
@@ -26,6 +27,7 @@ public class Rollbacker extends AbstractPhaseEngine {
     private final static Logger log = LoggerFactory.getLogger(Rollbacker.class);
 
     private List interestedResources;
+    private List rolledbackResources = new ArrayList();
 
     public Rollbacker(Executor executor) {
         super(executor);
@@ -55,7 +57,21 @@ public class Rollbacker extends AbstractPhaseEngine {
             throwException("transaction failed during rollback of " + transaction, ex, interestedResources.size());
         }
 
-        transaction.setStatus(Status.STATUS_ROLLEDBACK);
+        if (log.isDebugEnabled()) log.debug("rollback executed on resources " + Decoder.collectResourcesNames(rolledbackResources));
+
+        List rolledbackAndNotInterestedUniqueNames = new ArrayList();
+        rolledbackAndNotInterestedUniqueNames.addAll(collectResourcesUniqueNames(rolledbackResources));
+        List notInterestedResources = collectNotInterestedResources(resourceManager.getAllResources(), interestedResources);
+        rolledbackAndNotInterestedUniqueNames.addAll(collectResourcesUniqueNames(notInterestedResources));
+
+        List rolledbackAndNotInterestedResources = new ArrayList();
+        rolledbackAndNotInterestedResources.addAll(rolledbackResources);
+        rolledbackAndNotInterestedResources.addAll(notInterestedResources);
+
+
+        if (log.isDebugEnabled()) log.debug("rollback succeeded on resources " + Decoder.collectResourcesNames(rolledbackAndNotInterestedResources));
+
+        transaction.setStatus(Status.STATUS_ROLLEDBACK, new HashSet(rolledbackAndNotInterestedUniqueNames));
     }
 
     private void throwException(String message, PhaseException phaseException, int totalResourceCount) throws HeuristicMixedException, HeuristicCommitException {
@@ -100,7 +116,7 @@ public class Rollbacker extends AbstractPhaseEngine {
     }
 
     protected Job createJob(XAResourceHolderState resourceHolder) {
-        return new RollbackJob(resourceHolder);
+        return new RollbackJob(resourceHolder, rolledbackResources);
     }
 
     protected boolean isParticipating(XAResourceHolderState xaResourceHolderState) {
@@ -113,8 +129,11 @@ public class Rollbacker extends AbstractPhaseEngine {
     }
 
     private static class RollbackJob extends Job {
-        public RollbackJob(XAResourceHolderState resourceHolder) {
+        List rolledbackResources;
+
+        public RollbackJob(XAResourceHolderState resourceHolder, List rolledbackResources) {
             super(resourceHolder);
+            this.rolledbackResources = rolledbackResources;
         }
 
         public void run() {
@@ -131,6 +150,7 @@ public class Rollbacker extends AbstractPhaseEngine {
             try {
                 if (log.isDebugEnabled()) log.debug("trying to rollback resource " + resourceHolder);
                 resourceHolder.getXAResource().rollback(resourceHolder.getXid());
+                rolledbackResources.add(resourceHolder);
                 if (log.isDebugEnabled()) log.debug("rolled back resource " + resourceHolder);
             } catch (XAException ex) {
                 handleXAException(resourceHolder, ex);
@@ -150,7 +170,7 @@ public class Rollbacker extends AbstractPhaseEngine {
                     throw xaException;
 
                 default:
-                    throw new BitronixXAException("resource reported " + Decoder.decodeXAExceptionErrorCode(xaException) + " when asked to rollback transaction branch", XAException.XA_HEURHAZ, xaException);
+                    log.error("resource '" + failedResourceHolder.getUniqueName() + "' reported " + Decoder.decodeXAExceptionErrorCode(xaException) + " when asked to rollback transaction branch", xaException);
             }
         }
 
