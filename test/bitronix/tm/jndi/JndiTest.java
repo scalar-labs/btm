@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.NameNotFoundException;
 import java.util.Hashtable;
 
 import bitronix.tm.TransactionManagerServices;
@@ -11,13 +12,7 @@ import bitronix.tm.BitronixTransactionManager;
 import bitronix.tm.mock.resource.jdbc.MockXADataSource;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lorban
- * Date: 24 mars 2008
- * Time: 18:44:31
- * To change this template use File | Settings | File Templates.
- */
+
 public class JndiTest extends TestCase {
 
     private BitronixTransactionManager transactionManager;
@@ -42,7 +37,14 @@ public class JndiTest extends TestCase {
         Context ctx = new InitialContext(env);
 
         assertTrue(transactionManager == ctx.lookup("java:comp/UserTransaction"));
-        assertNull(ctx.lookup("aaa"));
+
+        try {
+            ctx.lookup("aaa");
+            fail("expected NameNotFoundException");
+        } catch (NameNotFoundException ex) {
+            assertEquals("unable to find a bound object at name 'aaa'", ex.getMessage());
+        }
+
         assertTrue(pds == ctx.lookup("jdbc/pds"));
 
         ctx.close();
@@ -59,9 +61,23 @@ public class JndiTest extends TestCase {
         env.put(Context.INITIAL_CONTEXT_FACTORY, BitronixInitialContextFactory.class.getName());
         Context ctx = new InitialContext(env);
 
-        assertNull(ctx.lookup("java:comp/UserTransaction"));
+
+        try {
+            ctx.lookup("java:comp/UserTransaction");
+            fail("expected NameNotFoundException");
+        } catch (NameNotFoundException ex) {
+            assertEquals("unable to find a bound object at name 'java:comp/UserTransaction'", ex.getMessage());
+        }
+
+
         assertTrue(transactionManager == ctx.lookup("TM"));
-        assertNull(ctx.lookup("aaa"));
+
+        try {
+            ctx.lookup("aaa");
+            fail("expected NameNotFoundException");
+        } catch (NameNotFoundException ex) {
+            assertEquals("unable to find a bound object at name 'aaa'", ex.getMessage());
+        }
 
         ctx.close();
     }
