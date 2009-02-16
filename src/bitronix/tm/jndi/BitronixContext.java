@@ -32,7 +32,7 @@ public class BitronixContext implements Context {
         userTransactionName = TransactionManagerServices.getConfiguration().getJndiUserTransactionName();
         if (userTransactionName == null)
             userTransactionName = DEFAULT_USER_TRANSACTION_NAME;
-        if (log.isDebugEnabled()) log.debug("binding transaction manager under name '" + userTransactionName + "'");
+        if (log.isDebugEnabled()) log.debug("binding transaction manager at name '" + userTransactionName + "'");
     }
 
     private void checkClosed() throws ServiceUnavailableException {
@@ -51,9 +51,16 @@ public class BitronixContext implements Context {
     public Object lookup(String s) throws NamingException {
         checkClosed();
         if (log.isDebugEnabled()) log.debug("looking up '" + s + "'");
+
+        Object o;
         if (userTransactionName.equals(s))
-            return TransactionManagerServices.getTransactionManager();
-        return ResourceRegistrar.get(s);
+            o = TransactionManagerServices.getTransactionManager();
+        else
+            o = ResourceRegistrar.get(s);
+
+        if (o == null)
+            throw new NameNotFoundException("unable to find a bound object at name '" + s + "'");
+        return o;
     }
 
     public String toString() {
