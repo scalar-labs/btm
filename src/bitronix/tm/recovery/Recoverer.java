@@ -102,7 +102,11 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             }
 
             // 1. call recover on all known resources
-            Set unrecoverableResourceNames = recoverAllResources();
+            Set inFlightGtrids = new HashSet();
+            if (TransactionManagerServices.isTransactionManagerRunning())
+                inFlightGtrids = TransactionManagerServices.getTransactionManager().getInFlightTransactions().keySet();
+
+            Set unrecoverableResourceNames = recoverAllResources(inFlightGtrids);
 
             // 1.1. unregister unrecoverable resources
             Iterator itUnrecoverable = unrecoverableResourceNames.iterator();
@@ -169,9 +173,10 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     /**
      * Recover all configured resources and fill the <code>recoveredXidSets</code> with all recovered XIDs.
      * Step 1.
+     * @param inFlightGtrids a Set of {@link Uid}s that should not be recovered because they're still in-flight.
      * @return a Set of unique resource names that failed recovery.
      */
-    private Set recoverAllResources() {
+    private Set recoverAllResources(Set inFlightGtrids) {
         Set unrecoverableResourceNames = new HashSet();
 
         Iterator it = registeredResources.entrySet().iterator();
@@ -184,6 +189,10 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 if (log.isDebugEnabled()) log.debug("performing recovery on " + uniqueName);
                 Set xids = recover(producer);
                 if (log.isDebugEnabled()) log.debug("recovered " + xids.size() + " XID(s) from resource " + uniqueName);
+
+                xids = filterOutInFlightXids(xids, inFlightGtrids);
+                if (log.isDebugEnabled()) log.debug(xids.size() + " XID(s) from resource " + uniqueName + " are not part of an in-flight transaction");
+
                 recoveredXidSets.put(uniqueName, xids);
             } catch (XAException ex) {
                 boolean failFast = !isRetryUnrecoverableResourcesRegistrationEnabled();
@@ -204,6 +213,24 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         if (log.isDebugEnabled()) log.debug((registeredResources.size() - unrecoverableResourceNames.size()) + " resource(s) recovered");
 
         return unrecoverableResourceNames;
+    }
+
+    private Set filterOutInFlightXids(Set xids, Set inFlightGtrids) {
+        Set result = new HashSet();
+
+        Iterator it = xids.iterator();
+        while (it.hasNext()) {
+            BitronixXid xid = (BitronixXid) it.next();
+            if (!inFlightGtrids.contains(xid.getGlobalTransactionIdUid())) {
+                if (log.isDebugEnabled()) log.debug("keeping not in-flight XID " + xid);
+                result.add(xid);
+            }
+            else {
+                if (log.isDebugEnabled()) log.debug("skipping in-flight XID " + xid);
+            }
+        }
+
+        return result;
     }
 
     private boolean isRetryUnrecoverableResourcesRegistrationEnabled() {
