@@ -28,6 +28,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     private int status = Status.STATUS_NO_TRANSACTION;
     private XAResourceManager resourceManager;
     private Scheduler synchronizationScheduler = new Scheduler();
+    private List transactionStatusListeners = new ArrayList();
     private boolean timeout = false;
     private Date timeoutDate;
 
@@ -265,6 +266,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             boolean force = (resourceManager.size() > 1) && (status == Status.STATUS_COMMITTING);
             if (log.isDebugEnabled()) log.debug("changing transaction status to " + Decoder.decodeStatus(status) + (force ? " (forced)" : ""));
 
+            int oldStatus = this.status;
             this.status = status;
             Journal journal = TransactionManagerServices.getJournal();
             journal.log(status, resourceManager.getGtrid(), uniqueNames);
@@ -274,10 +276,28 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
             if (status == Status.STATUS_ACTIVE)
                 ManagementRegistrar.register("bitronix.tm:type=Transaction,Gtrid=" + resourceManager.getGtrid(), this);
+
+            fireTransactionStatusChangedEvent(oldStatus, status);
         } catch (IOException ex) {
             // if we cannot log, the TM must stop managing TX until the problem is fixed
             throw new BitronixSystemException("error logging status", ex);
         }
+    }
+
+    private void fireTransactionStatusChangedEvent(int oldStatus, int newStatus) {
+        if (log.isDebugEnabled()) log.debug("transaction status is changing from " + Decoder.decodeStatus(oldStatus) + " to " +
+                Decoder.decodeStatus(newStatus) + " - executing " + transactionStatusListeners.size() + " listener(s)");
+        
+        for (int i = 0; i < transactionStatusListeners.size(); i++) {
+            TransactionStatusChangeListener listener = (TransactionStatusChangeListener) transactionStatusListeners.get(i);
+            if (log.isDebugEnabled()) log.debug("executing TransactionStatusChangeListener " + listener);
+            listener.statusChanged(oldStatus, newStatus);
+            if (log.isDebugEnabled()) log.debug("executed TransactionStatusChangeListener " + listener);
+        }
+    }
+
+    public void addTransactionStatusChangeListener(TransactionStatusChangeListener listener) {
+        transactionStatusListeners.add(listener);
     }
 
     public int hashCode() {
