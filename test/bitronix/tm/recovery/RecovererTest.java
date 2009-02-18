@@ -2,13 +2,20 @@ package bitronix.tm.recovery;
 
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.BitronixTransactionManager;
+import bitronix.tm.BitronixTransaction;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;
 import bitronix.tm.internal.BitronixXAException;
+import bitronix.tm.internal.TransactionStatusChangeListener;
 import bitronix.tm.journal.Journal;
 import bitronix.tm.mock.resource.MockXAResource;
 import bitronix.tm.mock.resource.MockXid;
+import bitronix.tm.mock.resource.MockJournal;
 import bitronix.tm.mock.resource.jdbc.MockXADataSource;
+import bitronix.tm.mock.events.EventRecorder;
+import bitronix.tm.mock.events.Event;
+import bitronix.tm.mock.events.JournalLogEvent;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.resource.common.ResourceBean;
@@ -25,6 +32,9 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.List;
+import java.sql.Connection;
+import java.lang.reflect.Field;
 
 /**
  * <p></p>
@@ -265,6 +275,62 @@ public class RecovererTest extends TestCase {
         assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
         assertEquals(0, TransactionManagerServices.getRecoverer().getCommittedCount());
         assertEquals(0, TransactionManagerServices.getRecoverer().getRolledbackCount());
+    }
+
+    boolean listenerExecuted = false;
+    public void testBackgroundRecovererSkippingInFlightTransactions() throws Exception {
+        // change disk journal into mock journal
+        Field journalField = TransactionManagerServices.class.getDeclaredField("journal");
+        journalField.setAccessible(true);
+        journalField.set(TransactionManagerServices.class, new MockJournal());
+
+        pds.setMaxPoolSize(2);
+        BitronixTransactionManager btm = TransactionManagerServices.getTransactionManager();
+        final Recoverer recoverer = TransactionManagerServices.getRecoverer();
+
+        try {
+            btm.begin();
+
+            BitronixTransaction tx = btm.getCurrentTransaction();
+            tx.addTransactionStatusChangeListener(new TransactionStatusChangeListener() {
+                public void statusChanged(int oldStatus, int newStatus) {
+                    if (newStatus != Status.STATUS_COMMITTING)
+                        return;
+
+                    recoverer.run();
+                    assertEquals(0, recoverer.getCommittedCount());
+                    assertEquals(0, recoverer.getRolledbackCount());
+                    assertNull(recoverer.getCompletionException());
+                    listenerExecuted = true;
+                }
+            });
+
+            Connection c = pds.getConnection();
+            c.createStatement();
+            c.close();
+    
+            xaResource.addInDoubtXid(new MockXid(new byte[] {0, 1, 2}, tx.getResourceManager().getGtrid().getArray(), BitronixXid.FORMAT_ID));
+
+            btm.commit();
+        }
+        finally {
+            btm.shutdown();
+        }
+
+        assertTrue("recoverer did not run between phases 1 and 2", listenerExecuted);
+
+        int committedCount = 0;
+
+        List events = EventRecorder.getOrderedEvents();
+        for (int i = 0; i < events.size(); i++) {
+            Event event = (Event) events.get(i);
+            if (event instanceof JournalLogEvent) {
+                if (((JournalLogEvent) event).getStatus() == Status.STATUS_COMMITTED)
+                    committedCount++;
+            }
+        }
+
+        assertEquals("TX has been committed more or less times than just once", 1, committedCount);
     }
 
 }
