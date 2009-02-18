@@ -3,6 +3,7 @@ package bitronix.tm.twopc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import bitronix.tm.BitronixTransaction;
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.twopc.executor.Executor;
 import bitronix.tm.twopc.executor.Job;
@@ -189,7 +190,15 @@ public class Committer extends AbstractPhaseEngine {
                     throw xaException;
 
                 default:
-                    log.error("resource '" + failedResourceHolder.getUniqueName() + "' reported " + Decoder.decodeXAExceptionErrorCode(xaException) + " when asked to commit transaction branch", xaException);
+                    if (TransactionManagerServices.getConfiguration().getBackgroundRecoveryInterval() > 0) {
+                        log.warn("resource '" + failedResourceHolder.getUniqueName() + "' reported " + Decoder.decodeXAExceptionErrorCode(xaException) +
+                                " when asked to commit transaction branch. Transaction is prepared and will commit via recovery service when resource availability allows.", xaException);
+                    }
+                    else {
+                        log.error("resource '" + failedResourceHolder.getUniqueName() + "' reported " + Decoder.decodeXAExceptionErrorCode(xaException) +
+                                " when asked to commit transaction branch. Transaction is prepared but won't commit until you restart the transaction manager. " +
+                                "Consider enabling the background recoverer by setting 'backgroundRecoveryInterval' to a value above 0.", xaException);
+                    }
             }
         }
 
