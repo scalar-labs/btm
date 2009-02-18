@@ -126,7 +126,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 if (log.isDebugEnabled()) log.debug("will not retry unrecoverable resources registration");
 
             // 2. commit dangling COMMITTING transactions
-            Set committedGtrids = commitDanglingTransactions();
+            Set committedGtrids = commitDanglingTransactions(inFlightGtrids);
             committedCount = committedGtrids.size();
 
             // 3. rollback any remaining recovered transaction
@@ -263,10 +263,11 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     /**
      * Commit transactions that have a dangling COMMITTING record in the journal.
      * Step 2.
+     * @param inFlightGtrids a Set of {@link Uid}s that should not be recovered because they're still in-flight.
      * @return a Set of all committed GTRIDs encoded as strings.
      * @throws java.io.IOException if there is an I/O error reading the journal.
      */
-    private Set commitDanglingTransactions() throws IOException {
+    private Set commitDanglingTransactions(Set inFlightGtrids) throws IOException {
         Set committedGtrids = new HashSet();
 
         Map danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
@@ -280,7 +281,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             Set uniqueNames = tlog.getUniqueNames();
             Set danglingTransactions = getDanglingTransactionsInRecoveredXids(uniqueNames, tlog.getGtrid());
 
-            if (danglingTransactions.size() > 0) {
+            if (!inFlightGtrids.contains(gtrid)) {
                 if (log.isDebugEnabled()) log.debug("committing dangling transaction with GTRID " + gtrid);
                 commit(danglingTransactions);
                 if (log.isDebugEnabled()) log.debug("committed dangling transaction with GTRID " + gtrid);
@@ -298,7 +299,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 }
             }
             else {
-                if (log.isDebugEnabled()) log.debug("no dangling transaction with GTRID " + gtrid);
+                if (log.isDebugEnabled()) log.debug("skipping in-flight transaction with GTRID " + gtrid);
             }
         }
         if (log.isDebugEnabled()) log.debug("committed " + committedGtrids.size() + " dangling transaction(s)");
