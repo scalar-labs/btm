@@ -279,20 +279,26 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
 
             Set uniqueNames = tlog.getUniqueNames();
             Set danglingTransactions = getDanglingTransactionsInRecoveredXids(uniqueNames, tlog.getGtrid());
-            if (log.isDebugEnabled()) log.debug("committing dangling transaction with GTRID " + gtrid);
-            commit(danglingTransactions);
-            if (log.isDebugEnabled()) log.debug("committed dangling transaction with GTRID " + gtrid);
-            committedGtrids.add(gtrid);
 
-            Set participatingUniqueNames = filterParticipatingUniqueNamesInRecoveredXids(uniqueNames);
+            if (danglingTransactions.size() > 0) {
+                if (log.isDebugEnabled()) log.debug("committing dangling transaction with GTRID " + gtrid);
+                commit(danglingTransactions);
+                if (log.isDebugEnabled()) log.debug("committed dangling transaction with GTRID " + gtrid);
+                committedGtrids.add(gtrid);
 
-            if (participatingUniqueNames.size() > 0) {
-                if (log.isDebugEnabled()) log.debug("updating journal's transaction with GTRID " + gtrid + " status to COMMITTED for names [" + buildUniqueNamesString(participatingUniqueNames) + "]");
-                TransactionManagerServices.getJournal().log(Status.STATUS_COMMITTED, tlog.getGtrid(), participatingUniqueNames);
+                Set participatingUniqueNames = filterParticipatingUniqueNamesInRecoveredXids(uniqueNames);
+
+                if (participatingUniqueNames.size() > 0) {
+                    if (log.isDebugEnabled()) log.debug("updating journal's transaction with GTRID " + gtrid + " status to COMMITTED for names [" + buildUniqueNamesString(participatingUniqueNames) + "]");
+                    TransactionManagerServices.getJournal().log(Status.STATUS_COMMITTED, tlog.getGtrid(), participatingUniqueNames);
+                }
+                else {
+                    if (log.isDebugEnabled()) log.debug("not updating journal's transaction with GTRID " + gtrid + " status to COMMITTED as no resource could be found (incremental recovery will need to clean this)");
+                    committedGtrids.remove(gtrid);
+                }
             }
             else {
-                if (log.isDebugEnabled()) log.debug("not updating journal's transaction with GTRID " + gtrid + " status to COMMITTED as no resource could be found (incremental recovery will need to clean this)");
-                committedGtrids.remove(gtrid);
+                if (log.isDebugEnabled()) log.debug("no dangling transaction with GTRID " + gtrid);
             }
         }
         if (log.isDebugEnabled()) log.debug("committed " + committedGtrids.size() + " dangling transaction(s)");
