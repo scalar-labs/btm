@@ -37,6 +37,12 @@ public class MockXid implements Xid {
         this.gtrid = gtrid;
     }
 
+    public MockXid(byte[] bqual, byte[] gtrid, int formatId) {
+        this.bqual = bqual;
+        this.gtrid = gtrid;
+        this.formatId = formatId;
+    }
+
     public int getFormatId() {
         return formatId;
     }
