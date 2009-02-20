@@ -192,9 +192,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @return a map of BitronixTransaction objects using Uid as key and BitronixTransaction as value.
      */
     public Map getInFlightTransactions() {
-        synchronized (inFlightTransactions) {
-            return new HashMap(inFlightTransactions);
-        }
+        return inFlightTransactions;
     }
 
     /**
@@ -221,12 +219,15 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     public void dumpTransactionContexts() {
         if (log.isDebugEnabled()) {
             if (log.isDebugEnabled()) log.debug("dumping " + inFlightTransactions.size() + " transaction context(s)");
-            Iterator it = getInFlightTransactions().entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry entry = (Map.Entry) it.next();
-                BitronixTransaction tx = (BitronixTransaction) entry.getValue();
-                if (log.isDebugEnabled()) log.debug(tx.toString());
-            }
+            Map inFlightTransactions = getInFlightTransactions();
+            synchronized (inFlightTransactions) {
+                Iterator it = inFlightTransactions.entrySet().iterator();
+                while (it.hasNext()) {
+                    Map.Entry entry = (Map.Entry) it.next();
+                    BitronixTransaction tx = (BitronixTransaction) entry.getValue();
+                    if (log.isDebugEnabled()) log.debug(tx.toString());
+                }
+            } // synchronized (inFlightTransactions)
         } // if
     }
 

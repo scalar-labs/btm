@@ -101,11 +101,22 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 registeredResources.put(name, ResourceRegistrar.get(name));
             }
 
-            // 1. call recover on all known resources
+            // get list of in-flight transactions that should not be recovered and the list 
+            // of dangling journal records should be collected atomically to avoid race conditions
+            Map danglingRecords;
             Set inFlightGtrids = new HashSet();
-            if (TransactionManagerServices.isTransactionManagerRunning())
-                inFlightGtrids = TransactionManagerServices.getTransactionManager().getInFlightTransactions().keySet();
+            if (TransactionManagerServices.isTransactionManagerRunning()) {
+                Map inFlightTransactions = TransactionManagerServices.getTransactionManager().getInFlightTransactions();
+                synchronized (inFlightTransactions) {
+                    inFlightGtrids = inFlightTransactions.keySet();
+                    danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
+                }
+            }
+            else {
+                danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
+            }
 
+            // 1. call recover on all known resources
             Set unrecoverableResourceNames = recoverAllResources(inFlightGtrids);
 
             // 1.1. unregister unrecoverable resources
@@ -126,7 +137,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 if (log.isDebugEnabled()) log.debug("will not retry unrecoverable resources registration");
 
             // 2. commit dangling COMMITTING transactions
-            Set committedGtrids = commitDanglingTransactions(inFlightGtrids);
+            Set committedGtrids = commitDanglingTransactions(inFlightGtrids, danglingRecords);
             committedCount = committedGtrids.size();
 
             // 3. rollback any remaining recovered transaction
@@ -264,13 +275,13 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * Commit transactions that have a dangling COMMITTING record in the journal.
      * Step 2.
      * @param inFlightGtrids a Set of {@link Uid}s that should not be recovered because they're still in-flight.
+     * @param danglingRecords a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value.
      * @return a Set of all committed GTRIDs encoded as strings.
      * @throws java.io.IOException if there is an I/O error reading the journal.
      */
-    private Set commitDanglingTransactions(Set inFlightGtrids) throws IOException {
+    private Set commitDanglingTransactions(Set inFlightGtrids, Map danglingRecords) throws IOException {
         Set committedGtrids = new HashSet();
 
-        Map danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
         if (log.isDebugEnabled()) log.debug("found " + danglingRecords.size() + " dangling record(s) in journal");
         Iterator it = danglingRecords.entrySet().iterator();
         while (it.hasNext()) {
