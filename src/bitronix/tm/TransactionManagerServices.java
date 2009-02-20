@@ -146,6 +146,14 @@ public class TransactionManagerServices {
     }
 
     /**
+     * Check if the task scheduler has started.
+     * @return true if the task scheduler has started.
+     */
+    public synchronized static boolean isTaskSchedulerRunning() {
+        return taskScheduler != null;
+    }
+
+    /**
      * Clear services references. Called at the end of the shutdown procedure.
      */
     protected static synchronized void clear() {

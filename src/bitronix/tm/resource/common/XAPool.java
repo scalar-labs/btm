@@ -113,7 +113,10 @@ public class XAPool implements StateChangeListener {
                 if (log.isDebugEnabled()) log.debug("ignoring catched exception while closing connection " + xaStatefulHolder, ex);
             }
         }
-        TransactionManagerServices.getTaskScheduler().cancelPoolShrinking(this);
+
+        if (TransactionManagerServices.isTaskSchedulerRunning())
+            TransactionManagerServices.getTaskScheduler().cancelPoolShrinking(this);
+
         objects.clear();
     }
 
@@ -269,7 +272,7 @@ public class XAPool implements StateChangeListener {
             XAResourceHolderState xaResourceHolderState = xaResourceHolder.getXAResourceHolderState();
             if (xaResourceHolderState != null) {
                 // compare GTRIDs
-                BitronixXid bitronixXid = (BitronixXid) xaResourceHolderState.getXid();
+                BitronixXid bitronixXid = xaResourceHolderState.getXid();
                 Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
                 if (log.isDebugEnabled()) log.debug("NOT_ACCESSIBLE xa resource GTRID: " + resourceGtrid);
                 if (currentTxGtrid.equals(resourceGtrid)) {

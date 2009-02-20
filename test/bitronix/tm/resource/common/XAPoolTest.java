@@ -2,6 +2,9 @@ package bitronix.tm.resource.common;
 
 import bitronix.tm.mock.resource.jdbc.MockXADataSource;
 import bitronix.tm.utils.CryptoEngine;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.BitronixTransactionManager;
 import junit.framework.TestCase;
 
 /**
@@ -28,6 +31,21 @@ public class XAPoolTest extends TestCase {
         MockXADataSource xads = (MockXADataSource) xaPool.getXAFactory();
         assertEquals("java", xads.getUserName());
         assertEquals("java", xads.getPassword());
+    }
+
+    public void testNoRestartOfTaskSchedulerDuringClose() throws Exception {
+        PoolingDataSource pds = new PoolingDataSource();
+        pds.setClassName(MockXADataSource.class.getName());
+        pds.setMaxPoolSize(1);
+        pds.setUniqueName("mock");
+        pds.init();
+
+        BitronixTransactionManager btm = TransactionManagerServices.getTransactionManager();
+        btm.shutdown();
+
+        pds.close();
+
+        assertFalse(TransactionManagerServices.isTaskSchedulerRunning());
     }
 
 }
