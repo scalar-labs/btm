@@ -3,7 +3,6 @@ package bitronix.tm.resource.common;
 import bitronix.tm.internal.XAResourceHolderState;
 
 import javax.transaction.xa.XAResource;
-import java.util.List;
 
 /**
  * {@link XAResource} wrappers must implement this interface. It defines a way to get access to the transactional
@@ -32,15 +31,24 @@ public interface XAResourceHolder extends XAStatefulHolder {
 
     /**
      * Set the {@link XAResourceHolderState} of this wrapped resource.
-     * @param xaResourceHolderState the {@link XAResourceHolderState}.
+     * @param xaResourceHolderState the {@link XAResourceHolderState} to set.
      */
     public void setXAResourceHolderState(XAResourceHolderState xaResourceHolderState);
 
+
     /**
-     * Get a {@link List} of all existing {@link XAResourceHolderState}s for this {@link XAResourceHolder}. Basically
-     * there is one entry in the list per in-flight transaction in which this {@link XAResource} is enlisted.
-     * @return a {@link List} of all existing {@link XAResourceHolderState}s for this {@link XAResourceHolder}.
+     * Remove the specified state from this wrapped resource.
+     * @param xaResourceHolderState the {@link XAResourceHolderState} to remove.
+     * @return true if the state actually existed before removal, false otherwise.
      */
-    public List getAllXAResourceHolderStates();
+    public boolean removeXAResourceHolderState(XAResourceHolderState xaResourceHolderState);
+
+    /**
+     * Check if this {@link XAResourceHolder} contains a state for a specific {@link XAResourceHolder}.
+     * In other words: has the {@link XAResourceHolder}'s {@link XAResource} been enlisted in some transaction ?
+     * @param xaResourceHolder the {@link XAResourceHolder} to look for.
+     * @return true if the {@link XAResourceHolder} is enlisted in some transaction, false otherwise.
+     */
+    public boolean hasStateForXAResource(XAResourceHolder xaResourceHolder);
 
 }

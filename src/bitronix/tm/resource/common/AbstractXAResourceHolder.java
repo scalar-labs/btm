@@ -4,6 +4,7 @@ import bitronix.tm.internal.XAResourceHolderState;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,34 +22,51 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
 
     private final static Logger log = LoggerFactory.getLogger(AbstractXAResourceHolder.class);
 
+    private final List xaResourceHolderStates = Collections.synchronizedList(new ArrayList());
     private XAResourceHolderState currentXaResourceHolderState;
-    private List xaResourceHolderStates = new ArrayList();
 
     public XAResourceHolderState getXAResourceHolderState() {
         return currentXaResourceHolderState;
     }
 
     public void setXAResourceHolderState(XAResourceHolderState xaResourceHolderState) {
-        if (log.isDebugEnabled()) log.debug("setting default XAResourceHolderState [" + xaResourceHolderState + "] on " + this);
-        if (xaResourceHolderState != null) {
-            this.currentXaResourceHolderState = xaResourceHolderState;
-            if (!xaResourceHolderStates.contains(xaResourceHolderState)) {
-                if (log.isDebugEnabled()) log.debug("XAResourceHolderState previously unknown, adding it to the list");
-                this.xaResourceHolderStates.add(xaResourceHolderState);
+        synchronized (xaResourceHolderStates) {
+            if (log.isDebugEnabled()) log.debug("setting default XAResourceHolderState [" + xaResourceHolderState + "] on " + this);
+            if (xaResourceHolderState != null) {
+                this.currentXaResourceHolderState = xaResourceHolderState;
+                if (!xaResourceHolderStates.contains(xaResourceHolderState)) {
+                    if (log.isDebugEnabled()) log.debug("XAResourceHolderState previously unknown, adding it to the list");
+                    this.xaResourceHolderStates.add(xaResourceHolderState);
+                }
             }
-        }
-        else {
-            if (currentXaResourceHolderState != null) {
-                xaResourceHolderStates.remove(currentXaResourceHolderState);
-                this.currentXaResourceHolderState = null;
+            else {
+                if (currentXaResourceHolderState != null) {
+                    xaResourceHolderStates.remove(currentXaResourceHolderState);
+                    this.currentXaResourceHolderState = null;
+                }
+                else
+                    log.warn("currentXaResourceHolderState is already null! Bug ?");
             }
-            else
-                log.warn("currentXaResourceHolderState is already null! Bug ?");
         }
     }
 
-    public List getAllXAResourceHolderStates() {
-        return xaResourceHolderStates;
+    public boolean removeXAResourceHolderState(XAResourceHolderState xaResourceHolderState) {
+        return xaResourceHolderStates.remove(xaResourceHolderState);
+    }
+
+    public boolean hasStateForXAResource(XAResourceHolder xaResourceHolder) {
+        synchronized (xaResourceHolderStates) {
+            for (int i = 0; i < xaResourceHolderStates.size(); i++) {
+                XAResourceHolderState otherXaResourceHolderState = (XAResourceHolderState) xaResourceHolderStates.get(i);
+                if (otherXaResourceHolderState.getXAResource() == xaResourceHolder.getXAResource()) {
+                    if (log.isDebugEnabled()) log.debug("resource " + xaResourceHolder + " is enlisted in another transaction with " + otherXaResourceHolderState.getXid().toString());
+                    return true;
+                }
+            }
+
+            if (log.isDebugEnabled()) log.debug("resource not enlisted in any transaction: " + xaResourceHolder);
+            return false;
+        }
     }
 
     /**

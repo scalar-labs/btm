@@ -187,17 +187,7 @@ public class TransactionContextHelper {
             return false;
         }
 
-        List xaResourceHolderStates = xaResourceHolder.getAllXAResourceHolderStates();
-        for (int i = 0; i < xaResourceHolderStates.size(); i++) {
-            XAResourceHolderState otherXaResourceHolderState = (XAResourceHolderState) xaResourceHolderStates.get(i);
-            if (otherXaResourceHolderState.getXAResource() == xaResourceHolder.getXAResource()) {
-                if (log.isDebugEnabled()) log.debug("resource " + xaResourceHolder + " is enlisted in another transaction with " + otherXaResourceHolderState.getXid().toString());
-                return true;
-            }
-        }
-
-        if (log.isDebugEnabled()) log.debug("resource not enlisted in any transaction: " + xaResourceHolder);
-        return false;
+        return xaResourceHolder.hasStateForXAResource(xaResourceHolder);
     }
 
     private static boolean isEnlistedInSomeTransaction(XAStatefulHolder xaStatefulHolder) throws BitronixSystemException {
