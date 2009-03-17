@@ -170,7 +170,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         int oldState = getState();
         setState(STATE_ACCESSIBLE);
         if (oldState == STATE_IN_POOL) {
-            if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state STATE_IN_POOL, testing it");
+            if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state IN_POOL, testing it");
             testConnection(connection);
             applyIsolationLevel();
         }
