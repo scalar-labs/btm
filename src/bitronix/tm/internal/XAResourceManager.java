@@ -220,7 +220,7 @@ public class XAResourceManager {
             // then the XID is changed.
             boolean mightHaveMore = true;
             while (mightHaveMore)
-                mightHaveMore = xaResourceHolderState.getXAResourceHolder().getAllXAResourceHolderStates().remove(xaResourceHolderState);
+                mightHaveMore = xaResourceHolderState.getXAResourceHolder().removeXAResourceHolderState(xaResourceHolderState);
 
             it.remove();
         }
