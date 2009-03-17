@@ -116,10 +116,10 @@ public class TransactionContextHelper {
             } else {
                 throw new BitronixSystemException("cannot close a resource when its XAResource is taking part in an unfinished global transaction");
             }
-        } else if (bean.getDeferConnectionRelease()) {
+        }
+        else if (bean.getDeferConnectionRelease()) {
             // global mode, defer connection requeuing
             if (log.isDebugEnabled()) log.debug("deferring release to pool of " + xaStatefulHolder);
-            xaStatefulHolder.setState(XAResourceHolder.STATE_NOT_ACCESSIBLE);
 
             if (!TransactionContextHelper.isAlreadyRegisteredForDeferredRelease(xaStatefulHolder, currentTransaction)) {
                 if (log.isDebugEnabled()) log.debug("registering DeferredReleaseSynchronization for " + xaStatefulHolder);
@@ -127,7 +127,10 @@ public class TransactionContextHelper {
                 currentTransaction.getSynchronizationScheduler().add(synchronization, Scheduler.ALWAYS_LAST_POSITION);
             }
             else if (log.isDebugEnabled()) log.debug("already registered DeferredReleaseSynchronization for " + xaStatefulHolder);
-        } else {
+
+            xaStatefulHolder.setState(XAResourceHolder.STATE_NOT_ACCESSIBLE);
+        }
+        else {
             // global mode, immediate connection requeuing
             if (log.isDebugEnabled()) log.debug("immediately releasing to pool " + xaStatefulHolder);
             xaStatefulHolder.setState(XAResourceHolder.STATE_IN_POOL);
