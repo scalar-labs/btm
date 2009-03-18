@@ -17,10 +17,8 @@ public class DeferredReleaseSynchronization implements Synchronization {
     private final static Logger log = LoggerFactory.getLogger(DeferredReleaseSynchronization.class);
 
     private XAStatefulHolder xaStatefulHolder;
-    private BitronixTransaction transaction;
 
-    public DeferredReleaseSynchronization(BitronixTransaction transaction, XAStatefulHolder xaStatefulHolder) {
-        this.transaction = transaction;
+    public DeferredReleaseSynchronization(XAStatefulHolder xaStatefulHolder) {
         this.xaStatefulHolder = xaStatefulHolder;
     }
 
@@ -31,8 +29,6 @@ public class DeferredReleaseSynchronization implements Synchronization {
     public void afterCompletion(int status) {
         if (log.isDebugEnabled()) log.debug("DeferredReleaseSynchronization requeuing " + xaStatefulHolder);
 
-        // this TX is no longer in-flight -> remove this transaction's state from all XAResourceHolders
-        transaction.getResourceManager().clearXAResourceHolderStates();
         // set this connection's state back to IN_POOL
         xaStatefulHolder.setState(XAResourceHolder.STATE_IN_POOL);
 

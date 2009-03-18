@@ -51,7 +51,9 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
     }
 
     public boolean removeXAResourceHolderState(XAResourceHolderState xaResourceHolderState) {
-        return xaResourceHolderStates.remove(xaResourceHolderState);
+        boolean removed = xaResourceHolderStates.remove(xaResourceHolderState);
+        if (removed && log.isDebugEnabled()) log.debug("removed " + xaResourceHolderState);
+        return removed;
     }
 
     public boolean hasStateForXAResource(XAResourceHolder xaResourceHolder) {

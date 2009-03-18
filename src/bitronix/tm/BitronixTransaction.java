@@ -404,6 +404,9 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     }
 
     private void fireAfterCompletionEvent() {
+        // this TX is no longer in-flight -> remove this transaction's state from all XAResourceHolders
+        getResourceManager().clearXAResourceHolderStates();
+
         if (log.isDebugEnabled()) log.debug("after completion, " + synchronizationScheduler.size() + " synchronization(s) to execute");
         Iterator it = synchronizationScheduler.iterator();
         while (it.hasNext()) {
