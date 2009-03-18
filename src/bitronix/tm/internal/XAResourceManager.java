@@ -210,6 +210,7 @@ public class XAResourceManager {
      * {@link bitronix.tm.resource.common.XAResourceHolder}s.
      */
     public void clearXAResourceHolderStates() {
+        if (log.isDebugEnabled()) log.debug("clearing XAResourceHolder states on " + resources.size() + " resource(s)");
         Iterator it = resources.iterator();
         while (it.hasNext()) {
             XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
@@ -219,8 +220,10 @@ public class XAResourceManager {
             // and right after the transaction is resumed, another xaResourceHolderState with a null XID is inserted
             // then the XID is changed.
             boolean mightHaveMore = true;
-            while (mightHaveMore)
+            while (mightHaveMore) {
+                if (log.isDebugEnabled()) log.debug("clearing state on " + xaResourceHolderState);
                 mightHaveMore = xaResourceHolderState.getXAResourceHolder().removeXAResourceHolderState(xaResourceHolderState);
+            }
 
             it.remove();
         }

@@ -416,9 +416,6 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             }
         }
 
-        // this TX is no longer in-flight -> remove this transaction's state from all XAResourceHolders
-        resourceManager.clearXAResourceHolderStates();
-
         ManagementRegistrar.unregister("bitronix.tm:type=Transaction,Gtrid=" + resourceManager.getGtrid());
     }
 
