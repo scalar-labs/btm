@@ -353,7 +353,8 @@ public class DiskJournal implements Journal {
                     TransactionLogRecord rec = (TransactionLogRecord) danglingRecords.get(tlog.getGtrid());
                     if (rec != null) {
                         rec.getUniqueNames().removeAll(tlog.getUniqueNames());
-                        if (rec.getUniqueNames().size() == 0) {
+                        rec.refresh();
+                        if (rec.getUniqueNames().isEmpty()) {
                             danglingRecords.remove(tlog.getGtrid());
                             committed++;
                         }
@@ -362,7 +363,8 @@ public class DiskJournal implements Journal {
             }
 
             if (log.isDebugEnabled()) log.debug("collected dangling records of " + tla + ", committing: " + committing + ", committed: " + committed + ", delta: " + danglingRecords.size());
-        } finally {
+        }
+        finally {
             tlc.close();
         }
         return danglingRecords;

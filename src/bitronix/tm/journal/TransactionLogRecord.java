@@ -92,11 +92,8 @@ public class TransactionLogRecord {
         this.uniqueNames = new TreeSet(uniqueNames);
         endRecord = TransactionLogAppender.END_RECORD;
 
-        recordLength = calculateRecordLength(uniqueNames);
-        headerLength = getRecordHeaderLength();
-        crc32 = calulateCrc32();
+        refresh();
     }
-
 
     public int getStatus() {
         return status;
@@ -134,10 +131,28 @@ public class TransactionLogRecord {
         return endRecord;
     }
 
+    /**
+     * Recalculate and store the dynamic values of this record: {@link #getRecordLength()}, {@link #getRecordHeaderLength()}
+     * and {@link #calulateCrc32()}. This method must be called each time after the set of contained unique names is updated.
+     */
+    public void refresh() {
+        recordLength = calculateRecordLength(uniqueNames);
+        headerLength = getRecordHeaderLength();
+        crc32 = calulateCrc32();
+    }
+
+    /**
+     * Recalculate the CRC32 value of this record (using {@link #calulateCrc32()}) and compare it with the stored value.
+     * @return true if the recalculated value equals the stored one, false otherwise.
+     */
     public boolean isCrc32Correct() {
         return calulateCrc32() == getCrc32();
     }
 
+    /**
+     * Calculate the CRC32 value of this record.
+     * @return the CRC32 value of this record.
+     */
     public int calulateCrc32() {
         CRC32 crc32 = new CRC32();
         crc32.update(Encoder.intToBytes(status));
