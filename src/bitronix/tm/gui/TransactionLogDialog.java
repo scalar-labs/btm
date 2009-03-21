@@ -51,7 +51,7 @@ public class TransactionLogDialog extends JDialog {
             crc32Field.setText(""+tlog.getCrc32());
         }
         else {
-            crc32Field.setText(tlog.getCrc32() + " (should be: " + tlog.calulateCrc32() + ")");
+            crc32Field.setText(tlog.getCrc32() + " (should be: " + tlog.calculateCrc32() + ")");
             crc32Field.setBackground(Color.RED);
         }
         gtridField.setText(tlog.getGtrid().toString());
