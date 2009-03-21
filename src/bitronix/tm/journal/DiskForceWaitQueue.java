@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 import java.util.LinkedList;
 import java.util.List;
 
+import bitronix.tm.utils.CollectionUtils;
+
 /**
  * {@link TransactionLogAppender}s waiting for a disk force get enqueued here.
  * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
@@ -55,7 +57,7 @@ public class DiskForceWaitQueue {
     }
 
     public synchronized void waitUntilNotContains(TransactionLogAppender tla) throws InterruptedException {
-        while (objects.contains(tla)) {
+        while (CollectionUtils.containsByIdentity(objects, tla)) {
             if (log.isDebugEnabled()) log.debug("waiting for " + tla + " to get dequeued");
             wait();
         }

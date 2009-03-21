@@ -1,6 +1,7 @@
 package bitronix.tm.resource.common;
 
 import bitronix.tm.internal.XAResourceHolderState;
+import bitronix.tm.utils.CollectionUtils;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
             if (log.isDebugEnabled()) log.debug("setting default XAResourceHolderState [" + xaResourceHolderState + "] on " + this);
             if (xaResourceHolderState != null) {
                 this.currentXaResourceHolderState = xaResourceHolderState;
-                if (!xaResourceHolderStates.contains(xaResourceHolderState)) {
+                if (!CollectionUtils.containsByIdentity(xaResourceHolderStates, xaResourceHolderState)) {
                     if (log.isDebugEnabled()) log.debug("XAResourceHolderState previously unknown, adding it to the list");
                     this.xaResourceHolderStates.add(xaResourceHolderState);
                 }

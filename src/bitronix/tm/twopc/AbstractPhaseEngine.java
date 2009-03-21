@@ -5,6 +5,7 @@ import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.twopc.executor.Job;
 import bitronix.tm.twopc.executor.Executor;
 import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.CollectionUtils;
 
 import javax.transaction.xa.XAException;
 import java.util.*;
@@ -185,7 +186,7 @@ public abstract class AbstractPhaseEngine {
         for (int i = 0; i < allResources.size(); i++) {
             XAResourceHolderState resourceHolderState = (XAResourceHolderState) allResources.get(i);
 
-            if (!interestedResources.contains(resourceHolderState))
+            if (!CollectionUtils.containsByIdentity(interestedResources, resourceHolderState))
                 result.add(resourceHolderState);
         }
 
