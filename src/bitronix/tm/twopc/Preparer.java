@@ -25,7 +25,7 @@ public class Preparer extends AbstractPhaseEngine {
 
     private final static Logger log = LoggerFactory.getLogger(Preparer.class);
 
-    private List preparedResources;
+    private final List preparedResources = Collections.synchronizedList(new ArrayList());
 
     public Preparer(Executor executor) {
         super(executor);
@@ -42,7 +42,6 @@ public class Preparer extends AbstractPhaseEngine {
     public List prepare(BitronixTransaction transaction) throws RollbackException, BitronixSystemException {
         XAResourceManager resourceManager = transaction.getResourceManager();
         transaction.setStatus(Status.STATUS_PREPARING);
-        this.preparedResources = new ArrayList();
 
         if (resourceManager.size() == 0) {
             if (TransactionManagerServices.getConfiguration().isWarnAboutZeroResourceTransaction())
@@ -113,7 +112,7 @@ public class Preparer extends AbstractPhaseEngine {
     }
 
     protected Job createJob(XAResourceHolderState xaResourceHolderState) {
-        return new PrepareJob(xaResourceHolderState, preparedResources);
+        return new PrepareJob(xaResourceHolderState);
     }
 
     protected boolean isParticipating(XAResourceHolderState xaResourceHolderState) {
@@ -121,12 +120,9 @@ public class Preparer extends AbstractPhaseEngine {
     }
 
 
-    private static class PrepareJob extends Job {
-        private final List preparedResources;
-
-        public PrepareJob(XAResourceHolderState resourceHolder, List preparedResources) {
+    private class PrepareJob extends Job {
+        public PrepareJob(XAResourceHolderState resourceHolder) {
             super(resourceHolder);
-            this.preparedResources = preparedResources;
         }
 
         public void run() {
@@ -136,9 +132,7 @@ public class Preparer extends AbstractPhaseEngine {
 
                 int vote = resourceHolder.getXAResource().prepare(resourceHolder.getXid());
                 if (vote != XAResource.XA_RDONLY) {
-                    synchronized (preparedResources) {
-                        preparedResources.add(resourceHolder);
-                    }
+                    preparedResources.add(resourceHolder);
                 }
 
                 if (log.isDebugEnabled()) log.debug("prepared resource " + resourceHolder + " voted " + Decoder.decodePrepareVote(vote));

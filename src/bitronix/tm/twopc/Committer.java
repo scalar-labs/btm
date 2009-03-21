@@ -16,6 +16,7 @@ import javax.transaction.xa.XAException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Collections;
 
 /**
  * Phase 2 Commit logic engine.
@@ -29,7 +30,7 @@ public class Committer extends AbstractPhaseEngine {
 
     private boolean onePhase;
     private List interestedResources;
-    private List committedResources = new ArrayList();
+    private final List committedResources = Collections.synchronizedList(new ArrayList());
 
 
     public Committer(Executor executor) {
@@ -125,7 +126,7 @@ public class Committer extends AbstractPhaseEngine {
     }
 
     protected Job createJob(XAResourceHolderState resourceHolder) {
-        return new CommitJob(resourceHolder, committedResources, onePhase);
+        return new CommitJob(resourceHolder);
     }
 
     protected boolean isParticipating(XAResourceHolderState xaResourceHolderState) {
@@ -138,14 +139,10 @@ public class Committer extends AbstractPhaseEngine {
     }
 
 
-    private static class CommitJob extends Job {
-        private boolean onePhase;
-        private List committedResources;
+    private class CommitJob extends Job {
 
-        public CommitJob(XAResourceHolderState resourceHolder, List committedResources, boolean onePhase) {
+        public CommitJob(XAResourceHolderState resourceHolder) {
             super(resourceHolder);
-            this.committedResources = committedResources;
-            this.onePhase = onePhase;
         }
 
         public XAException getXAException() {

@@ -16,6 +16,7 @@ import javax.transaction.xa.XAException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Collections;
 
 /**
  * Phase 1 & 2 Rollback logic engine.
@@ -28,7 +29,7 @@ public class Rollbacker extends AbstractPhaseEngine {
     private final static Logger log = LoggerFactory.getLogger(Rollbacker.class);
 
     private List interestedResources;
-    private List rolledbackResources = new ArrayList();
+    private final List rolledbackResources = Collections.synchronizedList(new ArrayList());
 
     public Rollbacker(Executor executor) {
         super(executor);
@@ -117,7 +118,7 @@ public class Rollbacker extends AbstractPhaseEngine {
     }
 
     protected Job createJob(XAResourceHolderState resourceHolder) {
-        return new RollbackJob(resourceHolder, rolledbackResources);
+        return new RollbackJob(resourceHolder);
     }
 
     protected boolean isParticipating(XAResourceHolderState xaResourceHolderState) {
@@ -129,12 +130,10 @@ public class Rollbacker extends AbstractPhaseEngine {
         return false;
     }
 
-    private static class RollbackJob extends Job {
-        List rolledbackResources;
+    private class RollbackJob extends Job {
 
-        public RollbackJob(XAResourceHolderState resourceHolder, List rolledbackResources) {
+        public RollbackJob(XAResourceHolderState resourceHolder) {
             super(resourceHolder);
-            this.rolledbackResources = rolledbackResources;
         }
 
         public void run() {
