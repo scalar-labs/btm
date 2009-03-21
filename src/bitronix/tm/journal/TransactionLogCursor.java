@@ -127,7 +127,7 @@ public class TransactionLogCursor {
             if (!skipCrcCheck && !tlog.isCrc32Correct()) {
                 randomAccessFile.seek(endOfRecordPosition);
                 throw new CorruptedTransactionLogException("corrupted log found at position " + currentPosition + "(invalid CRC, recorded: " + tlog.getCrc32() +
-                        ", calculated: " + tlog.calulateCrc32() + ")");
+                        ", calculated: " + tlog.calculateCrc32() + ")");
             }
 
             return tlog;
