@@ -25,6 +25,7 @@ public class Preparer extends AbstractPhaseEngine {
 
     private final static Logger log = LoggerFactory.getLogger(Preparer.class);
 
+    // this list has to be thread-safe as the PrepareJobs can be executed in parallel (when async 2PC is configured)
     private final List preparedResources = Collections.synchronizedList(new ArrayList());
 
     public Preparer(Executor executor) {

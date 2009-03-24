@@ -30,6 +30,7 @@ public class Committer extends AbstractPhaseEngine {
 
     private boolean onePhase;
     private List interestedResources;
+    // this list has to be thread-safe as the CommitJobs can be executed in parallel (when async 2PC is configured)
     private final List committedResources = Collections.synchronizedList(new ArrayList());
 
 
@@ -56,7 +57,7 @@ public class Committer extends AbstractPhaseEngine {
 
         transaction.setStatus(Status.STATUS_COMMITTING);
 
-        this.interestedResources = interestedResources;
+        this.interestedResources = Collections.unmodifiableList(interestedResources);
         this.onePhase = resourceManager.size() == 1;
 
         try {
@@ -69,17 +70,23 @@ public class Committer extends AbstractPhaseEngine {
 
         if (log.isDebugEnabled()) log.debug("phase 2 commit executed on resources " + Decoder.collectResourcesNames(committedResources));
 
+        // Some resources might have failed the 2nd phase of 2PC.
+        // Only resources which successfully committed should be registered in the journal, the other
+        // ones should be picked up by the recoverer.
+        // Not interested resources have to be included as well since they returned XA_RDONLY and they
+        // don't participate in phase 2: the TX succeded for them.
         List committedAndNotInterestedUniqueNames = new ArrayList();
         committedAndNotInterestedUniqueNames.addAll(collectResourcesUniqueNames(committedResources));
         List notInterestedResources = collectNotInterestedResources(resourceManager.getAllResources(), interestedResources);
         committedAndNotInterestedUniqueNames.addAll(collectResourcesUniqueNames(notInterestedResources));
 
-        List committedAndNotInterestedResources = new ArrayList();
-        committedAndNotInterestedResources.addAll(committedResources);
-        committedAndNotInterestedResources.addAll(notInterestedResources);
+        if (log.isDebugEnabled()) {
+            List committedAndNotInterestedResources = new ArrayList();
+            committedAndNotInterestedResources.addAll(committedResources);
+            committedAndNotInterestedResources.addAll(notInterestedResources);
 
-
-        if (log.isDebugEnabled()) log.debug("phase 2 commit succeeded on resources " + Decoder.collectResourcesNames(committedAndNotInterestedResources));
+            log.debug("phase 2 commit succeeded on resources " + Decoder.collectResourcesNames(committedAndNotInterestedResources));
+        }
 
         transaction.setStatus(Status.STATUS_COMMITTED, new HashSet(committedAndNotInterestedUniqueNames));
     }

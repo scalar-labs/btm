@@ -29,6 +29,7 @@ public class Rollbacker extends AbstractPhaseEngine {
     private final static Logger log = LoggerFactory.getLogger(Rollbacker.class);
 
     private List interestedResources;
+    // this list has to be thread-safe as the RollbackJobs can be executed in parallel (when async 2PC is configured)
     private final List rolledbackResources = Collections.synchronizedList(new ArrayList());
 
     public Rollbacker(Executor executor) {
@@ -49,7 +50,7 @@ public class Rollbacker extends AbstractPhaseEngine {
     public void rollback(BitronixTransaction transaction, List interestedResources) throws HeuristicMixedException, HeuristicCommitException, BitronixSystemException {
         XAResourceManager resourceManager = transaction.getResourceManager();
         transaction.setStatus(Status.STATUS_ROLLING_BACK);
-        this.interestedResources = interestedResources;
+        this.interestedResources = Collections.unmodifiableList(interestedResources);
 
         try {
             executePhase(resourceManager, true);
@@ -61,17 +62,23 @@ public class Rollbacker extends AbstractPhaseEngine {
 
         if (log.isDebugEnabled()) log.debug("rollback executed on resources " + Decoder.collectResourcesNames(rolledbackResources));
 
+        // Some resources might have failed the 2nd phase of 2PC.
+        // Only resources which successfully rolled back should be registered in the journal, the other
+        // ones should be picked up by the recoverer.
+        // Not interested resources have to be included as well since they returned XA_RDONLY and they
+        // don't participate in phase 2: the TX succeded for them.
         List rolledbackAndNotInterestedUniqueNames = new ArrayList();
         rolledbackAndNotInterestedUniqueNames.addAll(collectResourcesUniqueNames(rolledbackResources));
         List notInterestedResources = collectNotInterestedResources(resourceManager.getAllResources(), interestedResources);
         rolledbackAndNotInterestedUniqueNames.addAll(collectResourcesUniqueNames(notInterestedResources));
 
-        List rolledbackAndNotInterestedResources = new ArrayList();
-        rolledbackAndNotInterestedResources.addAll(rolledbackResources);
-        rolledbackAndNotInterestedResources.addAll(notInterestedResources);
+        if (log.isDebugEnabled()) {
+            List rolledbackAndNotInterestedResources = new ArrayList();
+            rolledbackAndNotInterestedResources.addAll(rolledbackResources);
+            rolledbackAndNotInterestedResources.addAll(notInterestedResources);
 
-
-        if (log.isDebugEnabled()) log.debug("rollback succeeded on resources " + Decoder.collectResourcesNames(rolledbackAndNotInterestedResources));
+            log.debug("rollback succeeded on resources " + Decoder.collectResourcesNames(rolledbackAndNotInterestedResources));
+        }
 
         transaction.setStatus(Status.STATUS_ROLLEDBACK, new HashSet(rolledbackAndNotInterestedUniqueNames));
     }
