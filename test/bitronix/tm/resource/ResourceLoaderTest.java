@@ -12,13 +12,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.lang.reflect.Field;
 
-/**
- * Created by IntelliJ IDEA.
- * User: OrbanL
- * Date: 16-mrt-2006
- * Time: 18:27:34
- * To change this template use File | Settings | File Templates.
- */
 public class ResourceLoaderTest extends TestCase {
 
     public void testBindOneJdbc() throws Exception {
@@ -162,7 +155,7 @@ public class ResourceLoaderTest extends TestCase {
             loader.initXAResourceProducers(p);
             fail("should have thrown ResourceConfigurationException");
         } catch (ResourceConfigurationException ex) {
-            assertEquals("cannot configure resource for configuration entries with name <ds2> - failing property is <className>", ex.getMessage());
+            assertEquals("cannot configure resource for configuration entries with name [ds2] - failing property is [className]", ex.getMessage());
             assertEquals(ClassNotFoundException.class, ex.getCause().getClass());
             assertEquals("some.class.Name", ex.getCause().getMessage());
         }
@@ -174,7 +167,7 @@ public class ResourceLoaderTest extends TestCase {
             loader.initXAResourceProducers(p);
             fail("should have thrown ResourceConfigurationException");
         } catch (ResourceConfigurationException ex) {
-            assertEquals("missing mandatory property <uniqueName> for resource <ds2> in resources configuration file", ex.getMessage());
+            assertEquals("missing mandatory property [uniqueName] of resource [ds2] in resources configuration file", ex.getMessage());
         }
 
         try {
@@ -184,7 +177,7 @@ public class ResourceLoaderTest extends TestCase {
             loader.initXAResourceProducers(p);
             fail("should have thrown ResourceConfigurationException");
         } catch (ResourceConfigurationException ex) {
-            assertEquals("missing mandatory property <className> for resource <ds2> in resources configuration file", ex.getMessage());
+            assertEquals("missing mandatory property [className] for resource [ds2] in resources configuration file", ex.getMessage());
         }
 
         Properties p = new Properties();
@@ -207,7 +200,7 @@ public class ResourceLoaderTest extends TestCase {
             loader.initXAResourceProducers(p);
             fail("expected ResourceConfigurationException");
         } catch (ResourceConfigurationException ex) {
-            assertEquals("cannot configure resource for configuration entries with name <ds2> - failing property is <maxPoolSize>", ex.getMessage());
+            assertEquals("cannot configure resource for configuration entries with name [ds2] - failing property is [maxPoolSize]", ex.getMessage());
         }
 
         p.setProperty("resource.ds2.className", MockXADataSource.class.getName());

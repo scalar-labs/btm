@@ -57,7 +57,7 @@ public class ResourceLoader implements Service {
         String filename = TransactionManagerServices.getConfiguration().getResourceConfigurationFilename();
         if (filename != null) {
             if (!new File(filename).exists())
-                throw new ResourceConfigurationException("cannot find resources configuration file '" + filename + "', missing or invalid value of property: bitronix.tm.resource.configuration");
+                throw new ResourceConfigurationException("cannot find resources configuration file '" + filename +"', missing or invalid value of property 'bitronix.tm.resource.configuration'");
             log.info("reading resources configuration from " + filename);
             return init(filename);
         }
@@ -131,7 +131,7 @@ public class ResourceLoader implements Service {
 
             return initXAResourceProducers(properties);
         } catch (IOException ex) {
-            throw new InitializationException("cannot create resource binder", ex);
+            throw new InitializationException("cannot create resource loader", ex);
         }
     }
 
@@ -228,13 +228,13 @@ public class ResourceLoader implements Service {
                 PropertyUtils.setProperty(producer, lastPropertyName, propertyValue);
             }
             if (producer.getUniqueName() == null)
-                throw new ResourceConfigurationException("missing mandatory property <uniqueName> for resource <" + configuredName + "> in resources configuration file");
+                throw new ResourceConfigurationException("missing mandatory property [uniqueName] of resource [" + configuredName + "] in resources configuration file");
 
             return producer;
         } catch (ResourceConfigurationException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new ResourceConfigurationException("cannot configure resource for configuration entries with name <" + configuredName + ">" + " - failing property is <" + lastPropertyName + ">", ex);
+            throw new ResourceConfigurationException("cannot configure resource for configuration entries with name [" + configuredName + "]" + " - failing property is [" + lastPropertyName + "]", ex);
         }
     }
 
@@ -254,13 +254,13 @@ public class ResourceLoader implements Service {
                 String className = propertyPair.getValue();
                 XAResourceProducer producer = instanciate(className);
                 if (producer == null)
-                    throw new ResourceConfigurationException("property <className> " +
-                            "for resource <" + configuredName + "> in resources configuration file " +
+                    throw new ResourceConfigurationException("property [className] " +
+                            "of resource [" + configuredName + "] in resources configuration file " +
                             "must be the name of a class implementing either javax.sql.XADataSource or javax.jms.XAConnectionFactory");
                 return producer;
             }
         }
-        throw new ResourceConfigurationException("missing mandatory property <className> for resource <" + configuredName + "> in resources configuration file");
+        throw new ResourceConfigurationException("missing mandatory property [className] for resource [" + configuredName + "] in resources configuration file");
     }
 
 
