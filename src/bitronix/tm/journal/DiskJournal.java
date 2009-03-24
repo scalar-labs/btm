@@ -352,8 +352,7 @@ public class DiskJournal implements Journal {
                 if (tlog.getStatus() == Status.STATUS_COMMITTED) {
                     TransactionLogRecord rec = (TransactionLogRecord) danglingRecords.get(tlog.getGtrid());
                     if (rec != null) {
-                        rec.getUniqueNames().removeAll(tlog.getUniqueNames());
-                        rec.refresh();
+                        rec.removeUniqueNames(tlog.getUniqueNames());
                         if (rec.getUniqueNames().isEmpty()) {
                             danglingRecords.remove(tlog.getGtrid());
                             committed++;

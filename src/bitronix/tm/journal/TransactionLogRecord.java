@@ -7,10 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.zip.CRC32;
 
 /**
@@ -124,18 +121,24 @@ public class TransactionLogRecord {
     }
 
     public Set getUniqueNames() {
-        return uniqueNames;
+        return Collections.unmodifiableSortedSet(uniqueNames);
     }
 
     public int getEndRecord() {
         return endRecord;
     }
 
+
+    public void removeUniqueNames(Collection namesToRemove) {
+        uniqueNames.removeAll(namesToRemove);
+        refresh();
+    }
+
     /**
      * Recalculate and store the dynamic values of this record: {@link #getRecordLength()}, {@link #getRecordHeaderLength()}
      * and {@link #calculateCrc32()}. This method must be called each time after the set of contained unique names is updated.
      */
-    public void refresh() {
+    private void refresh() {
         recordLength = calculateRecordLength(uniqueNames);
         headerLength = getRecordHeaderLength();
         crc32 = calculateCrc32();
