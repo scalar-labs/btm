@@ -34,11 +34,17 @@ public final class Uid {
         return result;
     }
 
+    public long extractTimestamp() {
+        byte[] result = new byte[8];
+        System.arraycopy(array, 0, result, 0, 8);
+        return Encoder.bytesToLong(result);
+    }
+
     public boolean equals(Object obj) {
         if (obj instanceof Uid) {
             Uid otherUid = (Uid) obj;
 
-            // optimizes perf
+            // optimizes performance a bit
             if (hashCodeValue != otherUid.hashCodeValue)
                 return false;
 

@@ -37,4 +37,18 @@ public class Encoder {
 
         return array;
     }
+
+    public static long bytesToLong(byte[] bytes) {
+        if (bytes.length != 8)
+            throw new IllegalArgumentException("a long can only be decoded from a 8 bytes array (got a " + bytes.length + " byte(s) array)");
+
+        long result = 0;
+
+        for(int i=0; i < 8 ;i++) {
+           result <<= 8;
+           result ^= (long) bytes[i] & 0xFF;
+        }
+
+        return result;
+    }
 }
