@@ -95,10 +95,12 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             rolledbackCount = 0;
 
             // Query resources from ResourceRegistrar
-            Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
-            while (it.hasNext()) {
-                String name = (String) it.next();
-                registeredResources.put(name, ResourceRegistrar.get(name));
+            synchronized (ResourceRegistrar.class) {
+                Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+                while (it.hasNext()) {
+                    String name = (String) it.next();
+                    registeredResources.put(name, ResourceRegistrar.get(name));
+                }
             }
 
             // get list of in-flight transactions that should not be recovered and the list 
