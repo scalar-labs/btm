@@ -69,7 +69,7 @@ public class ConfigurationTest extends TestCase {
         final String expectation = "a Configuration with [asynchronous2Pc=false, backgroundRecoveryInterval=0, currentNodeOnlyRecovery=false, defaultTransactionTimeout=60," +
                 " disableJmx=false, filterLogStatus=false, forceBatchingEnabled=true, forcedWriteEnabled=true, gracefulShutdownInterval=10," +
                 " jndiUserTransactionName=null, journal=disk, logPart1Filename=btm1.tlog, logPart2Filename=btm2.tlog, maxLogSizeInMb=2," +
-                " resourceConfigurationFilename=null, retryUnrecoverableResourcesRegistrationInterval=0, serverId=null, skipCorruptedLogs=false," +
+                " resourceConfigurationFilename=null, serverId=null, skipCorruptedLogs=false," +
                 " warnAboutZeroResourceTransaction=true]";
 
         assertEquals(expectation, new Configuration().toString());
