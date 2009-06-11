@@ -2,7 +2,6 @@ package bitronix.tm.recovery;
 
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.Configuration;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.ManagementRegistrar;
 import bitronix.tm.utils.Uid;
@@ -105,53 +104,30 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
 
             // get list of in-flight transactions that should not be recovered and the list 
             // of dangling journal records should be collected atomically to avoid race conditions
-            Map danglingRecords;
-            Set inFlightGtrids = new HashSet();
+            long oldestTransactionTimestamp = Long.MAX_VALUE;
             if (TransactionManagerServices.isTransactionManagerRunning()) {
-                Map inFlightTransactions = TransactionManagerServices.getTransactionManager().getInFlightTransactions();
-                synchronized (inFlightTransactions) {
-                    inFlightGtrids = inFlightTransactions.keySet();
-                    danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
-                }
+                oldestTransactionTimestamp = TransactionManagerServices.getTransactionManager().getOldestInFlightTransactionTimestamp();
             }
-            else {
-                danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
-            }
+
+            Map danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
 
             // 1. call recover on all known resources
-            Set unrecoverableResourceNames = recoverAllResources(inFlightGtrids);
-
-            // 1.1. unregister unrecoverable resources
-            Iterator itUnrecoverable = unrecoverableResourceNames.iterator();
-            while (itUnrecoverable.hasNext()) {
-                String uniqueName = (String) itUnrecoverable.next();
-                if (log.isDebugEnabled()) log.debug("closing unrecoverable resource " + uniqueName);
-                XAResourceProducer producer = (XAResourceProducer) registeredResources.remove(uniqueName);
-                producer.close();
-            }
-
-            // 1.2. register a task to retry registration, if needed
-            if (isRetryUnrecoverableResourcesRegistrationEnabled()) {
-                int intervalInMinutes = TransactionManagerServices.getConfiguration().getRetryUnrecoverableResourcesRegistrationInterval();
-                TransactionManagerServices.getTaskScheduler().scheduleRetryUnrecoverableResourcesRegistration(new Date(System.currentTimeMillis() + intervalInMinutes * 60 * 1000));
-            }
-            else
-                if (log.isDebugEnabled()) log.debug("will not retry unrecoverable resources registration");
+            recoverAllResources();
 
             // 2. commit dangling COMMITTING transactions
-            Set committedGtrids = commitDanglingTransactions(inFlightGtrids, danglingRecords);
+            Set committedGtrids = commitDanglingTransactions(oldestTransactionTimestamp, danglingRecords);
             committedCount = committedGtrids.size();
 
             // 3. rollback any remaining recovered transaction
-            rolledbackCount = rollbackAbortedTransactions(committedGtrids);
+            rolledbackCount = rollbackAbortedTransactions(oldestTransactionTimestamp, committedGtrids);
 
             log.info("recovery committed " + committedCount + " dangling transaction(s) and rolled back " + rolledbackCount +
-                    " aborted transaction(s) on " + registeredResources.size() + " resource(s) [" + getRegisteredResourcesUniqueNames() + "]" +
-                    (isRetryUnrecoverableResourcesRegistrationEnabled() ? ", discarded " + unrecoverableResourceNames.size() + " unrecoverable resource(s) [" + buildUniqueNamesString(unrecoverableResourceNames) + "]": ""));
+                    " aborted transaction(s) on " + registeredResources.size() + " resource(s) [" + getRegisteredResourcesUniqueNames() + "]");
+
             this.completionException = null;
         } catch (Exception ex) {
             this.completionException = ex;
-            if (log.isDebugEnabled()) log.debug("recovery failed, registered resource(s): " + getRegisteredResourcesUniqueNames(), ex);
+            log.warn("recovery failed, registered resource(s): " + getRegisteredResourcesUniqueNames(), ex);
         }
         finally {
             recoveredXidSets.clear();
@@ -186,12 +162,8 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     /**
      * Recover all configured resources and fill the <code>recoveredXidSets</code> with all recovered XIDs.
      * Step 1.
-     * @param inFlightGtrids a Set of {@link Uid}s that should not be recovered because they're still in-flight.
-     * @return a Set of unique resource names that failed recovery.
      */
-    private Set recoverAllResources(Set inFlightGtrids) {
-        Set unrecoverableResourceNames = new HashSet();
-
+    private void recoverAllResources() {
         Iterator it = registeredResources.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry entry = (Map.Entry) it.next();
@@ -202,55 +174,13 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 if (log.isDebugEnabled()) log.debug("performing recovery on " + uniqueName);
                 Set xids = recover(producer);
                 if (log.isDebugEnabled()) log.debug("recovered " + xids.size() + " XID(s) from resource " + uniqueName);
-
-                xids = filterOutInFlightXids(xids, inFlightGtrids);
-                if (log.isDebugEnabled()) log.debug(xids.size() + " XID(s) from resource " + uniqueName + " are not part of an in-flight transaction");
-
                 recoveredXidSets.put(uniqueName, xids);
             } catch (XAException ex) {
-                boolean failFast = !isRetryUnrecoverableResourcesRegistrationEnabled();
-                if (failFast)
-                    throw new RecoveryException("error running recovery on resource " + uniqueName + " (" + Decoder.decodeXAExceptionErrorCode(ex) + ")", ex);
-
-                unrecoverableResourceNames.add(uniqueName);
-                log.warn("error running recovery on resource " + uniqueName + " (" + Decoder.decodeXAExceptionErrorCode(ex) + ")", ex);
+                throw new RecoveryException("error running recovery on resource " + uniqueName + " (" + Decoder.decodeXAExceptionErrorCode(ex) + ")", ex);
             } catch (Exception ex) {
-                boolean failFast = !isRetryUnrecoverableResourcesRegistrationEnabled();
-                if (failFast)
-                    throw new RecoveryException("error running recovery on resource " + uniqueName, ex);
-
-                unrecoverableResourceNames.add(uniqueName);
-                log.warn("error running recovery on resource " + uniqueName, ex);
+                throw new RecoveryException("error running recovery on resource " + uniqueName, ex);
             }
         }
-        if (log.isDebugEnabled()) log.debug((registeredResources.size() - unrecoverableResourceNames.size()) + " resource(s) recovered");
-
-        return unrecoverableResourceNames;
-    }
-
-    private Set filterOutInFlightXids(Set xids, Set inFlightGtrids) {
-        Set result = new HashSet();
-
-        Iterator it = xids.iterator();
-        while (it.hasNext()) {
-            BitronixXid xid = (BitronixXid) it.next();
-            if (!inFlightGtrids.contains(xid.getGlobalTransactionIdUid())) {
-                if (log.isDebugEnabled()) log.debug("keeping not in-flight XID " + xid);
-                result.add(xid);
-            }
-            else {
-                if (log.isDebugEnabled()) log.debug("skipping in-flight XID " + xid);
-            }
-        }
-
-        return result;
-    }
-
-    private boolean isRetryUnrecoverableResourcesRegistrationEnabled() {
-        Configuration configuration = TransactionManagerServices.getConfiguration();
-
-        return configuration.getResourceConfigurationFilename() != null &&
-               configuration.getRetryUnrecoverableResourcesRegistrationInterval() > 0;
     }
 
     /**
@@ -276,12 +206,12 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     /**
      * Commit transactions that have a dangling COMMITTING record in the journal.
      * Step 2.
-     * @param inFlightGtrids a Set of {@link Uid}s that should not be recovered because they're still in-flight.
+     * @param oldestTransactionTimestamp the timestamp of the oldest transaction still in-flight.
      * @param danglingRecords a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value.
      * @return a Set of all committed GTRIDs encoded as strings.
      * @throws java.io.IOException if there is an I/O error reading the journal.
      */
-    private Set commitDanglingTransactions(Set inFlightGtrids, Map danglingRecords) throws IOException {
+    private Set commitDanglingTransactions(long oldestTransactionTimestamp, Map danglingRecords) throws IOException {
         Set committedGtrids = new HashSet();
 
         if (log.isDebugEnabled()) log.debug("found " + danglingRecords.size() + " dangling record(s) in journal");
@@ -294,7 +224,10 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             Set uniqueNames = tlog.getUniqueNames();
             Set danglingTransactions = getDanglingTransactionsInRecoveredXids(uniqueNames, tlog.getGtrid());
 
-            if (!inFlightGtrids.contains(gtrid)) {
+            long txTimestamp = gtrid.extractTimestamp();
+            if (log.isDebugEnabled()) log.debug("recovered XID timestamp: " + txTimestamp + " - oldest in-flight TX timestamp: " + oldestTransactionTimestamp);
+
+            if (txTimestamp < oldestTransactionTimestamp) {
                 if (log.isDebugEnabled()) log.debug("committing dangling transaction with GTRID " + gtrid);
                 commit(danglingTransactions);
                 if (log.isDebugEnabled()) log.debug("committed dangling transaction with GTRID " + gtrid);
@@ -413,10 +346,11 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * Rollback branches whose {@link Xid} has been recovered on the resource but hasn't been committed.
      * Those are the 'aborted' transactions of the Presumed Abort protocol.
      * Step 3.
+     * @param oldestTransactionTimestamp the timestamp of the oldest transaction still in-flight.
      * @param committedGtrids a set of {@link Uid}s already committed on this resource.
      * @return the rolled back branches count.
      */
-    private int rollbackAbortedTransactions(Set committedGtrids) {
+    private int rollbackAbortedTransactions(long oldestTransactionTimestamp, Set committedGtrids) {
         if (log.isDebugEnabled()) log.debug("rolling back aborted branch(es)");
         int rollbackCount = 0;
         Iterator it = recoveredXidSets.entrySet().iterator();
@@ -426,7 +360,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             Set recoveredXids = (Set) entry.getValue();
 
             if (log.isDebugEnabled()) log.debug("checking " + recoveredXids.size() + " branch(es) on " + uniqueName + " for rollback");
-            int count = rollbackAbortedBranchesOfResource(uniqueName, recoveredXids, committedGtrids);
+            int count = rollbackAbortedBranchesOfResource(oldestTransactionTimestamp, uniqueName, recoveredXids, committedGtrids);
             if (log.isDebugEnabled()) log.debug("checked " + recoveredXids.size() + " branch(es) on " + uniqueName + " for rollback");
             rollbackCount += count;
         }
@@ -438,18 +372,26 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     /**
      * Rollback aborted branches of the resource specified by uniqueName.
      * Step 3.
+     * @param oldestTransactionTimestamp the timestamp of the oldest transaction still in-flight.
      * @param uniqueName the unique name of the resource on which to rollback branches.
      * @param recoveredXids a set of {@link BitronixXid} recovered on the reource.
      * @param committedGtrids a set of {@link Uid}s already committed on the resource.
      * @return the rolled back branches count.
      */
-    private int rollbackAbortedBranchesOfResource(String uniqueName, Set recoveredXids, Set committedGtrids) {
+    private int rollbackAbortedBranchesOfResource(long oldestTransactionTimestamp, String uniqueName, Set recoveredXids, Set committedGtrids) {
         int abortedCount = 0;
         Iterator it = recoveredXids.iterator();
         while (it.hasNext()) {
             BitronixXid recoveredXid = (BitronixXid) it.next();
             if (committedGtrids.contains(recoveredXid.getGlobalTransactionIdUid())) {
                 if (log.isDebugEnabled()) log.debug("XID has been committed, skipping rollback: " + recoveredXid + " on " + uniqueName);
+                continue;
+            }
+
+            long txTimestamp = recoveredXid.getGlobalTransactionIdUid().extractTimestamp();
+            if (log.isDebugEnabled()) log.debug("recovered XID timestamp: " + txTimestamp + " - oldest in-flight TX timestamp: " + oldestTransactionTimestamp);
+            if (txTimestamp >= oldestTransactionTimestamp) {
+                if (log.isDebugEnabled()) log.debug("skipping XID of in-flight transaction: " + recoveredXid);
                 continue;
             }
 

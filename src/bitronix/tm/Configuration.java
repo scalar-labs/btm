@@ -47,7 +47,6 @@ public class Configuration implements Service {
     private int defaultTransactionTimeout;
     private int gracefulShutdownInterval;
     private int backgroundRecoveryInterval;
-    private int retryUnrecoverableResourcesRegistrationInterval;
     private boolean disableJmx;
     private String jndiUserTransactionName;
     private String journal;
@@ -90,7 +89,6 @@ public class Configuration implements Service {
             defaultTransactionTimeout = getInt(properties, "bitronix.tm.timer.defaultTransactionTimeout", 60);
             gracefulShutdownInterval = getInt(properties, "bitronix.tm.timer.gracefulShutdownInterval", 60);
             backgroundRecoveryInterval = getInt(properties, "bitronix.tm.timer.backgroundRecoveryInterval", 0);
-            retryUnrecoverableResourcesRegistrationInterval = getInt(properties, "bitronix.tm.timer.retryUnrecoverableResourcesRegistrationInterval", 0);
             disableJmx = getBoolean(properties, "bitronix.tm.disableJmx", false);
             jndiUserTransactionName = getString(properties, "bitronix.tm.jndi.userTransactionName", null);
             journal = getString(properties, "bitronix.tm.journal", "disk");
@@ -362,28 +360,6 @@ public class Configuration implements Service {
     public void setBackgroundRecoveryInterval(int backgroundRecoveryInterval) {
         checkNotStarted();
         this.backgroundRecoveryInterval = backgroundRecoveryInterval;
-    }
-
-    /**
-     * Interval in minutes at which to retry unrecoverable resources registration in the background. Disabled when set
-     * to 0.
-     * <p>Property name:<br/><b>bitronix.tm.timer.retryUnrecoverableResourcesRegistrationInterval -</b>
-     * <i>(defaults to 0)</i></p>
-     * @return the interval in minutes.
-     */
-    public int getRetryUnrecoverableResourcesRegistrationInterval() {
-        return retryUnrecoverableResourcesRegistrationInterval;
-    }
-
-    /**
-     * Set the interval in minutes at which to retry unrecoverable resources registration in the background. Disabled
-     * when set to 0.
-     * @see #getResourceConfigurationFilename()
-     * @param retryUnrecoverableResourcesRegistrationInterval the interval in minutes.
-     */
-    public void setRetryUnrecoverableResourcesRegistrationInterval(int retryUnrecoverableResourcesRegistrationInterval) {
-        checkNotStarted();
-        this.retryUnrecoverableResourcesRegistrationInterval = retryUnrecoverableResourcesRegistrationInterval;
     }
 
     /**

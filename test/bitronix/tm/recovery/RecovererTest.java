@@ -29,10 +29,7 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 import javax.transaction.xa.XAException;
 import java.io.File;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.List;
+import java.util.*;
 import java.sql.Connection;
 import java.lang.reflect.Field;
 
@@ -83,9 +80,9 @@ public class RecovererTest extends TestCase {
         if (TransactionManagerServices.isTransactionManagerRunning())
             TransactionManagerServices.getTransactionManager().shutdown();
 
-        TransactionManagerServices.getConfiguration().setRetryUnrecoverableResourcesRegistrationInterval(0);
         journal.close();
         pds.close();
+        TransactionManagerServices.getJournal().close();
         new File(TransactionManagerServices.getConfiguration().getLogPart1Filename()).delete();
         new File(TransactionManagerServices.getConfiguration().getLogPart2Filename()).delete();
     }
@@ -173,6 +170,71 @@ public class RecovererTest extends TestCase {
         assertEquals(0, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
     }
 
+    public void testSkipInFlightRollback() throws Exception {
+        BitronixTransactionManager btm = TransactionManagerServices.getTransactionManager();
+
+        Uid uid0 = UidGenerator.generateUid();
+        Xid xid0 = new MockXid(0, uid0.getArray(), BitronixXid.FORMAT_ID);
+        xaResource.addInDoubtXid(xid0);
+
+        assertNull(btm.getCurrentTransaction());
+        Thread.sleep(30); // let the clock run a bit so that in-flight TX is a bit older than the journaled one
+        btm.begin();
+
+        Xid xid1 = new MockXid(1, UidGenerator.generateUid().getArray(), BitronixXid.FORMAT_ID);
+        xaResource.addInDoubtXid(xid1);
+
+        TransactionManagerServices.getRecoverer().run();
+
+        btm.rollback();
+
+        assertEquals(0, TransactionManagerServices.getRecoverer().getCommittedCount());
+        assertEquals(1, TransactionManagerServices.getRecoverer().getRolledbackCount());
+        assertEquals(1, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
+
+        btm.shutdown();
+        TransactionManagerServices.getJournal().open();
+        TransactionManagerServices.getRecoverer().run();
+
+        assertEquals(0, TransactionManagerServices.getRecoverer().getCommittedCount());
+        assertEquals(1, TransactionManagerServices.getRecoverer().getRolledbackCount());
+        assertEquals(0, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
+    }
+
+    public void testSkipInFlightCommit() throws Exception {
+        BitronixTransactionManager btm = TransactionManagerServices.getTransactionManager();
+
+        Uid uid0 = UidGenerator.generateUid();
+        Xid xid0 = new MockXid(0, uid0.getArray(), BitronixXid.FORMAT_ID);
+        xaResource.addInDoubtXid(xid0);
+        Set names = new HashSet();
+        names.add(pds.getUniqueName());
+        journal.log(Status.STATUS_COMMITTING, new Uid(xid0.getGlobalTransactionId()), names);
+
+        assertNull(btm.getCurrentTransaction());
+        Thread.sleep(30); // let the clock run a bit so that in-flight TX is a bit older than the journaled one
+        btm.begin();
+
+        Xid xid1 = new MockXid(1, UidGenerator.generateUid().getArray(), BitronixXid.FORMAT_ID);
+        xaResource.addInDoubtXid(xid1);
+
+        names = new HashSet();
+        names.add(pds.getUniqueName());
+        journal.log(Status.STATUS_COMMITTING, new Uid(xid1.getGlobalTransactionId()), names);
+
+        TransactionManagerServices.getRecoverer().run();
+
+        btm.rollback();
+
+        assertEquals(1, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
+
+        btm.shutdown();
+        TransactionManagerServices.getJournal().open();
+        TransactionManagerServices.getRecoverer().run();
+
+        assertEquals(0, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
+    }
+
     public void testRecoverMissingResource() throws Exception {
         final Xid xid0 = new MockXid(0, UidGenerator.generateUid().getArray(), BitronixXid.FORMAT_ID);
         xaResource.addInDoubtXid(xid0);
@@ -244,33 +306,6 @@ public class RecovererTest extends TestCase {
             assertEquals("error running recovery on resource mock-xads (XAER_RMERR)", ex.getCause().getMessage());
             assertEquals("let's pretend recovery failed", ex.getCause().getCause().getMessage());
         }
-
-        assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
-        assertEquals(0, TransactionManagerServices.getRecoverer().getCommittedCount());
-        assertEquals(0, TransactionManagerServices.getRecoverer().getRolledbackCount());
-    }
-
-    public void testRecoverNotBlockingStartup() throws Exception {
-        xaResource.setRecoverException(new BitronixXAException("let's pretend recovery failed", XAException.XAER_RMERR));
-        assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
-
-        TransactionManagerServices.getConfiguration().setRetryUnrecoverableResourcesRegistrationInterval(1);
-        TransactionManagerServices.getConfiguration().setResourceConfigurationFilename("bitronix-res.properties");
-        TransactionManagerServices.getRecoverer().run();
-        assertNull(TransactionManagerServices.getRecoverer().getCompletionException());
-
-        assertEquals(0, ResourceRegistrar.getResourcesUniqueNames().size());
-        assertEquals(0, TransactionManagerServices.getRecoverer().getCommittedCount());
-        assertEquals(0, TransactionManagerServices.getRecoverer().getRolledbackCount());
-    }
-
-    public void testRecoverByTmNotBlockingStartup() throws Exception {
-        xaResource.setRecoverException(new BitronixXAException("let's pretend recovery failed", XAException.XAER_RMERR));
-        assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
-
-        TransactionManagerServices.getConfiguration().setRetryUnrecoverableResourcesRegistrationInterval(1);
-        TransactionManagerServices.getConfiguration().setResourceConfigurationFilename("test/" + getClass().getName().replace('.', '/') + ".properties");
-        TransactionManagerServices.getTransactionManager();
 
         assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
         assertEquals(0, TransactionManagerServices.getRecoverer().getCommittedCount());

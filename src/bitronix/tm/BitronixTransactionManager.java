@@ -1,10 +1,7 @@
 package bitronix.tm;
 
 import bitronix.tm.internal.*;
-import bitronix.tm.utils.Decoder;
-import bitronix.tm.utils.Service;
-import bitronix.tm.utils.InitializationException;
-import bitronix.tm.utils.Scheduler;
+import bitronix.tm.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,6 +82,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
         currentTx.getSynchronizationScheduler().add(new ClearContextSynchronization(currentTx), Scheduler.ALWAYS_LAST_POSITION -1);
         currentTx.setActive();
+        if (log.isDebugEnabled()) log.debug("begun new transaction at " + currentTx.getResourceManager().getGtrid().extractTimestamp());
     }
 
     public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, IllegalStateException, SystemException {
@@ -193,6 +191,34 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      */
     public Map getInFlightTransactions() {
         return inFlightTransactions;
+    }
+
+    /**
+     * Return the timestamp of the oldest in-flight transaction.
+     * @return the timestamp or Long.MIN_VALUE if there is no in-flight transaction.
+     */
+    public long getOldestInFlightTransactionTimestamp() {
+        synchronized (inFlightTransactions) {
+            if (inFlightTransactions.size() == 0) {
+                if (log.isDebugEnabled()) log.debug("oldest in-flight transaction's timestamp: " + Long.MIN_VALUE);
+                return Long.MIN_VALUE;
+            }
+
+            long oldestTimestamp = Long.MAX_VALUE;
+
+            Iterator it = inFlightTransactions.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry entry = (Map.Entry) it.next();
+                Uid gtrid = (Uid) entry.getKey();
+                long currentTimestamp = gtrid.extractTimestamp();
+
+                if (currentTimestamp < oldestTimestamp)
+                    oldestTimestamp = currentTimestamp;
+            }
+
+            if (log.isDebugEnabled()) log.debug("oldest in-flight transaction's timestamp: " + oldestTimestamp);    
+            return oldestTimestamp;
+        }
     }
 
     /**

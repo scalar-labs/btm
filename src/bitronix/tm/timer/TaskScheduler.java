@@ -97,13 +97,6 @@ public class TaskScheduler extends Thread implements Service {
         if (log.isDebugEnabled()) log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size());
     }
 
-    public void scheduleRetryUnrecoverableResourcesRegistration(Date executionTime) {
-        if (log.isDebugEnabled()) log.debug("scheduling retry of unrecoverable resources registration task for " + executionTime);
-        RetryUnrecoverableResourcesRegistrationTask task = new RetryUnrecoverableResourcesRegistrationTask(executionTime, this);
-        addTask(task);
-        if (log.isDebugEnabled()) log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size());
-    }
-
     /**
      * Cancel the task that will run background recovery at the specified date.
      * @param recoverer the recovery implementation to use.
