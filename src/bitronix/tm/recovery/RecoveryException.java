@@ -6,7 +6,7 @@ package bitronix.tm.recovery;
  *
  * @author lorban
  */
-public class RecoveryException extends RuntimeException {
+public class RecoveryException extends Exception {
     public RecoveryException(String message, Throwable cause) {
         super(message, cause);
     }

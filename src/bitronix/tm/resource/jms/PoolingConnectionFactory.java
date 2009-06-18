@@ -21,7 +21,7 @@ import javax.transaction.xa.XAResource;
  *
  * @author lorban
  */
-public class PoolingConnectionFactory  extends ResourceBean implements ConnectionFactory, XAResourceProducer {
+public class PoolingConnectionFactory extends ResourceBean implements ConnectionFactory, XAResourceProducer {
 
     private final static Logger log = LoggerFactory.getLogger(PoolingConnectionFactory.class);
 
@@ -115,7 +115,7 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
 
     /* XAResourceProducer implementation */
 
-    public XAResourceHolderState startRecovery() {
+    public XAResourceHolderState startRecovery() throws RecoveryException {
         try {
             init();
             if (recoveryPooledConnection == null) {
@@ -129,7 +129,7 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
         }
     }
 
-    public void endRecovery() {
+    public void endRecovery() throws RecoveryException {
         if (recoveryPooledConnection == null)
             return;
 
@@ -142,6 +142,10 @@ public class PoolingConnectionFactory  extends ResourceBean implements Connectio
         } catch (Exception ex) {
             throw new RecoveryException("error ending recovery", ex);
         }
+    }
+
+    public void setFailed(boolean failed) {
+        pool.setFailed(failed);
     }
 
     public void close() {

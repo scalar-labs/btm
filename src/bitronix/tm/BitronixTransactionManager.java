@@ -44,22 +44,21 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             TransactionManagerServices.getJournal().open();
             TransactionManagerServices.getResourceLoader().init();
             TransactionManagerServices.getRecoverer().run();
-            Exception completionException = TransactionManagerServices.getRecoverer().getCompletionException();
-            if (completionException != null)
-                throw completionException;
 
-            int backgroundRecoveryInterval = TransactionManagerServices.getConfiguration().getBackgroundRecoveryInterval();
-            if (backgroundRecoveryInterval > 0) {
-                if (log.isDebugEnabled()) log.debug("recovery will run in the background every " + backgroundRecoveryInterval + " minutes");
-                Date nextExecutionDate = new Date(System.currentTimeMillis() + (backgroundRecoveryInterval * 60L * 1000L));
-                TransactionManagerServices.getTaskScheduler().scheduleRecovery(TransactionManagerServices.getRecoverer(), nextExecutionDate);
+            int backgroundRecoveryInterval = TransactionManagerServices.getConfiguration().getBackgroundRecoveryIntervalSeconds();
+            if (backgroundRecoveryInterval < 1) {
+                throw new InitializationException("invalid configuration value for backgroundRecoveryIntervalSeconds, found '" + backgroundRecoveryInterval + "' but it must be greater than 0");
             }
+
+            if (log.isDebugEnabled()) log.debug("recovery will run in the background every " + backgroundRecoveryInterval + " second(s)");
+            Date nextExecutionDate = new Date(System.currentTimeMillis() + (backgroundRecoveryInterval * 1000L));
+            TransactionManagerServices.getTaskScheduler().scheduleRecovery(TransactionManagerServices.getRecoverer(), nextExecutionDate);
         } catch (IOException ex) {
             throw new InitializationException("cannot open disk journal", ex);
         } catch (Exception ex) {
             TransactionManagerServices.getJournal().shutdown();
             TransactionManagerServices.getResourceLoader().shutdown();
-            throw new InitializationException("recovery failed, cannot safely start the transaction manager", ex);
+            throw new InitializationException("initialization failed, cannot safely start the transaction manager", ex);
         }
     }
 
@@ -186,8 +185,8 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     }
 
     /**
-     * Return all existing transactions.
-     * @return a map of BitronixTransaction objects using Uid as key and BitronixTransaction as value.
+     * Return all in-flight transactions.
+     * @return a map of {@link BitronixTransaction} objects using {@link Uid} as key and {@link BitronixTransaction} as value.
      */
     public Map getInFlightTransactions() {
         return inFlightTransactions;
@@ -245,7 +244,6 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     public void dumpTransactionContexts() {
         if (log.isDebugEnabled()) {
             if (log.isDebugEnabled()) log.debug("dumping " + inFlightTransactions.size() + " transaction context(s)");
-            Map inFlightTransactions = getInFlightTransactions();
             synchronized (inFlightTransactions) {
                 Iterator it = inFlightTransactions.entrySet().iterator();
                 while (it.hasNext()) {

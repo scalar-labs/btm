@@ -92,6 +92,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         try {
             committedCount = 0;
             rolledbackCount = 0;
+            long oldestTransactionTimestamp = Long.MAX_VALUE;
 
             // Query resources from ResourceRegistrar
             synchronized (ResourceRegistrar.class) {
@@ -100,13 +101,10 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                     String name = (String) it.next();
                     registeredResources.put(name, ResourceRegistrar.get(name));
                 }
-            }
 
-            // get list of in-flight transactions that should not be recovered and the list 
-            // of dangling journal records should be collected atomically to avoid race conditions
-            long oldestTransactionTimestamp = Long.MAX_VALUE;
-            if (TransactionManagerServices.isTransactionManagerRunning()) {
-                oldestTransactionTimestamp = TransactionManagerServices.getTransactionManager().getOldestInFlightTransactionTimestamp();
+                if (TransactionManagerServices.isTransactionManagerRunning()) {
+                    oldestTransactionTimestamp = TransactionManagerServices.getTransactionManager().getOldestInFlightTransactionTimestamp();
+                }
             }
 
             Map danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
@@ -162,9 +160,10 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     /**
      * Recover all configured resources and fill the <code>recoveredXidSets</code> with all recovered XIDs.
      * Step 1.
+     * @throws RecoveryException if an error preventing recovery happened.
      */
-    private void recoverAllResources() {
-        Iterator it = registeredResources.entrySet().iterator();
+    private void recoverAllResources() throws RecoveryException {
+        Iterator it = new HashMap(registeredResources).entrySet().iterator(); // a cloned registeredResources Map must be iterated as the original one can be modified in the loop
         while (it.hasNext()) {
             Map.Entry entry = (Map.Entry) it.next();
             String uniqueName = (String) entry.getKey();
@@ -175,10 +174,15 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 Set xids = recover(producer);
                 if (log.isDebugEnabled()) log.debug("recovered " + xids.size() + " XID(s) from resource " + uniqueName);
                 recoveredXidSets.put(uniqueName, xids);
+                producer.setFailed(false);
             } catch (XAException ex) {
-                throw new RecoveryException("error running recovery on resource " + uniqueName + " (" + Decoder.decodeXAExceptionErrorCode(ex) + ")", ex);
+                producer.setFailed(true);
+                registeredResources.remove(uniqueName);
+                log.warn("error running recovery on resource " + uniqueName + " (error=" + Decoder.decodeXAExceptionErrorCode(ex) + ")", ex);
             } catch (Exception ex) {
-                throw new RecoveryException("error running recovery on resource " + uniqueName, ex);
+                producer.setFailed(true);
+                registeredResources.remove(uniqueName);
+                log.warn("error running recovery on resource " + uniqueName, ex);
             }
         }
     }
@@ -189,8 +193,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * @return a Set of BitronixXids.
      * @param producer the {@link XAResourceProducer} to recover.
      * @throws javax.transaction.xa.XAException if {@link XAResource#recover(int)} call fails.
+     * @throws RecoveryException if an error preventing recovery happened.
      */
-    private Set recover(XAResourceProducer producer) throws XAException {
+    private Set recover(XAResourceProducer producer) throws XAException, RecoveryException {
         if (producer == null)
             throw new IllegalArgumentException("recoverable resource cannot be null");
 
@@ -210,8 +215,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * @param danglingRecords a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value.
      * @return a Set of all committed GTRIDs encoded as strings.
      * @throws java.io.IOException if there is an I/O error reading the journal.
+     * @throws RecoveryException if an error preventing recovery happened.
      */
-    private Set commitDanglingTransactions(long oldestTransactionTimestamp, Map danglingRecords) throws IOException {
+    private Set commitDanglingTransactions(long oldestTransactionTimestamp, Map danglingRecords) throws IOException, RecoveryException {
         Set committedGtrids = new HashSet();
 
         if (log.isDebugEnabled()) log.debug("found " + danglingRecords.size() + " dangling record(s) in journal");
@@ -310,8 +316,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * Commit all branches of a dangling transaction.
      * Step 2.
      * @param danglingTransactions a set of {@link DanglingTransaction}s to commit.
+     * @throws RecoveryException if an error preventing recovery happened.
      */
-    private void commit(Set danglingTransactions) {
+    private void commit(Set danglingTransactions) throws RecoveryException {
         if (log.isDebugEnabled()) log.debug(danglingTransactions.size() + " branch(es) to commit");
 
         Iterator it = danglingTransactions.iterator();
@@ -331,8 +338,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * @param uniqueName the unique name of the resource on which the commit should be done.
      * @param xid the {@link Xid} to commit.
      * @return true when commit was successful.
+     * @throws RecoveryException if an error preventing recovery happened.
      */
-    private boolean commit(String uniqueName, Xid xid) {
+    private boolean commit(String uniqueName, Xid xid) throws RecoveryException {
         XAResourceProducer producer = (XAResourceProducer) registeredResources.get(uniqueName);
         try {
             XAResourceHolderState xaResourceHolderState = producer.startRecovery();
@@ -349,8 +357,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * @param oldestTransactionTimestamp the timestamp of the oldest transaction still in-flight.
      * @param committedGtrids a set of {@link Uid}s already committed on this resource.
      * @return the rolled back branches count.
+     * @throws RecoveryException if an error preventing recovery happened.
      */
-    private int rollbackAbortedTransactions(long oldestTransactionTimestamp, Set committedGtrids) {
+    private int rollbackAbortedTransactions(long oldestTransactionTimestamp, Set committedGtrids) throws RecoveryException {
         if (log.isDebugEnabled()) log.debug("rolling back aborted branch(es)");
         int rollbackCount = 0;
         Iterator it = recoveredXidSets.entrySet().iterator();
@@ -377,8 +386,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * @param recoveredXids a set of {@link BitronixXid} recovered on the reource.
      * @param committedGtrids a set of {@link Uid}s already committed on the resource.
      * @return the rolled back branches count.
+     * @throws RecoveryException if an error preventing recovery happened.
      */
-    private int rollbackAbortedBranchesOfResource(long oldestTransactionTimestamp, String uniqueName, Set recoveredXids, Set committedGtrids) {
+    private int rollbackAbortedBranchesOfResource(long oldestTransactionTimestamp, String uniqueName, Set recoveredXids, Set committedGtrids) throws RecoveryException {
         int abortedCount = 0;
         Iterator it = recoveredXids.iterator();
         while (it.hasNext()) {
@@ -409,8 +419,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * @param uniqueName the unique name of the resource on which to rollback branches.
      * @param xid the {@link Xid} to rollback.
      * @return true when rollback was successful.
+     * @throws RecoveryException if an error preventing recovery happened.
      */
-    private boolean rollback(String uniqueName, Xid xid) {
+    private boolean rollback(String uniqueName, Xid xid) throws RecoveryException {
         XAResourceProducer producer = (XAResourceProducer) registeredResources.get(uniqueName);
         if (producer == null) {
             if (log.isDebugEnabled()) log.debug("resource " + uniqueName + " has not recovered, skipping rollback");

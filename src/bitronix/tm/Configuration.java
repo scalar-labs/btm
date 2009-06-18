@@ -46,7 +46,7 @@ public class Configuration implements Service {
     private boolean warnAboutZeroResourceTransaction;
     private int defaultTransactionTimeout;
     private int gracefulShutdownInterval;
-    private int backgroundRecoveryInterval;
+    private int backgroundRecoveryIntervalSeconds;
     private boolean disableJmx;
     private String jndiUserTransactionName;
     private String journal;
@@ -88,7 +88,7 @@ public class Configuration implements Service {
             warnAboutZeroResourceTransaction = getBoolean(properties, "bitronix.tm.2pc.warnAboutZeroResourceTransactions", true);
             defaultTransactionTimeout = getInt(properties, "bitronix.tm.timer.defaultTransactionTimeout", 60);
             gracefulShutdownInterval = getInt(properties, "bitronix.tm.timer.gracefulShutdownInterval", 60);
-            backgroundRecoveryInterval = getInt(properties, "bitronix.tm.timer.backgroundRecoveryInterval", 0);
+            backgroundRecoveryIntervalSeconds = getInt(properties, "bitronix.tm.timer.backgroundRecoveryIntervalSeconds", 60);
             disableJmx = getBoolean(properties, "bitronix.tm.disableJmx", false);
             jndiUserTransactionName = getString(properties, "bitronix.tm.jndi.userTransactionName", null);
             journal = getString(properties, "bitronix.tm.journal", "disk");
@@ -347,19 +347,40 @@ public class Configuration implements Service {
      * Interval in minutes at which to run the recovery process in the background. Disabled when set to 0.
      * <p>Property name:<br/><b>bitronix.tm.timer.backgroundRecoveryInterval -</b> <i>(defaults to 0)</i></p>
      * @return the interval in minutes.
+     * @deprecated superceded by #getBackgroundRecoveryIntervalSeconds().
      */
     public int getBackgroundRecoveryInterval() {
-        return backgroundRecoveryInterval;
+        return getBackgroundRecoveryIntervalSeconds() / 60;
     }
 
     /**
      * Set the interval in minutes at which to run the recovery process in the background. Disabled when set to 0.
      * @see #getBackgroundRecoveryInterval()
      * @param backgroundRecoveryInterval the interval in minutes.
+     * @deprecated superceded by #setBackgroundRecoveryIntervalSeconds(int).
      */
     public void setBackgroundRecoveryInterval(int backgroundRecoveryInterval) {
+        log.warn("setBackgroundRecoveryInterval() is deprecated, consider using setBackgroundRecoveryIntervalSeconds() instead.");
+        setBackgroundRecoveryIntervalSeconds(backgroundRecoveryInterval * 60);
+    }
+
+    /**
+     * Interval in seconds at which to run the recovery process in the background. Disabled when set to 0.
+     * <p>Property name:<br/><b>bitronix.tm.timer.backgroundRecoveryIntervalSeconds -</b> <i>(defaults to 60)</i></p>
+     * @return the interval in seconds.
+     */
+    public int getBackgroundRecoveryIntervalSeconds() {
+        return backgroundRecoveryIntervalSeconds;
+    }
+
+    /**
+     * Set the interval in seconds at which to run the recovery process in the background. Disabled when set to 0.
+     * @see #getBackgroundRecoveryIntervalSeconds()
+     * @param backgroundRecoveryIntervalSeconds the interval in minutes.
+     */
+    public void setBackgroundRecoveryIntervalSeconds(int backgroundRecoveryIntervalSeconds) {
         checkNotStarted();
-        this.backgroundRecoveryInterval = backgroundRecoveryInterval;
+        this.backgroundRecoveryIntervalSeconds = backgroundRecoveryIntervalSeconds;
     }
 
     /**

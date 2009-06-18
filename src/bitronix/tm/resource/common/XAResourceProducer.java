@@ -1,6 +1,7 @@
 package bitronix.tm.resource.common;
 
 import bitronix.tm.internal.XAResourceHolderState;
+import bitronix.tm.recovery.RecoveryException;
 
 import javax.naming.Referenceable;
 import javax.transaction.xa.XAResource;
@@ -24,13 +25,21 @@ public interface XAResourceProducer extends Referenceable, Serializable {
     /**
      * Prepare the recoverable {@link XAResource} producer for recovery.
      * @return a {@link XAResourceHolderState} object that can be used to call <code>recover()</code>.
+     * @throws bitronix.tm.recovery.RecoveryException thrown when a {@link XAResourceHolderState} cannot be acquired.
      */
-    public XAResourceHolderState startRecovery();
+    public XAResourceHolderState startRecovery() throws RecoveryException;
 
     /**
      * Release internal resources held after call to <code>startRecovery()</code>.
+     * @throws bitronix.tm.recovery.RecoveryException thrown when an error occured while releasing reserved resources.
      */
-    public void endRecovery();
+    public void endRecovery() throws RecoveryException;
+
+    /**
+     * Mark this resource producer as failed or not. A resource is considered failed if recovery fails to run on it.
+     * @param failed true is the resource must be considered failed, false it it must be considered sane.
+     */
+    public void setFailed(boolean failed);
 
     /**
      * Find in the {@link XAResourceHolder}s created by this {@link XAResourceProducer} the one which this

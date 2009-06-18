@@ -17,8 +17,8 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.transaction.xa.XAException;
 import javax.transaction.Status;
+import javax.transaction.xa.XAException;
 
 /**
  * Incremental resource recoverer.
@@ -33,10 +33,9 @@ public class IncrementalRecoverer {
     /**
      * Run incremental recovery on the specified resource.
      * @param xaResourceProducer the resource to recover.
-     * @return false when an incompatible heuristic decision has been detected.
      * @throws RecoveryException when an error preventing recovery happens.
      */
-    public static boolean recover(XAResourceProducer xaResourceProducer) throws RecoveryException {
+    public static void recover(XAResourceProducer xaResourceProducer) throws RecoveryException {
         String uniqueName = xaResourceProducer.getUniqueName();
         if (log.isDebugEnabled()) log.debug("start of incremental recovery on resource " + uniqueName);
         XAResourceHolderState xarhs = xaResourceProducer.startRecovery();
@@ -47,7 +46,6 @@ public class IncrementalRecoverer {
             if (log.isDebugEnabled()) log.debug(xids.size() + " dangling transaction(s) found on resource");
             Map danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
             if (log.isDebugEnabled()) log.debug(danglingRecords.size() + " dangling transaction(s) found in journal");
-
 
             int commitCount = 0;
             int rollbackCount = 0;
@@ -71,12 +69,23 @@ public class IncrementalRecoverer {
                 }
             }
 
+            // if recovery isn't successful we don't mark the resource as failed: heuristics might have happened
+            // but communication with the resouce is working.
+            if (!success)
+                throw new RecoveryException("error recovering resource '" + uniqueName + "' due to an imcompatible heuristic decision");
+
+            xaResourceProducer.setFailed(false);
+
             log.info("incremental recovery committed " + commitCount + " dangling transaction(s) and rolled back " + rollbackCount +
                     " aborted transaction(s) on resource [" + uniqueName + "]");
-            return success;
         } catch (XAException ex) {
+            xaResourceProducer.setFailed(true);
             throw new RecoveryException("failed recovering resource " + uniqueName, ex);
         } catch (IOException ex) {
+            xaResourceProducer.setFailed(true);
+            throw new RecoveryException("failed recovering resource " + uniqueName, ex);
+        } catch (RuntimeException ex) {
+            xaResourceProducer.setFailed(true);
             throw new RecoveryException("failed recovering resource " + uniqueName, ex);
         } finally {
             xaResourceProducer.endRecovery();

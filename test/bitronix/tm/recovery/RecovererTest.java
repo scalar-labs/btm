@@ -281,37 +281,6 @@ public class RecovererTest extends TestCase {
         TransactionManagerServices.getTransactionManager().shutdown();
     }
 
-    public void testRecoverBlockingStartup() throws Exception {
-        xaResource.setRecoverException(new BitronixXAException("let's pretend recovery failed", XAException.XAER_RMERR));
-        assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
-
-        TransactionManagerServices.getRecoverer().run();
-        assertEquals("error running recovery on resource mock-xads (XAER_RMERR)", TransactionManagerServices.getRecoverer().getCompletionException().getMessage());
-        assertEquals("let's pretend recovery failed", TransactionManagerServices.getRecoverer().getCompletionException().getCause().getMessage());
-
-        assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
-        assertEquals(0, TransactionManagerServices.getRecoverer().getCommittedCount());
-        assertEquals(0, TransactionManagerServices.getRecoverer().getRolledbackCount());
-    }
-
-    public void testRecoverByTmBlockingStartup() throws Exception {
-        xaResource.setRecoverException(new BitronixXAException("let's pretend recovery failed", XAException.XAER_RMERR));
-        assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
-
-        try {
-            TransactionManagerServices.getTransactionManager();
-            fail("startup should have failed");
-        } catch (Exception ex) {
-            assertEquals("recovery failed, cannot safely start the transaction manager", ex.getMessage());
-            assertEquals("error running recovery on resource mock-xads (XAER_RMERR)", ex.getCause().getMessage());
-            assertEquals("let's pretend recovery failed", ex.getCause().getCause().getMessage());
-        }
-
-        assertEquals(1, ResourceRegistrar.getResourcesUniqueNames().size());
-        assertEquals(0, TransactionManagerServices.getRecoverer().getCommittedCount());
-        assertEquals(0, TransactionManagerServices.getRecoverer().getRolledbackCount());
-    }
-
     boolean listenerExecuted = false;
     public void testBackgroundRecovererSkippingInFlightTransactions() throws Exception {
         // change disk journal into mock journal

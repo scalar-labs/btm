@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.BitronixTransaction;
 import bitronix.tm.BitronixXid;
+import bitronix.tm.recovery.IncrementalRecoverer;
+import bitronix.tm.recovery.RecoveryException;
 import bitronix.tm.utils.CryptoEngine;
 import bitronix.tm.utils.PropertyUtils;
 import bitronix.tm.utils.Uid;
@@ -30,6 +32,7 @@ public class XAPool implements StateChangeListener {
     private ResourceBean bean;
     private XAResourceProducer xaResourceProducer;
     private Object xaFactory;
+    private boolean failed = false;
 
 
     public XAPool(XAResourceProducer xaResourceProducer, ResourceBean bean) throws Exception {
@@ -40,13 +43,18 @@ public class XAPool implements StateChangeListener {
         if (bean.getAcquireIncrement() < 1)
             throw new IllegalArgumentException("cannot create a pool with a connection acquisition increment less than 1, configured value is " + bean.getAcquireIncrement());
 
-        if (bean.getMaxIdleTime() > 0) {
-            TransactionManagerServices.getTaskScheduler().schedulePoolShrinking(this);
+        xaFactory = createXAFactory(bean);
+
+        init();
+    }
+
+    private void init() throws Exception {
+        for (int i=0; i < bean.getMinPoolSize() ;i++) {
+            createPooledObject(xaFactory);
         }
 
-        xaFactory = createXAFactory(bean);
-        for (int i=0; i<bean.getMinPoolSize() ;i++) {
-            createPooledObject(xaFactory);
+        if (bean.getMaxIdleTime() > 0) {
+            TransactionManagerServices.getTaskScheduler().schedulePoolShrinking(this);
         }
     }
 
@@ -54,11 +62,30 @@ public class XAPool implements StateChangeListener {
         return xaFactory;
     }
 
+    public synchronized void setFailed(boolean failed) {
+        this.failed = failed;
+    }
+
     public synchronized Object getConnectionHandle() throws Exception {
         return getConnectionHandle(true);
     }
     
     public synchronized Object getConnectionHandle(boolean recycle) throws Exception {
+        if (failed) {
+            try {
+                if (log.isDebugEnabled()) log.debug("resource '" + bean.getUniqueName() + "' is marked as failed, resetting and recovering it before trying connection acquisition");
+                close();
+                init();
+                IncrementalRecoverer.recover(xaResourceProducer);
+            }
+            catch (RecoveryException ex) {
+                throw new BitronixRuntimeException("incremental recovery failed when trying to acquire a connection from failed resource '" + bean.getUniqueName() + "'", ex);
+            }
+            catch (Exception ex) {
+                throw new BitronixRuntimeException("pool reset failed when trying to acquire a connection from failed resource '" + bean.getUniqueName() + "'", ex);
+            }
+        }
+
         long remainingTime = bean.getAcquisitionTimeout() * 1000L;
         long before = System.currentTimeMillis();
         while (true) {
@@ -118,6 +145,7 @@ public class XAPool implements StateChangeListener {
             TransactionManagerServices.getTaskScheduler().cancelPoolShrinking(this);
 
         objects.clear();
+        failed = false;
     }
 
     public synchronized long totalPoolSize() {
@@ -196,7 +224,7 @@ public class XAPool implements StateChangeListener {
     }
 
     public String toString() {
-        return "an XAPool of resource " + bean.getUniqueName() + " with " + totalPoolSize() + " connection(s) (" + inPoolSize() + " still available)";
+        return "an XAPool of resource " + bean.getUniqueName() + " with " + totalPoolSize() + " connection(s) (" + inPoolSize() + " still available)" + (failed ? " -failed-" : "");
     }
 
     private void createPooledObject(Object xaFactory) throws Exception {

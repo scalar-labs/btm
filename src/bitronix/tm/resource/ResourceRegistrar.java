@@ -56,9 +56,7 @@ public class ResourceRegistrar {
 
         if (TransactionManagerServices.isTransactionManagerRunning()) {
             if (log.isDebugEnabled()) log.debug("transaction manager is running, recovering resource " + uniqueName);
-            boolean success = IncrementalRecoverer.recover(producer);
-            if (!success)
-                log.error("error recovering resource " + uniqueName + " due to an imcompatible heuristic decision");
+            IncrementalRecoverer.recover(producer);
         }
 
         resources.put(uniqueName, producer);

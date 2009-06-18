@@ -36,7 +36,7 @@ public class RecoveryTask extends Task {
         recovery.setPriority(Thread.NORM_PRIORITY -1);
         recovery.start();
 
-        Date nextExecutionDate = new Date(getExecutionTime().getTime() + (TransactionManagerServices.getConfiguration().getBackgroundRecoveryInterval() * 60L * 1000L));
+        Date nextExecutionDate = new Date(getExecutionTime().getTime() + (TransactionManagerServices.getConfiguration().getBackgroundRecoveryIntervalSeconds() * 1000L));
         if (log.isDebugEnabled()) log.debug("rescheduling recovery for " + nextExecutionDate);
         getTaskScheduler().scheduleRecovery(recoverer, nextExecutionDate);
     }

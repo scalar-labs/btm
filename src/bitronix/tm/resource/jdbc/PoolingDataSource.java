@@ -122,7 +122,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
 
     /* XAResourceProducer implementation */
 
-    public XAResourceHolderState startRecovery() {
+    public XAResourceHolderState startRecovery() throws RecoveryException {
         init();
         if (recoveryConnectionHandle == null) {
             try {
@@ -135,7 +135,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         return new XAResourceHolderState(recoveryConnectionHandle.getPooledConnection(), this);
     }
 
-    public void endRecovery() {
+    public void endRecovery() throws RecoveryException {
         if (recoveryConnectionHandle == null)
             return;
 
@@ -146,6 +146,10 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         } catch (Exception ex) {
             throw new RecoveryException("error ending recovery on " + this, ex);
         }
+    }
+
+    public void setFailed(boolean failed) {
+        pool.setFailed(failed);
     }
 
     public void close() {
