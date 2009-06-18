@@ -92,7 +92,7 @@ public class Configuration implements Service {
             disableJmx = getBoolean(properties, "bitronix.tm.disableJmx", false);
             jndiUserTransactionName = getString(properties, "bitronix.tm.jndi.userTransactionName", null);
             journal = getString(properties, "bitronix.tm.journal", "disk");
-            currentNodeOnlyRecovery = getBoolean(properties, "bitronix.tm.currentNodeOnlyRecovery", false);
+            currentNodeOnlyRecovery = getBoolean(properties, "bitronix.tm.currentNodeOnlyRecovery", true);
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
         } catch (IOException ex) {
             throw new InitializationException("error loading configuration", ex);

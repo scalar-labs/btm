@@ -77,7 +77,9 @@ public class IncrementalRecoverer {
             xaResourceProducer.setFailed(false);
 
             log.info("incremental recovery committed " + commitCount + " dangling transaction(s) and rolled back " + rollbackCount +
-                    " aborted transaction(s) on resource [" + uniqueName + "]");
+                    " aborted transaction(s) on resource [" + uniqueName + "]" +
+                    ((TransactionManagerServices.getConfiguration().isCurrentNodeOnlyRecovery()) ? " (restricted to serverId '" + TransactionManagerServices.getConfiguration().getServerId() + "')" : ""));
+
         } catch (XAException ex) {
             xaResourceProducer.setFailed(true);
             throw new RecoveryException("failed recovering resource " + uniqueName, ex);
