@@ -4,6 +4,7 @@ import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.utils.InitializationException;
 import bitronix.tm.utils.PropertyUtils;
 import bitronix.tm.utils.Service;
+import bitronix.tm.utils.ClassLoaderUtils;
 import bitronix.tm.resource.common.XAResourceProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,17 +97,17 @@ public class ResourceLoader implements Service {
      * @throws InstantiationException if the {@link XAResourceProducer} cannot be instanciated.
      */
     private static XAResourceProducer instanciate(String xaResourceClassName) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-        Class clazz = Thread.currentThread().getContextClassLoader().loadClass(xaResourceClassName);
+        Class clazz = ClassLoaderUtils.loadClass(xaResourceClassName);
 
         // resource classes are instanciated via reflection so that there is no hard class binding between this internal
         // transaction manager service and 3rd party libraries like the JMS ones.
         // This allows using the TM with a 100% JDBC application without requiring JMS libraries.
 
         if (XADataSource.class.isAssignableFrom(clazz)) {
-            return (XAResourceProducer) Thread.currentThread().getContextClassLoader().loadClass(JDBC_RESOURCE_CLASSNAME).newInstance();
+            return (XAResourceProducer) ClassLoaderUtils.loadClass(JDBC_RESOURCE_CLASSNAME).newInstance();
         }
         else if (XAConnectionFactory.class.isAssignableFrom(clazz)) {
-            return (XAResourceProducer) Thread.currentThread().getContextClassLoader().loadClass(JMS_RESOURCE_CLASSNAME).newInstance();
+            return (XAResourceProducer) ClassLoaderUtils.loadClass(JMS_RESOURCE_CLASSNAME).newInstance();
         }
         else
             return null;

@@ -1,6 +1,7 @@
 package bitronix.tm.twopc.executor;
 
 import bitronix.tm.internal.BitronixRuntimeException;
+import bitronix.tm.utils.ClassLoaderUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,16 +51,16 @@ public class ConcurrentExecutor implements Executor {
         if (log.isDebugEnabled()) log.debug("initializing concurrent executor implementation <" + executorsImpl + ">");
 
         try {
-            Class executorsClass = Thread.currentThread().getContextClassLoader().loadClass(executorsImpl);
-            Class executorServiceClass = Thread.currentThread().getContextClassLoader().loadClass(executorServiceImpl);
-            Class timeUnitClass = Thread.currentThread().getContextClassLoader().loadClass(timeUnitImpl);
+            Class executorsClass = ClassLoaderUtils.loadClass(executorsImpl);
+            Class executorServiceClass = ClassLoaderUtils.loadClass(executorServiceImpl);
+            Class timeUnitClass = ClassLoaderUtils.loadClass(timeUnitImpl);
 
             executorService = executorsClass.getMethod("newCachedThreadPool", (Class[]) null).invoke(executorsClass, (Object[]) null);
             executorServiceSubmitMethod = executorServiceClass.getMethod("submit", new Class[] { Runnable.class });
             executorServiceShutdownMethod = executorServiceClass.getMethod("shutdownNow", (Class[]) null);
             timeUnitMilliseconds = timeUnitClass.getField("MILLISECONDS").get(timeUnitClass);
-            futureGetMethod = Thread.currentThread().getContextClassLoader().loadClass(futureImpl).getMethod("get", new Class[] { long.class, timeUnitClass });
-            futureIsDoneMethod = Thread.currentThread().getContextClassLoader().loadClass(futureImpl).getMethod("isDone", (Class[]) null);
+            futureGetMethod = ClassLoaderUtils.loadClass(futureImpl).getMethod("get", new Class[] { long.class, timeUnitClass });
+            futureIsDoneMethod = ClassLoaderUtils.loadClass(futureImpl).getMethod("isDone", (Class[]) null);
 
             if (log.isDebugEnabled()) log.debug("found a valid implementation for this executor <" + executorsImpl + ">");
             usable = true;

@@ -1,5 +1,7 @@
 package bitronix.tm.resource.jdbc.lrc;
 
+import bitronix.tm.utils.ClassLoaderUtils;
+
 import javax.sql.XADataSource;
 import javax.sql.XAConnection;
 import java.sql.SQLException;
@@ -71,7 +73,7 @@ public class LrcXADataSource implements XADataSource {
 
     public XAConnection getXAConnection() throws SQLException {
         try {
-            Class driverClazz = Thread.currentThread().getContextClassLoader().loadClass(driverClassName);
+            Class driverClazz = ClassLoaderUtils.loadClass(driverClassName);
             Driver driver = (Driver) driverClazz.newInstance();
             Properties props = new Properties();
             if (user != null) props.setProperty("user", user);
@@ -85,7 +87,7 @@ public class LrcXADataSource implements XADataSource {
 
     public XAConnection getXAConnection(String user, String password) throws SQLException {
         try {
-            Class driverClazz = Thread.currentThread().getContextClassLoader().loadClass(driverClassName);
+            Class driverClazz = ClassLoaderUtils.loadClass(driverClassName);
             Driver driver = (Driver) driverClazz.newInstance();
             Properties props = new Properties();
             props.setProperty("user", user);

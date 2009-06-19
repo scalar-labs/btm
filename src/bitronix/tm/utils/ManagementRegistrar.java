@@ -28,11 +28,11 @@ public class ManagementRegistrar {
 
         if (enableJmx) {
             try {
-                Class managementFactoryClass = Thread.currentThread().getContextClassLoader().loadClass("java.lang.management.ManagementFactory");
+                Class managementFactoryClass = ClassLoaderUtils.loadClass("java.lang.management.ManagementFactory");
                 Method getPlatformMBeanServerMethod = managementFactoryClass.getMethod("getPlatformMBeanServer", (Class[]) null);
                 mbeanServer = getPlatformMBeanServerMethod.invoke(managementFactoryClass, (Object[]) null);
 
-                Class objectNameClass = Thread.currentThread().getContextClassLoader().loadClass("javax.management.ObjectName");
+                Class objectNameClass = ClassLoaderUtils.loadClass("javax.management.ObjectName");
                 objectNameConstructor = objectNameClass.getConstructor(new Class[] {String.class});
 
                 registerMBeanMethod = mbeanServer.getClass().getMethod("registerMBean", new Class[] {Object.class, objectNameClass});

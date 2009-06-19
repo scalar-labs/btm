@@ -10,6 +10,7 @@ import bitronix.tm.recovery.RecoveryException;
 import bitronix.tm.utils.CryptoEngine;
 import bitronix.tm.utils.PropertyUtils;
 import bitronix.tm.utils.Uid;
+import bitronix.tm.utils.ClassLoaderUtils;
 import bitronix.tm.internal.*;
 
 import javax.transaction.xa.XAResource;
@@ -237,7 +238,7 @@ public class XAPool implements StateChangeListener {
         String className = bean.getClassName();
         if (className == null)
             throw new IllegalArgumentException("className cannot be null");
-        Class xaFactoryClass = Thread.currentThread().getContextClassLoader().loadClass(className);
+        Class xaFactoryClass = ClassLoaderUtils.loadClass(className);
         Object xaFactory = xaFactoryClass.newInstance();
 
         Iterator it = bean.getDriverProperties().entrySet().iterator();

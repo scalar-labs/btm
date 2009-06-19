@@ -8,6 +8,7 @@ import bitronix.tm.resource.ResourceLoader;
 import bitronix.tm.timer.TaskScheduler;
 import bitronix.tm.twopc.executor.*;
 import bitronix.tm.utils.InitializationException;
+import bitronix.tm.utils.ClassLoaderUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +66,7 @@ public class TransactionManagerServices {
                 journal = new NullJournal();
             else {
                 try {
-                    Class clazz = Thread.currentThread().getContextClassLoader().loadClass(configuredJounal);
+                    Class clazz = ClassLoaderUtils.loadClass(configuredJounal);
                     journal = (Journal) clazz.newInstance();
                 } catch (Exception ex) {
                     throw new InitializationException("invalid journal implementation '" + configuredJounal + "'", ex);
