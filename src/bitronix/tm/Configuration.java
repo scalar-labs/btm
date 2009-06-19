@@ -1,9 +1,6 @@
 package bitronix.tm;
 
-import bitronix.tm.utils.PropertyException;
-import bitronix.tm.utils.PropertyUtils;
-import bitronix.tm.utils.Service;
-import bitronix.tm.utils.InitializationException;
+import bitronix.tm.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +62,7 @@ public class Configuration implements Service {
                     in = new FileInputStream(configurationFilename);
                 } else {
                     if (log.isDebugEnabled()) log.debug("loading default configuration");
-                    in = Thread.currentThread().getContextClassLoader().getResourceAsStream("bitronix-default-config.properties");
+                    in = ClassLoaderUtils.getResourceAsStream("bitronix-default-config.properties");
                 }
                 properties = new Properties();
                 if (in != null)
@@ -506,7 +503,11 @@ public class Configuration implements Service {
                 serverIdArray = truncatedServerId;
             }
 
-            log.info("JVM unique ID: <" + new String(serverIdArray) + ">");
+            String serverIdArrayAsString = new String(serverIdArray);
+            if (serverId == null)
+                serverId = serverIdArrayAsString;
+
+            log.info("JVM unique ID: <" + serverIdArrayAsString + ">");
         }
         return serverIdArray;
     }
