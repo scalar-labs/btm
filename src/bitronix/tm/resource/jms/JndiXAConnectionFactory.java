@@ -8,6 +8,7 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.rmi.PortableRemoteObject;
 import java.util.Hashtable;
+import java.util.Properties;
 
 /**
  * {@link XAConnectionFactory} implementation that wraps another {@link XAConnectionFactory} implementation available
@@ -23,6 +24,8 @@ public class JndiXAConnectionFactory implements XAConnectionFactory {
     private String name;
     private String securityPrincipal;
     private String securityCredentials;
+    private Properties extraJndiProperties = new Properties();
+    private boolean narrowJndiObject = false;
     private XAConnectionFactory wrappedFactory;
 
 
@@ -113,26 +116,74 @@ public class JndiXAConnectionFactory implements XAConnectionFactory {
         this.name = name;
     }
 
+    /**
+     * The extra JNDI environment properties added the the {@link InitialContext}'s environment upon creation.
+     * @return The extra JNDI environment properties.
+     */
+    public Properties getExtraJndiProperties() {
+        return extraJndiProperties;
+    }
+
+    /**
+     * Set the extra JNDI environment properties added the the {@link InitialContext}'s environment upon creation.
+     * @param extraJndiProperties The extra JNDI environment properties.
+     */
+    public void setExtraJndiProperties(Properties extraJndiProperties) {
+        this.extraJndiProperties = extraJndiProperties;
+    }
+
+    /**
+     * Should {@link PortableRemoteObject#narrow(Object, Class)} be applied on the object looked up from
+     * JNDI before trying to cast it to {@link XAConnectionFactory} ?
+     * @return true if the object should be narrowed, false otherwise.
+     */
+    public boolean isNarrowJndiObject() {
+        return narrowJndiObject;
+    }
+
+    /**
+     * Set if {@link PortableRemoteObject#narrow(Object, Class)} should be applied on the object looked up from
+     * JNDI before trying to cast it to {@link XAConnectionFactory} ?
+     * @param narrowJndiObject true if the object should be narrowed, false otherwise.
+     */
+    public void setNarrowJndiObject(boolean narrowJndiObject) {
+        this.narrowJndiObject = narrowJndiObject;
+    }
+
     protected void init() throws NamingException {
         if (wrappedFactory != null)
             return;
 
         Context ctx;
-        if (!isEmpty(initialContextFactory) && !isEmpty(providerUrl)) {
+        if (!isEmpty(initialContextFactory)) {
             Hashtable env = new Hashtable();
             env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
-            env.put(Context.PROVIDER_URL, providerUrl);
+            if (!isEmpty(providerUrl))
+                env.put(Context.PROVIDER_URL, providerUrl);
             if (!isEmpty(securityPrincipal))
                 env.put(Context.SECURITY_PRINCIPAL, securityPrincipal);
             if (!isEmpty(securityCredentials))
                 env.put(Context.SECURITY_CREDENTIALS, securityCredentials);
+            if (!extraJndiProperties.isEmpty())
+                env.putAll(extraJndiProperties);
             ctx = new InitialContext(env);
         }
         else {
             ctx = new InitialContext();
         }
 
-        wrappedFactory = (XAConnectionFactory) PortableRemoteObject.narrow(ctx.lookup(name), XAConnectionFactory.class);
+        try {
+            Object lookedUpObject = ctx.lookup(name);
+            if (narrowJndiObject) {
+                wrappedFactory = (XAConnectionFactory) PortableRemoteObject.narrow(lookedUpObject, XAConnectionFactory.class);
+            }
+            else {
+                wrappedFactory = (XAConnectionFactory) lookedUpObject;
+            }
+        }
+        finally {
+            ctx.close();
+        }
     }
 
     public XAConnection createXAConnection() throws JMSException {
