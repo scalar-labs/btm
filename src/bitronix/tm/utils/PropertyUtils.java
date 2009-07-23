@@ -24,11 +24,15 @@ public class PropertyUtils {
      */
     public static void setProperty(Object target, String propertyName, Object propertyValue) throws PropertyException {
         String[] propertyNames = propertyName.split("\\.");
+
+        StringBuffer visitedPropertyName = new StringBuffer();
         Object currentTarget = target;
-        for (int i = 0; i < propertyNames.length -1; i++) {
+        int i = 0;
+        while (i < propertyNames.length -1) {
             String name = propertyNames[i];
             Object result = callGetter(currentTarget, name);
             if (result == null) {
+                // try to instanciate the object & set it in place
                 Class propertyType = getPropertyType(target, name);
                 try {
                     result = propertyType.newInstance();
@@ -39,10 +43,19 @@ public class PropertyUtils {
                 }
                 callSetter(currentTarget, name, result);
             }
+
             currentTarget = result;
+            visitedPropertyName.append(name);
+            visitedPropertyName.append('.');
+            i++;
+
+            // if it's a Properties object -> the non-visited part of the key should be used
+            // as this Properties' object key so stop iterating over the dotted properties.
+            if (currentTarget instanceof Properties)
+                break;
         }
 
-        String lastPropertyName = propertyNames[propertyNames.length - 1];
+        String lastPropertyName = propertyName.substring(visitedPropertyName.length(), propertyName.length());
         if (currentTarget instanceof Properties) {
             Properties p = (Properties) currentTarget;
             p.setProperty(lastPropertyName, propertyValue.toString());
@@ -228,27 +241,21 @@ public class PropertyUtils {
         if ((destinationClass == boolean.class || destinationClass == Boolean.class)  &&  value.getClass() == String.class) {
             return Boolean.valueOf((String) value);
         }
-
         if ((destinationClass == byte.class || destinationClass == Byte.class)  &&  value.getClass() == String.class) {
             return new Byte((String) value);
         }
-
         if ((destinationClass == short.class || destinationClass == Short.class)  &&  value.getClass() == String.class) {
             return new Short((String) value);
         }
-
         if ((destinationClass == int.class || destinationClass == Integer.class)  &&  value.getClass() == String.class) {
             return new Integer((String) value);
         }
-
         if ((destinationClass == long.class || destinationClass == Long.class)  &&  value.getClass() == String.class) {
             return new Long((String) value);
         }
-
         if ((destinationClass == float.class || destinationClass == Float.class)  &&  value.getClass() == String.class) {
             return new Float((String) value);
         }
-
         if ((destinationClass == double.class || destinationClass == Double.class)  &&  value.getClass() == String.class) {
             return new Double((String) value);
         }
@@ -307,10 +314,11 @@ public class PropertyUtils {
 
     private static Class getPropertyType(Object target, String propertyName) {
         String getterName = "get" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
+        String getterIsName = "is" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
         Method[] methods = target.getClass().getMethods();
         for (int i = 0; i < methods.length; i++) {
             Method method = methods[i];
-            if (method.getName().equals(getterName)  &&  !method.getReturnType().equals(void.class)  &&  method.getParameterTypes().length == 0) {
+            if ((method.getName().equals(getterName) || method.getName().equals(getterIsName))  &&  !method.getReturnType().equals(void.class)  &&  method.getParameterTypes().length == 0) {
                 return method.getReturnType();
             }
         }

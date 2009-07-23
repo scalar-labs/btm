@@ -5,9 +5,6 @@ import junit.framework.TestCase;
 import java.util.Properties;
 import java.util.Map;
 
-import bitronix.tm.utils.PropertyException;
-import bitronix.tm.utils.PropertyUtils;
-
 /**
  * <p></p>
  * <p>&copy; Bitronix 2005, 2006</p>
@@ -16,7 +13,7 @@ import bitronix.tm.utils.PropertyUtils;
  */
 public class PropertyUtilsTest extends TestCase {
 
-    public void testSmartSetProperties() throws Exception {
+    public void testSetProperties() throws Exception {
         Destination destination = new Destination();
 
         PropertyUtils.setProperty(destination, "props.key", "value");
@@ -28,7 +25,7 @@ public class PropertyUtilsTest extends TestCase {
         PropertyUtils.setProperty(destination, "subDestination.anInteger", "20");
         assertEquals(20, destination.getSubDestination().getAnInteger());
         PropertyUtils.setProperty(destination, "aBoolean", "true");
-        assertEquals(true, destination.getABoolean());
+        assertEquals(true, destination.isABoolean());
         PropertyUtils.setProperty(destination, "aWriteOnlyInt", "20");
 
         PrivateDestination privateDestination = new PrivateDestination();
@@ -38,6 +35,16 @@ public class PropertyUtilsTest extends TestCase {
         } catch (PropertyException ex) {
             assertEquals("cannot set property 'subDestination.props.key' - 'subDestination' is null and cannot be auto-filled", ex.getMessage());
         }
+    }
+
+    public void testSetPropertiesObjectLongKey() throws Exception {
+        PrivateDestination destination = new PrivateDestination();
+        
+        PropertyUtils.setProperty(destination, "props.key", "value1");
+        PropertyUtils.setProperty(destination, "props.a.dotted.key", "value2");
+
+        assertEquals("value1", destination.getProps().get("key"));
+        assertEquals("value2", destination.getProps().get("a.dotted.key"));
     }
 
     public void testSmartGetProperties() throws Exception {
@@ -74,7 +81,7 @@ public class PropertyUtilsTest extends TestCase {
         PropertyUtils.setProperty(destination, "aDouble", "0.654987");
 
         assertEquals("this is my string", destination.getAString());
-        assertEquals(true, destination.getABoolean());
+        assertEquals(true, destination.isABoolean());
         assertEquals(100, destination.getAByte());
         assertEquals(20000, destination.getAShort());
         assertEquals(300000, destination.getAnInteger());
@@ -146,7 +153,7 @@ public class PropertyUtilsTest extends TestCase {
             this.aWriteOnlyInt = aWriteOnlyInt;
         }
 
-        public boolean getABoolean() {
+        public boolean isABoolean() {
             return aBoolean;
         }
 
