@@ -187,14 +187,16 @@ public class ResourceLoader implements Service {
 
             if (key.startsWith("resource.")) {
                 String[] keyParts = key.split("\\.");
-                if (keyParts.length < 3 || keyParts.length > 4) {
+                if (keyParts.length < 3) {
                     log.warn("ignoring invalid entry in configuration file: " + key);
                     continue;
                 }
                 String configuredName = keyParts[1];
                 String propertyName = keyParts[2];
-                if (keyParts.length == 4) {
-                    propertyName += "." + keyParts[3];
+                if (keyParts.length > 3) {
+                    for (int i=3; i < keyParts.length; i++) {
+                        propertyName += "." + keyParts[i];
+                    }
                 }
 
                 List pairs = (List) entries.get(configuredName);
