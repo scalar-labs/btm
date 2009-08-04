@@ -66,6 +66,8 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         XAPool p2 = getPool(this.poolingDataSource2);
         registerPoolEventListener(p2);
 
+        TransactionManagerServices.getConfiguration().setGracefulShutdownInterval(2);
+
         // start TM
         TransactionManagerServices.getTransactionManager();
 

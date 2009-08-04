@@ -137,6 +137,8 @@ public class XAResourceManager {
      * @throws XAException if the resource threw an exception during resume.
      */
     public void resume() throws XAException {
+        List toBeEnlisted = new ArrayList();
+
         Iterator it = resources.iterator();
         while (it.hasNext()) {
             XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
@@ -151,6 +153,33 @@ public class XAResourceManager {
             // reference back to them.
             // See: {@link bitronix.tm.resource.common.XAResourceHolder#getXAResourceHolderState()}
             xaResourceHolderState.getXAResourceHolder().setXAResourceHolderState(xaResourceHolderState);
+
+            // If a prepared statement is (re-) used after suspend/resume is performed its XAResource needs to be
+            // re-enlisted.
+            try {
+                if (log.isDebugEnabled()) log.debug("re-enlisting " + xaResourceHolderState);
+
+                if (!xaResourceHolderState.getUseTmJoin()) {
+                    toBeEnlisted.add(new XAResourceHolderState(xaResourceHolderState));
+                }
+                else {
+                    enlist(xaResourceHolderState);
+                }
+            } catch (BitronixSystemException ex) {
+                throw new BitronixXAException("", XAException.XAER_PROTO, ex);
+            }
+        }
+
+        if (toBeEnlisted.size() > 0 && log.isDebugEnabled()) log.debug("enlisting " + toBeEnlisted.size() + " unjoinable resource(s)");
+        for (int i = 0; i < toBeEnlisted.size(); i++) {
+            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) toBeEnlisted.get(i);
+
+            xaResourceHolderState.getXAResourceHolder().setXAResourceHolderState(xaResourceHolderState);
+            try {
+                enlist(xaResourceHolderState);
+            } catch (BitronixSystemException ex) {
+                throw new BitronixXAException("error enlisting unjoinable resource " + xaResourceHolderState, XAException.XAER_PROTO, ex);
+            }
         }
     }
 

@@ -49,13 +49,24 @@ public class XAResourceHolderState {
         xid = null;
     }
 
+    public XAResourceHolderState(XAResourceHolderState resourceHolderState) {
+        this.bean = resourceHolderState.bean;
+        this.xaResourceHolder = resourceHolderState.xaResourceHolder;
+
+        started = false;
+        ended = false;
+        suspended = false;
+        isTimeoutAlreadySet = false;
+        xid = null;
+    }
+
     public BitronixXid getXid() {
         return xid;
     }
 
     public void setXid(BitronixXid xid) throws BitronixSystemException {
         if (log.isDebugEnabled()) log.debug("assigning <" + xid + "> to <" + this + ">");
-        if (this.xid != null)
+        if (this.xid != null && !xid.equals(this.xid))
             throw new BitronixSystemException("a XID has already been assigned to " + this);
         this.xid = xid;
     }
