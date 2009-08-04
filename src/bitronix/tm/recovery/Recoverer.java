@@ -161,9 +161,8 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     /**
      * Recover all configured resources and fill the <code>recoveredXidSets</code> with all recovered XIDs.
      * Step 1.
-     * @throws RecoveryException if an error preventing recovery happened.
      */
-    private void recoverAllResources() throws RecoveryException {
+    private void recoverAllResources() {
         Iterator it = new HashMap(registeredResources).entrySet().iterator(); // a cloned registeredResources Map must be iterated as the original one can be modified in the loop
         while (it.hasNext()) {
             Map.Entry entry = (Map.Entry) it.next();
@@ -179,11 +178,11 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             } catch (XAException ex) {
                 producer.setFailed(true);
                 registeredResources.remove(uniqueName);
-                log.warn("error running recovery on resource " + uniqueName + " (error=" + Decoder.decodeXAExceptionErrorCode(ex) + ")", ex);
+                log.warn("error running recovery on resource '" + uniqueName + "', resource marked as failed (background recoverer will retry recovery) (error=" + Decoder.decodeXAExceptionErrorCode(ex) + ")", ex);
             } catch (Exception ex) {
                 producer.setFailed(true);
                 registeredResources.remove(uniqueName);
-                log.warn("error running recovery on resource " + uniqueName, ex);
+                log.warn("error running recovery on resource '" + uniqueName + "', resource marked as failed (background recoverer will retry recovery)", ex);
             }
         }
     }

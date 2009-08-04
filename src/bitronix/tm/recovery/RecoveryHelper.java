@@ -94,7 +94,7 @@ public class RecoveryHelper {
                 byte[] jvmUniqueId = TransactionManagerServices.getConfiguration().buildServerIdArray();
 
                 if (extractedServerId == null) {
-                    log.warn("skipping XID " + bitronixXid + " as its GTRID's serverId is null. It loooks like the disk journal is corrupted !");
+                    log.error("skipping XID " + bitronixXid + " as its GTRID's serverId is null. It loooks like the disk journal is corrupted !");
                     continue;
                 }
 
