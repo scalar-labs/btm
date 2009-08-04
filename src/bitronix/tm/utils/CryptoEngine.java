@@ -23,7 +23,7 @@ public class CryptoEngine {
     private static final String CRYPTO_PASSWORD = "B1tr0n!+";
 
     /**
-     * Crypt the given data using the given cipher and the given password as the crypto key.
+     * Crypt the given data using the given cipher.
      * The crypted result is base64-encoded before it is returned.
      * @param cipher the cypther to use.
      * @param data the data to crypt.
@@ -63,9 +63,9 @@ public class CryptoEngine {
     }
 
     /**
-     * Decrypt the given base64-encoded, crypted data.
+     * Decrypt using the given cipher the given base64-encoded, crypted data.
      * @param cipher the cypther to use.
-     * @param data the data to decrypt.
+     * @param data the base64-encoded data to decrypt.
      * @return decrypted data.
      * @throws InvalidKeyException if the given key material is shorter than 8 bytes.
      * @throws NoSuchAlgorithmException if a secret-key factory for the specified algorithm is not available in the
@@ -104,7 +104,7 @@ public class CryptoEngine {
     }
 
     /**
-     * Main class that can be used as a command-line tool to get a crypted version of a resource password.
+     * Main method of this class to be used as a command-line tool to get a crypted version of a resource password.
      * @param args the command-line arguments.
      * @throws Exception when an error occurs crypting the given resource password.
      */
