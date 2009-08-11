@@ -45,6 +45,15 @@ public class ManagementRegistrar {
     }
 
     /**
+     * Replace characters considered illegal in a management object's name.
+     * @param name the name to work on.
+     * @return a fully valid name where all invalid characters have been replaced with '_'.
+     */
+    public static String makeValidName(String name) {
+        return name.replaceAll("[\\:\\,\\=,\\.]", "_");
+    }
+
+    /**
      * Register the specified management object.
      * @param name the name of the object.
      * @param obj the management object.

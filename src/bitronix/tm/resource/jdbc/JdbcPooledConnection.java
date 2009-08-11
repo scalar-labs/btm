@@ -65,7 +65,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             poolingDataSource.setUseTmJoin(true);
         }
 
-        this.jmxName = "bitronix.tm:type=JdbcPooledConnection,UniqueName=" + poolingDataSource.getUniqueName().replaceAll("[\\:\\,\\=,\\.]", "_") + ",Id=" + poolingDataSource.incCreatedResourcesCounter();
+        this.jmxName = "bitronix.tm:type=JdbcPooledConnection,UniqueName=" + ManagementRegistrar.makeValidName(poolingDataSource.getUniqueName()) + ",Id=" + poolingDataSource.incCreatedResourcesCounter();
         ManagementRegistrar.register(jmxName, this);
     }
 

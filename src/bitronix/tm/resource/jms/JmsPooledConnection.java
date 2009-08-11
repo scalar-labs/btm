@@ -34,7 +34,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
         this.poolingConnectionFactory = poolingConnectionFactory;
         this.xaConnection = connection;
         addStateChangeEventListener(new JmsPooledConnectionStateChangeListener());
-        this.jmxName = "bitronix.tm:type=JmsPooledConnection,UniqueName=" + poolingConnectionFactory.getUniqueName().replaceAll("[\\:\\,\\=,\\.]", "_") + ",Id=" + poolingConnectionFactory.incCreatedResourcesCounter();
+        this.jmxName = "bitronix.tm:type=JmsPooledConnection,UniqueName=" + ManagementRegistrar.makeValidName(poolingConnectionFactory.getUniqueName()) + ",Id=" + poolingConnectionFactory.incCreatedResourcesCounter();
         ManagementRegistrar.register(jmxName, this);
     }
 
