@@ -1,6 +1,5 @@
 package bitronix.tm.resource.jms;
 
-import bitronix.tm.BitronixXid;
 import bitronix.tm.internal.BitronixSystemException;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.ManagementRegistrar;
@@ -182,15 +181,15 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     }
 
     public Collection getTransactionGtridsCurrentlyHoldingThis() {
-        List result = new ArrayList();
         synchronized (sessions) {
+            List result = new ArrayList();
             for (int i = 0; i < sessions.size(); i++) {
                 DualSessionWrapper dsw = (DualSessionWrapper) sessions.get(i);
-                String gtrid = ((BitronixXid) dsw.getXAResourceHolderState().getXid()).getGlobalTransactionIdUid().toString();
+                String gtrid = dsw.getXAResourceHolderState().getXid().getGlobalTransactionIdUid().toString();
                 result.add(gtrid);
             }
+            return result;
         }
-        return result;
     }
 
     /**
