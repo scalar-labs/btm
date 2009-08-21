@@ -24,6 +24,9 @@ public class LrcXADataSource implements XADataSource {
     private String user;
     private String password;
 
+    public LrcXADataSource() {
+    }
+
     public int getLoginTimeout() throws SQLException {
         return loginTimeout;
     }

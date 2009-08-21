@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  *   |       rollback()
  * PREPARED ------------- NO_TX
  * </pre>
- * {@link XAResource#TMJOIN}, {@link XAResource#TMSUSPEND} and {@link XAResource#TMRESUME} are not supported.
+ * {@link XAResource#TMSUSPEND} and {@link XAResource#TMRESUME} are not supported.
  * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban

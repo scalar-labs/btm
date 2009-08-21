@@ -61,6 +61,6 @@ public class LrcXAConnection implements XAConnection {
     }
 
     public String toString() {
-        return "a LrcXAConnection";
+        return "a LrcXAConnection on " + connection;
     }
 }
