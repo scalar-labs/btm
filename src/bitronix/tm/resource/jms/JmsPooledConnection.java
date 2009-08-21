@@ -3,7 +3,9 @@ package bitronix.tm.resource.jms;
 import bitronix.tm.internal.BitronixSystemException;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.ManagementRegistrar;
+import bitronix.tm.utils.Scheduler;
 import bitronix.tm.resource.common.*;
+import bitronix.tm.resource.jms.lrc.LrcXAConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +36,16 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
         this.poolingConnectionFactory = poolingConnectionFactory;
         this.xaConnection = connection;
         addStateChangeEventListener(new JmsPooledConnectionStateChangeListener());
+        
+        if (poolingConnectionFactory.getClassName().equals(LrcXAConnectionFactory.class.getName())) {
+            if (log.isDebugEnabled()) log.debug("emulating XA for resource " + poolingConnectionFactory.getUniqueName() + " - changing twoPcOrderingPosition to " + Scheduler.ALWAYS_LAST_POSITION);
+            poolingConnectionFactory.setTwoPcOrderingPosition(Scheduler.ALWAYS_LAST_POSITION);
+            if (log.isDebugEnabled()) log.debug("emulating XA for resource " + poolingConnectionFactory.getUniqueName() + " - changing deferConnectionRelease to true");
+            poolingConnectionFactory.setDeferConnectionRelease(true);
+            if (log.isDebugEnabled()) log.debug("emulating XA for resource " + poolingConnectionFactory.getUniqueName() + " - changing useTmJoin to true");
+            poolingConnectionFactory.setUseTmJoin(true);
+        }
+        
         this.jmxName = "bitronix.tm:type=JmsPooledConnection,UniqueName=" + ManagementRegistrar.makeValidName(poolingConnectionFactory.getUniqueName()) + ",Id=" + poolingConnectionFactory.incCreatedResourcesCounter();
         ManagementRegistrar.register(jmxName, this);
     }
