@@ -21,6 +21,7 @@ public class JndiXAConnectionFactory implements XAConnectionFactory {
 
     private String initialContextFactory;
     private String providerUrl;
+    private String urlPkgPrefixes;
     private String name;
     private String securityPrincipal;
     private String securityCredentials;
@@ -42,7 +43,8 @@ public class JndiXAConnectionFactory implements XAConnectionFactory {
 
     /**
      * Set the {@link Context#INITIAL_CONTEXT_FACTORY} of the JNDI {@link Context} used to fetch the {@link XAConnectionFactory}.
-     * If not set, the {@link Context} is created without the environment parameter, using the default constructor.
+     * If not set, the {@link Context} is created without the environment parameter, using the default constructor. This means
+     * <i>all other properties (providerUrl, urlPkgPrefixes, extraJndiProperties...) are then ignored.</i>
      * @param initialContextFactory the {@link Context#INITIAL_CONTEXT_FACTORY} value.
      */
     public void setInitialContextFactory(String initialContextFactory) {
@@ -59,11 +61,26 @@ public class JndiXAConnectionFactory implements XAConnectionFactory {
 
     /**
      * Set the {@link Context#PROVIDER_URL} of the JNDI {@link Context} used to fetch the {@link XAConnectionFactory}.
-     * If not set, the {@link Context} is created without the environment parameter, using the default constructor.
      * @param providerUrl the {@link Context#PROVIDER_URL} value.
      */
     public void setProviderUrl(String providerUrl) {
         this.providerUrl = providerUrl;
+    }
+
+    /**
+     * The {@link Context#URL_PKG_PREFIXES} of the JNDI {@link Context} used to fetch the {@link XAConnectionFactory}.
+     * @return the {@link Context#URL_PKG_PREFIXES} value.
+     */
+    public String getUrlPkgPrefixes() {
+        return urlPkgPrefixes;
+    }
+
+    /**
+     * Set the {@link Context#URL_PKG_PREFIXES} of the JNDI {@link Context} used to fetch the {@link XAConnectionFactory}.
+     * @param urlPkgPrefixes the {@link Context#URL_PKG_PREFIXES} value.
+     */
+    public void setUrlPkgPrefixes(String urlPkgPrefixes) {
+        this.urlPkgPrefixes = urlPkgPrefixes;
     }
 
     /**
@@ -160,6 +177,8 @@ public class JndiXAConnectionFactory implements XAConnectionFactory {
             env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
             if (!isEmpty(providerUrl))
                 env.put(Context.PROVIDER_URL, providerUrl);
+            if (!isEmpty(urlPkgPrefixes))
+                env.put(Context.URL_PKG_PREFIXES, urlPkgPrefixes);
             if (!isEmpty(securityPrincipal))
                 env.put(Context.SECURITY_PRINCIPAL, securityPrincipal);
             if (!isEmpty(securityCredentials))
