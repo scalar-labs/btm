@@ -103,6 +103,6 @@ public class LrcXADataSource implements XADataSource {
     }
 
     public String toString() {
-        return "a LrcXADataSource on " + driverClassName + " with URL " + url;
+        return "a JDBC LrcXADataSource on " + driverClassName + " with URL " + url;
     }
 }

@@ -156,6 +156,6 @@ public class LrcXASession implements XASession {
     }
 
     public String toString() {
-        return "a LrcXASession on " + nonXaSession;
+        return "a JMS LrcXASession on " + nonXaSession;
     }
 }

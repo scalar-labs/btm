@@ -68,7 +68,7 @@ public class LrcConnectionHandle implements Connection {
     }
 
     public String toString() {
-        return "a LrcConnectionHandle on " + xaResource;
+        return "a JDBC LrcConnectionHandle on " + xaResource;
     }
 
     /* dumb wrapping of Connection methods */

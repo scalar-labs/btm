@@ -268,6 +268,6 @@ public class LrcXAResource implements XAResource {
     }
 
     public String toString() {
-        return "a LrcXAResource in state " + xlatedState() + " of session " + session;
+        return "a JMS LrcXAResource in state " + xlatedState() + " of session " + session;
     }
 }

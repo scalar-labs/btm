@@ -64,6 +64,6 @@ public class LrcXAConnectionFactory implements XAConnectionFactory {
     }
 
     public String toString() {
-        return "a LrcXAConnectionFactory on " + connectionFactoryClassName + " with properties " + properties;
+        return "a JMS LrcXAConnectionFactory on " + connectionFactoryClassName + " with properties " + properties;
     }
 }
