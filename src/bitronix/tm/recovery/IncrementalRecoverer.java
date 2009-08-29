@@ -38,7 +38,13 @@ public class IncrementalRecoverer {
     public static void recover(XAResourceProducer xaResourceProducer) throws RecoveryException {
         String uniqueName = xaResourceProducer.getUniqueName();
         if (log.isDebugEnabled()) log.debug("start of incremental recovery on resource " + uniqueName);
-        XAResourceHolderState xarhs = xaResourceProducer.startRecovery();
+        XAResourceHolderState xarhs;
+        try {
+            xarhs = xaResourceProducer.startRecovery();
+        } catch (RecoveryException ex) {
+            xaResourceProducer.setFailed(true);
+            throw ex;
+        }
 
         try {
             boolean success = true;

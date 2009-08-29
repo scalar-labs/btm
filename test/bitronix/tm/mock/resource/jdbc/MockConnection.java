@@ -166,4 +166,8 @@ public class MockConnection implements Connection {
     public PreparedStatement prepareStatement(String sql, String columnNames[]) throws SQLException {
         return new MockPreparedStatement();
     }
+
+    public String toString() {
+        return "a MockXAConnection";
+    }
 }
