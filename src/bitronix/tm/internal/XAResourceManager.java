@@ -137,7 +137,7 @@ public class XAResourceManager {
      * @throws XAException if the resource threw an exception during resume.
      */
     public void resume() throws XAException {
-        List toBeEnlisted = new ArrayList();
+        List toBeReEnlisted = new ArrayList();
 
         Iterator it = resources.iterator();
         while (it.hasNext()) {
@@ -154,31 +154,22 @@ public class XAResourceManager {
             // See: {@link bitronix.tm.resource.common.XAResourceHolder#getXAResourceHolderState()}
             xaResourceHolderState.getXAResourceHolder().setXAResourceHolderState(xaResourceHolderState);
 
-            // If a prepared statement is (re-) used after suspend/resume is performed its XAResource needs to be
-            // re-enlisted.
-            try {
-                if (log.isDebugEnabled()) log.debug("re-enlisting " + xaResourceHolderState);
-
-                if (!xaResourceHolderState.getUseTmJoin()) {
-                    toBeEnlisted.add(new XAResourceHolderState(xaResourceHolderState));
-                }
-                else {
-                    enlist(xaResourceHolderState);
-                }
-            } catch (BitronixSystemException ex) {
-                throw new BitronixXAException("", XAException.XAER_PROTO, ex);
-            }
+            // If a prepared statement is (re-)used after suspend/resume is performed its XAResource needs to be
+            // re-enlisted. This must be done outisde this loop or that will confuse the iterator!
+            if (log.isDebugEnabled()) log.debug("join support disabled, will re-enlist " + xaResourceHolderState);
+            toBeReEnlisted.add(new XAResourceHolderState(xaResourceHolderState));
         }
 
-        if (toBeEnlisted.size() > 0 && log.isDebugEnabled()) log.debug("enlisting " + toBeEnlisted.size() + " unjoinable resource(s)");
-        for (int i = 0; i < toBeEnlisted.size(); i++) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) toBeEnlisted.get(i);
+        if (toBeReEnlisted.size() > 0 && log.isDebugEnabled()) log.debug("re-enlisting " + toBeReEnlisted.size() + " resource(s)");
+        for (int i = 0; i < toBeReEnlisted.size(); i++) {
+            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) toBeReEnlisted.get(i);
 
+            if (log.isDebugEnabled()) log.debug("re-enlisting resource " + xaResourceHolderState);
             xaResourceHolderState.getXAResourceHolder().setXAResourceHolderState(xaResourceHolderState);
             try {
                 enlist(xaResourceHolderState);
             } catch (BitronixSystemException ex) {
-                throw new BitronixXAException("error enlisting unjoinable resource " + xaResourceHolderState, XAException.XAER_PROTO, ex);
+                throw new BitronixXAException("error re-enlisting resource during resume: " + xaResourceHolderState, XAException.XAER_PROTO, ex);
             }
         }
     }
