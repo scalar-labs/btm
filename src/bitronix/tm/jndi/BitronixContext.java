@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Implementation of {@link javax.naming.Context} that allows lookup of transaction manager
  * and registered resources.
- * <p>This implementation is tivial as only the <code>lookup</code> methods are implemented,
+ * <p>This implementation is trivial as only the <code>lookup</code> methods are implemented,
  * all the other ones will throw a {@link OperationNotSupportedException}.</p>
  * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
