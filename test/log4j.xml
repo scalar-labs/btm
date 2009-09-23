@@ -8,7 +8,7 @@
         <param name="Threshold" value="INFO"/>
 
         <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="%d{ABSOLUTE} {%8.8t} (%x) [%-5p,%-10c{1}] %m%n"/>
+            <param name="ConversionPattern" value="%d{ABSOLUTE} {%8.8t} (%X{btm-gtrid}) [%-5p,%-10c{1}] %m%n"/>
         </layout>
     </appender>
 
@@ -18,16 +18,11 @@
         <param name="Threshold" value="DEBUG"/>
 
         <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="%d [%t] %p - %m%n"/>
+            <param name="ConversionPattern" value="%d [%t] (%X{btm-gtrid}) %p - %m%n"/>
         </layout>
     </appender>
 
     <category name="bitronix">
-        <level value="DEBUG"/>
-        <appender-ref ref="file"/>
-    </category>
-
-    <category name="org.apache.activemq.ActiveMQSession">
         <level value="DEBUG"/>
         <appender-ref ref="file"/>
     </category>

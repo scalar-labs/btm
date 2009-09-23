@@ -4,6 +4,7 @@ import bitronix.tm.internal.*;
 import bitronix.tm.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import javax.naming.*;
 import javax.transaction.*;
@@ -23,6 +24,7 @@ import java.util.jar.Manifest;
 public class BitronixTransactionManager implements TransactionManager, UserTransaction, Referenceable, Service {
 
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionManager.class);
+    private final static String MDC_GTRID_KEY = "btm-gtrid";
 
     private final Map contexts = Collections.synchronizedMap(new HashMap());
     private final Map inFlightTransactions = Collections.synchronizedMap(new HashMap());
@@ -364,6 +366,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         BitronixTransaction transaction = new BitronixTransaction(getCurrentContext().getTimeout());
         getCurrentContext().setTransaction(transaction);
         inFlightTransactions.put(transaction.getResourceManager().getGtrid(), transaction);
+        MDC.put(MDC_GTRID_KEY, transaction.getGtrid());
         return transaction;
     }
 
@@ -374,6 +377,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         if (log.isDebugEnabled()) log.debug("clearing current thread context: " + getCurrentContext());
         contexts.remove(Thread.currentThread());
         if (log.isDebugEnabled()) log.debug("cleared current thread context: " + getCurrentContext());
+        MDC.remove(MDC_GTRID_KEY);
     }
 
     /**
@@ -385,6 +389,9 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         if (context == null)
             throw new IllegalArgumentException("setCurrentContext() should not be called with a null context, clearCurrentContext() should be used instead");
         contexts.put(Thread.currentThread(), context);
+        if (context.getTransaction() != null) {
+            MDC.put(MDC_GTRID_KEY, context.getTransaction().getGtrid());
+        }
     }
 
     /**
@@ -425,6 +432,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
                 } // while
             }
             inFlightTransactions.remove(currentTx.getResourceManager().getGtrid());
+            MDC.remove(MDC_GTRID_KEY);
         }
 
         public String toString() {

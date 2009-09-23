@@ -10,6 +10,9 @@ import bitronix.tm.mock.resource.jdbc.MockDriver;
 
 import java.sql.Connection;
 
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+
 /**
  * <p></p>
  * <p>&copy; Bitronix 2005, 2006</p>
@@ -17,6 +20,8 @@ import java.sql.Connection;
  * @author lorban
  */
 public class JtaTest extends TestCase {
+
+    private final static Logger log = LoggerFactory.getLogger(JtaTest.class);
 
     private BitronixTransactionManager btm;
 
@@ -41,6 +46,19 @@ public class JtaTest extends TestCase {
         assertNotNull(btm.getTransaction());
 
         btm.rollback();
+    }
+
+    // this test also helps verifying MDC support but logs have to be manually checked
+    public void testSuspendResume() throws Exception {
+        log.info("test starts");
+        btm.begin();
+        log.info("tx begun");
+        Transaction tx = btm.suspend();
+        log.info("tx suspended");
+        btm.resume(tx);
+        log.info("tx resumed");
+        btm.rollback();
+        log.info("test over");
     }
 
     public void testTimeout() throws Exception {
