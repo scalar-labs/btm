@@ -150,7 +150,9 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
             if (log.isDebugEnabled()) log.debug("no session handle found in NOT_ACCESSIBLE state, creating new session");
             sessionHandle = new DualSessionWrapper(this, transacted, acknowledgeMode);
             sessionHandle.addStateChangeEventListener(new JmsConnectionHandleStateChangeListener());
-            sessions.add(sessionHandle);
+            synchronized (sessions) {
+                sessions.add(sessionHandle);
+            }
         }
         else {
             if (log.isDebugEnabled()) log.debug("found session handle in NOT_ACCESSIBLE state, recycling it: " + sessionHandle);
@@ -177,9 +179,11 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     }
 
     public String toString() {
-        return "a JmsPooledConnection of pool " + poolingConnectionFactory.getUniqueName() + " in state " +
-                Decoder.decodeXAStatefulHolderState(getState()) + " with underlying connection " + xaConnection +
-                " with " + sessions.size() + " opened session(s)";
+        synchronized (sessions) {
+            return "a JmsPooledConnection of pool " + poolingConnectionFactory.getUniqueName() + " in state " +
+                    Decoder.decodeXAStatefulHolderState(getState()) + " with underlying connection " + xaConnection +
+                    " with " + sessions.size() + " opened session(s)";
+        }
     }
 
     /* management */
@@ -234,8 +238,10 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     private class JmsConnectionHandleStateChangeListener implements StateChangeListener {
         public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
             if (newState == XAResourceHolder.STATE_CLOSED) {
-                sessions.remove(source);
-                if (log.isDebugEnabled()) log.debug("DualSessionWrapper has been closed, " + sessions.size() + " session(s) left open in pooled connection");
+                synchronized (sessions) {
+                    sessions.remove(source);
+                    if (log.isDebugEnabled()) log.debug("DualSessionWrapper has been closed, " + sessions.size() + " session(s) left open in pooled connection");
+                }
             }
         }
 
