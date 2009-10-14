@@ -134,11 +134,15 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
             return;
 
         try {
-            recoveryXAResourceHolder.close();
-            recoveryXAResourceHolder = null;
-            if (log.isDebugEnabled()) log.debug("releasing recovery connection " + recoveryPooledConnection);
-            recoveryPooledConnection.setState(XAStatefulHolder.STATE_IN_POOL);
-            recoveryPooledConnection = null;
+            if (recoveryXAResourceHolder != null) {
+                recoveryXAResourceHolder.close();
+                recoveryXAResourceHolder = null;
+            }
+            if (recoveryPooledConnection != null) {
+                if (log.isDebugEnabled()) log.debug("releasing recovery connection " + recoveryPooledConnection);
+                recoveryPooledConnection.setState(XAStatefulHolder.STATE_IN_POOL);
+                recoveryPooledConnection = null;
+            }
         } catch (Exception ex) {
             throw new RecoveryException("error ending recovery", ex);
         }
