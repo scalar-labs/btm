@@ -477,8 +477,6 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         assertEquals(true, ((XAResourceIsSameRmEvent) orderedEvents.get(i++)).isSameRm());
         assertEquals(XAResource.TMJOIN, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
 
-        assertEquals(DATASOURCE2_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
-
         XAResourceIsSameRmEvent evt = (XAResourceIsSameRmEvent) orderedEvents.get(i++);
         XAResource src = (XAResource) evt.getSource();
         XAResource comp = evt.getXAResource();
@@ -486,6 +484,8 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         assertTrue(poolingDataSource2.findXAResourceHolder(comp) != null);
 
         assertEquals(XAResource.TMJOIN, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
+
+        assertEquals(DATASOURCE2_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
 
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());

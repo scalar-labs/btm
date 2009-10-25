@@ -155,8 +155,7 @@ public class XAResourceManager {
             xaResourceHolderState.getXAResourceHolder().setXAResourceHolderState(xaResourceHolderState);
 
             // If a prepared statement is (re-)used after suspend/resume is performed its XAResource needs to be
-            // re-enlisted. This must be done outisde this loop or that will confuse the iterator!
-            if (log.isDebugEnabled()) log.debug("join support disabled, will re-enlist " + xaResourceHolderState);
+            // re-enlisted. This must be done outside this loop or that will confuse the iterator!
             toBeReEnlisted.add(new XAResourceHolderState(xaResourceHolderState));
         }
 
