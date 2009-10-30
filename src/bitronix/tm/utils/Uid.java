@@ -1,7 +1,5 @@
 package bitronix.tm.utils;
 
-import bitronix.tm.TransactionManagerServices;
-
 import java.util.Arrays;
 
 /**
@@ -27,7 +25,7 @@ public final class Uid {
     }
 
     public byte[] extractServerId() {
-        int serverIdLength = array.length - 8 - 4;
+        int serverIdLength = array.length - 8 - 4; // - timestamp - sequence
         if (serverIdLength < 1)
             return null;
 
@@ -37,7 +35,7 @@ public final class Uid {
     }
 
     public long extractTimestamp() {
-        return Encoder.bytesToLong(array,  TransactionManagerServices.getConfiguration().buildServerIdArray().length);
+        return Encoder.bytesToLong(array, array.length - 8 - 4); // - timestamp - sequence
     }
 
     public boolean equals(Object obj) {

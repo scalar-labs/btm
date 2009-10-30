@@ -30,8 +30,6 @@ public class UidGenerator {
         int uidLength = serverId.length + timestamp.length + sequence.length;
         byte[] uidArray = new byte[uidLength];
 
-        //TODO: the server ID is encoded first but its size is variable and can change between runs.
-        //It should be encoded last but that would make TX logs incompatible with older versions !
         System.arraycopy(serverId, 0, uidArray, 0, serverId.length);
         System.arraycopy(timestamp, 0, uidArray, serverId.length, timestamp.length);
         System.arraycopy(sequence, 0, uidArray, serverId.length + timestamp.length, sequence.length);
