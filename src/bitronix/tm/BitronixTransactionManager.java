@@ -32,8 +32,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
     /**
      * Create the {@link BitronixTransactionManager}. Open the journal, load resources and perform recovery
-     * synchronously. If <code>bitronix.tm.timer.backgroundRecoveryInterval</code> is greater than 0, the recovery
-     * service gets scheduled for background recovery.
+     * synchronously. The recovery service then gets scheduled for background recovery.
      */
     public BitronixTransactionManager() {
         try {
