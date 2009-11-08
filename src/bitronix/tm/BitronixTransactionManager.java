@@ -343,15 +343,23 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      */
     private void logVersion() {
         String message = "Bitronix Transaction Manager version ";
+        InputStream is = null;
         try {
             String pathToThisClass = getClass().getResource("/" + getClass().getName().replace('.', '/') + ".class").toString();
             String manifestPath = pathToThisClass.substring(0, pathToThisClass.lastIndexOf("!") + 1) + "/META-INF/MANIFEST.MF";
-            InputStream is = new URL(manifestPath).openStream();
+            is = new URL(manifestPath).openStream();
             Manifest manifest = new Manifest(is);
             message += manifest.getMainAttributes().getValue("Implementation-Version");
-            is.close();
         } catch (Exception ex) {
             message += "???";
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException ex) {
+                    if (log.isDebugEnabled()) log.debug("error closing MANIFEST.MF's input stream", ex);
+                }
+            }
         }
         log.info(message);
         if (log.isDebugEnabled()) log.debug("JVM version " + System.getProperty("java.version"));
