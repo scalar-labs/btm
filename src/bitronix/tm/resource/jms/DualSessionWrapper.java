@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jms.*;
+import javax.jms.IllegalStateException;
 import javax.transaction.SystemException;
 import javax.transaction.xa.XAResource;
 import java.io.Serializable;
@@ -59,7 +60,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
     public Session getSession(boolean forceXa) throws JMSException {
         if (getState() == STATE_CLOSED)
-            throw new JMSException("session handle is closed");
+            throw new IllegalStateException("session handle is closed");
 
         if (forceXa) {
             if (log.isDebugEnabled()) log.debug("choosing XA session (forced)");
@@ -122,7 +123,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         try {
             TransactionContextHelper.delistFromCurrentTransaction(this, pooledConnection.getPoolingConnectionFactory());
         } catch (BitronixRollbackSystemException ex) {
-            throw (JMSException) new JMSException("unilateral rollback of  " + getXAResourceHolderState()).initCause(ex);
+            throw (JMSException) new TransactionRolledBackException("unilateral rollback of  " + getXAResourceHolderState()).initCause(ex);
         } catch (SystemException ex) {
             throw (JMSException) new JMSException("error delisting " + getXAResourceHolderState()).initCause(ex);
         }
@@ -308,7 +309,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
     public void setMessageListener(MessageListener listener) throws JMSException {
         if (getState() == STATE_CLOSED)
-            throw new JMSException("session handle is closed");
+            throw new IllegalStateException("session handle is closed");
 
         if (session != null)
             session.setMessageListener(listener);
@@ -364,21 +365,21 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
     public void commit() throws JMSException {
         if (isParticipatingInActiveGlobalTransaction())
-            throw new JMSException("cannot commit a resource enlisted in a global transaction");
+            throw new TransactionInProgressException("cannot commit a resource enlisted in a global transaction");
 
         getSession().commit();
     }
 
     public void rollback() throws JMSException {
         if (isParticipatingInActiveGlobalTransaction())
-            throw new JMSException("cannot rollback a resource enlisted in a global transaction");
+            throw new TransactionInProgressException("cannot rollback a resource enlisted in a global transaction");
 
         getSession().rollback();
     }
 
     public void recover() throws JMSException {
         if (isParticipatingInActiveGlobalTransaction())
-            throw new JMSException("cannot recover a resource enlisted in a global transaction");
+            throw new TransactionInProgressException("cannot recover a resource enlisted in a global transaction");
 
         getSession().recover();
     }
