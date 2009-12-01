@@ -39,6 +39,9 @@ public final class Uid {
     }
 
     public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+        
         // catching the ClassCastException actually is faster than a instanceof check
         try {
             Uid otherUid = (Uid) obj;

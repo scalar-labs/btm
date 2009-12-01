@@ -42,4 +42,14 @@ public class UidGeneratorTest extends TestCase {
         }
     }
 
+    public void testEquals() throws Exception {
+        Uid uid1 = UidGenerator.generateUid();
+        Uid uid2 = UidGenerator.generateUid();
+        Uid uid3 = null;
+
+        assertFalse(uid1.equals(uid2));
+        assertFalse(uid2.equals(uid3));
+        assertTrue(uid2.equals(uid2));
+    }
+
 }
