@@ -39,11 +39,7 @@ public final class Uid {
     }
 
     public boolean equals(Object obj) {
-        if (obj == null)
-            return false;
-        
-        // catching the ClassCastException actually is faster than a instanceof check
-        try {
+        if (obj instanceof Uid) {
             Uid otherUid = (Uid) obj;
 
             // optimizes performance a bit
@@ -52,9 +48,7 @@ public final class Uid {
 
             return Arrays.equals(array, otherUid.array);
         }
-        catch (ClassCastException ex) {
-            return false;
-        }
+        return false;
     }
 
     public int hashCode() {
