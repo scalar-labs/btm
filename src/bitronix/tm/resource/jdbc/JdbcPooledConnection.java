@@ -28,7 +28,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     private Connection connection;
     private XAResource xaResource;
     private PoolingDataSource poolingDataSource;
-    private LruMap statementsCache;
+    private LruStatementCache statementsCache;
     private List uncachedStatements = new ArrayList();
 
     /* management */
@@ -41,12 +41,11 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         this.poolingDataSource = poolingDataSource;
         this.xaConnection = xaConnection;
         this.xaResource = xaConnection.getXAResource();
-        this.statementsCache = new LruMap(poolingDataSource.getPreparedStatementCacheSize());
+        this.statementsCache = new LruStatementCache(poolingDataSource.getPreparedStatementCacheSize());
         statementsCache.addEvictionListener(new LruEvictionListener() {
             public void onEviction(Object value) {
                 PreparedStatement stmt = (PreparedStatement) value;
                 try {
-                    if (log.isDebugEnabled()) log.debug("closing evicted statement " + stmt);
                     stmt.close();
                 } catch (SQLException ex) {
                     log.warn("error closing evicted statement", ex);
@@ -95,12 +94,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         setState(STATE_CLOSED);
 
         // cleanup of pooled resources
-        Iterator it = statementsCache.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            PreparedStatement stmt = (PreparedStatement) entry.getValue();
-            stmt.close();
-        }
+        statementsCache.clear();
 
         ManagementRegistrar.unregister(jmxName);
 
@@ -221,24 +215,21 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     /**
      * Get a PreparedStatement from cache.
-     * @param sql the key that has been used to cache the statement.
+     * @param stmt the key that has been used to cache the statement.
      * @return the cached statement corresponding to the key or null if no statement is cached under that key.
      */
-    protected PreparedStatement getCachedStatement(String sql) {
-        PreparedStatement stmt = (PreparedStatement) statementsCache.get(sql);
-        if (log.isDebugEnabled()) log.debug("statement cache lookup of <" + sql + "> in " + this + ": " + stmt);
-        return stmt;
+    protected PreparedStatement getCachedStatement(JdbcPreparedStatementHandle stmt) {
+        return statementsCache.get(stmt);
     }
 
     /**
      * Put a PreparedStatement in the cache.
-     * @param sql the key that is used to cache the statement.
+     *
      * @param stmt the statement to cache.
      * @return the cached statement.
      */
-    protected PreparedStatement putCachedStatement(String sql, PreparedStatement stmt) {
-        if (log.isDebugEnabled()) log.debug("caching statement <" + sql + "> in " + this);
-        return (PreparedStatement) statementsCache.put(sql, stmt);
+    protected PreparedStatement putCachedStatement(JdbcPreparedStatementHandle stmt) {
+        return statementsCache.put(stmt);
     }
 
     /**
