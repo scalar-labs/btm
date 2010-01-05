@@ -167,6 +167,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state IN_POOL, testing it");
             testConnection(connection);
             applyIsolationLevel();
+            applyCursorHoldabilty();
+            applyLocalAutoCommit();
         }
         else {
             if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state " + Decoder.decodeXAStatefulHolderState(oldState) + ", no need to test it");
@@ -245,6 +247,44 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     public String toString() {
         return "a JdbcPooledConnection from datasource " + poolingDataSource.getUniqueName() + " in state " + Decoder.decodeXAStatefulHolderState(getState()) + " wrapping " + xaConnection;
     }
+
+    private void applyCursorHoldabilty() throws SQLException {
+        String cursorHoldability = getPoolingDataSource().getCursorHoldability();
+        if (cursorHoldability != null) {
+            int holdability = translateCursorHoldability(cursorHoldability);
+            if (holdability < 0) {
+                log.warn("invalid cursor holdability '" + cursorHoldability + "' configured, keeping the default cursor holdability.");
+            }
+            else {
+                if (log.isDebugEnabled()) log.debug("setting connection's cursor holdability to " + cursorHoldability);
+                connection.setHoldability(holdability);
+            }
+        }
+    }
+
+    private static int translateCursorHoldability(String cursorHoldability) {
+        if ("CLOSE_CURSORS_AT_COMMIT".equals(cursorHoldability)) return ResultSet.CLOSE_CURSORS_AT_COMMIT;
+        if ("HOLD_CURSORS_OVER_COMMIT".equals(cursorHoldability)) return ResultSet.HOLD_CURSORS_OVER_COMMIT;
+        return -1;
+    }
+
+
+    private void applyLocalAutoCommit() throws SQLException {
+    	String localAutoCommit = getPoolingDataSource().getLocalAutoCommit();
+    	if (localAutoCommit != null) {
+    		if (localAutoCommit.equalsIgnoreCase("true")) {
+                if (log.isDebugEnabled()) log.debug("setting connection's auto commit to true");
+    			connection.setAutoCommit(true);
+    		}
+    		else if (localAutoCommit.equalsIgnoreCase("false")) {
+                if (log.isDebugEnabled()) log.debug("setting connection's auto commit to false");
+    			connection.setAutoCommit(false);
+    		}
+    		else {
+    			if (log.isDebugEnabled()) log.warn("invalid auto commit '" + localAutoCommit + "' configured, keeping default auto commit");
+    		}
+    	}
+	}
 
     /* management */
 

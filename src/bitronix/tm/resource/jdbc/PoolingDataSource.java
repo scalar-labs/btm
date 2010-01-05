@@ -36,6 +36,8 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     private String testQuery;
     private int preparedStatementCacheSize = 0;
     private String isolationLevel;
+	private String cursorHoldability;
+	private String localAutoCommit;
 
     public PoolingDataSource() {
     }
@@ -81,6 +83,13 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         return preparedStatementCacheSize;
     }
 
+    /**
+     * Set the target maximum size of the prepared statement cache.  In
+     * reality under certain unusual conditions the cache may temporarily
+     * drift higher in size.
+     *
+     * @param preparedStatementCacheSize the target maximum size
+     */
     public void setPreparedStatementCacheSize(int preparedStatementCacheSize) {
         this.preparedStatementCacheSize = preparedStatementCacheSize;
     }
@@ -89,9 +98,38 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         return isolationLevel;
     }
 
+    /**
+     * Set the default isolation level for connections.
+     *
+     * @param isolationLevel the isolation level
+     */
     public void setIsolationLevel(String isolationLevel) {
         this.isolationLevel = isolationLevel;
     }
+
+    public String getCursorHoldability() {
+    	return cursorHoldability;
+    }
+
+    /**
+     * Set the default cursor holdability for connections.
+     *
+     * @param cursorHoldability the cursor holdability
+     */
+    public void setCursorHoldability(String cursorHoldability) {
+    	this.cursorHoldability = cursorHoldability;
+    }
+
+    public String getLocalAutoCommit() {
+    	return localAutoCommit;
+    }
+
+    public void setLocalAutoCommit(String localAutoCommit) {
+    	this.localAutoCommit = localAutoCommit;
+    }
+
+
+    /* Implementation of DataSource interface */
 
     public Connection getConnection() throws SQLException {
         init();
