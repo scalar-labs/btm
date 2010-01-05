@@ -11,8 +11,9 @@ import java.util.Properties;
  * @author lorban
  */
 public abstract class ResourceBean implements Serializable {
+	private static final long serialVersionUID = -3437270448361225732L;
 
-    private String className;
+	private String className;
     private String uniqueName;
     private boolean automaticEnlistingEnabled = true;
     private boolean useTmJoin = true;
@@ -27,6 +28,7 @@ public abstract class ResourceBean implements Serializable {
     private boolean allowLocalTransactions = false;
     private int twoPcOrderingPosition = 1;
     private boolean applyTransactionTimeout = false;
+    private boolean shareAccessibleConnections = false;
     private transient int createdResourcesCounter;
 
     /**
@@ -280,4 +282,21 @@ public abstract class ResourceBean implements Serializable {
     public int incCreatedResourcesCounter() {
         return this.createdResourcesCounter++;
     }
+
+	/**
+	 * Set whether connections in the ACCESSIBLE state can be shared within the context
+	 * of a transaction.
+	 *
+	 * @param shareAccessibleConnections the shareAccessibleConnections to set
+	 */
+	public void setShareAccessibleConnections(boolean shareAccessibleConnections) {
+		this.shareAccessibleConnections = shareAccessibleConnections;
+	}
+
+	/**
+	 * @return the shareAccessibleConnections
+	 */
+	public boolean isShareAccessibleConnections() {
+		return shareAccessibleConnections;
+	}
 }

@@ -35,7 +35,6 @@ public class XAPool implements StateChangeListener {
     private Object xaFactory;
     private boolean failed = false;
 
-
     public XAPool(XAResourceProducer xaResourceProducer, ResourceBean bean) throws Exception {
         this.xaResourceProducer = xaResourceProducer;
         this.bean = bean;
@@ -93,8 +92,14 @@ public class XAPool implements StateChangeListener {
             XAStatefulHolder xaStatefulHolder = null;
             String stateDescription = null;
             if (recycle) {
-                xaStatefulHolder = getNotAccessible();
-                stateDescription = "NOT_ACCESSIBLE";
+            	if (bean.isShareAccessibleConnections()) {
+	            	xaStatefulHolder = getAccessible();
+	            	stateDescription = "ACCESSIBLE";
+	            }
+            	if (xaStatefulHolder == null) {
+	                xaStatefulHolder = getNotAccessible();
+	                stateDescription = "NOT_ACCESSIBLE";
+	            }
             }
             if (xaStatefulHolder == null) {
                 xaStatefulHolder = getInPool();
@@ -267,6 +272,30 @@ public class XAPool implements StateChangeListener {
         String cipher = resourcePassword.substring(1, endIdx);
         if (log.isDebugEnabled()) log.debug("resource password is encrypted, decrypting " + resourcePassword);
         return CryptoEngine.decrypt(cipher, resourcePassword.substring(endIdx + 1));
+    }
+
+    private XAStatefulHolder getAccessible() {
+        if (log.isDebugEnabled()) log.debug("trying to recycle a ACCESSIBLE connection of " + this);
+
+        BitronixTransaction transaction = TransactionContextHelper.currentTransaction();
+        if (transaction == null) {
+            if (log.isDebugEnabled()) log.debug("no current transaction, ACCESSIBLE connections will be not be shared");
+            return null;
+        }
+        Uid currentTxGtrid = transaction.getResourceManager().getGtrid();
+	    if (log.isDebugEnabled()) log.debug("current transaction GTRID is [" + currentTxGtrid + "]");
+
+        for (int i = 0; i < totalPoolSize(); i++) {
+            XAStatefulHolder xaStatefulHolder = (XAStatefulHolder) objects.get(i);
+            if (xaStatefulHolder.getState() == XAStatefulHolder.STATE_ACCESSIBLE) {
+                if (log.isDebugEnabled()) log.debug("found a connection in ACCESSIBLE state: " + xaStatefulHolder);
+                if (containsXAResourceHolderMatchingGtrid(xaStatefulHolder, currentTxGtrid))
+                    return xaStatefulHolder;
+            }
+        } // for
+
+        if (log.isDebugEnabled()) log.debug("no ACCESSIBLE connection found in the global transaction");
+        return null;        
     }
 
     private XAStatefulHolder getNotAccessible() {

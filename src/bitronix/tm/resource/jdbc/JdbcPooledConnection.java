@@ -18,7 +18,7 @@ import java.util.Date;
  * Implementation of a JDBC pooled connection wrapping vendor's {@link XAConnection} implementation.
  * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
- * @author lorban
+ * @author lorban, brettw
  */
 public class JdbcPooledConnection extends AbstractXAResourceHolder implements StateChangeListener, JdbcPooledConnectionMBean {
 
@@ -52,6 +52,9 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
                 }
             }
         });
+
+        super.setAllowSameStateTransitions(poolingDataSource.isShareAccessibleConnections());
+
         connection = xaConnection.getConnection();
         addStateChangeEventListener(this);
 

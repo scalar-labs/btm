@@ -1,23 +1,19 @@
 package bitronix.tm.mock;
 
+import java.lang.reflect.Field;
+import java.util.*;
+
+import junit.framework.TestCase;
+
+import org.slf4j.*;
+
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.mock.events.ConnectionDequeuedEvent;
-import bitronix.tm.mock.events.ConnectionQueuedEvent;
-import bitronix.tm.mock.events.EventRecorder;
+import bitronix.tm.mock.events.*;
 import bitronix.tm.mock.resource.MockJournal;
 import bitronix.tm.mock.resource.jdbc.MockXADataSource;
-import bitronix.tm.resource.jdbc.*;
-import bitronix.tm.resource.common.AbstractXAResourceHolder;
-import bitronix.tm.resource.common.XAPool;
-import bitronix.tm.resource.common.*;
 import bitronix.tm.resource.ResourceRegistrar;
-import junit.framework.TestCase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Iterator;
+import bitronix.tm.resource.common.*;
+import bitronix.tm.resource.jdbc.*;
 
 /**
  *
@@ -39,14 +35,17 @@ public abstract class AbstractMockJdbcTest extends TestCase {
             ResourceRegistrar.unregister(ResourceRegistrar.get(name));
         }
 
+        // DataSource1 has shared accessible connections
         poolingDataSource1 = new PoolingDataSource();
         poolingDataSource1.setClassName(MockXADataSource.class.getName());
         poolingDataSource1.setUniqueName(DATASOURCE1_NAME);
         poolingDataSource1.setMinPoolSize(POOL_SIZE);
         poolingDataSource1.setMaxPoolSize(POOL_SIZE);
         poolingDataSource1.setAllowLocalTransactions(true);
+        poolingDataSource1.setShareAccessibleConnections(true);
         poolingDataSource1.init();
 
+        // DataSource2 does not have shared accessible connections
         poolingDataSource2 = new PoolingDataSource();
         poolingDataSource2.setClassName(MockXADataSource.class.getName());
         poolingDataSource2.setUniqueName(DATASOURCE2_NAME);
@@ -120,10 +119,9 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         TransactionManagerServices.getTransactionManager().shutdown();
     }
 
-    public static Object getWrappedXAConnectionOf(JdbcPooledConnection pc1) throws NoSuchFieldException, IllegalAccessException {
+    public static Object getWrappedXAConnectionOf(Object pc1) throws NoSuchFieldException, IllegalAccessException {
         Field f = pc1.getClass().getDeclaredField("xaConnection");
         f.setAccessible(true);
         return f.get(pc1);
     }
-
 }

@@ -90,41 +90,42 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
         if (log.isDebugEnabled()) log.debug("*** getting TM");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 
-        XAPool pool1 = getPool(poolingDataSource1);
+        // Use DataSource2 because it does not have shared accessible connections
+        XAPool pool2 = getPool(poolingDataSource2);
 
         if (log.isDebugEnabled()) log.debug("*** before begin");
         tm.begin();
         if (log.isDebugEnabled()) log.debug("*** after begin");
 
-        assertEquals(POOL_SIZE, pool1.inPoolSize());
+        assertEquals(POOL_SIZE, pool2.inPoolSize());
 
         if (log.isDebugEnabled()) log.debug("*** getting connection 1 from DS1");
-        Connection connection1 = poolingDataSource1.getConnection();
+        Connection connection1 = poolingDataSource2.getConnection();
         connection1.createStatement();
 
-        assertEquals(POOL_SIZE -1, pool1.inPoolSize());
+        assertEquals(POOL_SIZE -1, pool2.inPoolSize());
 
         if (log.isDebugEnabled()) log.debug("*** getting connection 2 from DS1");
-        Connection connection2 = poolingDataSource1.getConnection();
+        Connection connection2 = poolingDataSource2.getConnection();
         connection2.createStatement();
 
-        assertEquals(POOL_SIZE -2, pool1.inPoolSize());
+        assertEquals(POOL_SIZE -2, pool2.inPoolSize());
 
         if (log.isDebugEnabled()) log.debug("*** closing connection 1");
         connection1.close();
 
-        assertEquals(POOL_SIZE -2, pool1.inPoolSize());
+        assertEquals(POOL_SIZE -2, pool2.inPoolSize());
 
         if (log.isDebugEnabled()) log.debug("*** closing connection 2");
         connection2.close();
 
-        assertEquals(POOL_SIZE -2, pool1.inPoolSize());
+        assertEquals(POOL_SIZE -2, pool2.inPoolSize());
 
         if (log.isDebugEnabled()) log.debug("*** committing");
         tm.commit();
         if (log.isDebugEnabled()) log.debug("*** TX is done");
 
-        assertEquals(POOL_SIZE, pool1.inPoolSize());
+        assertEquals(POOL_SIZE, pool2.inPoolSize());
 
         // check flow
         List orderedEvents = EventRecorder.getOrderedEvents();
@@ -133,9 +134,9 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
         assertEquals(17, orderedEvents.size());
         int i=0;
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
-        assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(DATASOURCE2_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
-        assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(DATASOURCE2_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
@@ -147,8 +148,8 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
         assertEquals(false, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
         assertEquals(false, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
         assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
-        assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
-        assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
     }
 
     public void testConnectionCloseInDifferentContext() throws Exception {
