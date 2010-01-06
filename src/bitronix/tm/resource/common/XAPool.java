@@ -413,12 +413,7 @@ public class XAPool implements StateChangeListener {
 
     	ThreadLocal threadLocal = (ThreadLocal) statefulHolderTransactionMap.get(currentTxGtrid);
         if (threadLocal == null) {
-			threadLocal = new ThreadLocal();
-			threadLocal.set(xaStatefulHolder);
-	        statefulHolderTransactionMap.put(currentTxGtrid, threadLocal);
-	        if (log.isDebugEnabled()) log.debug("added shared connection mapping for " + currentTxGtrid + " holder " + xaStatefulHolder);
-	        
-	        // This is the first time this XAStatefulHolder is going into the map,
+	        // This is the first time this TxGtrid/ThreadLocal is going into the map,
 	        // register interest in synchronization so we can remove it at commit/rollback
         	try {
 				transaction.registerSynchronization(new Synchronization() {
@@ -435,6 +430,11 @@ public class XAPool implements StateChangeListener {
 				// OK, forget it.  The transaction is either rollback only or already finished.
 				return;
 			}
+
+			threadLocal = new ThreadLocal();
+			threadLocal.set(xaStatefulHolder);
+	        statefulHolderTransactionMap.put(currentTxGtrid, threadLocal);
+	        if (log.isDebugEnabled()) log.debug("added shared connection mapping for " + currentTxGtrid + " holder " + xaStatefulHolder);	        
         }
         else {
         	threadLocal.set(xaStatefulHolder);
