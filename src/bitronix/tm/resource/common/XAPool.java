@@ -377,7 +377,7 @@ public class XAPool implements StateChangeListener {
     }
 
     /****************************************************************
-     * 
+     * Shared Connection Handling
      */
 
     private XAStatefulHolder getSharedXaStatefulHolder() {
@@ -388,19 +388,22 @@ public class XAPool implements StateChangeListener {
         }
         Uid currentTxGtrid = transaction.getResourceManager().getGtrid();
 
-        XAStatefulHolder xaStatefulHolder = (XAStatefulHolder) statefulHolderTransactionMap.get(currentTxGtrid);
-        if (xaStatefulHolder != null &&
-        	xaStatefulHolder.getState() != XAStatefulHolder.STATE_IN_POOL &&
-        	xaStatefulHolder.getState() != XAStatefulHolder.STATE_CLOSED) {
-        	if (log.isDebugEnabled()) log.debug("sharing connection " + xaStatefulHolder + " in transaction " + currentTxGtrid);
-        	return xaStatefulHolder;
+        ThreadLocal threadLocal = (ThreadLocal) statefulHolderTransactionMap.get(currentTxGtrid);
+        if (threadLocal != null) {
+        	XAStatefulHolder xaStatefulHolder = (XAStatefulHolder) threadLocal.get();
+        	if (xaStatefulHolder != null &&
+	        	xaStatefulHolder.getState() != XAStatefulHolder.STATE_IN_POOL &&
+	        	xaStatefulHolder.getState() != XAStatefulHolder.STATE_CLOSED) {
+
+	        	if (log.isDebugEnabled()) log.debug("sharing connection " + xaStatefulHolder + " in transaction " + currentTxGtrid);
+	        	return xaStatefulHolder;
+        	}
         }
-        else {
-        	return null;
-        }
+
+        return null;
     }
 
-    private void putSharedXaStatefulHolder(XAStatefulHolder xaStatefulHolder) {
+    private void putSharedXaStatefulHolder(final XAStatefulHolder xaStatefulHolder) {
         BitronixTransaction transaction = TransactionContextHelper.currentTransaction();
         if (transaction == null) {
             if (log.isDebugEnabled()) log.debug("no current transaction, not adding " + xaStatefulHolder + " to shared connection map");
@@ -408,9 +411,15 @@ public class XAPool implements StateChangeListener {
         }
         final Uid currentTxGtrid = transaction.getResourceManager().getGtrid();
 
-        if (!statefulHolderTransactionMap.containsKey(currentTxGtrid)) {
-        	// This is the first time this XAStatefulHolder is going into the map,
-        	// register interest in synchronization so we can remove it at commit/rollback
+    	ThreadLocal threadLocal = (ThreadLocal) statefulHolderTransactionMap.get(currentTxGtrid);
+        if (threadLocal == null) {
+			threadLocal = new ThreadLocal();
+			threadLocal.set(xaStatefulHolder);
+	        statefulHolderTransactionMap.put(currentTxGtrid, threadLocal);
+	        if (log.isDebugEnabled()) log.debug("added shared connection mapping for " + currentTxGtrid + " holder " + xaStatefulHolder);
+	        
+	        // This is the first time this XAStatefulHolder is going into the map,
+	        // register interest in synchronization so we can remove it at commit/rollback
         	try {
 				transaction.registerSynchronization(new Synchronization() {
 					public void beforeCompletion() {
@@ -426,9 +435,9 @@ public class XAPool implements StateChangeListener {
 				// OK, forget it.  The transaction is either rollback only or already finished.
 				return;
 			}
-
-	        statefulHolderTransactionMap.put(currentTxGtrid, xaStatefulHolder);
-	        if (log.isDebugEnabled()) log.debug("added shared connection mapping for " + currentTxGtrid + " holder " + xaStatefulHolder);
-        }        
+        }
+        else {
+        	threadLocal.set(xaStatefulHolder);
+        }
     }
 }
