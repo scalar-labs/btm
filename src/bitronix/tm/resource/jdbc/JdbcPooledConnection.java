@@ -171,7 +171,16 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             testConnection(connection);
             applyIsolationLevel();
             applyCursorHoldabilty();
-            applyLocalAutoCommit();
+            if (TransactionContextHelper.currentTransaction() == null) {
+            	// Outside of a transaction (i.e. local) it is safe to set the
+            	// auto-commit flag
+            	applyLocalAutoCommit();
+            }
+            else {
+            	// Always set auto-commit true in the context of a global transaction,
+            	// otherwise the database might throw XAER_OUTSIDE
+            	connection.setAutoCommit(true);
+            }
         }
         else {
             if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state " + Decoder.decodeXAStatefulHolderState(oldState) + ", no need to test it");
