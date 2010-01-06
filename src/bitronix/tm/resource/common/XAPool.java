@@ -7,12 +7,11 @@ import bitronix.tm.BitronixTransaction;
 import bitronix.tm.BitronixXid;
 import bitronix.tm.recovery.IncrementalRecoverer;
 import bitronix.tm.recovery.RecoveryException;
+import bitronix.tm.utils.*;
 import bitronix.tm.utils.CryptoEngine;
-import bitronix.tm.utils.PropertyUtils;
-import bitronix.tm.utils.Uid;
-import bitronix.tm.utils.ClassLoaderUtils;
 import bitronix.tm.internal.*;
 
+import javax.transaction.*;
 import javax.transaction.xa.XAResource;
 import java.util.*;
 
@@ -29,6 +28,7 @@ public class XAPool implements StateChangeListener {
     private final static Logger log = LoggerFactory.getLogger(XAPool.class);
     private final static String PASSWORD_PROPERTY_NAME = "password";
 
+    private Map statefulHolderTransactionMap = new HashMap();
     private List objects = new ArrayList();
     private ResourceBean bean;
     private XAResourceProducer xaResourceProducer;
@@ -90,25 +90,25 @@ public class XAPool implements StateChangeListener {
         long before = System.currentTimeMillis();
         while (true) {
             XAStatefulHolder xaStatefulHolder = null;
-            String stateDescription = null;
             if (recycle) {
-            	if (bean.isShareAccessibleConnections()) {
-	            	xaStatefulHolder = getAccessible();
-	            	stateDescription = "ACCESSIBLE";
+            	if (bean.isShareTransactionConnections()) {
+	            	xaStatefulHolder = getSharedXaStatefulHolder();
 	            }
-            	if (xaStatefulHolder == null) {
+            	else if (xaStatefulHolder == null) {
 	                xaStatefulHolder = getNotAccessible();
-	                stateDescription = "NOT_ACCESSIBLE";
 	            }
             }
             if (xaStatefulHolder == null) {
                 xaStatefulHolder = getInPool();
-                stateDescription = "IN_POOL";
             }
-            if (log.isDebugEnabled()) log.debug("found " + stateDescription + " connection " + xaStatefulHolder + " from " + this);
+            if (log.isDebugEnabled()) log.debug("found " + Decoder.decodeXAStatefulHolderState(xaStatefulHolder.getState()) + " connection " + xaStatefulHolder + " from " + this);
 
             try {
-                return xaStatefulHolder.getConnectionHandle();
+                Object connectionHandle = xaStatefulHolder.getConnectionHandle();
+            	if (bean.isShareTransactionConnections()) {
+            		putSharedXaStatefulHolder(xaStatefulHolder);
+            	}                
+                return connectionHandle;
             } catch (Exception ex) {
                 if (log.isDebugEnabled()) log.debug("connection is invalid, trying to close it", ex);
                 try {
@@ -274,30 +274,6 @@ public class XAPool implements StateChangeListener {
         return CryptoEngine.decrypt(cipher, resourcePassword.substring(endIdx + 1));
     }
 
-    private XAStatefulHolder getAccessible() {
-        if (log.isDebugEnabled()) log.debug("trying to recycle a ACCESSIBLE connection of " + this);
-
-        BitronixTransaction transaction = TransactionContextHelper.currentTransaction();
-        if (transaction == null) {
-            if (log.isDebugEnabled()) log.debug("no current transaction, ACCESSIBLE connections will be not be shared");
-            return null;
-        }
-        Uid currentTxGtrid = transaction.getResourceManager().getGtrid();
-	    if (log.isDebugEnabled()) log.debug("current transaction GTRID is [" + currentTxGtrid + "]");
-
-        for (int i = 0; i < totalPoolSize(); i++) {
-            XAStatefulHolder xaStatefulHolder = (XAStatefulHolder) objects.get(i);
-            if (xaStatefulHolder.getState() == XAStatefulHolder.STATE_ACCESSIBLE) {
-                if (log.isDebugEnabled()) log.debug("found a connection in ACCESSIBLE state: " + xaStatefulHolder);
-                if (containsXAResourceHolderMatchingGtrid(xaStatefulHolder, currentTxGtrid))
-                    return xaStatefulHolder;
-            }
-        } // for
-
-        if (log.isDebugEnabled()) log.debug("no ACCESSIBLE connection found in the global transaction");
-        return null;        
-    }
-
     private XAStatefulHolder getNotAccessible() {
         if (log.isDebugEnabled()) log.debug("trying to recycle a NOT_ACCESSIBLE connection of " + this);
         BitronixTransaction transaction = TransactionContextHelper.currentTransaction();
@@ -400,4 +376,59 @@ public class XAPool implements StateChangeListener {
         } // while
     }
 
+    /****************************************************************
+     * 
+     */
+
+    private XAStatefulHolder getSharedXaStatefulHolder() {
+        BitronixTransaction transaction = TransactionContextHelper.currentTransaction();
+        if (transaction == null) {
+            if (log.isDebugEnabled()) log.debug("no current transaction, shared connection map will not be used");
+            return null;
+        }
+        Uid currentTxGtrid = transaction.getResourceManager().getGtrid();
+
+        XAStatefulHolder xaStatefulHolder = (XAStatefulHolder) statefulHolderTransactionMap.get(currentTxGtrid);
+        if (xaStatefulHolder != null &&
+        	xaStatefulHolder.getState() != XAStatefulHolder.STATE_IN_POOL &&
+        	xaStatefulHolder.getState() != XAStatefulHolder.STATE_CLOSED) {
+        	if (log.isDebugEnabled()) log.debug("sharing connection " + xaStatefulHolder + " in transaction " + currentTxGtrid);
+        	return xaStatefulHolder;
+        }
+        else {
+        	return null;
+        }
+    }
+
+    private void putSharedXaStatefulHolder(XAStatefulHolder xaStatefulHolder) {
+        BitronixTransaction transaction = TransactionContextHelper.currentTransaction();
+        if (transaction == null) {
+            if (log.isDebugEnabled()) log.debug("no current transaction, not adding " + xaStatefulHolder + " to shared connection map");
+            return;
+        }
+        final Uid currentTxGtrid = transaction.getResourceManager().getGtrid();
+
+        if (!statefulHolderTransactionMap.containsKey(currentTxGtrid)) {
+        	// This is the first time this XAStatefulHolder is going into the map,
+        	// register interest in synchronization so we can remove it at commit/rollback
+        	try {
+				transaction.registerSynchronization(new Synchronization() {
+					public void beforeCompletion() {
+						// Do nothing
+					}
+					
+					public void afterCompletion(int status) {
+						if (log.isDebugEnabled()) log.debug("deleted shared connection mapping for " + currentTxGtrid);
+						statefulHolderTransactionMap.remove(currentTxGtrid);
+					}
+				});
+			} catch (Exception e) {
+				// OK, forget it.  The transaction is either rollback only or already finished.
+				return;
+			}
+
+	        statefulHolderTransactionMap.put(currentTxGtrid, xaStatefulHolder);
+	        if (log.isDebugEnabled()) log.debug("added shared connection mapping for " + currentTxGtrid + " holder " + xaStatefulHolder);
+        }        
+    }
 }
