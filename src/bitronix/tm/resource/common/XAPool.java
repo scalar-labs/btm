@@ -328,7 +328,7 @@ public class XAPool implements StateChangeListener {
         for (int i = 0; i < xaResourceHolders.size(); i++) {
             XAResourceHolder xaResourceHolder = (XAResourceHolder) xaResourceHolders.get(i);
             XAResourceHolderState xaResourceHolderState = xaResourceHolder.getXAResourceHolderState();
-            if (xaResourceHolderState != null) {
+            if (xaResourceHolderState != null && xaResourceHolderState.getXid() != null) {
                 // compare GTRIDs
                 BitronixXid bitronixXid = xaResourceHolderState.getXid();
                 Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
