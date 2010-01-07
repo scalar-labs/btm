@@ -3,6 +3,16 @@ package bitronix.tm.resource.jdbc;
 import java.lang.reflect.*;
 import java.util.*;
 
+/**
+ * Base class for Proxy InvocationHandlers.  Maintains a method cache
+ * for swift delegation to either the overridden methods (implemented
+ * in a sub-class of this class) or the underlying delegate class'
+ * methods.  Makes proxying an interface almost completely painless.
+ *
+ * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
+ *
+ * @author brettw
+ */
 public abstract class BaseProxyHandlerClass implements InvocationHandler {
 	private static Map classMethodCache = new HashMap();
 	private Map methodCache;
@@ -77,5 +87,13 @@ public abstract class BaseProxyHandlerClass implements InvocationHandler {
 		return this.getClass().equals(method.getDeclaringClass());
 	}
 
+	/**
+	 * Must be implemented by the sub-class of this class.  This method
+	 * should return the "true" object to be delegated to in the case
+	 * that the method is not overridden by the sub-class.
+	 *
+	 * @return the true delegate object
+	 * @throws Exception can throw any exception if desired
+	 */
 	public abstract Object getProxiedDelegate() throws Exception;
 }
