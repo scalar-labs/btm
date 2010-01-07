@@ -422,8 +422,10 @@ public class XAPool implements StateChangeListener {
 					}
 					
 					public void afterCompletion(int status) {
-						if (log.isDebugEnabled()) log.debug("deleted shared connection mapping for " + currentTxGtrid);
-						statefulHolderTransactionMap.remove(currentTxGtrid);
+						synchronized (XAPool.this) {
+							statefulHolderTransactionMap.remove(currentTxGtrid);
+							if (log.isDebugEnabled()) log.debug("deleted shared connection mapping for " + currentTxGtrid);
+						}
 					}
 				});
 			} catch (Exception e) {
