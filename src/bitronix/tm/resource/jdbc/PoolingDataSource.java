@@ -1,33 +1,31 @@
 package bitronix.tm.resource.jdbc;
 
+import java.io.PrintWriter;
+import java.lang.reflect.*;
+import java.sql.*;
+
+import javax.naming.*;
+import javax.sql.*;
+import javax.transaction.xa.XAResource;
+
+import org.slf4j.*;
+
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.recovery.RecoveryException;
-import bitronix.tm.resource.ResourceConfigurationException;
-import bitronix.tm.resource.ResourceObjectFactory;
-import bitronix.tm.resource.ResourceRegistrar;
+import bitronix.tm.resource.*;
 import bitronix.tm.resource.common.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.naming.NamingException;
-import javax.naming.Reference;
-import javax.naming.StringRefAddr;
-import javax.sql.DataSource;
-import javax.sql.XADataSource;
-import javax.transaction.xa.XAResource;
-import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.SQLException;
 
 /**
  * Implementation of a JDBC {@link DataSource} wrapping vendor's {@link XADataSource} implementation.
  * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
- * @author lorban
+ * @author lorban, brettw
  */
 public class PoolingDataSource extends ResourceBean implements DataSource, XAResourceProducer {
 
-    private final static Logger log = LoggerFactory.getLogger(PoolingDataSource.class);
+	private static final long serialVersionUID = -2263299752624011938L;
+
+	private final static Logger log = LoggerFactory.getLogger(PoolingDataSource.class);
 
     private transient XAPool pool;
     private transient XADataSource xaDataSource;
@@ -140,9 +138,9 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         }
 
         try {
-            Connection connectionHandle = (Connection) pool.getConnectionHandle();
+        	InvocationHandler connectionHandle = (InvocationHandler) pool.getConnectionHandle();
             if (log.isDebugEnabled()) log.debug("acquired connection from " + this);
-            return connectionHandle;
+            return (Connection) Proxy.newProxyInstance(Connection.class.getClassLoader(), new Class[] { Connection.class }, connectionHandle);
         } catch (Exception ex) {
             throw (SQLException) new SQLException("unable to get a connection from pool of " + this).initCause(ex);
         }
@@ -246,4 +244,17 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         xaDataSource.setLogWriter(out);
     }
 
+    /* Java 6 JDBC4 methods.  Compilable under source 1.4 restriction.
+     * Original interface definition uses generics, but generics are
+     * unwrapped at compile-time, so these should work.  Under 1.4 they
+     * are ignored as simple additional methods on this class.  Under
+     * 1.6 they will be invoked appropriately.
+     */
+	public boolean isWrapperFor(Class iface) throws SQLException {
+		return false;
+	}
+
+	public Object unwrap(Class iface) throws SQLException {
+		throw new SQLException("Bitronix PoolingDataSource is not a wrapper.");
+	}
 }

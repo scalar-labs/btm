@@ -1,24 +1,23 @@
 package bitronix.tm.resource.jdbc.lrc;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.lang.reflect.*;
+import java.sql.*;
+import java.util.*;
 
-import javax.sql.XAConnection;
-import javax.sql.ConnectionEventListener;
-import javax.sql.ConnectionEvent;
+import javax.sql.*;
 import javax.transaction.xa.XAResource;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.ArrayList;
+
+import org.slf4j.*;
+
+import bitronix.tm.resource.jdbc.BaseProxyHandlerClass;
 
 /**
  * XAConnection implementation for a non-XA JDBC resource emulating XA with Last Resource Commit.
  * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
- * @author lorban
+ * @author lorban, brettw
  */
-public class LrcXAConnection implements XAConnection {
+public class LrcXAConnection extends BaseProxyHandlerClass { // implements XAConnection
 
     private final static Logger log = LoggerFactory.getLogger(LrcXAConnection.class);
 
@@ -41,7 +40,8 @@ public class LrcXAConnection implements XAConnection {
     }
 
     public Connection getConnection() throws SQLException {
-        return new LrcConnectionHandle(xaResource, connection);
+    	LrcConnectionHandle lrcConnectionHandle = new LrcConnectionHandle(xaResource, connection);
+        return (Connection) Proxy.newProxyInstance(Connection.class.getClassLoader(), new Class[] { Connection.class }, lrcConnectionHandle);
     }
 
     public void addConnectionEventListener(ConnectionEventListener listener) {
@@ -56,11 +56,28 @@ public class LrcXAConnection implements XAConnection {
         if (log.isDebugEnabled()) log.debug("notifying " + connectionEventListeners.size() + " connectionEventListeners(s) about closing of " + this);
         for (int i = 0; i < connectionEventListeners.size(); i++) {
             ConnectionEventListener connectionEventListener = (ConnectionEventListener) connectionEventListeners.get(i);
-            connectionEventListener.connectionClosed(new ConnectionEvent(this));
+            XAConnection conn = (XAConnection) Proxy.newProxyInstance(XAConnection.class.getClassLoader(), new Class[] { XAConnection.class }, this);
+            connectionEventListener.connectionClosed(new ConnectionEvent(conn));
         }
+    }
+
+    public boolean equals(Object obj) {
+    	if (!(obj instanceof LrcXAConnection))
+    		return false;
+
+    	LrcXAConnection other = (LrcXAConnection) obj;
+    	return this.connection.equals(other.connection);
+    }
+
+    public int hashCode() {
+    	return this.connection.hashCode();
     }
 
     public String toString() {
         return "a JDBC LrcXAConnection on " + connection;
     }
+
+	public Object getProxiedDelegate() throws Exception {
+		return connection;
+	}
 }

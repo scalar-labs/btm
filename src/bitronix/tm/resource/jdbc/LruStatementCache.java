@@ -19,7 +19,7 @@ import bitronix.tm.utils.LruEvictionListener;
  *
  * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
- * @author lorban
+ * @author brettw
  */
 public class LruStatementCache {
 
@@ -83,7 +83,7 @@ public class LruStatementCache {
      * @param key the cache key
      * @return the cached JdbcPreparedStatementHandle statement, or null
      */
-    public PreparedStatement get(JdbcPreparedStatementHandle key) {
+    public JdbcPreparedStatementHandle get(JdbcPreparedStatementHandle key) {
     	synchronized (cache)
     	{
 	        // See LinkedHashMap documentation.  Getting an entry means it is 
@@ -109,7 +109,7 @@ public class LruStatementCache {
      * @param stmt a prepared statement handle
      * @return a prepared statement
      */
-    public PreparedStatement put(JdbcPreparedStatementHandle key) {
+    public JdbcPreparedStatementHandle put(JdbcPreparedStatementHandle key) {
     	synchronized (cache)
     	{
 	        if (maxSize < 1) {

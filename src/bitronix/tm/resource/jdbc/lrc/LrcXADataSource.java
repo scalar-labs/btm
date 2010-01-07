@@ -1,20 +1,19 @@
 package bitronix.tm.resource.jdbc.lrc;
 
-import bitronix.tm.utils.ClassLoaderUtils;
-
-import javax.sql.XADataSource;
-import javax.sql.XAConnection;
-import java.sql.SQLException;
-import java.sql.Driver;
-import java.sql.Connection;
 import java.io.PrintWriter;
+import java.lang.reflect.Proxy;
+import java.sql.*;
 import java.util.Properties;
+
+import javax.sql.*;
+
+import bitronix.tm.utils.ClassLoaderUtils;
 
 /**
  * XADataSource implementation for a non-XA JDBC resource emulating XA with Last Resource Commit.
  * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
- * @author lorban
+ * @author lorban, brettw
  */
 public class LrcXADataSource implements XADataSource {
 
@@ -82,7 +81,8 @@ public class LrcXADataSource implements XADataSource {
             if (user != null) props.setProperty("user", user);
             if (password != null) props.setProperty("password", password);
             Connection connection = driver.connect(url, props);
-            return new LrcXAConnection(connection);
+            LrcXAConnection lrcXAConnection = new LrcXAConnection(connection);
+            return (XAConnection) Proxy.newProxyInstance(XAConnection.class.getClassLoader(), new Class[] { XAConnection.class }, lrcXAConnection);
         } catch (Exception ex) {
             throw (SQLException) new SQLException("unable to connect to non-XA resource " + driverClassName).initCause(ex);
         }
@@ -96,7 +96,8 @@ public class LrcXADataSource implements XADataSource {
             props.setProperty("user", user);
             props.setProperty("password", password);
             Connection connection = driver.connect(url, props);
-            return new LrcXAConnection(connection);
+            LrcXAConnection lrcXAConnection = new LrcXAConnection(connection);
+            return (XAConnection) Proxy.newProxyInstance(XAConnection.class.getClassLoader(), new Class[] { XAConnection.class }, lrcXAConnection);
         } catch (Exception ex) {
             throw (SQLException) new SQLException("unable to connect to non-XA resource " + driverClassName).initCause(ex);
         }
