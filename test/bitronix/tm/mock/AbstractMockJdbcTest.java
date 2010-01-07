@@ -10,7 +10,7 @@ import org.slf4j.*;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.mock.events.*;
 import bitronix.tm.mock.resource.MockJournal;
-import bitronix.tm.mock.resource.jdbc.MockXADataSource;
+import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.*;
 import bitronix.tm.resource.jdbc.*;
@@ -37,17 +37,17 @@ public abstract class AbstractMockJdbcTest extends TestCase {
 
         // DataSource1 has shared accessible connections
         poolingDataSource1 = new PoolingDataSource();
-        poolingDataSource1.setClassName(MockXADataSource.class.getName());
+        poolingDataSource1.setClassName(MockitoXADataSource.class.getName());
         poolingDataSource1.setUniqueName(DATASOURCE1_NAME);
         poolingDataSource1.setMinPoolSize(POOL_SIZE);
         poolingDataSource1.setMaxPoolSize(POOL_SIZE);
         poolingDataSource1.setAllowLocalTransactions(true);
-        poolingDataSource1.setShareAccessibleConnections(true);
+        poolingDataSource1.setShareTransactionConnections(true);
         poolingDataSource1.init();
 
         // DataSource2 does not have shared accessible connections
         poolingDataSource2 = new PoolingDataSource();
-        poolingDataSource2.setClassName(MockXADataSource.class.getName());
+        poolingDataSource2.setClassName(MockitoXADataSource.class.getName());
         poolingDataSource2.setUniqueName(DATASOURCE2_NAME);
         poolingDataSource2.setMinPoolSize(POOL_SIZE);
         poolingDataSource2.setMaxPoolSize(POOL_SIZE);

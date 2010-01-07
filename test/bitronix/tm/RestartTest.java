@@ -1,11 +1,11 @@
 package bitronix.tm;
 
-import bitronix.tm.mock.resource.jdbc.MockXADataSource;
+import java.util.Iterator;
+
+import junit.framework.TestCase;
+import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
-import junit.framework.TestCase;
-
-import java.util.Iterator;
 
 /**
  * <p></p>
@@ -27,7 +27,7 @@ public class RestartTest extends TestCase {
     public void testRestartWithoutLoaderNoReuseResource() throws Exception {
         for (int i=0; i<3 ;i++) {
             PoolingDataSource pds = new PoolingDataSource();
-            pds.setClassName(MockXADataSource.class.getName());
+            pds.setClassName(MockitoXADataSource.class.getName());
             pds.setUniqueName("ds");
             pds.setMaxPoolSize(1);
             pds.init();
@@ -49,7 +49,7 @@ public class RestartTest extends TestCase {
 
     public void testRestartWithoutLoaderReuseResource() throws Exception {
         PoolingDataSource pds = new PoolingDataSource();
-        pds.setClassName(MockXADataSource.class.getName());
+        pds.setClassName(MockitoXADataSource.class.getName());
         pds.setUniqueName("ds");
         pds.setMaxPoolSize(1);
         pds.init();

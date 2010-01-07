@@ -1,14 +1,12 @@
 package bitronix.tm;
 
-import bitronix.tm.mock.resource.jdbc.MockXADataSource;
-import bitronix.tm.recovery.IncrementalRecoverer;
-import bitronix.tm.recovery.Recoverer;
-import bitronix.tm.recovery.RecoveryException;
+import java.sql.SQLException;
+
+import junit.framework.TestCase;
+import bitronix.tm.mock.resource.jdbc.*;
+import bitronix.tm.recovery.*;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
-import junit.framework.TestCase;
-
-import java.sql.SQLException;
 
 /**
  * (c) Bitronix
@@ -29,7 +27,7 @@ public class JdbcFailedPoolTest extends TestCase {
 
     public void testAcquiringConnectionAfterRecoveryDoesNotMarkAsFailed() throws Exception {
         PoolingDataSource poolingDataSource = new PoolingDataSource();
-        poolingDataSource.setClassName(MockXADataSource.class.getName());
+        poolingDataSource.setClassName(MockitoXADataSource.class.getName());
         poolingDataSource.setUniqueName("ds1");
         poolingDataSource.setMaxPoolSize(1);
         poolingDataSource.setMaxIdleTime(1); // set low shrink timeout
@@ -37,7 +35,7 @@ public class JdbcFailedPoolTest extends TestCase {
 
         IncrementalRecoverer.recover(poolingDataSource);
 
-        MockXADataSource.setStaticGetXAConnectionException(new SQLException("creating a new connection does not work"));
+        MockitoXADataSource.setStaticGetXAConnectionException(new SQLException("creating a new connection does not work"));
         Thread.sleep(2000); // wait for shrink
 
         // should not work but should not mark the pool as failed as it could recover
@@ -52,10 +50,10 @@ public class JdbcFailedPoolTest extends TestCase {
     }
 
     public void testFailingRecoveryMarksAsFailed() throws Exception {
-        MockXADataSource.setStaticGetXAConnectionException(new SQLException("creating a new connection does not work"));
+        MockitoXADataSource.setStaticGetXAConnectionException(new SQLException("creating a new connection does not work"));
 
         PoolingDataSource poolingDataSource = new PoolingDataSource();
-        poolingDataSource.setClassName(MockXADataSource.class.getName());
+        poolingDataSource.setClassName(MockitoXADataSource.class.getName());
         poolingDataSource.setUniqueName("ds1");
         poolingDataSource.setMaxPoolSize(1);
         poolingDataSource.init();
@@ -76,7 +74,7 @@ public class JdbcFailedPoolTest extends TestCase {
         assertSame(poolingDataSource, ResourceRegistrar.get("ds1"));
 
 
-        MockXADataSource.setStaticGetXAConnectionException(null);
+        MockitoXADataSource.setStaticGetXAConnectionException(null);
 
         recoverer.run();
         assertEquals("a PoolingDataSource containing an XAPool of resource ds1 with 1 connection(s) (1 still available)", poolingDataSource.toString());
@@ -88,10 +86,10 @@ public class JdbcFailedPoolTest extends TestCase {
     }
 
     public void testSuccessfulRecoveryMarksAsNotFailed() throws Exception {
-        MockXADataSource.setStaticGetXAConnectionException(new SQLException("creating a new connection does not work"));
+        MockitoXADataSource.setStaticGetXAConnectionException(new SQLException("creating a new connection does not work"));
 
         PoolingDataSource poolingDataSource = new PoolingDataSource();
-        poolingDataSource.setClassName(MockXADataSource.class.getName());
+        poolingDataSource.setClassName(MockitoXADataSource.class.getName());
         poolingDataSource.setUniqueName("ds1");
         poolingDataSource.setMaxPoolSize(1);
         poolingDataSource.init();
@@ -106,7 +104,7 @@ public class JdbcFailedPoolTest extends TestCase {
         assertEquals("a PoolingDataSource containing an XAPool of resource ds1 with 0 connection(s) (0 still available) -failed-", poolingDataSource.toString());
 
 
-        MockXADataSource.setStaticGetXAConnectionException(null);
+        MockitoXADataSource.setStaticGetXAConnectionException(null);
 
         Recoverer recoverer = new Recoverer();
         recoverer.run();

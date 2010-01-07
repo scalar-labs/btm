@@ -31,7 +31,7 @@ public class MockDriver implements Driver {
     }
 
     public Connection connect(String url, Properties info) throws SQLException {
-        return new MockConnection();
+        return MockitoXADataSource.createMockConnection();
     }
 
     public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {

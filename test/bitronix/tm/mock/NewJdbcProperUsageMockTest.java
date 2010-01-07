@@ -1,29 +1,23 @@
 package bitronix.tm.mock;
 
-import bitronix.tm.BitronixTransactionManager;
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.BitronixTransaction;
-import bitronix.tm.mock.events.*;
-import bitronix.tm.mock.resource.jdbc.MockXAConnection;
-import bitronix.tm.mock.resource.jdbc.MockDriver;
-import bitronix.tm.mock.resource.MockXAResource;
-import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
-import bitronix.tm.resource.jdbc.JdbcPooledConnection;
-import bitronix.tm.resource.jdbc.PoolingDataSource;
-import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
-import bitronix.tm.resource.common.XAPool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.transaction.*;
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.ArrayList;
-import java.lang.reflect.Field;
 import java.io.*;
+import java.lang.reflect.*;
+import java.sql.*;
+import java.util.*;
+
+import javax.sql.XAConnection;
+import javax.transaction.*;
+import javax.transaction.xa.*;
+
+import org.slf4j.*;
+
+import bitronix.tm.*;
+import bitronix.tm.mock.events.*;
+import bitronix.tm.mock.resource.MockXAResource;
+import bitronix.tm.mock.resource.jdbc.MockDriver;
+import bitronix.tm.resource.common.XAPool;
+import bitronix.tm.resource.jdbc.*;
+import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
 
 /**
  * (c) Bitronix, 20-oct.-2005
@@ -756,8 +750,9 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         tm.begin();
 
         Connection connection1 = poolingDataSource1.getConnection();
-        JdbcPooledConnection pc1 = ((JdbcConnectionHandle) connection1).getPooledConnection();
-            MockXAConnection mockXAConnection1 = (MockXAConnection) getWrappedXAConnectionOf(pc1);
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection1);
+        JdbcPooledConnection pc1 = handle.getPooledConnection();
+            XAConnection mockXAConnection1 = (XAConnection) getWrappedXAConnectionOf(pc1);
             MockXAResource mockXAResource = (MockXAResource) mockXAConnection1.getXAResource();
             mockXAResource.setCommitException(new XAException(XAException.XA_HEURCOM));
         connection1.createStatement();
@@ -814,8 +809,9 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         tm.begin();
 
         Connection connection1 = poolingDataSource1.getConnection();
-        JdbcPooledConnection pc1 = ((JdbcConnectionHandle) connection1).getPooledConnection();
-            MockXAConnection mockXAConnection1 = (MockXAConnection) getWrappedXAConnectionOf(pc1);
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection1);
+        JdbcPooledConnection pc1 = handle.getPooledConnection();
+            XAConnection mockXAConnection1 = (XAConnection) getWrappedXAConnectionOf(pc1);
             MockXAResource mockXAResource = (MockXAResource) mockXAConnection1.getXAResource();
             mockXAResource.setRollbackException(new XAException(XAException.XA_HEURRB));
         connection1.createStatement();
@@ -983,7 +979,6 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         thread.run();
         assertTrue(thread.isSuccesful());
     }
-
 
     static class LooseTransactionThread extends Thread {
 

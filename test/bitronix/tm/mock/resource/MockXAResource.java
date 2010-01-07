@@ -1,12 +1,10 @@
 package bitronix.tm.mock.resource;
 
+import javax.transaction.xa.*;
+
 import bitronix.tm.internal.BitronixXAException;
 import bitronix.tm.mock.events.*;
-import bitronix.tm.mock.resource.jdbc.MockXADataSource;
-
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
-import javax.transaction.xa.Xid;
+import bitronix.tm.mock.resource.jdbc.*;
 
 /**
  * (c) Bitronix, 19-déc.-2005
@@ -17,7 +15,7 @@ public class MockXAResource implements XAResource {
 
     private int prepareRc = XAResource.XA_OK;
     private int transactiontimeout;
-    private MockXADataSource xads;
+    private MockitoXADataSource xads;
 
     private XAException endException;
     private XAException prepareException;
@@ -26,7 +24,7 @@ public class MockXAResource implements XAResource {
     private RuntimeException prepareRuntimeException;
     private XAException recoverException;
 
-    public MockXAResource(MockXADataSource xads) {
+    public MockXAResource(MockitoXADataSource xads) {
         this.xads = xads;
     }
 

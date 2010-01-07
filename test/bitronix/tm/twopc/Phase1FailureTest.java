@@ -1,23 +1,20 @@
 package bitronix.tm.twopc;
 
-import bitronix.tm.BitronixTransactionManager;
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.mock.AbstractMockJdbcTest;
-import bitronix.tm.mock.events.*;
-import bitronix.tm.mock.resource.MockJournal;
-import bitronix.tm.mock.resource.MockXAResource;
-import bitronix.tm.mock.resource.jdbc.MockXAConnection;
-import bitronix.tm.mock.resource.jdbc.MockXADataSource;
-import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
-import bitronix.tm.resource.jdbc.PoolingDataSource;
-import junit.framework.TestCase;
-
-import javax.transaction.Status;
-import javax.transaction.RollbackException;
-import javax.transaction.xa.XAException;
-import java.lang.reflect.Field;
+import java.lang.reflect.*;
 import java.sql.Connection;
 import java.util.List;
+
+import javax.sql.XAConnection;
+import javax.transaction.*;
+import javax.transaction.xa.XAException;
+
+import junit.framework.TestCase;
+import bitronix.tm.*;
+import bitronix.tm.mock.AbstractMockJdbcTest;
+import bitronix.tm.mock.events.*;
+import bitronix.tm.mock.resource.*;
+import bitronix.tm.mock.resource.jdbc.*;
+import bitronix.tm.resource.jdbc.*;
 
 /**
  * <p></p>
@@ -55,17 +52,19 @@ public class Phase1FailureTest extends TestCase {
         tm.setTransactionTimeout(10); // TX must not timeout
 
         Connection connection1 = poolingDataSource1.getConnection();
-        MockXAConnection mockXAConnection1 = (MockXAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(((JdbcConnectionHandle) connection1).getPooledConnection());
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection1);
+        XAConnection xaConnection1 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle.getPooledConnection());
         connection1.createStatement();
 
         Connection connection2 = poolingDataSource2.getConnection();
-        MockXAConnection mockXAConnection2 = (MockXAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(((JdbcConnectionHandle) connection2).getPooledConnection());
+        JdbcConnectionHandle handle2 = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection2);
+        XAConnection xaConnection2 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle2.getPooledConnection());
         connection2.createStatement();
 
-        final MockXAResource mockXAResource1 = (MockXAResource) mockXAConnection1.getXAResource();
+        final MockXAResource mockXAResource1 = (MockXAResource) xaConnection1.getXAResource();
         mockXAResource1.setRollbackException(createXAException("resource 1 rollback failed", XAException.XAER_INVAL));
 
-        MockXAResource mockXAResource2 = (MockXAResource) mockXAConnection2.getXAResource();
+        MockXAResource mockXAResource2 = (MockXAResource) xaConnection2.getXAResource();
         mockXAResource2.setPrepareException(createXAException("resource 2 prepare failed", XAException.XAER_RMERR));
 
         try {
@@ -124,13 +123,14 @@ public class Phase1FailureTest extends TestCase {
         connection1.createStatement();
 
         Connection connection2 = poolingDataSource2.getConnection();
-        MockXAConnection mockXAConnection2 = (MockXAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(((JdbcConnectionHandle) connection2).getPooledConnection());
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection2);
+        XAConnection xaConnection2 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle.getPooledConnection());
         connection2.createStatement();
 
         Connection connection3 = poolingDataSource2.getConnection();
         connection3.createStatement();
 
-        MockXAResource mockXAResource2 = (MockXAResource) mockXAConnection2.getXAResource();
+        MockXAResource mockXAResource2 = (MockXAResource) xaConnection2.getXAResource();
         mockXAResource2.setPrepareException(createXAException("resource 2 prepare failed", XAException.XAER_RMERR));
 
         try {
@@ -181,10 +181,11 @@ public class Phase1FailureTest extends TestCase {
         connection1.createStatement();
 
         Connection connection2 = poolingDataSource2.getConnection();
-        MockXAConnection mockXAConnection2 = (MockXAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(((JdbcConnectionHandle) connection2).getPooledConnection());
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection2);
+        XAConnection xaConnection2 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle.getPooledConnection());
         connection2.createStatement();
 
-        MockXAResource mockXAResource2 = (MockXAResource) mockXAConnection2.getXAResource();
+        MockXAResource mockXAResource2 = (MockXAResource) xaConnection2.getXAResource();
         mockXAResource2.setEndException(createXAException("resource 2 end failed", XAException.XAER_NOTA));
 
         try {
@@ -232,10 +233,11 @@ public class Phase1FailureTest extends TestCase {
         connection1.createStatement();
 
         Connection connection2 = poolingDataSource2.getConnection();
-        MockXAConnection mockXAConnection2 = (MockXAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(((JdbcConnectionHandle) connection2).getPooledConnection());
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection2);
+        XAConnection xaConnection2 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle.getPooledConnection());
         connection2.createStatement();
 
-        MockXAResource mockXAResource2 = (MockXAResource) mockXAConnection2.getXAResource();
+        MockXAResource mockXAResource2 = (MockXAResource) xaConnection2.getXAResource();
         mockXAResource2.setEndException(createXAException("resource 2 end failed", XAException.XAER_NOTA));
 
         tm.rollback();
@@ -277,7 +279,7 @@ public class Phase1FailureTest extends TestCase {
         field.set(TransactionManagerServices.class, new MockJournal());
 
         poolingDataSource1 = new PoolingDataSource();
-        poolingDataSource1.setClassName(MockXADataSource.class.getName());
+        poolingDataSource1.setClassName(MockitoXADataSource.class.getName());
         poolingDataSource1.setUniqueName("pds1");
         poolingDataSource1.setMinPoolSize(5);
         poolingDataSource1.setMaxPoolSize(5);
@@ -285,7 +287,7 @@ public class Phase1FailureTest extends TestCase {
         poolingDataSource1.init();
 
         poolingDataSource2 = new PoolingDataSource();
-        poolingDataSource2.setClassName(MockXADataSource.class.getName());
+        poolingDataSource2.setClassName(MockitoXADataSource.class.getName());
         poolingDataSource2.setUniqueName("pds2");
         poolingDataSource2.setMinPoolSize(5);
         poolingDataSource2.setMaxPoolSize(5);
@@ -293,7 +295,7 @@ public class Phase1FailureTest extends TestCase {
         poolingDataSource2.init();
 
         poolingDataSource3 = new PoolingDataSource();
-        poolingDataSource3.setClassName(MockXADataSource.class.getName());
+        poolingDataSource3.setClassName(MockitoXADataSource.class.getName());
         poolingDataSource3.setUniqueName("pds3");
         poolingDataSource3.setMinPoolSize(5);
         poolingDataSource3.setMaxPoolSize(5);

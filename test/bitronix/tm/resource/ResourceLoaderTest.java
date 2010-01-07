@@ -1,16 +1,16 @@
 package bitronix.tm.resource;
 
-import bitronix.tm.mock.resource.jdbc.MockXADataSource;
+import java.lang.reflect.Field;
+import java.util.*;
+
+import javax.sql.XADataSource;
+
+import junit.framework.TestCase;
+import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.mock.resource.jms.MockXAConnectionFactory;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import bitronix.tm.resource.jms.PoolingConnectionFactory;
 import bitronix.tm.utils.PropertyUtils;
-import junit.framework.TestCase;
-
-import javax.sql.XADataSource;
-import java.util.Map;
-import java.util.Properties;
-import java.lang.reflect.Field;
 
 public class ResourceLoaderTest extends TestCase {
 
@@ -18,7 +18,7 @@ public class ResourceLoaderTest extends TestCase {
         ResourceLoader loader = new ResourceLoader();
 
         Properties p = new Properties();
-        p.setProperty("resource.ds1.className", MockXADataSource.class.getName());
+        p.setProperty("resource.ds1.className", MockitoXADataSource.class.getName());
         p.setProperty("resource.ds1.uniqueName", "dataSource1");
         p.setProperty("resource.ds1.maxPoolSize", "123");
         p.setProperty("resource.ds1.automaticEnlistingEnabled", "true");
@@ -36,7 +36,7 @@ public class ResourceLoaderTest extends TestCase {
         String uniqueName = (String) dataSources.keySet().iterator().next();
         assertEquals("dataSource1", uniqueName);
         PoolingDataSource pds = (PoolingDataSource) dataSources.get(uniqueName);
-        assertEquals("bitronix.tm.mock.resource.jdbc.MockXADataSource", pds.getClassName());
+        assertEquals("bitronix.tm.mock.resource.jdbc.MockitoXADataSource", pds.getClassName());
         assertEquals("dataSource1", pds.getUniqueName());
         assertEquals(123, pds.getMaxPoolSize());
         assertEquals(3, pds.getDriverProperties().size());
@@ -48,7 +48,7 @@ public class ResourceLoaderTest extends TestCase {
         ResourceLoader loader = new ResourceLoader();
 
         Properties p = new Properties();
-        p.setProperty("resource.ds1.className", MockXADataSource.class.getName());
+        p.setProperty("resource.ds1.className", MockitoXADataSource.class.getName());
         p.setProperty("resource.ds1.uniqueName", "dataSource10");
         p.setProperty("resource.ds1.maxPoolSize", "123");
         p.setProperty("resource.ds1.automaticEnlistingEnabled", "true");
@@ -66,7 +66,7 @@ public class ResourceLoaderTest extends TestCase {
         String uniqueName = (String) dataSources.keySet().iterator().next();
         assertEquals("dataSource10", uniqueName);
         PoolingDataSource pds = (PoolingDataSource) dataSources.get(uniqueName);
-        assertEquals("bitronix.tm.mock.resource.jdbc.MockXADataSource", pds.getClassName());
+        assertEquals("bitronix.tm.mock.resource.jdbc.MockitoXADataSource", pds.getClassName());
         assertEquals("dataSource10", pds.getUniqueName());
         assertEquals(123, pds.getMaxPoolSize());
         assertEquals(3, pds.getDriverProperties().size());
@@ -111,7 +111,7 @@ public class ResourceLoaderTest extends TestCase {
         ResourceLoader loader = new ResourceLoader();
 
         Properties p = new Properties();
-        p.setProperty("resource.ds1.className", MockXADataSource.class.getName());
+        p.setProperty("resource.ds1.className", MockitoXADataSource.class.getName());
         p.setProperty("resource.ds1.uniqueName", "dataSource2");
         p.setProperty("resource.ds1.maxPoolSize", "123");
         p.setProperty("resource.ds1.automaticEnlistingEnabled", "true");
@@ -121,7 +121,7 @@ public class ResourceLoaderTest extends TestCase {
         p.setProperty("resource.ds1.driverProperties.password", "java");
         p.setProperty("resource.ds1.driverProperties.database", "users1");
 
-        p.setProperty("resource.ds2.className", MockXADataSource.class.getName());
+        p.setProperty("resource.ds2.className", MockitoXADataSource.class.getName());
         p.setProperty("resource.ds2.uniqueName", "some.unique.Name");
         p.setProperty("resource.ds2.maxPoolSize", "123");
 
@@ -130,13 +130,13 @@ public class ResourceLoaderTest extends TestCase {
 
         assertEquals(2, dataSources.size());
         PoolingDataSource pds = (PoolingDataSource) dataSources.get("dataSource2");
-        assertEquals("bitronix.tm.mock.resource.jdbc.MockXADataSource", pds.getClassName());
+        assertEquals("bitronix.tm.mock.resource.jdbc.MockitoXADataSource", pds.getClassName());
         assertEquals("dataSource2", pds.getUniqueName());
         assertEquals(123, pds.getMaxPoolSize());
         assertEquals(3, pds.getDriverProperties().size());
 
         pds = (PoolingDataSource) dataSources.get("some.unique.Name");
-        assertEquals("bitronix.tm.mock.resource.jdbc.MockXADataSource", pds.getClassName());
+        assertEquals("bitronix.tm.mock.resource.jdbc.MockitoXADataSource", pds.getClassName());
         assertEquals("some.unique.Name", pds.getUniqueName());
         assertEquals(123, pds.getMaxPoolSize());
         assertEquals(true, pds.getDeferConnectionRelease());
@@ -162,7 +162,7 @@ public class ResourceLoaderTest extends TestCase {
 
         try {
             Properties p = new Properties();
-            p.setProperty("resource.ds2.className", MockXADataSource.class.getName());
+            p.setProperty("resource.ds2.className", MockitoXADataSource.class.getName());
 
             loader.initXAResourceProducers(p);
             fail("should have thrown ResourceConfigurationException");
@@ -181,7 +181,7 @@ public class ResourceLoaderTest extends TestCase {
         }
 
         Properties p = new Properties();
-        p.setProperty("resource.ds2.className", MockXADataSource.class.getName());
+        p.setProperty("resource.ds2.className", MockitoXADataSource.class.getName());
         p.setProperty("resource.ds2.uniqueName", "some.other.unique.Name");
         p.setProperty("resource.ds2.maxPoolSize", "123");
 
@@ -192,7 +192,7 @@ public class ResourceLoaderTest extends TestCase {
         ResourceLoader loader = new ResourceLoader();
 
         Properties p = new Properties();
-        p.setProperty("resource.ds2.className", MockXADataSource.class.getName());
+        p.setProperty("resource.ds2.className", MockitoXADataSource.class.getName());
         p.setProperty("resource.ds2.uniqueName", "some.more.unique.Name");
         p.setProperty("resource.ds2.maxPoolSize", "abc"); // incorrect format
 
@@ -203,7 +203,7 @@ public class ResourceLoaderTest extends TestCase {
             assertEquals("cannot configure resource for configuration entries with name [ds2] - failing property is [maxPoolSize]", ex.getMessage());
         }
 
-        p.setProperty("resource.ds2.className", MockXADataSource.class.getName());
+        p.setProperty("resource.ds2.className", MockitoXADataSource.class.getName());
         p.setProperty("resource.ds2.uniqueName", "some.also.other.unique.Name");
         p.setProperty("resource.ds2.maxPoolSize", "123");
         p.setProperty("resource.ds2.useTmJoin", "unknown"); // incorrect format, will default to false

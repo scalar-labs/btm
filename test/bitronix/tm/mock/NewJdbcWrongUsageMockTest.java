@@ -1,28 +1,22 @@
 package bitronix.tm.mock;
 
-import bitronix.tm.BitronixTransactionManager;
-import bitronix.tm.TransactionManagerServices;
+import java.lang.reflect.Proxy;
+import java.sql.*;
+import java.util.List;
+
+import javax.sql.XAConnection;
+import javax.transaction.*;
+import javax.transaction.xa.*;
+
+import bitronix.tm.*;
 import bitronix.tm.mock.events.*;
-import bitronix.tm.mock.resource.jdbc.MockXAConnection;
-import bitronix.tm.mock.resource.jdbc.MockDriver;
 import bitronix.tm.mock.resource.MockXAResource;
+import bitronix.tm.mock.resource.jdbc.*;
 import bitronix.tm.mock.resource.jms.MockConnectionFactory;
-import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
-import bitronix.tm.resource.jdbc.JdbcPooledConnection;
-import bitronix.tm.resource.jdbc.PoolingDataSource;
+import bitronix.tm.resource.jdbc.*;
 import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
 import bitronix.tm.resource.jms.PoolingConnectionFactory;
 import bitronix.tm.resource.jms.lrc.LrcXAConnectionFactory;
-
-import javax.transaction.InvalidTransactionException;
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.Transaction;
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.List;
 
 /**
  * (c) Bitronix, 20-oct.-2005
@@ -36,10 +30,11 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
         tm.begin();
 
         Connection connection1 = poolingDataSource1.getConnection();
-        JdbcPooledConnection pc1 = ((JdbcConnectionHandle) connection1).getPooledConnection();
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection1);
+        JdbcPooledConnection pc1 = handle.getPooledConnection();
 
-        MockXAConnection mockXAConnection1 = (MockXAConnection) getWrappedXAConnectionOf(pc1);
-            MockXAResource mockXAResource = (MockXAResource) mockXAConnection1.getXAResource();
+        XAConnection xaConnection1 = (XAConnection) getWrappedXAConnectionOf(pc1);
+            MockXAResource mockXAResource = (MockXAResource) xaConnection1.getXAResource();
             XAException xaException = new XAException("resource failed");
             xaException.errorCode = XAException.XAER_RMERR;
             mockXAResource.setPrepareException(xaException);
@@ -95,9 +90,10 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
         tm.begin();
 
         Connection connection1 = poolingDataSource1.getConnection();
-        JdbcPooledConnection pc1 = ((JdbcConnectionHandle) connection1).getPooledConnection();
-            MockXAConnection mockXAConnection1 = (MockXAConnection) getWrappedXAConnectionOf(pc1);
-            MockXAResource mockXAResource = (MockXAResource) mockXAConnection1.getXAResource();
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection1);
+        JdbcPooledConnection pc1 = handle.getPooledConnection();
+            XAConnection xaConnection1 = (XAConnection) getWrappedXAConnectionOf(pc1);
+            MockXAResource mockXAResource = (MockXAResource) xaConnection1.getXAResource();
             mockXAResource.setPrepareException(new RuntimeException("driver error"));
         connection1.createStatement();
 
@@ -232,7 +228,7 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
              c2.createStatement();
              fail("expected SQLException");
          } catch (SQLException ex) {
-             assertEquals("error enlisting a JdbcConnectionHandle of a JdbcPooledConnection from datasource pds2_lrc in state ACCESSIBLE wrapping a JDBC LrcXAConnection on a MockXAConnection on a JDBC LrcConnectionHandle on a JDBC LrcXAResource in state NO_TX", ex.getMessage());
+        	 assertTrue(ex.getMessage().startsWith("error enlisting a JdbcConnectionHandle of a JdbcPooledConnection from datasource pds2_lrc in state ACCESSIBLE wrapping a JDBC LrcXAConnection on Mock for Connection"));
              assertTrue(ex.getCause().getMessage().matches("cannot enlist more than one non-XA resource, tried enlisting an XAResourceHolderState with uniqueName=pds2_lrc XAResource=a JDBC LrcXAResource in state NO_TX with XID null, already enlisted: an XAResourceHolderState with uniqueName=pds1_lrc XAResource=a JDBC LrcXAResource in state STARTED \\(started\\) with XID a Bitronix XID .*"));
          }
          c2.close();
@@ -276,8 +272,8 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
              c2.createStatement();
              fail("expected SQLException");
          } catch (SQLException ex) {
-             assertEquals("error enlisting a JdbcConnectionHandle of a JdbcPooledConnection from datasource pds2_lrc in state ACCESSIBLE wrapping a JDBC LrcXAConnection on a MockXAConnection on a JDBC LrcConnectionHandle on a JDBC LrcXAResource in state NO_TX", ex.getMessage());
-             assertTrue(ex.getCause().getMessage().startsWith("cannot enlist more than one non-XA resource, tried enlisting an XAResourceHolderState with uniqueName=pds2_lrc XAResource=a JDBC LrcXAResource in state NO_TX with XID null, already enlisted: an XAResourceHolderState with uniqueName=pcf_lrc XAResource=a JMS LrcXAResource in state STARTED of session a MockXASession (started) with XID a Bitronix XID"));
+        	 assertTrue(ex.getMessage().startsWith("error enlisting a JdbcConnectionHandle of a JdbcPooledConnection from datasource pds2_lrc in state ACCESSIBLE wrapping a JDBC LrcXAConnection on Mock for Connection"));
+             assertTrue(ex.getCause().getMessage().startsWith("cannot enlist more than one non-XA resource, tried enlisting an XAResourceHolderState with uniqueName=pds2_lrc XAResource=a JDBC LrcXAResource in state NO_TX with XID null, already enlisted: an XAResourceHolderState with uniqueName=pcf_lrc XAResource=a JMS LrcXAResource in state STARTED of session Mock for Session"));
          }
          c2.close();
 

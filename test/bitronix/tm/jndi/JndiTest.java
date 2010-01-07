@@ -1,15 +1,12 @@
 package bitronix.tm.jndi;
 
-import junit.framework.TestCase;
-
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NameNotFoundException;
 import java.util.Hashtable;
 
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.BitronixTransactionManager;
-import bitronix.tm.mock.resource.jdbc.MockXADataSource;
+import javax.naming.*;
+
+import junit.framework.TestCase;
+import bitronix.tm.*;
+import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 
 
@@ -28,7 +25,7 @@ public class JndiTest extends TestCase {
     public void testDefaultUserTransactionAndResources() throws Exception {
         PoolingDataSource pds = new PoolingDataSource();
         pds.setMaxPoolSize(1);
-        pds.setClassName(MockXADataSource.class.getName());
+        pds.setClassName(MockitoXADataSource.class.getName());
         pds.setUniqueName("jdbc/pds");
         pds.init();
 

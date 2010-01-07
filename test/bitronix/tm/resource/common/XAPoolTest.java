@@ -1,11 +1,10 @@
 package bitronix.tm.resource.common;
 
-import bitronix.tm.mock.resource.jdbc.MockXADataSource;
-import bitronix.tm.utils.CryptoEngine;
-import bitronix.tm.resource.jdbc.PoolingDataSource;
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.BitronixTransactionManager;
 import junit.framework.TestCase;
+import bitronix.tm.*;
+import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+import bitronix.tm.utils.CryptoEngine;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,7 +19,7 @@ public class XAPoolTest extends TestCase {
         ResourceBean rb = new ResourceBean() {};
 
         rb.setMaxPoolSize(1);
-        rb.setClassName(MockXADataSource.class.getName());
+        rb.setClassName(MockitoXADataSource.class.getName());
         rb.getDriverProperties().setProperty("userName", "java");
         rb.getDriverProperties().setProperty("password", "{DES}" + CryptoEngine.crypt("DES", "java"));
 
@@ -28,14 +27,14 @@ public class XAPoolTest extends TestCase {
         assertEquals(0, xaPool.totalPoolSize());
         assertEquals(0, xaPool.inPoolSize());
 
-        MockXADataSource xads = (MockXADataSource) xaPool.getXAFactory();
+        MockitoXADataSource xads = (MockitoXADataSource) xaPool.getXAFactory();
         assertEquals("java", xads.getUserName());
         assertEquals("java", xads.getPassword());
     }
 
     public void testNoRestartOfTaskSchedulerDuringClose() throws Exception {
         PoolingDataSource pds = new PoolingDataSource();
-        pds.setClassName(MockXADataSource.class.getName());
+        pds.setClassName(MockitoXADataSource.class.getName());
         pds.setMaxPoolSize(1);
         pds.setUniqueName("mock");
         pds.init();

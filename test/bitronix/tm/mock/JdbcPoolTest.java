@@ -1,16 +1,15 @@
 package bitronix.tm.mock;
 
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.mock.resource.jdbc.MockXADataSource;
-import bitronix.tm.resource.common.XAPool;
-import bitronix.tm.resource.jdbc.PoolingDataSource;
-import junit.framework.TestCase;
+import java.lang.reflect.Field;
+import java.sql.*;
 
 import javax.transaction.TransactionManager;
-import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
+
+import junit.framework.TestCase;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.mock.resource.jdbc.*;
+import bitronix.tm.resource.common.XAPool;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
 
 public class JdbcPoolTest extends TestCase {
 
@@ -21,7 +20,7 @@ public class JdbcPoolTest extends TestCase {
         pds.setMinPoolSize(1);
         pds.setMaxPoolSize(2);
         pds.setMaxIdleTime(1);
-        pds.setClassName(MockXADataSource.class.getName());
+        pds.setClassName(MockitoXADataSource.class.getName());
         pds.setUniqueName("pds");
         pds.setAllowLocalTransactions(true);
         pds.setAcquisitionTimeout(1);
@@ -204,7 +203,7 @@ public class JdbcPoolTest extends TestCase {
         pds.setMinPoolSize(1);
         pds.setMaxPoolSize(2);
         pds.setMaxIdleTime(1);
-        pds.setClassName(MockXADataSource.class.getName());
+        pds.setClassName(MockitoXADataSource.class.getName());
         pds.setUniqueName("pds2");
         pds.setAllowLocalTransactions(true);
         pds.setAcquisitionTimeout(1);
