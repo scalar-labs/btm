@@ -38,7 +38,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
         addStateChangeEventListener(new JmsPooledConnectionStateChangeListener());
         
         if (poolingConnectionFactory.getClassName().equals(LrcXAConnectionFactory.class.getName())) {
-            if (log.isDebugEnabled()) log.debug("emulating XA for resource " + poolingConnectionFactory.getUniqueName() + " - changing twoPcOrderingPosition to " + Scheduler.ALWAYS_LAST_POSITION);
+            if (log.isDebugEnabled()) log.debug("emulating XA for resource " + poolingConnectionFactory.getUniqueName() + " - changing twoPcOrderingPosition to ALWAYS_LAST_POSITION");
             poolingConnectionFactory.setTwoPcOrderingPosition(Scheduler.ALWAYS_LAST_POSITION);
             if (log.isDebugEnabled()) log.debug("emulating XA for resource " + poolingConnectionFactory.getUniqueName() + " - changing deferConnectionRelease to true");
             poolingConnectionFactory.setDeferConnectionRelease(true);

@@ -67,7 +67,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         addStateChangeEventListener(this);
 
         if (poolingDataSource.getClassName().equals(LrcXADataSource.class.getName())) {
-            if (log.isDebugEnabled()) log.debug("emulating XA for resource " + poolingDataSource.getUniqueName() + " - changing twoPcOrderingPosition to " + Scheduler.ALWAYS_LAST_POSITION);
+            if (log.isDebugEnabled()) log.debug("emulating XA for resource " + poolingDataSource.getUniqueName() + " - changing twoPcOrderingPosition to ALWAYS_LAST_POSITION");
             poolingDataSource.setTwoPcOrderingPosition(Scheduler.ALWAYS_LAST_POSITION);
             if (log.isDebugEnabled()) log.debug("emulating XA for resource " + poolingDataSource.getUniqueName() + " - changing deferConnectionRelease to true");
             poolingDataSource.setDeferConnectionRelease(true);
