@@ -60,8 +60,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             }
         });
 
-        super.setAllowSameStateTransitions(poolingDataSource.isShareTransactionConnections());
-
         connection = xaConnection.getConnection();
         detectJdbcVersion(connection);
         addStateChangeEventListener(this);

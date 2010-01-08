@@ -1,11 +1,10 @@
 package bitronix.tm.resource.common;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import bitronix.tm.utils.Decoder;
+import java.util.*;
 
-import java.util.List;
-import java.util.ArrayList;
+import org.slf4j.*;
+
+import bitronix.tm.utils.Decoder;
 
 /**
  * Implementation of all services required by a {@link XAStatefulHolder}.
@@ -18,12 +17,7 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
     private final static Logger log = LoggerFactory.getLogger(AbstractXAStatefulHolder.class);
 
     private int state = STATE_IN_POOL;
-    private boolean allowSameStateTransitions = false;
     private List stateChangeEventListeners = new ArrayList();
-
-    protected void setAllowSameStateTransitions(boolean allow) {
-    	allowSameStateTransitions = allow;
-    }
 
     public synchronized int getState() {
         return state;
@@ -34,7 +28,7 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
         fireStateChanging(oldState, state);
 
         synchronized (this) {
-            if (oldState == state && !allowSameStateTransitions)
+            if (oldState == state)
                 throw new IllegalArgumentException("cannot switch state from " + Decoder.decodeXAStatefulHolderState(oldState) +
                         " to " + Decoder.decodeXAStatefulHolderState(state));
 

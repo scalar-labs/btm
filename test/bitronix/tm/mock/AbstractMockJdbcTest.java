@@ -42,7 +42,6 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         poolingDataSource1.setMinPoolSize(POOL_SIZE);
         poolingDataSource1.setMaxPoolSize(POOL_SIZE);
         poolingDataSource1.setAllowLocalTransactions(true);
-        poolingDataSource1.setShareTransactionConnections(true);
         poolingDataSource1.init();
 
         // DataSource2 does not have shared accessible connections
