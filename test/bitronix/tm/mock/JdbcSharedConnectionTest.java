@@ -14,31 +14,6 @@ import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
 public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
     private final static Logger log = LoggerFactory.getLogger(NewJdbcProperUsageMockTest.class);
 
-    public void testSharedConnection() throws Exception {
-        if (log.isDebugEnabled()) log.debug("*** getting TM");
-        BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
-        tm.setTransactionTimeout(120);
-
-        if (log.isDebugEnabled()) log.debug("*** before begin");
-        tm.begin();
-        if (log.isDebugEnabled()) log.debug("*** after begin");
-
-        if (log.isDebugEnabled()) log.debug("*** getting connection from DS1");
-        Connection connection1 = poolingDataSource1.getConnection();
-
-        if (log.isDebugEnabled()) log.debug("*** getting second connection from DS1");
-        Connection connection2 = poolingDataSource1.getConnection();
-
-        JdbcConnectionHandle handle1 = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection1);
-        JdbcConnectionHandle handle2 = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection2);
-        assertEquals(handle1.getConnection(), handle2.getConnection());
-
-        connection1.close();
-        connection2.close();
-
-        tm.commit();
-    }
-
     public void testSharedConnectionMultithreaded() throws Exception {
         if (log.isDebugEnabled()) log.debug("*** getting TM");
         final BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
