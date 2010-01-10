@@ -139,7 +139,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             return;
         }
 
-    	if (jdbcVersionDetected >= 4) {
+    	if ("isValid".equals(query) && jdbcVersionDetected >= 4) {
     		Boolean isValid = null;
     		try {
     	        if (log.isDebugEnabled()) log.debug("testing with JDBC4 isValid() method, connection of " + this);
@@ -151,6 +151,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 			// if isValid is null, and exception was caught above and we fall through to the query test
 			if (isValid != null) {
 				if (isValid.booleanValue()) {
+                    if (log.isDebugEnabled()) log.debug("isValid successfully tested connection of " + this);
 					return;
 				}
 				throw new SQLException("connection is no longer valid");
@@ -163,7 +164,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         ResultSet rs = stmt.executeQuery();
         rs.close();
         stmt.close();
-        if (log.isDebugEnabled()) log.debug("successfully tested connection of " + this);
+        if (log.isDebugEnabled()) log.debug("testQuery successfully tested connection of " + this);
     }
 
     protected void release() throws SQLException {
