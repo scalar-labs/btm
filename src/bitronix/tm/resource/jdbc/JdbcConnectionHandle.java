@@ -65,7 +65,7 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
         } // if getAutomaticEnlistingEnabled
     }
 
-	/****************************************************************
+	/*
 	 * Overridden methods of Connection.
 	 */
 

@@ -20,6 +20,10 @@ public class LrcConnectionHandle extends BaseProxyHandlerClass { // implements C
         this.xaResource = xaResource;
     }
 
+    public Connection getConnection() {
+        return delegate;
+    }
+
     private Connection getDelegate() throws SQLException {
         if (delegate == null)
             throw new SQLException("connection is closed");

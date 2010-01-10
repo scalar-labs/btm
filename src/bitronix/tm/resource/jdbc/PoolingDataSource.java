@@ -23,8 +23,6 @@ import bitronix.tm.resource.common.*;
  */
 public class PoolingDataSource extends ResourceBean implements DataSource, XAResourceProducer {
 
-	private static final long serialVersionUID = -2263299752624011938L;
-
 	private final static Logger log = LoggerFactory.getLogger(PoolingDataSource.class);
 
     private transient XAPool pool;
@@ -255,6 +253,6 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
 	}
 
 	public Object unwrap(Class iface) throws SQLException {
-		throw new SQLException("Bitronix PoolingDataSource is not a wrapper.");
+		throw new SQLException("bitronix.tm.resource.jdbc.PoolingDataSource is not a wrapper");
 	}
 }

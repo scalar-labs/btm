@@ -19,7 +19,7 @@ import bitronix.tm.utils.LruEvictionListener;
  *
  * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
- * @author brettw
+ * @author lorban, brettw
  */
 public class LruStatementCache {
 
@@ -106,7 +106,7 @@ public class LruStatementCache {
      * closed (by the client).  A "closed" statement has it's
      * usage counter decremented in the cache.
      *
-     * @param stmt a prepared statement handle
+     * @param key a prepared statement handle
      * @return a prepared statement
      */
     public JdbcPreparedStatementHandle put(JdbcPreparedStatementHandle key) {

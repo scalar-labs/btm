@@ -86,7 +86,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 			isValidMethod.invoke(connection, new Object[] {new Integer(DETECTION_TIMEOUT)}); // test invoke
 			jdbcVersionDetected = 4;
 			if (poolingDataSource.getTestQuery() != null) {
-				log.info("Test query is configured, but DataSource is JDBC4 or newer and supports isValid().  Ignoring test query.");
+				log.info("test query is configured but DataSource is JDBC4 or newer and supports isValid(), ignoring test query");
 			}
 		} catch (Exception e) {
 			jdbcVersionDetected = 3;
@@ -133,13 +133,19 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     }
 
     private void testConnection(Connection connection) throws SQLException {
+        String query = poolingDataSource.getTestQuery();
+        if (query == null) {
+            if (log.isDebugEnabled()) log.debug("no query to test connection of " + this + ", skipping test");
+            return;
+        }
+
     	if (jdbcVersionDetected >= 4) {
     		Boolean isValid = null;
     		try {
     	        if (log.isDebugEnabled()) log.debug("testing with JDBC4 isValid() method, connection of " + this);
 				isValid = (Boolean) isValidMethod.invoke(connection, new Object[] {new Integer(poolingDataSource.getAcquisitionTimeout())});
 			} catch (Exception e) {
-	            log.warn("Dysfunctional JDBC4 Connection.isValid() method, or negative acquisition timeout, in call to test connection of " + this + ".  Falling back to test query.");
+	            log.warn("dysfunctional JDBC4 Connection.isValid() method, or negative acquisition timeout, in call to test connection of " + this + ".  Falling back to test query.");
 				jdbcVersionDetected = 3;
 			}
 			// if isValid is null, and exception was caught above and we fall through to the query test
@@ -147,15 +153,9 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 				if (isValid.booleanValue()) {
 					return;
 				}
-				throw new SQLException("Connection is no longer valid");
+				throw new SQLException("connection is no longer valid");
 			}
     	}
-
-        String query = poolingDataSource.getTestQuery();
-        if (query == null) {
-            if (log.isDebugEnabled()) log.debug("no query to test connection of " + this + ", skipping test");
-            return;
-        }
 
         // Throws a SQLException if the connection is dead
         if (log.isDebugEnabled()) log.debug("testing with query '" + query + "' connection of " + this);
@@ -271,7 +271,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     /**
      * Get a PreparedStatement from cache.
-     *
      * @param stmt the key that has been used to cache the statement.
      * @return the cached statement corresponding to the key or null if no statement is cached under that key.
      */
@@ -281,7 +280,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     /**
      * Put a PreparedStatement in the cache.
-     *
      * @param stmt the statement to cache.
      * @return the cached statement.
      */

@@ -17,8 +17,7 @@ public abstract class BaseProxyHandlerClass implements InvocationHandler {
 	private static Map classMethodCache = new HashMap();
 	private Map methodCache;
 
-	// Instance initializer
-	{
+	public BaseProxyHandlerClass() {
 		synchronized (this.getClass()) {
 			methodCache = (Map) classMethodCache.get(this.getClass());
 			if (methodCache == null) {
@@ -33,8 +32,7 @@ public abstract class BaseProxyHandlerClass implements InvocationHandler {
 	 * 
 	 * @see java.lang.reflect.InvocationHandler
 	 */
-	public Object invoke(Object proxy, Method method, Object[] args)
-			throws Throwable {
+	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		try {
 			// If the method is directly overridden by "this" (i.e. sub-class)
 			// class call "this" class' Method with "this" object, otherwise
