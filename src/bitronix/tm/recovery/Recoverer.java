@@ -74,6 +74,8 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     private Exception completionException;
     private int committedCount;
     private int rolledbackCount;
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
+    private int executionsCount = 0;
 
 
     public Recoverer() {
@@ -89,6 +91,11 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * call it manually.
      */
     public void run() {
+        if (!isRunning.compareAndSet(false, true)) {
+            log.info("recoverer is already running, abandoning this recovery request");
+            return;
+        }
+
         try {
             committedCount = 0;
             rolledbackCount = 0;
@@ -131,6 +138,8 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         finally {
             recoveredXidSets.clear();
             registeredResources.clear();
+            executionsCount++;
+            isRunning.set(false);
         }
     }
 
@@ -156,6 +165,14 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      */
     public int getRolledbackCount() {
         return rolledbackCount;
+    }
+
+    /**
+     * Get how many times the recoverer has run since the transaction manager started.
+     * @return how many times the recoverer has run since the transaction manager started.
+     */
+    public int getExecutionsCount() {
+        return executionsCount;
     }
 
     /**
@@ -454,6 +471,42 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 resourcesUniqueNames.append(", ");
         }
         return resourcesUniqueNames.toString();
+    }
+
+    /**
+     * A boolean value that may be updated atomically. This is a simplified subset of the JDK 1.5+
+     * java.util.concurrent.atomic.AtomicBoolean class.
+     */
+    private static class AtomicBoolean {
+        private boolean value;
+
+        public AtomicBoolean(boolean value) {
+            this.value = value;
+        }
+
+        public synchronized boolean get() {
+            return value;
+        }
+
+        public synchronized void set(boolean value) {
+            this.value = value;
+        }
+
+        /**
+         * Atomically sets the value to the given updated value if the current value == the expected value.
+         *
+         * @param expect the expected value.
+         * @param update the new value.
+         * @return true if successful. False return indicates that the actual value was not equal to the expected value.
+         */
+        public synchronized boolean compareAndSet(boolean expect, boolean update) {
+            if (this.value == expect) {
+                this.value = update;
+                return true;
+            }
+            return false;
+        }
+
     }
 
 }

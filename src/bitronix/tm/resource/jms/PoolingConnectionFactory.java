@@ -116,13 +116,14 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
     /* XAResourceProducer implementation */
 
     public XAResourceHolderState startRecovery() throws RecoveryException {
+        init();
+        if (recoveryPooledConnection != null)
+            throw new RecoveryException("recovery already in progress on " + this);
+
         try {
-            init();
-            if (recoveryPooledConnection == null) {
-                JmsConnectionHandle connectionHandle = (JmsConnectionHandle) pool.getConnectionHandle(false);
-                recoveryPooledConnection = connectionHandle.getPooledConnection();
-                recoveryXAResourceHolder = recoveryPooledConnection.createRecoveryXAResourceHolder();
-            }
+            JmsConnectionHandle connectionHandle = (JmsConnectionHandle) pool.getConnectionHandle(false);
+            recoveryPooledConnection = connectionHandle.getPooledConnection();
+            recoveryXAResourceHolder = recoveryPooledConnection.createRecoveryXAResourceHolder();
             return new XAResourceHolderState(recoveryXAResourceHolder, recoveryPooledConnection.getPoolingConnectionFactory());
         } catch (Exception ex) {
             throw new RecoveryException("error starting recovery", ex);

@@ -158,15 +158,16 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
 
     public XAResourceHolderState startRecovery() throws RecoveryException {
         init();
-        if (recoveryConnectionHandle == null) {
-            try {
-                recoveryConnectionHandle = (JdbcConnectionHandle) pool.getConnectionHandle(false);
-                recoveryXAResourceHolder = recoveryConnectionHandle.getPooledConnection().createRecoveryXAResourceHolder();
-            } catch (Exception ex) {
-                throw new RecoveryException("cannot start recovery on " + this, ex);
-            }
+        if (recoveryConnectionHandle != null)
+            throw new RecoveryException("recovery already in progress on " + this);
+
+        try {
+            recoveryConnectionHandle = (JdbcConnectionHandle) pool.getConnectionHandle(false);
+            recoveryXAResourceHolder = recoveryConnectionHandle.getPooledConnection().createRecoveryXAResourceHolder();
+            return new XAResourceHolderState(recoveryConnectionHandle.getPooledConnection(), this);
+        } catch (Exception ex) {
+            throw new RecoveryException("cannot start recovery on " + this, ex);
         }
-        return new XAResourceHolderState(recoveryConnectionHandle.getPooledConnection(), this);
     }
 
     public void endRecovery() throws RecoveryException {

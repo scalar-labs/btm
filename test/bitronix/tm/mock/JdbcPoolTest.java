@@ -5,6 +5,7 @@ import java.sql.*;
 
 import javax.transaction.TransactionManager;
 
+import bitronix.tm.recovery.RecoveryException;
 import junit.framework.TestCase;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.mock.resource.jdbc.*;
@@ -30,6 +31,21 @@ public class JdbcPoolTest extends TestCase {
 
     protected void tearDown() throws Exception {
         pds.close();
+    }
+
+    public void testReEnteringRecovery() throws Exception {
+        pds.startRecovery();
+        try {
+            pds.startRecovery();
+            fail("excpected RecoveryException");
+        } catch (RecoveryException ex) {
+            assertEquals("recovery already in progress on a PoolingDataSource containing an XAPool of resource pds with 1 connection(s) (0 still available)", ex.getMessage());
+        }
+
+        // make sure startRecovery() can be called again once endRecovery() has been called
+        pds.endRecovery();
+        pds.startRecovery();
+        pds.endRecovery();
     }
 
     public void testPoolGrowth() throws Exception {

@@ -2,6 +2,7 @@ package bitronix.tm.mock;
 
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.mock.resource.jms.MockXAConnectionFactory;
+import bitronix.tm.recovery.RecoveryException;
 import bitronix.tm.resource.jms.PoolingConnectionFactory;
 import junit.framework.TestCase;
 
@@ -30,7 +31,23 @@ public class JmsPoolTest extends TestCase {
     protected void tearDown() throws Exception {
         pcf.close();
     }
-    
+
+    public void testReEnteringRecovery() throws Exception {
+        pcf.startRecovery();
+        try {
+            pcf.startRecovery();
+            fail("excpected RecoveryException");
+        } catch (RecoveryException ex) {
+            assertEquals("recovery already in progress on a PoolingConnectionFactory with an XAPool of resource pcf with 1 connection(s) (0 still available)", ex.getMessage());
+        }
+
+        // make sure startRecovery() can be called again once endRecovery() has been called
+        pcf.endRecovery();
+        pcf.startRecovery();
+        pcf.endRecovery();
+    }
+
+
     public void testPoolNotStartingTransactionManager() throws Exception {
         // make sure TM is not running
         TransactionManagerServices.getTransactionManager().shutdown();

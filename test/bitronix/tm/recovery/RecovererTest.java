@@ -326,4 +326,32 @@ public class RecovererTest extends TestCase {
         assertEquals("TX has been committed more or less times than just once", 1, committedCount);
     }
 
+
+    public void testReentrance() throws Exception {
+        final int THREAD_COUNT = 10;
+        Recoverer recoverer = new Recoverer();
+
+        List threads = new ArrayList();
+
+        //create
+        for (int i=0; i< THREAD_COUNT;i++) {
+            Thread t = new Thread(recoverer);
+            threads.add(t);
+        }
+
+        //start
+        for (int i=0; i< THREAD_COUNT;i++) {
+            Thread t = (Thread) threads.get(i);
+            t.start();
+        }
+
+        //join
+        for (int i=0; i< THREAD_COUNT;i++) {
+            Thread t = (Thread) threads.get(i);
+            t.join();
+        }
+
+        assertEquals(1, recoverer.getExecutionsCount());
+    }
+    
 }

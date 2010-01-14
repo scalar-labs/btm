@@ -16,4 +16,6 @@ public interface RecovererMBean {
 
     public Exception getCompletionException();
 
+    public int getExecutionsCount();
+
 }
