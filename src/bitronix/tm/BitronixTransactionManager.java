@@ -80,9 +80,18 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             throw new NotSupportedException("nested transactions not supported");
         currentTx = createTransaction();
 
-        currentTx.getSynchronizationScheduler().add(new ClearContextSynchronization(currentTx), Scheduler.ALWAYS_LAST_POSITION -1);
-        currentTx.setActive();
-        if (log.isDebugEnabled()) log.debug("begun new transaction at " + currentTx.getResourceManager().getGtrid().extractTimestamp());
+        ClearContextSynchronization clearContextSynchronization = new ClearContextSynchronization(currentTx);
+        try {
+            currentTx.getSynchronizationScheduler().add(clearContextSynchronization, Scheduler.ALWAYS_LAST_POSITION -1);
+            currentTx.setActive(getOrCreateCurrentContext().getTimeout());
+            if (log.isDebugEnabled()) log.debug("begun new transaction at " + currentTx.getResourceManager().getGtrid().extractTimestamp());
+        } catch (RuntimeException ex) {
+            clearContextSynchronization.afterCompletion(Status.STATUS_NO_TRANSACTION);
+            throw ex;
+        } catch (SystemException ex) {
+            clearContextSynchronization.afterCompletion(Status.STATUS_NO_TRANSACTION);
+            throw ex;
+        }
     }
 
     public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, IllegalStateException, SystemException {
@@ -127,7 +136,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     public void setTransactionTimeout(int seconds) throws SystemException {
         if (seconds < 0)
             throw new BitronixSystemException("cannot set a timeout to less than 0 second (was: " + seconds + "s)");
-        getCurrentContext().setTimeout(seconds);
+        getOrCreateCurrentContext().setTimeout(seconds);
     }
 
     public Transaction suspend() throws SystemException {
@@ -138,7 +147,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
         try {
             currentTx.getResourceManager().suspend();
-            clearCurrentContext();
+            clearCurrentContextForSuspension();
             return currentTx;
         } catch (XAException ex) {
             throw new BitronixSystemException("cannot suspend " + currentTx + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
@@ -228,7 +237,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     public BitronixTransaction getCurrentTransaction() {
         if (contexts.get(Thread.currentThread()) == null)
             return null;
-        return getCurrentContext().getTransaction();
+        return getOrCreateCurrentContext().getTransaction();
     }
 
     /**
@@ -370,8 +379,8 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @return the created transaction.
      */
     private BitronixTransaction createTransaction() {
-        BitronixTransaction transaction = new BitronixTransaction(getCurrentContext().getTimeout());
-        getCurrentContext().setTransaction(transaction);
+        BitronixTransaction transaction = new BitronixTransaction();
+        getOrCreateCurrentContext().setTransaction(transaction);
         inFlightTransactions.put(transaction.getResourceManager().getGtrid(), transaction);
         MDC.put(MDC_GTRID_KEY, transaction.getGtrid());
         return transaction;
@@ -380,10 +389,10 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     /**
      * Unlink the transaction from the current thread's context.
      */
-    private void clearCurrentContext() {
-        if (log.isDebugEnabled()) log.debug("clearing current thread context: " + getCurrentContext());
+    private void clearCurrentContextForSuspension() {
+        if (log.isDebugEnabled()) log.debug("clearing current thread context: " + getOrCreateCurrentContext());
         contexts.remove(Thread.currentThread());
-        if (log.isDebugEnabled()) log.debug("cleared current thread context: " + getCurrentContext());
+        if (log.isDebugEnabled()) log.debug("cleared current thread context: " + getOrCreateCurrentContext());
         MDC.remove(MDC_GTRID_KEY);
     }
 
@@ -394,7 +403,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     private void setCurrentContext(ThreadContext context) {
         if (log.isDebugEnabled()) log.debug("changing current thread context to " + context);
         if (context == null)
-            throw new IllegalArgumentException("setCurrentContext() should not be called with a null context, clearCurrentContext() should be used instead");
+            throw new IllegalArgumentException("setCurrentContext() should not be called with a null context, clearCurrentContextForSuspension() should be used instead");
         contexts.put(Thread.currentThread(), context);
         if (context.getTransaction() != null) {
             MDC.put(MDC_GTRID_KEY, context.getTransaction().getGtrid());
@@ -405,7 +414,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * Get the context attached to the current thread. If there is no current context, a new one is created.
      * @return the context.
      */
-    private ThreadContext getCurrentContext() {
+    private ThreadContext getOrCreateCurrentContext() {
         ThreadContext threadContext = (ThreadContext) contexts.get(Thread.currentThread());
         if (threadContext == null) {
             if (log.isDebugEnabled()) log.debug("creating new thread context");

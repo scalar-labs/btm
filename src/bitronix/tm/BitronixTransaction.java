@@ -41,16 +41,12 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     private Date startDate;
 
 
-    public BitronixTransaction(int timeout) {
+    public BitronixTransaction() {
         Uid gtrid = UidGenerator.generateUid();
         if (log.isDebugEnabled()) log.debug("creating new transaction with GTRID [" + gtrid + "]");
         this.resourceManager = new XAResourceManager(gtrid);
 
         this.threadName = Thread.currentThread().getName();
-        this.startDate = new Date();
-        this.timeoutDate = new Date(System.currentTimeMillis() + (timeout * 1000L));
-
-        TransactionManagerServices.getTaskScheduler().scheduleTransactionTimeout(this, timeoutDate);
     }
 
     public int getStatus() throws SystemException {
@@ -250,10 +246,15 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         return timeout;
     }
 
-    public void setActive() throws IllegalStateException, SystemException {
+    public void setActive(int timeout) throws IllegalStateException, SystemException {
         if (status != Status.STATUS_NO_TRANSACTION)
             throw new IllegalStateException("transaction has already started");
+
         setStatus(Status.STATUS_ACTIVE);
+        this.startDate = new Date();
+        this.timeoutDate = new Date(System.currentTimeMillis() + (timeout * 1000L));
+
+        TransactionManagerServices.getTaskScheduler().scheduleTransactionTimeout(this, timeoutDate);
     }
 
 
