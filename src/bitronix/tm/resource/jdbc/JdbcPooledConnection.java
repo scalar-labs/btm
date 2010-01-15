@@ -85,8 +85,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 			isValidMethod = connection.getClass().getMethod("isValid", new Class[] { Integer.TYPE });
 			isValidMethod.invoke(connection, new Object[] {new Integer(DETECTION_TIMEOUT)}); // test invoke
 			jdbcVersionDetected = 4;
-			if (poolingDataSource.getTestQuery() != null) {
-				log.info("test query is configured but DataSource is JDBC4 or newer and supports isValid(), ignoring test query");
+			if (!poolingDataSource.isEnableJdbc4ConnectionTest()) {
+				log.info("dataSource is JDBC4 or newer and supports isValid(), but enableJdbc4ConnectionTest is not set or is false");
 			}
 		} catch (Exception e) {
 			jdbcVersionDetected = 3;
@@ -133,13 +133,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     }
 
     private void testConnection(Connection connection) throws SQLException {
-        String query = poolingDataSource.getTestQuery();
-        if (query == null) {
-            if (log.isDebugEnabled()) log.debug("no query to test connection of " + this + ", skipping test");
-            return;
-        }
-
-    	if ("isValid".equals(query) && jdbcVersionDetected >= 4) {
+        if (poolingDataSource.isEnableJdbc4ConnectionTest() && jdbcVersionDetected >= 4) {
     		Boolean isValid = null;
     		try {
     	        if (log.isDebugEnabled()) log.debug("testing with JDBC4 isValid() method, connection of " + this);
@@ -157,6 +151,12 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 				throw new SQLException("connection is no longer valid");
 			}
     	}
+
+        String query = poolingDataSource.getTestQuery();
+        if (query == null) {
+            if (log.isDebugEnabled()) log.debug("no query to test connection of " + this + ", skipping test");
+            return;
+        }
 
         // Throws a SQLException if the connection is dead
         if (log.isDebugEnabled()) log.debug("testing with query '" + query + "' connection of " + this);

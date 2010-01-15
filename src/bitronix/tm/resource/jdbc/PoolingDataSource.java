@@ -22,14 +22,16 @@ import bitronix.tm.resource.common.*;
  * @author lorban, brettw
  */
 public class PoolingDataSource extends ResourceBean implements DataSource, XAResourceProducer {
+    private static final long serialVersionUID = 8318653698355302977L;
 
-	private final static Logger log = LoggerFactory.getLogger(PoolingDataSource.class);
+    private final static Logger log = LoggerFactory.getLogger(PoolingDataSource.class);
 
     private transient XAPool pool;
     private transient XADataSource xaDataSource;
     private transient RecoveryXAResourceHolder recoveryXAResourceHolder;
     private transient JdbcConnectionHandle recoveryConnectionHandle;
     private String testQuery;
+    private boolean enableJdbc4ConnectionTest;
     private int preparedStatementCacheSize = 0;
     private String isolationLevel;
 	private String cursorHoldability;
@@ -73,6 +75,20 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
      */
     public void setTestQuery(String testQuery) {
         this.testQuery = testQuery;
+    }
+
+    /**
+     * @param enableJdbc4ConnectionTest the enableJdbc4ConnectionTest to set
+     */
+    public void setEnableJdbc4ConnectionTest(boolean enableJdbc4ConnectionTest) {
+        this.enableJdbc4ConnectionTest = enableJdbc4ConnectionTest;
+    }
+
+    /**
+     * @return the enableJdbc4ConnectionTest
+     */
+    public boolean isEnableJdbc4ConnectionTest() {
+        return enableJdbc4ConnectionTest;
     }
 
     public int getPreparedStatementCacheSize() {
