@@ -86,9 +86,9 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 			isValidMethod.invoke(connection, new Object[] {new Integer(DETECTION_TIMEOUT)}); // test invoke
 			jdbcVersionDetected = 4;
 			if (!poolingDataSource.isEnableJdbc4ConnectionTest()) {
-				log.info("dataSource is JDBC4 or newer and supports isValid(), but enableJdbc4ConnectionTest is not set or is false");
+				if (log.isDebugEnabled()) log.debug("dataSource is JDBC4 or newer and supports isValid(), but enableJdbc4ConnectionTest is not set or is false");
 			}
-		} catch (Exception e) {
+		} catch (Exception ex) {
 			jdbcVersionDetected = 3;
 		}
 		if (log.isDebugEnabled()) log.debug("detected JDBC connection class '" + connection.getClass() + "' is version " + jdbcVersionDetected + " type");
