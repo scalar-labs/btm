@@ -22,7 +22,6 @@ import bitronix.tm.resource.common.*;
  * @author lorban, brettw
  */
 public class PoolingDataSource extends ResourceBean implements DataSource, XAResourceProducer {
-    private static final long serialVersionUID = 8318653698355302977L;
 
     private final static Logger log = LoggerFactory.getLogger(PoolingDataSource.class);
 
