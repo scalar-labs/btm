@@ -215,14 +215,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             applyIsolationLevel();
             applyCursorHoldabilty();
             if (TransactionContextHelper.currentTransaction() == null) {
-            	// Outside of a transaction (i.e. local) it is safe to set the
-            	// auto-commit flag
+            	// it is safe to set the auto-commit flag outside of a global transaction
             	applyLocalAutoCommit();
-            }
-            else {
-            	// Always set auto-commit true in the context of a global transaction,
-            	// otherwise the database might throw XAER_OUTSIDE
-            	connection.setAutoCommit(true);
             }
         }
         else {
