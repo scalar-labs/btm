@@ -409,7 +409,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         getResourceManager().clearXAResourceHolderStates();
 
         if (log.isDebugEnabled()) log.debug("after completion, " + synchronizationScheduler.size() + " synchronization(s) to execute");
-        Iterator it = synchronizationScheduler.iterator();
+        Iterator it = synchronizationScheduler.reverseIterator();
         while (it.hasNext()) {
             Synchronization synchronization = (Synchronization) it.next();
             try {

@@ -46,6 +46,7 @@ public class Configuration implements Service {
     private int backgroundRecoveryIntervalSeconds;
     private boolean disableJmx;
     private String jndiUserTransactionName;
+    private String jndiTransactionSynchronizationRegistryName;
     private String journal;
     private boolean currentNodeOnlyRecovery;
     private String resourceConfigurationFilename;
@@ -88,6 +89,7 @@ public class Configuration implements Service {
             backgroundRecoveryIntervalSeconds = getInt(properties, "bitronix.tm.timer.backgroundRecoveryIntervalSeconds", 60);
             disableJmx = getBoolean(properties, "bitronix.tm.disableJmx", false);
             jndiUserTransactionName = getString(properties, "bitronix.tm.jndi.userTransactionName", null);
+            jndiTransactionSynchronizationRegistryName = getString(properties, "bitronix.tm.jndi.transactionSynchronizationRegistryName", null);
             journal = getString(properties, "bitronix.tm.journal", "disk");
             currentNodeOnlyRecovery = getBoolean(properties, "bitronix.tm.currentNodeOnlyRecovery", true);
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
@@ -418,6 +420,28 @@ public class Configuration implements Service {
     public void setJndiUserTransactionName(String jndiUserTransactionName) {
         checkNotStarted();
         this.jndiUserTransactionName = jndiUserTransactionName;
+    }
+
+    /**
+     * Get the name the {@link javax.transaction.TransactionSynchronizationRegistry} should be bound under in the
+     * {@link bitronix.tm.jndi.BitronixContext}.
+     * @return the name the {@link javax.transaction.TransactionSynchronizationRegistry} should
+     *         be bound under in the {@link bitronix.tm.jndi.BitronixContext}.
+     */
+    public String getJndiTransactionSynchronizationRegistryName() {
+        return jndiTransactionSynchronizationRegistryName;
+    }
+
+    /**
+     * Set the name the {@link javax.transaction.TransactionSynchronizationRegistry} should be bound under in the
+     * {@link bitronix.tm.jndi.BitronixContext}.
+     * @see #getJndiUserTransactionName()
+     * @param jndiTransactionSynchronizationRegistryName the name the {@link javax.transaction.TransactionSynchronizationRegistry} should
+     *        be bound under in the {@link bitronix.tm.jndi.BitronixContext}.
+     */
+    public void setJndiTransactionSynchronizationRegistryName(String jndiTransactionSynchronizationRegistryName) {
+        checkNotStarted();
+        this.jndiTransactionSynchronizationRegistryName = jndiTransactionSynchronizationRegistryName;
     }
 
     /**

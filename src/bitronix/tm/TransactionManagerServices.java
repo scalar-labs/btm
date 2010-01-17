@@ -26,6 +26,7 @@ public class TransactionManagerServices {
     private final static Logger log = LoggerFactory.getLogger(TransactionManagerServices.class);
 
     private static BitronixTransactionManager transactionManager;
+    private static BitronixTransactionSynchronizationRegistry transactionSynchronizationRegistry;
     private static Configuration configuration;
     private static Journal journal;
     private static TaskScheduler taskScheduler;
@@ -41,6 +42,16 @@ public class TransactionManagerServices {
         if (transactionManager == null)
             transactionManager = new BitronixTransactionManager();
         return transactionManager;
+    }
+
+    /**
+     * Create the JTA 1.1 TransactionSynchronizationRegistry.
+     * @return the TransactionSynchronizationRegistry.
+     */
+    public synchronized static BitronixTransactionSynchronizationRegistry getTransactionSynchronizationRegistry() {
+        if (transactionSynchronizationRegistry == null)
+            transactionSynchronizationRegistry = new BitronixTransactionSynchronizationRegistry();
+        return transactionSynchronizationRegistry;
     }
 
     /**
@@ -159,6 +170,7 @@ public class TransactionManagerServices {
      */
     protected static synchronized void clear() {
         transactionManager = null;
+        transactionSynchronizationRegistry = null;
         configuration = null;
         journal = null;
         taskScheduler = null;

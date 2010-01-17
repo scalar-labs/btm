@@ -80,21 +80,23 @@ public class Scheduler {
     }
 
     public Iterator iterator() {
-        return new SchedulerIterator(this);
+        return new SchedulerNaturalOrderIterator();
+    }
+
+    public Iterator reverseIterator() {
+        return new SchedulerReverseOrderIterator();
     }
 
     public String toString() {
         return "a Scheduler with " + size() + " object(s) in " + getNaturalOrderPositions().size() + " position(s)";
     }
 
-    private class SchedulerIterator implements Iterator {
-        private Scheduler scheduler;
+    private class SchedulerNaturalOrderIterator implements Iterator {
         private int nextKeyIndex;
         private List objectsOfCurrentKey;
         private int objectsOfCurrentKeyIndex;
 
-        private SchedulerIterator(Scheduler scheduler) {
-            this.scheduler = scheduler;
+        private SchedulerNaturalOrderIterator() {
             this.nextKeyIndex = 0;
         }
 
@@ -107,22 +109,22 @@ public class Scheduler {
             if (objectsOfCurrentKey.size() == 0) {
                 // there are no more objects in the current position's list -> remove it
                 nextKeyIndex--;
-                Object key = scheduler.keys.get(nextKeyIndex);
-                scheduler.keys.remove(nextKeyIndex);
-                scheduler.objects.remove(key);
+                Object key = Scheduler.this.keys.get(nextKeyIndex);
+                Scheduler.this.keys.remove(nextKeyIndex);
+                Scheduler.this.objects.remove(key);
                 objectsOfCurrentKey = null;
             }
-            scheduler.size--;
+            Scheduler.this.size--;
         }
 
         public boolean hasNext() {
             if (objectsOfCurrentKey == null || objectsOfCurrentKeyIndex >= objectsOfCurrentKey.size()) {
                 // we reached the end of the current position's list
 
-                if (nextKeyIndex < scheduler.keys.size()) {
+                if (nextKeyIndex < Scheduler.this.keys.size()) {
                     // there is another position after this one
-                    Integer currentKey = (Integer) scheduler.keys.get(nextKeyIndex++);
-                    objectsOfCurrentKey = (List) scheduler.objects.get(currentKey);
+                    Integer currentKey = (Integer) Scheduler.this.keys.get(nextKeyIndex++);
+                    objectsOfCurrentKey = (List) Scheduler.this.objects.get(currentKey);
                     objectsOfCurrentKeyIndex = 0;
                     return true;
                 }
@@ -141,6 +143,37 @@ public class Scheduler {
             if (!hasNext())
                 throw new NoSuchElementException("iterator bounds reached");
             return objectsOfCurrentKey.get(objectsOfCurrentKeyIndex++);
+        }
+    }
+
+    private class SchedulerReverseOrderIterator implements Iterator {
+        private Iterator reverseOrderPositionsIterator;
+        private Iterator currentPositionIterator;
+
+        private SchedulerReverseOrderIterator() {
+            reverseOrderPositionsIterator = Scheduler.this.getReverseOrderPositions().iterator();
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException("cannot remove elements iterated in reverse order");
+        }
+
+        public boolean hasNext() {
+            return (currentPositionIterator != null && currentPositionIterator.hasNext()) || reverseOrderPositionsIterator.hasNext();
+        }
+
+        public Object next() {
+            if (!hasNext())
+                throw new NoSuchElementException("iterator bounds reached");
+
+            if (currentPositionIterator == null || !currentPositionIterator.hasNext()) {
+                Integer newCurrentPositionKey = (Integer) reverseOrderPositionsIterator.next();
+                List newCurrentPositionList = getByReverseOrderForPosition(newCurrentPositionKey);
+                currentPositionIterator = newCurrentPositionList.iterator();
+                return currentPositionIterator.next();
+            }
+
+            return currentPositionIterator.next();
         }
     }
 
