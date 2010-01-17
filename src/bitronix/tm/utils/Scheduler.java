@@ -91,6 +91,9 @@ public class Scheduler {
         return "a Scheduler with " + size() + " object(s) in " + getNaturalOrderPositions().size() + " position(s)";
     }
 
+    /**
+     * This iterator supports in-flight updates of the iterated object.
+     */
     private class SchedulerNaturalOrderIterator implements Iterator {
         private int nextKeyIndex;
         private List objectsOfCurrentKey;
@@ -146,6 +149,9 @@ public class Scheduler {
         }
     }
 
+    /**
+     * This iterator DOES NOT support in-flight updates of the iterated object.
+     */
     private class SchedulerReverseOrderIterator implements Iterator {
         private Iterator reverseOrderPositionsIterator;
         private Iterator currentPositionIterator;
