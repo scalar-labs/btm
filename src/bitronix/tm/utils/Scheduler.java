@@ -151,6 +151,7 @@ public class Scheduler {
 
     /**
      * This iterator DOES NOT support in-flight updates of the iterated object.
+     * TODO BTM-65: add support for in-flight updates of the iterated object.
      */
     private class SchedulerReverseOrderIterator implements Iterator {
         private Iterator reverseOrderPositionsIterator;
