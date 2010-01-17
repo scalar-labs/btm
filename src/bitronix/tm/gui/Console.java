@@ -153,7 +153,7 @@ public class Console extends JFrame {
         getContentPane().add(statusBarPanel, BorderLayout.SOUTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 600);
-        show();
+        setVisible(true);
     }
 
 
@@ -256,7 +256,7 @@ public class Console extends JFrame {
         dialog.getContentPane().add(scrollPane);
         dialog.pack();
         dialog.setModal(false);
-        dialog.show();
+        dialog.setVisible(true);
 
 //        JOptionPane.showMessageDialog(this, redundantGtrids.size() + " duplicated GTRID", "Duplicated GTRID count", JOptionPane.INFORMATION_MESSAGE);
     }

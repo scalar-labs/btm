@@ -30,6 +30,6 @@ public class TransactionTableMouseListener extends MouseAdapter {
 
     private void showDetails() {
         TransactionLogRecord tlog = ((TransactionTableModel)table.getModel()).getRow(table.getSelectedRow());
-        new TransactionLogDialog(frame, tlog).show();
+        new TransactionLogDialog(frame, tlog).setVisible(true);
     }
 }
