@@ -34,6 +34,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     private PoolingDataSource poolingDataSource;
     private LruStatementCache statementsCache;
     private List uncachedStatements = new ArrayList();
+    private int usageCount;
 
     /* management */
     private String jmxName;
@@ -117,6 +118,11 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     }
 
     public void close() throws SQLException {
+        // this should never happen, should we throw an exception or log at warn/error?
+        if (usageCount > 0) {
+            if (log.isDebugEnabled()) log.debug("close connection with usage count > 0, " + this);
+        }
+
         setState(STATE_CLOSED);
 
         // cleanup of pooled resources
@@ -168,6 +174,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     }
 
     protected void release() throws SQLException {
+        --usageCount;
+
         if (log.isDebugEnabled()) log.debug("releasing to pool " + this);
 
         //TODO: even if delisting fails, requeuing should be done or we'll have a connection leak here
@@ -181,14 +189,25 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             throw (SQLException) new SQLException("error delisting " + this).initCause(ex);
         }
 
-        // requeuing
-        try {
-            TransactionContextHelper.requeue(this, poolingDataSource);
-        } catch (BitronixSystemException ex) {
-            throw (SQLException) new SQLException("error requeueing " + this).initCause(ex);
+        // Only requeue a connection if it is no longer in use.  In the case of non-shared connections,
+        // usageCount will always be 0 here, so the default behavior is unchanged.
+        if (usageCount == 0) {
+            try {
+                TransactionContextHelper.requeue(this, poolingDataSource);
+            } catch (BitronixSystemException ex) {
+                // Requeue failed, restore the usageCount to previous value (see testcase 
+                // NewJdbcStrangeUsageMockTest.testClosingSuspendedConnectionsInDifferentContext).
+                // This can happen when a close is attempted while the connection is participating
+                // in a global transaction.
+                usageCount++;
+                throw (SQLException) new SQLException("error requeueing " + this).initCause(ex);
+            }
+    
+            if (log.isDebugEnabled()) log.debug("released to pool " + this);
         }
-
-        if (log.isDebugEnabled()) log.debug("released to pool " + this);
+        else {
+            if (log.isDebugEnabled()) log.debug("not releasing " + this + " to pool yet, connection is still shared");
+        }
     }
 
     public XAResource getXAResource() {
@@ -208,7 +227,22 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     public Object getConnectionHandle() throws Exception {
         if (log.isDebugEnabled()) log.debug("getting connection handle from " + this);
         int oldState = getState();
-        setState(STATE_ACCESSIBLE);
+
+        // Increment the usage count
+        usageCount++;
+
+        // Only transition to STATE_ACCESSIBLE on the first usage.  If we're not sharing 
+        // connections (default behavior) usageCount is always 1 here, so this transition
+        // will always occur (current behavior unchanged).  If we _are_ sharing connections,
+        // and this is _not_ the first usage, it is valid for the state to already be 
+        // STATE_ACCESSIBLE.  Calling setState() with STATE_ACCESSIBLE when the state is
+        // already STATE_ACCESSIBLE fails the sanity check in AbstractXAStatefulHolder.
+        // Even if the connection is shared (usageCount > 1), if the state was STATE_NOT_ACCESSIBLE
+        // we transition back to STATE_ACCESSIBLE.
+        if (usageCount == 1 || oldState == STATE_NOT_ACCESSIBLE) {
+            setState(STATE_ACCESSIBLE);
+        }
+
         if (oldState == STATE_IN_POOL) {
             if (log.isDebugEnabled()) log.debug("connection " + xaConnection + " was in state IN_POOL, testing it");
             testConnection(connection);
@@ -231,6 +265,9 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         if (newState == STATE_IN_POOL) {
             if (log.isDebugEnabled()) log.debug("requeued JDBC connection of " + poolingDataSource);
             lastReleaseDate = new Date();
+            if (usageCount > 0) {
+                if (log.isDebugEnabled()) log.error("usage count too high on connection returned to pool " + source);
+            }
         }
         if (oldState == STATE_IN_POOL && newState == STATE_ACCESSIBLE) {
             acquisitionDate = new Date();
@@ -293,7 +330,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     }
 
     public String toString() {
-        return "a JdbcPooledConnection from datasource " + poolingDataSource.getUniqueName() + " in state " + Decoder.decodeXAStatefulHolderState(getState()) + " wrapping " + xaConnection;
+        return "a JdbcPooledConnection from datasource " + poolingDataSource.getUniqueName() + " in state " + Decoder.decodeXAStatefulHolderState(getState()) + " with usage count " + usageCount + " wrapping " + xaConnection;
     }
 
     private void applyCursorHoldabilty() throws SQLException {

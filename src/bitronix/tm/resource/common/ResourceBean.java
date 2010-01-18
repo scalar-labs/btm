@@ -28,6 +28,7 @@ public abstract class ResourceBean implements Serializable {
     private boolean allowLocalTransactions = false;
     private int twoPcOrderingPosition = 1;
     private boolean applyTransactionTimeout = false;
+    private boolean shareTransactionConnections = false;
     private transient int createdResourcesCounter;
 
     /**
@@ -281,4 +282,21 @@ public abstract class ResourceBean implements Serializable {
     public int incCreatedResourcesCounter() {
         return this.createdResourcesCounter++;
     }
+
+	/**
+	 * Set whether connections in the ACCESSIBLE state can be shared within the context
+	 * of a transaction.
+	 *
+	 * @param shareAccessibleConnections the shareAccessibleConnections to set
+	 */
+	public void setShareTransactionConnections(boolean shareAccessibleConnections) {
+		this.shareTransactionConnections = shareAccessibleConnections;
+	}
+
+	/**
+	 * @return the shareAccessibleConnections
+	 */
+	public boolean isShareTransactionConnections() {
+		return shareTransactionConnections;
+	}
 }

@@ -25,7 +25,6 @@ public class RecoveryXAResourceHolder extends AbstractXAResourceHolder {
     }
 
     public void close() throws Exception {
-        if (log.isDebugEnabled()) log.debug("recovery xa resource is being closed: " + xaResourceHolder);
         xaResourceHolder.setState(STATE_IN_POOL);
     }
 

@@ -81,8 +81,8 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
         XAResourceRollbackEvent rollbackEvent2 = (XAResourceRollbackEvent) orderedEvents.get(i++);
         assertTrue(prepareEvent1.getSource() == rollbackEvent2.getSource());
         assertEquals(Status.STATUS_ROLLEDBACK, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
-        assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
     }
 
     public void testPrepareRuntimeFailureCase() throws Exception {
@@ -138,8 +138,8 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
         XAResourceRollbackEvent rollbackEvent2 = (XAResourceRollbackEvent) orderedEvents.get(i++);
         assertTrue(prepareEvent1.getSource() == rollbackEvent2.getSource());
         assertEquals(Status.STATUS_ROLLEDBACK, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
-        assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
     }
 
     public void testIncorrectSuspendResume() throws Exception {
@@ -228,7 +228,7 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
              c2.createStatement();
              fail("expected SQLException");
          } catch (SQLException ex) {
-        	 assertTrue(ex.getMessage().startsWith("error enlisting a JdbcConnectionHandle of a JdbcPooledConnection from datasource pds2_lrc in state ACCESSIBLE wrapping a JDBC LrcXAConnection on Mock for Connection"));
+        	 assertTrue(ex.getMessage().startsWith("error enlisting a JdbcConnectionHandle of a JdbcPooledConnection from datasource pds2_lrc in state ACCESSIBLE with usage count 1 wrapping a JDBC LrcXAConnection on Mock for Connection"));
              assertTrue(ex.getCause().getMessage().matches("cannot enlist more than one non-XA resource, tried enlisting an XAResourceHolderState with uniqueName=pds2_lrc XAResource=a JDBC LrcXAResource in state NO_TX with XID null, already enlisted: an XAResourceHolderState with uniqueName=pds1_lrc XAResource=a JDBC LrcXAResource in state STARTED \\(started\\) with XID a Bitronix XID .*"));
          }
          c2.close();
@@ -272,7 +272,7 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
              c2.createStatement();
              fail("expected SQLException");
          } catch (SQLException ex) {
-        	 assertTrue(ex.getMessage().startsWith("error enlisting a JdbcConnectionHandle of a JdbcPooledConnection from datasource pds2_lrc in state ACCESSIBLE wrapping a JDBC LrcXAConnection on Mock for Connection"));
+        	 assertTrue(ex.getMessage().startsWith("error enlisting a JdbcConnectionHandle of a JdbcPooledConnection from datasource pds2_lrc in state ACCESSIBLE with usage count 1 wrapping a JDBC LrcXAConnection on Mock for Connection"));
              assertTrue(ex.getCause().getMessage().startsWith("cannot enlist more than one non-XA resource, tried enlisting an XAResourceHolderState with uniqueName=pds2_lrc XAResource=a JDBC LrcXAResource in state NO_TX with XID null, already enlisted: an XAResourceHolderState with uniqueName=pcf_lrc XAResource=a JMS LrcXAResource in state STARTED of session Mock for Session"));
          }
          c2.close();

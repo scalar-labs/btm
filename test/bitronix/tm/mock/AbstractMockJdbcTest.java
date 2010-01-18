@@ -42,6 +42,7 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         poolingDataSource1.setMinPoolSize(POOL_SIZE);
         poolingDataSource1.setMaxPoolSize(POOL_SIZE);
         poolingDataSource1.setAllowLocalTransactions(true);
+        poolingDataSource1.setShareTransactionConnections(true);
         poolingDataSource1.init();
 
         // DataSource2 does not have shared accessible connections
@@ -82,8 +83,10 @@ public abstract class AbstractMockJdbcTest extends TestCase {
     private void registerPoolEventListener(XAPool pool) throws Exception {
         ArrayList connections = new ArrayList();
 
-        while (pool.inPoolSize() > 0) {
-            JdbcConnectionHandle connectionHandle = (JdbcConnectionHandle) pool.getConnectionHandle();
+        Iterator iterator = pool.getXAResourceHolders().iterator();
+        while (iterator.hasNext()) {
+            XAStatefulHolder holder = (XAStatefulHolder) iterator.next();
+            JdbcConnectionHandle connectionHandle = (JdbcConnectionHandle) holder.getConnectionHandle();
             JdbcPooledConnection jdbcPooledConnection = connectionHandle.getPooledConnection();
             connections.add(connectionHandle);
             jdbcPooledConnection.addStateChangeEventListener(new StateChangeListener() {

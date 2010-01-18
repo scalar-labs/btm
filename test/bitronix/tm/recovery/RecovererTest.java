@@ -9,12 +9,15 @@ import javax.transaction.Status;
 import javax.transaction.xa.*;
 
 import junit.framework.TestCase;
+
+import org.slf4j.*;
+
 import bitronix.tm.*;
 import bitronix.tm.internal.TransactionStatusChangeListener;
 import bitronix.tm.journal.Journal;
 import bitronix.tm.mock.events.*;
 import bitronix.tm.mock.resource.*;
-import bitronix.tm.mock.resource.jdbc.*;
+import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.*;
 import bitronix.tm.resource.jdbc.*;
@@ -27,6 +30,7 @@ import bitronix.tm.utils.*;
  * @author lorban
  */
 public class RecovererTest extends TestCase {
+    private final static Logger log = LoggerFactory.getLogger(RecovererTest.class);
 
     private MockXAResource xaResource;
     private PoolingDataSource pds;
@@ -328,6 +332,7 @@ public class RecovererTest extends TestCase {
 
 
     public void testReentrance() throws Exception {
+        log.debug("Start test RecovererTest.testReentrance()");
         final int THREAD_COUNT = 10;
         Recoverer recoverer = new Recoverer();
 
