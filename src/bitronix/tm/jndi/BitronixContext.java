@@ -36,7 +36,7 @@ public class BitronixContext implements Context {
             userTransactionName = DEFAULT_USER_TRANSACTION_NAME;
         if (log.isDebugEnabled()) log.debug("binding transaction manager at name '" + userTransactionName + "'");
 
-        userTransactionName = TransactionManagerServices.getConfiguration().getJndiTransactionSynchronizationRegistryName();
+        synchronizationRegistryName = TransactionManagerServices.getConfiguration().getJndiTransactionSynchronizationRegistryName();
         if (synchronizationRegistryName == null)
             synchronizationRegistryName = DEFAULT_SYNCHRONIZATION_REGISTRY_NAME;
         if (log.isDebugEnabled()) log.debug("binding synchronization registry at name '" + synchronizationRegistryName + "'");
