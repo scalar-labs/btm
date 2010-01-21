@@ -41,7 +41,7 @@ public class LrcXAConnection extends BaseProxyHandlerClass { // implements XACon
 
     public Connection getConnection() throws SQLException {
     	LrcConnectionHandle lrcConnectionHandle = new LrcConnectionHandle(xaResource, connection);
-        return (Connection) Proxy.newProxyInstance(Connection.class.getClassLoader(), new Class[] { Connection.class }, lrcConnectionHandle);
+        return (Connection) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { Connection.class }, lrcConnectionHandle);
     }
 
     public void addConnectionEventListener(ConnectionEventListener listener) {
@@ -56,7 +56,7 @@ public class LrcXAConnection extends BaseProxyHandlerClass { // implements XACon
         if (log.isDebugEnabled()) log.debug("notifying " + connectionEventListeners.size() + " connectionEventListeners(s) about closing of " + this);
         for (int i = 0; i < connectionEventListeners.size(); i++) {
             ConnectionEventListener connectionEventListener = (ConnectionEventListener) connectionEventListeners.get(i);
-            XAConnection conn = (XAConnection) Proxy.newProxyInstance(XAConnection.class.getClassLoader(), new Class[] { XAConnection.class }, this);
+            XAConnection conn = (XAConnection) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { XAConnection.class }, this);
             connectionEventListener.connectionClosed(new ConnectionEvent(conn));
         }
     }
