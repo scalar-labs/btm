@@ -16,8 +16,9 @@
     <property name="dir.test.report" value="test-reports"/>
     <property name="dir.releasenotes" value="release-notes"/>
     <property name="jar.file" value="${dir.dist}/btm-${jar.version}.jar"/>
+    <property name="jar.src.file" value="${dir.dist}/btm-${jar.version}-sources.jar"/>
     <property name="zip.file" value="btm-dist-${jar.version}.zip"/>
-    <property name="pom.file" value="pom.xml"/>
+    <property name="pom.file" value="pom.xml.tpl"/>
 
 
     <path id="javac.classpath">
@@ -42,7 +43,7 @@
 
     <target name="all" depends="clean,build,test,doc,dist" description="Run clean,build,test,doc,dist"/>
 
-    <target name="dist" depends="build,doc" description="Generate distribution ZIP file">
+    <target name="dist" depends="build,doc,src" description="Generate distribution ZIP file">
         <property name="destination" value="${dir.dist}/btm-dist-${jar.version}"/>
 
         <copy file="${jar.file}" todir="${destination}"/>
@@ -139,10 +140,19 @@
         <fail if="error.junit" message="some test(s) failed"/>
     </target>
 
+    <target name="src" description="Generate sources JAR file">
+        <jar basedir="${dir.src}" file="${jar.src.file}">
+            <manifest>
+                <attribute name="Implementation-Version" value="${jar.version}"/>
+            </manifest>
+            <include name="**/*"/>
+            <exclude name="**/.svn"/>
+        </jar>
+    </target>
+
     <target name="clean" description="Delete all generated artifacts">
         <delete dir="${dir.test.report}" failonerror="true" includeemptydirs="true"/>
         <delete dir="${dir.dist}" failonerror="true" includeemptydirs="true"/>
-        <delete file="${jar.file}" failonerror="true"/>
     </target>
 
     <target name="doc" description="Copy static documentation and generate javadoc">
@@ -159,11 +169,13 @@
     <target name="upload-snapshot" description="Upload snapshot artifacts and distribution">
         <antcall target="upload-dist-snapshot"/>
         <antcall target="upload-artifact-snapshot"/>
+        <antcall target="upload-src-snapshot"/>
     </target>
 
     <target name="upload" description="Upload final artifacts and distribution">
         <antcall target="upload-dist"/>
         <antcall target="upload-artifact"/>
+        <antcall target="upload-src"/>
     </target>
 
     <target name="upload-artifact-snapshot" description="Upload built JAR file to snapshot maven repository">
@@ -194,6 +206,20 @@
             <param name="target" value="https://dav.codehaus.org/repository/btm/org/codehaus/btm/btm/${jar.version}/"/>
         </antcall>
         <delete file="btm-${jar.version}.pom"/>
+    </target>
+
+    <target name="upload-src-snapshot" description="Upload sources JAR file to snapshot maven repository">
+        <antcall target="webdav-put">
+            <param name="source" value="${jar.src.file}"/>
+            <param name="target" value="https://dav.codehaus.org/snapshots.repository/btm/org/codehaus/btm/btm/${jar.version}/"/>
+        </antcall>
+    </target>
+
+    <target name="upload-src" description="Upload sources JAR file to snapshot maven repository">
+        <antcall target="webdav-put">
+            <param name="source" value="${jar.src.file}"/>
+            <param name="target" value="https://dav.codehaus.org/repository/btm/org/codehaus/btm/btm/${jar.version}/"/>
+        </antcall>
     </target>
 
     <target name="upload-dist-snapshot" description="Upload built ZIP file to snapshot dist. server">

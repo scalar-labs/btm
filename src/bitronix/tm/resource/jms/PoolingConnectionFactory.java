@@ -33,6 +33,7 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
     private boolean testConnections = false;
     private String user;
     private String password;
+    private JmsConnectionHandle recoveryConnectionHandle;
 
 
     public PoolingConnectionFactory() {
@@ -121,8 +122,8 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
             throw new RecoveryException("recovery already in progress on " + this);
 
         try {
-            JmsConnectionHandle connectionHandle = (JmsConnectionHandle) pool.getConnectionHandle(false);
-            recoveryPooledConnection = connectionHandle.getPooledConnection();
+            recoveryConnectionHandle = (JmsConnectionHandle) pool.getConnectionHandle(false);
+            recoveryPooledConnection = recoveryConnectionHandle.getPooledConnection();
             recoveryXAResourceHolder = recoveryPooledConnection.createRecoveryXAResourceHolder();
             return new XAResourceHolderState(recoveryXAResourceHolder, recoveryPooledConnection.getPoolingConnectionFactory());
         } catch (Exception ex) {
@@ -135,13 +136,17 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
             return;
 
         try {
+            if (recoveryConnectionHandle != null) {
+                if (log.isDebugEnabled()) log.debug("recovery connection handle is being closed: " + recoveryConnectionHandle);
+                recoveryConnectionHandle.close();
+                recoveryConnectionHandle = null;
+            }
             if (recoveryXAResourceHolder != null) {
+                if (log.isDebugEnabled()) log.debug("recovery xa resource is being closed: " + recoveryXAResourceHolder);
                 recoveryXAResourceHolder.close();
                 recoveryXAResourceHolder = null;
             }
             if (recoveryPooledConnection != null) {
-                if (log.isDebugEnabled()) log.debug("releasing recovery connection " + recoveryPooledConnection);
-                recoveryPooledConnection.setState(XAStatefulHolder.STATE_IN_POOL);
                 recoveryPooledConnection = null;
             }
         } catch (Exception ex) {
