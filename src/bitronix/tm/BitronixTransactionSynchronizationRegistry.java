@@ -43,8 +43,8 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
                 throw new IllegalStateException("no transaction started on curent thread");
 
             return getResources().get(key);
-        } catch (SystemException e) {
-            throw new BitronixRuntimeException("cannot get current transaction status");
+        } catch (SystemException ex) {
+            throw new BitronixRuntimeException("cannot get current transaction status", ex);
         }
     }
 
@@ -65,8 +65,8 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
                 return null;
 
             return currentTransaction().getGtrid();
-        } catch (SystemException e) {
-            throw new BitronixRuntimeException("cannot get current transaction status");
+        } catch (SystemException ex) {
+            throw new BitronixRuntimeException("cannot get current transaction status", ex);
         }
     }
 
@@ -76,8 +76,8 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
                 return Status.STATUS_NO_TRANSACTION;
 
             return currentTransaction().getStatus();
-        } catch (SystemException e) {
-            throw new BitronixRuntimeException("cannot get current transaction status");
+        } catch (SystemException ex) {
+            throw new BitronixRuntimeException("cannot get current transaction status", ex);
         }
     }
 
@@ -95,8 +95,8 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
                 Synchronization synchronization = new ClearRegistryResourcesSynchronization();
                 currentTransaction().getSynchronizationScheduler().add(synchronization, Scheduler.ALWAYS_LAST_POSITION);
             }
-        } catch (SystemException e) {
-            throw new BitronixRuntimeException("cannot get current transaction status");
+        } catch (SystemException ex) {
+            throw new BitronixRuntimeException("cannot get current transaction status", ex);
         }
     }
 
@@ -113,9 +113,9 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
                     )
                 throw new IllegalStateException("transaction is done, cannot register an interposed synchronization");
 
-            currentTransaction().getSynchronizationScheduler().add(synchronization, Scheduler.DEFAULT_POSITION +1);
-        } catch (SystemException e) {
-            throw new BitronixRuntimeException("cannot get current transaction status");
+            currentTransaction().getSynchronizationScheduler().add(synchronization, Scheduler.DEFAULT_POSITION -1);
+        } catch (SystemException ex) {
+            throw new BitronixRuntimeException("cannot get current transaction status", ex);
         }
     }
 
@@ -125,8 +125,8 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
                 throw new IllegalStateException("no transaction started on curent thread");
 
             currentTransaction().setStatus(Status.STATUS_MARKED_ROLLBACK);
-        } catch (SystemException e) {
-            throw new BitronixRuntimeException("cannot get or set current transaction status");
+        } catch (SystemException ex) {
+            throw new BitronixRuntimeException("cannot get or set current transaction status", ex);
         }
     }
 
