@@ -77,19 +77,25 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     }
 
     /**
-     * @param enableJdbc4ConnectionTest the enableJdbc4ConnectionTest to set
+     * When set and the underlying JDBC driver supports JDBC 4 isValid(), a {@link Connection#isValid(int)} call
+     * is performed to test the connection before handing it to the caller.
+     * If both testQuery and enableJdbc4ConnectionTest are set, enableJdbc4ConnectionTest takes precedence.
+     * @param enableJdbc4ConnectionTest  true if JDBC 4 isValid() testing should be performed, false otherwise.
      */
     public void setEnableJdbc4ConnectionTest(boolean enableJdbc4ConnectionTest) {
         this.enableJdbc4ConnectionTest = enableJdbc4ConnectionTest;
     }
 
     /**
-     * @return the enableJdbc4ConnectionTest
+     * @return true if JDBC 4 isValid() testing should be performed, false otherwise.
      */
     public boolean isEnableJdbc4ConnectionTest() {
         return enableJdbc4ConnectionTest;
     }
 
+    /**
+     * @return the target maximum prepared statement cache size.
+     */
     public int getPreparedStatementCacheSize() {
         return preparedStatementCacheSize;
     }
@@ -98,43 +104,53 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
      * Set the target maximum size of the prepared statement cache.  In
      * reality under certain unusual conditions the cache may temporarily
      * drift higher in size.
-     *
-     * @param preparedStatementCacheSize the target maximum size
+     * @param preparedStatementCacheSize the target maximum prepared statement cache size.
      */
     public void setPreparedStatementCacheSize(int preparedStatementCacheSize) {
         this.preparedStatementCacheSize = preparedStatementCacheSize;
     }
 
+    /**
+     * @return the default isolation level.
+     */
     public String getIsolationLevel() {
         return isolationLevel;
     }
 
     /**
      * Set the default isolation level for connections.
-     *
-     * @param isolationLevel the isolation level
+     * @param isolationLevel the default isolation level.
      */
     public void setIsolationLevel(String isolationLevel) {
         this.isolationLevel = isolationLevel;
     }
 
+    /**
+     * @return cursorHoldability the default cursor holdability.
+     */
     public String getCursorHoldability() {
     	return cursorHoldability;
     }
 
     /**
      * Set the default cursor holdability for connections.
-     *
-     * @param cursorHoldability the cursor holdability
+     * @param cursorHoldability the default cursor holdability.
      */
     public void setCursorHoldability(String cursorHoldability) {
     	this.cursorHoldability = cursorHoldability;
     }
 
+    /**
+     * @return localAutoCommit the default local transactions autocommit mode.
+     */
     public String getLocalAutoCommit() {
     	return localAutoCommit;
     }
 
+    /**
+     * Set the default local transactions autocommit mode.
+     * @param localAutoCommit the default local transactions autocommit mode.
+     */
     public void setLocalAutoCommit(String localAutoCommit) {
     	this.localAutoCommit = localAutoCommit;
     }
