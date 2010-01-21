@@ -150,37 +150,59 @@ public class Scheduler {
     }
 
     /**
-     * This iterator DOES NOT support in-flight updates of the iterated object.
-     * TODO BTM-65: add support for in-flight updates of the iterated object.
+     * This iterator supports in-flight updates of the iterated object.
      */
     private class SchedulerReverseOrderIterator implements Iterator {
-        private Iterator reverseOrderPositionsIterator;
-        private Iterator currentPositionIterator;
+        private int nextKeyIndex;
+        private List objectsOfCurrentKey;
+        private int objectsOfCurrentKeyIndex;
 
         private SchedulerReverseOrderIterator() {
-            reverseOrderPositionsIterator = Scheduler.this.getReverseOrderPositions().iterator();
+            this.nextKeyIndex = Scheduler.this.keys.size() -1;
         }
 
         public void remove() {
-            throw new UnsupportedOperationException("cannot remove elements iterated in reverse order");
+            if (objectsOfCurrentKey == null)
+                throw new NoSuchElementException("iterator not yet placed on an element");
+
+            objectsOfCurrentKeyIndex--;
+            objectsOfCurrentKey.remove(objectsOfCurrentKeyIndex);
+            if (objectsOfCurrentKey.size() == 0) {
+                // there are no more objects in the current position's list -> remove it
+                Object key = Scheduler.this.keys.get(nextKeyIndex+1);
+                Scheduler.this.keys.remove(nextKeyIndex+1);
+                Scheduler.this.objects.remove(key);
+                objectsOfCurrentKey = null;
+            }
+            Scheduler.this.size--;
         }
 
         public boolean hasNext() {
-            return (currentPositionIterator != null && currentPositionIterator.hasNext()) || reverseOrderPositionsIterator.hasNext();
+            if (objectsOfCurrentKey == null || objectsOfCurrentKeyIndex >= objectsOfCurrentKey.size()) {
+                // we reached the end of the current position's list
+
+                if (nextKeyIndex >= 0) {
+                    // there is another position after this one
+                    Integer currentKey = (Integer) Scheduler.this.keys.get(nextKeyIndex--);
+                    objectsOfCurrentKey = (List) Scheduler.this.objects.get(currentKey);
+                    objectsOfCurrentKeyIndex = 0;
+                    return true;
+                }
+                else {
+                    // there is no other position after this one
+                    return false;
+                }
+
+            }
+
+            // there are still objects in the current position's list
+            return true;
         }
 
         public Object next() {
             if (!hasNext())
                 throw new NoSuchElementException("iterator bounds reached");
-
-            if (currentPositionIterator == null || !currentPositionIterator.hasNext()) {
-                Integer newCurrentPositionKey = (Integer) reverseOrderPositionsIterator.next();
-                List newCurrentPositionList = getByReverseOrderForPosition(newCurrentPositionKey);
-                currentPositionIterator = newCurrentPositionList.iterator();
-                return currentPositionIterator.next();
-            }
-
-            return currentPositionIterator.next();
+            return objectsOfCurrentKey.get(objectsOfCurrentKeyIndex++);
         }
     }
 

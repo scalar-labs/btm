@@ -157,9 +157,9 @@ public class SchedulerTest extends TestCase {
         assertTrue(it.hasNext());
 
         assertTrue(xarhs4 == it.next());
-        assertTrue(xarhs2 == it.next());
-        assertTrue(xarhs1 == it.next());
         assertTrue(xarhs0 == it.next());
+        assertTrue(xarhs1 == it.next());
+        assertTrue(xarhs2 == it.next());
         assertTrue(xarhs3 == it.next());
 
         assertFalse(it.hasNext());
@@ -182,6 +182,26 @@ public class SchedulerTest extends TestCase {
         assertTrue(xarhs0 == it.next());
         it.remove();
         assertTrue(xarhs1 == it.next());
+        it.remove();
+    }
+
+    public void testReverseRemove() {
+        Scheduler resourceScheduler = new Scheduler();
+
+        XAResourceHolderState xarhs0 = new XAResourceHolderState(null, new MockResourceBean(0));
+        XAResourceHolderState xarhs1 = new XAResourceHolderState(null, new MockResourceBean(1));
+
+        resourceScheduler.add(xarhs0, xarhs0.getTwoPcOrderingPosition());
+        resourceScheduler.add(xarhs1, xarhs1.getTwoPcOrderingPosition());
+
+        resourceScheduler.remove(xarhs0);
+        resourceScheduler.add(xarhs0, xarhs0.getTwoPcOrderingPosition());
+
+        Iterator it = resourceScheduler.reverseIterator();
+        assertTrue(it.hasNext());
+        assertTrue(xarhs1 == it.next());
+        it.remove();
+        assertTrue(xarhs0 == it.next());
         it.remove();
     }
 
