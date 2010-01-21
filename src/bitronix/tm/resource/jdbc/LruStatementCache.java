@@ -11,8 +11,6 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import bitronix.tm.utils.LruEvictionListener;
-
 /**
  * Last Recently Used PreparedStatement cache with eviction listeners 
  * support implementation.

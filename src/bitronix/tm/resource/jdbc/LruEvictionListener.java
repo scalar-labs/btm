@@ -1,7 +1,7 @@
-package bitronix.tm.utils;
+package bitronix.tm.resource.jdbc;
 
 /**
- * Eviction listener interface for {@link LruMap}.
+ * Eviction listener interface for {@link LruStatementCache}.
  * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
