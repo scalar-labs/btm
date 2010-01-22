@@ -81,8 +81,8 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
         XAResourceRollbackEvent rollbackEvent2 = (XAResourceRollbackEvent) orderedEvents.get(i++);
         assertTrue(prepareEvent1.getSource() == rollbackEvent2.getSource());
         assertEquals(Status.STATUS_ROLLEDBACK, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
-        assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
     }
 
     public void testPrepareRuntimeFailureCase() throws Exception {
@@ -138,8 +138,8 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
         XAResourceRollbackEvent rollbackEvent2 = (XAResourceRollbackEvent) orderedEvents.get(i++);
         assertTrue(prepareEvent1.getSource() == rollbackEvent2.getSource());
         assertEquals(Status.STATUS_ROLLEDBACK, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
-        assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+        assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
     }
 
     public void testIncorrectSuspendResume() throws Exception {
