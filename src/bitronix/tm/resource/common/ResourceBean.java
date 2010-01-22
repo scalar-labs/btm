@@ -11,7 +11,6 @@ import java.util.Properties;
  * @author lorban
  */
 public abstract class ResourceBean implements Serializable {
-	private static final long serialVersionUID = -3437270448361225732L;
 
 	private String className;
     private String uniqueName;
