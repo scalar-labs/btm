@@ -175,6 +175,14 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     }
 
     /**
+     * Check if the recoverer currently is running.
+     * @return true if the recoverer currently is running, false otherwise.
+     */
+    public boolean isRunning() {
+        return isRunning.get();
+    }
+
+    /**
      * Recover all configured resources and fill the <code>recoveredXidSets</code> with all recovered XIDs.
      * Step 1.
      */

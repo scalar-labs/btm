@@ -18,4 +18,6 @@ public interface RecovererMBean {
 
     public int getExecutionsCount();
 
+    public boolean isRunning();
+
 }
