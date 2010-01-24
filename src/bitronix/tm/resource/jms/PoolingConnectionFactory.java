@@ -6,6 +6,7 @@ import bitronix.tm.resource.ResourceConfigurationException;
 import bitronix.tm.resource.ResourceObjectFactory;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.*;
+import bitronix.tm.utils.ManagementRegistrar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,7 @@ import javax.transaction.xa.XAResource;
  *
  * @author lorban
  */
-public class PoolingConnectionFactory extends ResourceBean implements ConnectionFactory, XAResourceProducer {
+public class PoolingConnectionFactory extends ResourceBean implements ConnectionFactory, XAResourceProducer, PoolingConnectionFactoryMBean {
 
     private final static Logger log = LoggerFactory.getLogger(PoolingConnectionFactory.class);
 
@@ -34,6 +35,7 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
     private String user;
     private String password;
     private JmsConnectionHandle recoveryConnectionHandle;
+    private String jmxName;
 
 
     public PoolingConnectionFactory() {
@@ -45,7 +47,12 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
      */
     public synchronized void init() {
         try {
+            if (pool != null)
+                return;
+
             buildXAPool();
+            this.jmxName = "bitronix.tm:type=JMS,UniqueName=" + ManagementRegistrar.makeValidName(getUniqueName());
+            ManagementRegistrar.register(jmxName, this);
         }
         catch (Exception ex) {
             throw new ResourceConfigurationException("cannot create JMS connection factory named " + getUniqueName(), ex);
@@ -166,6 +173,9 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
         pool.close();
         pool = null;
 
+        ManagementRegistrar.unregister(jmxName);
+        jmxName = null;
+
         ResourceRegistrar.unregister(this);
     }
 
@@ -207,4 +217,17 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
                 null);
     }
 
+    /* management */
+
+    public long getInPoolSize() {
+        return pool.inPoolSize();
+    }
+
+    public long getTotalPoolSize() {
+        return pool.totalPoolSize();
+    }
+
+    public void reset() throws Exception {
+        pool.reset();
+    }
 }

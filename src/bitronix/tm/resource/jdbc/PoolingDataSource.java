@@ -8,6 +8,7 @@ import javax.naming.*;
 import javax.sql.*;
 import javax.transaction.xa.XAResource;
 
+import bitronix.tm.utils.ManagementRegistrar;
 import org.slf4j.*;
 
 import bitronix.tm.internal.XAResourceHolderState;
@@ -21,7 +22,7 @@ import bitronix.tm.resource.common.*;
  *
  * @author lorban, brettw
  */
-public class PoolingDataSource extends ResourceBean implements DataSource, XAResourceProducer {
+public class PoolingDataSource extends ResourceBean implements DataSource, XAResourceProducer, PoolingDataSourceMBean {
 
     private final static Logger log = LoggerFactory.getLogger(PoolingDataSource.class);
 
@@ -35,6 +36,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     private String isolationLevel;
 	private String cursorHoldability;
 	private String localAutoCommit;
+    private String jmxName;
 
     public PoolingDataSource() {
     }
@@ -44,7 +46,12 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
      */
     public synchronized void init() {
         try {
+            if (this.pool != null)
+                return;
+
             buildXAPool();
+            this.jmxName = "bitronix.tm:type=JDBC,UniqueName=" + ManagementRegistrar.makeValidName(getUniqueName());
+            ManagementRegistrar.register(jmxName, this);
         } catch (Exception ex) {
             throw new ResourceConfigurationException("cannot create JDBC datasource named " + getUniqueName(), ex);
         }
@@ -225,10 +232,14 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
             return;
         }
 
-        ResourceRegistrar.unregister(this);
         if (log.isDebugEnabled()) log.debug("closing " + this);
         pool.close();
         pool = null;
+
+        ManagementRegistrar.unregister(jmxName);
+        jmxName = null;
+
+        ResourceRegistrar.unregister(this);
     }
 
     public XAStatefulHolder createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
@@ -288,4 +299,18 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
 	public Object unwrap(Class iface) throws SQLException {
 		throw new SQLException("bitronix.tm.resource.jdbc.PoolingDataSource is not a wrapper");
 	}
+
+    /* management */
+
+    public long getInPoolSize() {
+        return pool.inPoolSize();
+    }
+
+    public long getTotalPoolSize() {
+        return pool.totalPoolSize();
+    }
+
+    public void reset() throws Exception {
+        pool.reset();
+    }
 }

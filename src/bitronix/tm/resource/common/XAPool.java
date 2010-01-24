@@ -232,6 +232,28 @@ public class XAPool implements StateChangeListener {
         } // for
         if (log.isDebugEnabled()) log.debug("closed " + toRemoveXaStatefulHolders.size() + " idle connection(s)");
         objects.removeAll(toRemoveXaStatefulHolders);
+        if (log.isDebugEnabled()) log.debug("shrunk " + this);
+    }
+
+    public synchronized void reset() throws Exception {
+        if (log.isDebugEnabled()) log.debug("resetting " + this);
+        List toRemoveXaStatefulHolders = new ArrayList();
+        for (int i = 0; i < totalPoolSize(); i++) {
+            if (totalPoolSize() - toRemoveXaStatefulHolders.size() <= bean.getMinPoolSize()) {
+                if (log.isDebugEnabled()) log.debug("pool reached min size");
+                break;
+            }
+
+            XAStatefulHolder xaStatefulHolder = (XAStatefulHolder) objects.get(i);
+            if (xaStatefulHolder.getState() != XAStatefulHolder.STATE_IN_POOL)
+                continue;
+
+            xaStatefulHolder.close();
+            toRemoveXaStatefulHolders.add(xaStatefulHolder);
+        }
+        if (log.isDebugEnabled()) log.debug("closed " + toRemoveXaStatefulHolders.size() + " connection(s)");
+        objects.removeAll(toRemoveXaStatefulHolders);
+        if (log.isDebugEnabled()) log.debug("reset " + this);
     }
 
     public String toString() {
