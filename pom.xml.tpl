@@ -6,6 +6,8 @@
     <name>Bitronix Transaction Manager</name>
     <inceptionYear>2006</inceptionYear>
     <version>@version@</version>
+    <url>http://docs.codehaus.org/display/BTM/Home</url>
+    
     <dependencies>
         <dependency>
             <groupId>org.apache.geronimo.specs</groupId>
