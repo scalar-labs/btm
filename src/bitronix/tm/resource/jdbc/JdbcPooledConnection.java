@@ -265,9 +265,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         if (newState == STATE_IN_POOL) {
             if (log.isDebugEnabled()) log.debug("requeued JDBC connection of " + poolingDataSource);
             lastReleaseDate = new Date();
-            if (usageCount > 0) {
-                if (log.isDebugEnabled()) log.error("usage count too high on connection returned to pool " + source);
-            }
         }
         if (oldState == STATE_IN_POOL && newState == STATE_ACCESSIBLE) {
             acquisitionDate = new Date();
@@ -278,6 +275,12 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     }
 
     public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
+        if (futureState == STATE_IN_POOL) {
+            if (usageCount > 0) {
+                log.warn("usage count too high (" + usageCount + ") on connection returned to pool " + source);
+            }
+        }
+        
         if (futureState == STATE_IN_POOL || futureState == STATE_NOT_ACCESSIBLE) {
             // close all uncached statements
             if (log.isDebugEnabled()) log.debug("closing " + uncachedStatements.size() + " uncached statement(s)");
