@@ -286,21 +286,23 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         xaDataSource.setLogWriter(out);
     }
 
-    /* Java 6 JDBC4 methods.  Compilable under source 1.4 restriction.
-     * Original interface definition uses generics, but generics are
-     * unwrapped at compile-time, so these should work.  Under 1.4 they
-     * are ignored as simple additional methods on this class.  Under
-     * 1.6 they will be invoked appropriately.
-     */
-	public boolean isWrapperFor(Class iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+	    if (xaDataSource instanceof Wrapper) {
+	        Wrapper wrapper = (Wrapper) xaDataSource;
+	        return wrapper.isWrapperFor(iface);
+	    }
 		return false;
 	}
 
-	public Object unwrap(Class iface) throws SQLException {
-		throw new SQLException("bitronix.tm.resource.jdbc.PoolingDataSource is not a wrapper");
+	public <T> T unwrap(Class<T> iface) throws SQLException {
+	    if (xaDataSource instanceof Wrapper) {
+            Wrapper wrapper = (Wrapper) xaDataSource;
+            return wrapper.unwrap(iface);
+	    }
+	    throw new SQLException(xaDataSource + " is not a wrapper for interface " + iface.getCanonicalName());
 	}
 
-    /* management */
+	/* management */
 
     public long getInPoolSize() {
         return pool.inPoolSize();
