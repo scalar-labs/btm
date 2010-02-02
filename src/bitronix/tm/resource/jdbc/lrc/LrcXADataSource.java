@@ -82,7 +82,7 @@ public class LrcXADataSource implements XADataSource {
             if (password != null) props.setProperty("password", password);
             Connection connection = driver.connect(url, props);
             LrcXAConnection lrcXAConnection = new LrcXAConnection(connection);
-            return (XAConnection) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { XAConnection.class }, lrcXAConnection);
+            return (XAConnection) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { XAConnection.class }, lrcXAConnection);
         } catch (Exception ex) {
             throw (SQLException) new SQLException("unable to connect to non-XA resource " + driverClassName).initCause(ex);
         }
@@ -97,7 +97,7 @@ public class LrcXADataSource implements XADataSource {
             props.setProperty("password", password);
             Connection connection = driver.connect(url, props);
             LrcXAConnection lrcXAConnection = new LrcXAConnection(connection);
-            return (XAConnection) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { XAConnection.class }, lrcXAConnection);
+            return (XAConnection) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { XAConnection.class }, lrcXAConnection);
         } catch (Exception ex) {
             throw (SQLException) new SQLException("unable to connect to non-XA resource " + driverClassName).initCause(ex);
         }

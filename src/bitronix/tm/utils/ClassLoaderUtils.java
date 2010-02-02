@@ -13,6 +13,17 @@ public class ClassLoaderUtils {
 
     private final static Logger log = LoggerFactory.getLogger(ClassLoaderUtils.class);
 
+    /**
+     * Get the class loader which can be used to generate proxies without leaking memory.
+     * @return the class loader which can be used to generate proxies without leaking memory.
+     */
+    public static ClassLoader getClassLoader() {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        if (cl != null) {
+            return cl;
+        }
+        return ClassLoaderUtils.class.getClassLoader();
+    }
 
     /**
      * Load a class by name. Tries the current thread's context loader then falls back to {@link Class#forName(String)}.

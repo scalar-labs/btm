@@ -8,6 +8,7 @@ import javax.naming.*;
 import javax.sql.*;
 import javax.transaction.xa.XAResource;
 
+import bitronix.tm.utils.ClassLoaderUtils;
 import bitronix.tm.utils.ManagementRegistrar;
 import org.slf4j.*;
 
@@ -176,7 +177,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         try {
         	InvocationHandler connectionHandle = (InvocationHandler) pool.getConnectionHandle();
             if (log.isDebugEnabled()) log.debug("acquired connection from " + this);
-            return (Connection) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { Connection.class }, connectionHandle);
+            return (Connection) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { Connection.class }, connectionHandle);
         } catch (Exception ex) {
             throw (SQLException) new SQLException("unable to get a connection from pool of " + this).initCause(ex);
         }
