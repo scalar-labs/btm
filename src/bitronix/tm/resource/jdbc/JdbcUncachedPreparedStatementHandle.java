@@ -19,9 +19,23 @@ public class JdbcUncachedPreparedStatementHandle extends BaseProxyHandlerClass {
         return delegate;
     }
 
-    /**
-     * Overridden methods of PreparedStatement.
-     */
+    /* java.sql.Wrapper implementation */
+
+	public boolean isWrapperFor(Class iface) throws SQLException {
+	    if (PreparedStatement.class.equals(iface)) {
+	        return true;
+	    }
+		return false;
+	}
+
+	public Object unwrap(Class iface) throws SQLException {
+        if (PreparedStatement.class.equals(iface)) {
+            return delegate;
+	    }
+	    throw new SQLException(getClass().getName() + " is not a wrapper for interface " + iface.getName());
+	}
+
+    /* Overridden methods of java.sql.PreparedStatement */
 
     public void close() throws SQLException {
         parentConnection.unregisterUncachedStatement(delegate);

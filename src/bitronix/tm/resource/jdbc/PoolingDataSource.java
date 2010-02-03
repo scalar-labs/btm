@@ -287,20 +287,20 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         xaDataSource.setLogWriter(out);
     }
 
-	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-	    if (xaDataSource instanceof Wrapper) {
-	        Wrapper wrapper = (Wrapper) xaDataSource;
-	        return wrapper.isWrapperFor(iface);
+    /* java.sql.Wrapper implementation */
+
+	public boolean isWrapperFor(Class iface) throws SQLException {
+	    if (XADataSource.class.equals(iface)) {
+	        return true;
 	    }
 		return false;
 	}
 
-	public <T> T unwrap(Class<T> iface) throws SQLException {
-	    if (xaDataSource instanceof Wrapper) {
-            Wrapper wrapper = (Wrapper) xaDataSource;
-            return wrapper.unwrap(iface);
+	public Object unwrap(Class iface) throws SQLException {
+        if (XADataSource.class.equals(iface)) {
+            return xaDataSource;
 	    }
-	    throw new SQLException(xaDataSource + " is not a wrapper for interface " + iface.getCanonicalName());
+	    throw new SQLException(getClass().getName() + " is not a wrapper for interface " + iface.getName());
 	}
 
 	/* management */

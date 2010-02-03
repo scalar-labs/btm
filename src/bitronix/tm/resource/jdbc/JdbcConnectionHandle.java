@@ -66,9 +66,7 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
         } // if getAutomaticEnlistingEnabled
     }
 
-	/*
-	 * Overridden methods of Connection.
-	 */
+	/* Overridden methods of java.sql.Connection */
 
     public void close() throws SQLException {
         if (log.isDebugEnabled()) log.debug("closing " + this);
@@ -354,6 +352,24 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
             return (PreparedStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { PreparedStatement.class }, statementHandle);
         }
     }
+
+    /* java.sql.Wrapper implementation */
+
+	public boolean isWrapperFor(Class iface) throws SQLException {
+	    if (Connection.class.equals(iface)) {
+	        return true;
+	    }
+		return false;
+	}
+
+	public Object unwrap(Class iface) throws SQLException {
+        if (Connection.class.equals(iface)) {
+            return delegate;
+	    }
+	    throw new SQLException(getClass().getName() + " is not a wrapper for interface " + iface.getName());
+	}
+
+    /* BaseProxyHandler implementation */
 
 	public Object getProxiedDelegate() throws Exception {
         return jdbcPooledConnection;

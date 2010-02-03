@@ -74,9 +74,23 @@ public class JdbcPreparedStatementHandle extends BaseProxyHandlerClass { // impl
         this.columnNames = columnNames;
     }
 
-    /*
-      * Internal methods
-      */
+    /* java.sql.Wrapper implementation */
+
+	public boolean isWrapperFor(Class iface) throws SQLException {
+	    if (PreparedStatement.class.equals(iface)) {
+	        return true;
+	    }
+		return false;
+	}
+
+	public Object unwrap(Class iface) throws SQLException {
+        if (PreparedStatement.class.equals(iface)) {
+            return delegate;
+	    }
+	    throw new SQLException(getClass().getName() + " is not a wrapper for interface " + iface.getName());
+	}
+
+    /* Internal methods */
 
     /**
      * Set the parent connection that created this statement. We need this to
@@ -110,9 +124,7 @@ public class JdbcPreparedStatementHandle extends BaseProxyHandlerClass { // impl
         return getDelegate();
     }
 
-    /*
-      * Overridden Object methods
-      */
+    /* Overridden java.lang.Object methods */
 
     /**
      * Overridden equals() that takes all PreparedStatement attributes into
@@ -150,12 +162,10 @@ public class JdbcPreparedStatementHandle extends BaseProxyHandlerClass { // impl
     }
 
     public String toString() {
-        return sql;
+        return "a JdbcPreparedStatementHandle with sql=[" + sql + "]";
     }
 
-    /**
-     * Overridden methods of PreparedStatement.
-     */
+    /* Overridden methods of java.sql.PreparedStatement */
 
     public void close() throws SQLException {
         if (!pretendClosed) {

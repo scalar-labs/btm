@@ -3,6 +3,8 @@ package bitronix.tm.mock;
 import java.lang.reflect.Field;
 import java.sql.*;
 
+import javax.sql.DataSource;
+import javax.sql.XADataSource;
 import javax.transaction.TransactionManager;
 
 import bitronix.tm.recovery.RecoveryException;
@@ -239,4 +241,35 @@ public class JdbcPoolTest extends TestCase {
         assertFalse(TransactionManagerServices.isTransactionManagerRunning());
     }
 
+    public void testWrappers() throws Exception {
+        // XADataSource
+        assertTrue(pds.isWrapperFor(XADataSource.class));
+        assertFalse(pds.isWrapperFor(DataSource.class));
+        XADataSource unwrappedXads = (XADataSource) pds.unwrap(XADataSource.class);
+        assertEquals(MockitoXADataSource.class.getName(), unwrappedXads.getClass().getName());
+
+        // Connection
+        Connection c = pds.getConnection();
+        assertTrue(c.isWrapperFor(Connection.class));
+        Connection unwrappedConnection = c.unwrap(Connection.class);
+        assertTrue(unwrappedConnection.getClass().getName().contains("java.sql.Connection") && unwrappedConnection.getClass().getName().contains("EnhancerByMockito"));
+
+        // Statement
+        Statement stmt = c.createStatement();
+        assertTrue(stmt.isWrapperFor(Statement.class));
+        Statement unwrappedStmt = stmt.unwrap(Statement.class);
+        assertTrue(unwrappedStmt.getClass().getName().contains("java.sql.Statement") && unwrappedStmt.getClass().getName().contains("EnhancerByMockito"));
+
+        // PreparedStatement
+        PreparedStatement pstmt = c.prepareStatement("mock sql");
+        assertTrue(pstmt.isWrapperFor(PreparedStatement.class));
+        Statement unwrappedPStmt = pstmt.unwrap(PreparedStatement.class);
+        assertTrue(unwrappedPStmt.getClass().getName().contains("java.sql.PreparedStatement") && unwrappedPStmt.getClass().getName().contains("EnhancerByMockito"));
+
+        // CallableStatement
+        CallableStatement cstmt = c.prepareCall("mock stored proc");
+        assertTrue(cstmt.isWrapperFor(CallableStatement.class));
+        Statement unwrappedCStmt = cstmt.unwrap(CallableStatement.class);
+        assertTrue(unwrappedCStmt.getClass().getName().contains("java.sql.CallableStatement") && unwrappedCStmt.getClass().getName().contains("EnhancerByMockito"));
+    }
 }
