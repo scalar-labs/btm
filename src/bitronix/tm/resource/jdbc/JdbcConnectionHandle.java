@@ -164,37 +164,55 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
     public Statement createStatement() throws SQLException {
         enlistResource();
 
-        return jdbcPooledConnection.registerUncachedStatement(getDelegate().createStatement());
+        Statement statement = getDelegate().createStatement();
+        jdbcPooledConnection.registerUncachedStatement(statement);
+        JdbcStatementHandle statementHandle = new JdbcStatementHandle(statement, jdbcPooledConnection);
+        return (Statement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { Statement.class }, statementHandle);
     }
 
     public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
         enlistResource();
 
-        return jdbcPooledConnection.registerUncachedStatement(getDelegate().createStatement(resultSetType, resultSetConcurrency));
+        Statement statement = getDelegate().createStatement(resultSetType, resultSetConcurrency);
+        jdbcPooledConnection.registerUncachedStatement(statement);
+        JdbcStatementHandle statementHandle = new JdbcStatementHandle(statement, jdbcPooledConnection);
+        return (Statement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { Statement.class }, statementHandle);
     }
 
     public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         enlistResource();
 
-        return jdbcPooledConnection.registerUncachedStatement(getDelegate().createStatement(resultSetType, resultSetConcurrency, resultSetHoldability));
+        Statement statement = getDelegate().createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
+        jdbcPooledConnection.registerUncachedStatement(statement);
+        JdbcStatementHandle statementHandle = new JdbcStatementHandle(statement, jdbcPooledConnection);
+        return (Statement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { Statement.class }, statementHandle);
     }
 
     public CallableStatement prepareCall(String sql) throws SQLException {
         enlistResource();
 
-        return (CallableStatement) jdbcPooledConnection.registerUncachedStatement(getDelegate().prepareCall(sql));
+        CallableStatement statement = getDelegate().prepareCall(sql);
+        jdbcPooledConnection.registerUncachedStatement(statement);
+        JdbcCallableStatementHandle statementHandle = new JdbcCallableStatementHandle(statement, jdbcPooledConnection);
+        return (CallableStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { CallableStatement.class }, statementHandle);
     }
 
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
         enlistResource();
 
-        return (CallableStatement) jdbcPooledConnection.registerUncachedStatement(getDelegate().prepareCall(sql, resultSetType, resultSetConcurrency));
+        CallableStatement statement = getDelegate().prepareCall(sql, resultSetType, resultSetConcurrency);
+        jdbcPooledConnection.registerUncachedStatement(statement);
+        JdbcCallableStatementHandle statementHandle = new JdbcCallableStatementHandle(statement, jdbcPooledConnection);
+        return (CallableStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { CallableStatement.class }, statementHandle);
     }
 
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
         enlistResource();
 
-        return (CallableStatement) jdbcPooledConnection.registerUncachedStatement(getDelegate().prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability));
+        CallableStatement statement = getDelegate().prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+        jdbcPooledConnection.registerUncachedStatement(statement);
+        JdbcCallableStatementHandle statementHandle = new JdbcCallableStatementHandle(statement, jdbcPooledConnection);
+        return (CallableStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { CallableStatement.class }, statementHandle);
     }
 
     /* PreparedStatement cache aware methods */
@@ -215,7 +233,10 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
             return (PreparedStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { PreparedStatement.class }, cachedStmt);
         }
         else {
-            return (PreparedStatement) jdbcPooledConnection.registerUncachedStatement(getDelegate().prepareStatement(sql));
+            PreparedStatement stmt = getDelegate().prepareStatement(sql);
+            jdbcPooledConnection.registerUncachedStatement(stmt);
+            JdbcUncachedPreparedStatementHandle statementHandle = new JdbcUncachedPreparedStatementHandle(stmt, jdbcPooledConnection);
+            return (PreparedStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { PreparedStatement.class }, statementHandle);
         }
     }
 
@@ -235,7 +256,10 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
             return (PreparedStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { PreparedStatement.class }, cachedStmt);
         }
         else {
-            return (PreparedStatement) jdbcPooledConnection.registerUncachedStatement(getDelegate().prepareStatement(sql, autoGeneratedKeys));
+            PreparedStatement stmt = getDelegate().prepareStatement(sql, autoGeneratedKeys);
+            jdbcPooledConnection.registerUncachedStatement(stmt);
+            JdbcUncachedPreparedStatementHandle statementHandle = new JdbcUncachedPreparedStatementHandle(stmt, jdbcPooledConnection);
+            return (PreparedStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { PreparedStatement.class }, statementHandle);
         }
     }
 
@@ -255,7 +279,10 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
             return (PreparedStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { PreparedStatement.class }, cachedStmt);
         }
         else {
-            return (PreparedStatement) jdbcPooledConnection.registerUncachedStatement(getDelegate().prepareStatement(sql, resultSetType, resultSetConcurrency));
+            PreparedStatement stmt = getDelegate().prepareStatement(sql, resultSetType, resultSetConcurrency);
+            jdbcPooledConnection.registerUncachedStatement(stmt);
+            JdbcUncachedPreparedStatementHandle statementHandle = new JdbcUncachedPreparedStatementHandle(stmt, jdbcPooledConnection);
+            return (PreparedStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { PreparedStatement.class }, statementHandle);
         }
     }
 
@@ -275,7 +302,10 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
             return (PreparedStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { PreparedStatement.class }, cachedStmt);
         }
         else {
-            return (PreparedStatement) jdbcPooledConnection.registerUncachedStatement(getDelegate().prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability));
+            PreparedStatement stmt = getDelegate().prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+            jdbcPooledConnection.registerUncachedStatement(stmt);
+            JdbcUncachedPreparedStatementHandle statementHandle = new JdbcUncachedPreparedStatementHandle(stmt, jdbcPooledConnection);
+            return (PreparedStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { PreparedStatement.class }, statementHandle);
         }
     }
 
@@ -295,7 +325,10 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
             return (PreparedStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { PreparedStatement.class }, cachedStmt);
         }
         else {
-            return (PreparedStatement) jdbcPooledConnection.registerUncachedStatement(getDelegate().prepareStatement(sql, columnIndexes));
+            PreparedStatement stmt = getDelegate().prepareStatement(sql, columnIndexes);
+            jdbcPooledConnection.registerUncachedStatement(stmt);
+            JdbcUncachedPreparedStatementHandle statementHandle = new JdbcUncachedPreparedStatementHandle(stmt, jdbcPooledConnection);
+            return (PreparedStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { PreparedStatement.class }, statementHandle);
         }
     }
 
@@ -315,11 +348,15 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
             return (PreparedStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { PreparedStatement.class }, cachedStmt);
         }
         else {
-            return (PreparedStatement) jdbcPooledConnection.registerUncachedStatement(getDelegate().prepareStatement(sql, columnNames));
+            PreparedStatement stmt = getDelegate().prepareStatement(sql, columnNames);
+            jdbcPooledConnection.registerUncachedStatement(stmt);
+            JdbcUncachedPreparedStatementHandle statementHandle = new JdbcUncachedPreparedStatementHandle(stmt, jdbcPooledConnection);
+            return (PreparedStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { PreparedStatement.class }, statementHandle);
         }
     }
 
 	public Object getProxiedDelegate() throws Exception {
-		return getDelegate();
+        return jdbcPooledConnection;
 	}
+
 }

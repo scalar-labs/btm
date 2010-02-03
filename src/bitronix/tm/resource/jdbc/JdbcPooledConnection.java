@@ -33,7 +33,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     private XAResource xaResource;
     private PoolingDataSource poolingDataSource;
     private LruStatementCache statementsCache;
-    private List uncachedStatements = new ArrayList();
+    private List uncachedStatements;
     private int usageCount;
 
     /* management */
@@ -50,6 +50,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         this.xaConnection = xaConnection;
         this.xaResource = xaConnection.getXAResource();
         this.statementsCache = new LruStatementCache(poolingDataSource.getPreparedStatementCacheSize());
+        this.uncachedStatements = Collections.synchronizedList(new ArrayList());
         statementsCache.addEvictionListener(new LruEvictionListener() {
             public void onEviction(Object value) {
                 PreparedStatement stmt = (PreparedStatement) value;
@@ -324,12 +325,17 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     /**
      * Register uncached statement so that it can be closed when the connection is put back in the pool.
+     *
      * @param stmt the statement to register.
      * @return the registered statement.
      */
     protected Statement registerUncachedStatement(Statement stmt) {
         uncachedStatements.add(stmt);
         return stmt;
+    }
+
+    protected void unregisterUncachedStatement(Statement stmt) {
+        uncachedStatements.remove(stmt);
     }
 
     public String toString() {
