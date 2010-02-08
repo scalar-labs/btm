@@ -201,8 +201,12 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
             List result = new ArrayList();
             for (int i = 0; i < sessions.size(); i++) {
                 DualSessionWrapper dsw = (DualSessionWrapper) sessions.get(i);
-                String gtrid = dsw.getXAResourceHolderState().getXid().getGlobalTransactionIdUid().toString();
-                result.add(gtrid);
+                try {
+                    String gtrid = dsw.getXAResourceHolderState().getXid().getGlobalTransactionIdUid().toString();
+                    result.add(gtrid);
+                } catch (NullPointerException ex) {
+                    // ignore
+                }
             }
             return result;
         }
