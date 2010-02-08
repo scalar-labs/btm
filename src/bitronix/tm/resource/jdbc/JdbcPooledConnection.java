@@ -395,7 +395,11 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     }
 
     public String getTransactionGtridCurrentlyHoldingThis() {
-        return getXAResourceHolderState().getXid().getGlobalTransactionIdUid().toString();
+        try {
+            return getXAResourceHolderState().getXid().getGlobalTransactionIdUid().toString();
+        } catch (NullPointerException ex) {
+            return null;
+        }
     }
 
 }
