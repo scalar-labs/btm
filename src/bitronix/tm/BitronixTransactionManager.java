@@ -290,7 +290,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         if (log.isDebugEnabled()) log.debug("shutting down executor");
         TransactionManagerServices.getExecutor().shutdown();
 
-        if (log.isDebugEnabled()) log.debug("shutting task scheduler");
+        if (log.isDebugEnabled()) log.debug("shutting down task scheduler");
         TransactionManagerServices.getTaskScheduler().shutdown();
 
         if (log.isDebugEnabled()) log.debug("shutting down disk journal");
