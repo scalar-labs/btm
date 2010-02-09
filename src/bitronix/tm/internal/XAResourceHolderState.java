@@ -3,6 +3,7 @@ package bitronix.tm.internal;
 import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.BitronixXid;
+import bitronix.tm.utils.Decoder;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -130,11 +131,11 @@ public class XAResourceHolderState {
             if (this.suspended)
                 throw new BitronixXAException("resource already suspended: " + this, XAException.XAER_PROTO);
 
-            if (log.isDebugEnabled()) log.debug("suspending " + this);
+            if (log.isDebugEnabled()) log.debug("suspending " + this + " with " + Decoder.decodeXAResourceFlag(flags));
             suspended = true;
         }
         else {
-            if (log.isDebugEnabled()) log.debug("ending " + this);
+            if (log.isDebugEnabled()) log.debug("ending " + this + " with " + Decoder.decodeXAResourceFlag(flags));
             ended = true;
         }
 
@@ -151,6 +152,7 @@ public class XAResourceHolderState {
         this.suspended = suspended;
         this.ended = ended;
         this.started = false;
+        if (log.isDebugEnabled()) log.debug("ended " + this + " with " + Decoder.decodeXAResourceFlag(flags));
     }
 
     public void start(int flags) throws XAException {
@@ -169,14 +171,14 @@ public class XAResourceHolderState {
             if (!this.started)
                 throw new BitronixXAException("resource hasn't been started, cannot resume it: " + this, XAException.XAER_PROTO);
 
-            if (log.isDebugEnabled()) log.debug("resuming " + this);
+            if (log.isDebugEnabled()) log.debug("resuming " + this + " with " + Decoder.decodeXAResourceFlag(flags));
             suspended = false;
         }
         else {
             if (this.started)
                 throw new BitronixXAException("resource already started: " + this, XAException.XAER_PROTO);
 
-            if (log.isDebugEnabled()) log.debug("starting " + this);
+            if (log.isDebugEnabled()) log.debug("starting " + this + " with " + Decoder.decodeXAResourceFlag(flags));
             started = true;
         }
 
@@ -191,6 +193,7 @@ public class XAResourceHolderState {
         this.suspended = suspended;
         this.started = started;
         this.ended = false;
+        if (log.isDebugEnabled()) log.debug("started " + this + " with " + Decoder.decodeXAResourceFlag(flags));
     }
 
     public int hashCode() {
