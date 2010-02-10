@@ -125,10 +125,16 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             // 3. rollback any remaining recovered transaction
             rolledbackCount = rollbackAbortedTransactions(oldestTransactionTimestamp, committedGtrids);
 
-            log.info("recovery committed " + committedCount + " dangling transaction(s) and rolled back " + rolledbackCount +
-                    " aborted transaction(s) on " + registeredResources.size() + " resource(s) [" + getRegisteredResourcesUniqueNames() + "]" +
-                    ((TransactionManagerServices.getConfiguration().isCurrentNodeOnlyRecovery()) ? " (restricted to serverId '" + TransactionManagerServices.getConfiguration().getServerId() + "')" : ""));
-
+            if (executionsCount == 0) {
+                log.info("recovery committed " + committedCount + " dangling transaction(s) and rolled back " + rolledbackCount +
+                        " aborted transaction(s) on " + registeredResources.size() + " resource(s) [" + getRegisteredResourcesUniqueNames() + "]" +
+                        ((TransactionManagerServices.getConfiguration().isCurrentNodeOnlyRecovery()) ? " (restricted to serverId '" + TransactionManagerServices.getConfiguration().getServerId() + "')" : ""));
+            }
+            else if (log.isDebugEnabled()) {
+                log.debug("recovery committed " + committedCount + " dangling transaction(s) and rolled back " + rolledbackCount +
+                        " aborted transaction(s) on " + registeredResources.size() + " resource(s) [" + getRegisteredResourcesUniqueNames() + "]" +
+                        ((TransactionManagerServices.getConfiguration().isCurrentNodeOnlyRecovery()) ? " (restricted to serverId '" + TransactionManagerServices.getConfiguration().getServerId() + "')" : ""));                
+            }
             this.completionException = null;
         } catch (Exception ex) {
             this.completionException = ex;
