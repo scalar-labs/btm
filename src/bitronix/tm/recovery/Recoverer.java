@@ -125,7 +125,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             // 3. rollback any remaining recovered transaction
             rolledbackCount = rollbackAbortedTransactions(oldestTransactionTimestamp, committedGtrids);
 
-            if (executionsCount == 0) {
+            if (executionsCount == 0 || committedCount > 0 || rolledbackCount > 0) {
                 log.info("recovery committed " + committedCount + " dangling transaction(s) and rolled back " + rolledbackCount +
                         " aborted transaction(s) on " + registeredResources.size() + " resource(s) [" + getRegisteredResourcesUniqueNames() + "]" +
                         ((TransactionManagerServices.getConfiguration().isCurrentNodeOnlyRecovery()) ? " (restricted to serverId '" + TransactionManagerServices.getConfiguration().getServerId() + "')" : ""));
