@@ -64,7 +64,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         XAResourceHolder resourceHolder = ResourceRegistrar.findXAResourceHolder(xaResource);
         if (resourceHolder == null)
             throw new BitronixSystemException("unknown XAResource " + xaResource + ", it does not belong to a registered resource");
-        XAResourceHolderState resourceHolderState = resourceHolder.getXAResourceHolderState();
+        XAResourceHolderState resourceHolderState = resourceHolder.getXAResourceHolderState(resourceManager.getGtrid());
 
         // resource timeout must be set here for manually enlisted resources to properly receive it
         resourceHolderState.setTransactionTimeoutDate(timeoutDate);
@@ -94,7 +94,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         XAResourceHolder XAResourceHolder = ResourceRegistrar.findXAResourceHolder(xaResource);
         if (XAResourceHolder == null)
             throw new BitronixSystemException("unknown XAResource " + xaResource + ", it does not belong to a registered resource");
-        XAResourceHolderState resourceHolderState = XAResourceHolder.getXAResourceHolderState();
+        XAResourceHolderState resourceHolderState = XAResourceHolder.getXAResourceHolderState(resourceManager.getGtrid());
 
         try {
             return resourceManager.delist(resourceHolderState, flag);

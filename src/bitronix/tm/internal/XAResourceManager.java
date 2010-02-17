@@ -1,10 +1,9 @@
 package bitronix.tm.internal;
 
+import bitronix.tm.BitronixXid;
+import bitronix.tm.utils.Scheduler;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;
-import bitronix.tm.utils.Decoder;
-import bitronix.tm.utils.Scheduler;
-import bitronix.tm.BitronixXid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +86,6 @@ public class XAResourceManager {
 
         xaResourceHolderState.setXid(xid);
         xaResourceHolderState.start(flag);
-        if (log.isDebugEnabled()) log.debug("started " + xaResourceHolderState + " with " + Decoder.decodeXAResourceFlag(flag));
 
 
         // in case of a JOIN, the resource holder is already in the scheduler -> do not add it twice
@@ -137,38 +135,16 @@ public class XAResourceManager {
      * @throws XAException if the resource threw an exception during resume.
      */
     public void resume() throws XAException {
-        List toBeReEnlisted = new ArrayList();
-
         Iterator it = resources.iterator();
         while (it.hasNext()) {
             XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
             if (log.isDebugEnabled()) log.debug("resuming " + xaResourceHolderState);
 
-            // The {@link XAResourceHolder} got borrowed by the new {@link XAResourceHolderState} created after suspend.
-            // Its reference to the old {@link XAResourceHolderState} has changed for the new one at the time the new
-            // one been enlisted. Now that we're switching back to the old context, we need to reattach the pooled
-            // connection with the {@link XAResourceHolderState} that it was attached to before suspension. Fortunately,
-            // the link {@link XAResourceHolderState} <-> {@link XAResourceHolder} is bi-directional so we can just loop
-            // over all enlisted {@link XAResourceHolderState} and set the {@link XAResourceHolder} they contain's
-            // reference back to them.
-            // See: {@link bitronix.tm.resource.common.XAResourceHolder#getXAResourceHolderState()}
-            xaResourceHolderState.getXAResourceHolder().setXAResourceHolderState(xaResourceHolderState);
-
-            // If a prepared statement is (re-)used after suspend/resume is performed its XAResource needs to be
-            // re-enlisted. This must be done outside this loop or that will confuse the iterator!
-            toBeReEnlisted.add(new XAResourceHolderState(xaResourceHolderState));
-        }
-
-        if (toBeReEnlisted.size() > 0 && log.isDebugEnabled()) log.debug("re-enlisting " + toBeReEnlisted.size() + " resource(s)");
-        for (int i = 0; i < toBeReEnlisted.size(); i++) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) toBeReEnlisted.get(i);
-
-            if (log.isDebugEnabled()) log.debug("re-enlisting resource " + xaResourceHolderState);
-            xaResourceHolderState.getXAResourceHolder().setXAResourceHolderState(xaResourceHolderState);
+            // all XAResource needs to be re-enlisted.
             try {
                 enlist(xaResourceHolderState);
             } catch (BitronixSystemException ex) {
-                throw new BitronixXAException("error re-enlisting resource during resume: " + xaResourceHolderState, XAException.XAER_PROTO, ex);
+                throw new BitronixXAException("error re-enlisting resource during resume: " + xaResourceHolderState, XAException.XAER_RMERR, ex);
             }
         }
     }
@@ -235,17 +211,7 @@ public class XAResourceManager {
             XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
 
             // clear out the current state
-            xaResourceHolderState.getXAResourceHolder().setXAResourceHolderState(null);
-
-            // After a JOIN happened, the same xaResourceHolderState is inserted twice.
-            // This is because the xaResourceHolderState is inserted once normally during the 1st half of the transaction
-            // and right after the transaction is resumed, another xaResourceHolderState with a null XID is inserted
-            // then the XID is changed.
-            boolean mightHaveMore = true;
-            while (mightHaveMore) {
-                mightHaveMore = xaResourceHolderState.getXAResourceHolder().removeXAResourceHolderState(xaResourceHolderState);
-                if (mightHaveMore && log.isDebugEnabled()) log.debug("cleared state on " + xaResourceHolderState);
-            }
+            xaResourceHolderState.getXAResourceHolder().removeXAResourceHolderState(gtrid);
 
             it.remove();
         }

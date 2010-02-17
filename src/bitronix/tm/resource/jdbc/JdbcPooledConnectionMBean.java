@@ -1,5 +1,6 @@
 package bitronix.tm.resource.jdbc;
 
+import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -12,6 +13,6 @@ public interface JdbcPooledConnectionMBean {
 
     String getStateDescription();
     Date getAcquisitionDate();
-    String getTransactionGtridCurrentlyHoldingThis();
-    
+    Collection getTransactionGtridsCurrentlyHoldingThis();
+
 }

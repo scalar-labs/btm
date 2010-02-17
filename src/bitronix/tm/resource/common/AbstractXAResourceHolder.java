@@ -1,14 +1,12 @@
 package bitronix.tm.resource.common;
 
+import bitronix.tm.BitronixTransaction;
 import bitronix.tm.internal.XAResourceHolderState;
-import bitronix.tm.utils.CollectionUtils;
-
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
-
+import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /**
  * Implementation of all services required by a {@link XAResourceHolder}. This class keeps a list of all
@@ -23,44 +21,39 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
 
     private final static Logger log = LoggerFactory.getLogger(AbstractXAResourceHolder.class);
 
-    private final List xaResourceHolderStates = Collections.synchronizedList(new ArrayList());
-    private XAResourceHolderState currentXaResourceHolderState;
+    private final Map xaResourceHolderStates = Collections.synchronizedMap(new HashMap());
 
-    public XAResourceHolderState getXAResourceHolderState() {
-        return currentXaResourceHolderState;
-    }
-
-    public void setXAResourceHolderState(XAResourceHolderState xaResourceHolderState) {
+    public XAResourceHolderState getXAResourceHolderState(Uid gtrid) {
         synchronized (xaResourceHolderStates) {
-            if (log.isDebugEnabled()) log.debug("setting default XAResourceHolderState [" + xaResourceHolderState + "] on " + this);
-            if (xaResourceHolderState != null) {
-                this.currentXaResourceHolderState = xaResourceHolderState;
-                if (!CollectionUtils.containsByIdentity(xaResourceHolderStates, xaResourceHolderState)) {
-                    if (log.isDebugEnabled()) log.debug("XAResourceHolderState previously unknown, adding it to the list");
-                    this.xaResourceHolderStates.add(xaResourceHolderState);
-                }
-            }
-            else {
-                if (currentXaResourceHolderState != null) {
-                    xaResourceHolderStates.remove(currentXaResourceHolderState);
-                    this.currentXaResourceHolderState = null;
-                }
-                else
-                    log.warn("currentXaResourceHolderState is already null! Bug ?");
-            }
+            return (XAResourceHolderState) xaResourceHolderStates.get(gtrid);
         }
     }
 
-    public boolean removeXAResourceHolderState(XAResourceHolderState xaResourceHolderState) {
-        boolean removed = xaResourceHolderStates.remove(xaResourceHolderState);
-        if (removed && log.isDebugEnabled()) log.debug("removed " + xaResourceHolderState);
-        return removed;
+    public void putXAResourceHolderState(Uid gtrid, XAResourceHolderState xaResourceHolderState) {
+        synchronized (xaResourceHolderStates) {
+            if (log.isDebugEnabled()) log.debug("putting XAResourceHolderState [" + xaResourceHolderState + "] of GTRID [" + gtrid + "] on " + this);
+            if (!xaResourceHolderStates.containsKey(gtrid)) {
+                if (log.isDebugEnabled()) log.debug("GTRID [" + gtrid + "] previously unknown to " + this + ", adding it to the resource's transactions list");
+                xaResourceHolderStates.put(gtrid, xaResourceHolderState);
+            }
+            else log.warn("tried to put again known GTRID [" + gtrid + "] on " + this + " - Bug?");
+        }
+    }
+
+    public void removeXAResourceHolderState(Uid gtrid) {
+        synchronized (xaResourceHolderStates) {
+            if (log.isDebugEnabled()) log.debug("removing XAResourceHolderState of GTRID [" + gtrid + "] from " + this);
+            Object removed = xaResourceHolderStates.remove(gtrid);
+            if (removed == null) log.warn("tried to remove unknown GTRID [" + gtrid + "] from " + this + " - Bug?");
+        }
     }
 
     public boolean hasStateForXAResource(XAResourceHolder xaResourceHolder) {
         synchronized (xaResourceHolderStates) {
-            for (int i = 0; i < xaResourceHolderStates.size(); i++) {
-                XAResourceHolderState otherXaResourceHolderState = (XAResourceHolderState) xaResourceHolderStates.get(i);
+            Iterator it = xaResourceHolderStates.values().iterator();
+            while (it.hasNext()) {
+                XAResourceHolderState otherXaResourceHolderState = (XAResourceHolderState) it.next();
+
                 if (otherXaResourceHolderState.getXAResource() == xaResourceHolder.getXAResource()) {
                     if (log.isDebugEnabled()) log.debug("resource " + xaResourceHolder + " is enlisted in another transaction with " + otherXaResourceHolderState.getXid().toString());
                     return true;
@@ -77,11 +70,28 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
      * @return true if start() has been successfully called but not end() yet <i>and</i> the transaction is not suspended.
      */
     public boolean isParticipatingInActiveGlobalTransaction() {
-        XAResourceHolderState xaResourceHolderState = getXAResourceHolderState();
-        return xaResourceHolderState != null &&
-                xaResourceHolderState.isStarted() &&
-                !xaResourceHolderState.isSuspended() &&
-                !xaResourceHolderState.isEnded();
+        synchronized (xaResourceHolderStates) {
+            BitronixTransaction currentTransaction = TransactionContextHelper.currentTransaction();
+            Uid gtrid = currentTransaction == null ? null : currentTransaction.getResourceManager().getGtrid();
+            if (gtrid == null)
+                return false;
+
+            XAResourceHolderState xaResourceHolderState = getXAResourceHolderState(gtrid);
+            return xaResourceHolderState != null &&
+                    xaResourceHolderState.isStarted() &&
+                    !xaResourceHolderState.isSuspended() &&
+                    !xaResourceHolderState.isEnded();
+        }
     }
 
+    /**
+     * Simple helper method which returns a set of GTRIDs of transactions in which
+     * this resource is enlisted. Useful for monitoring.
+     * @return a set of GTRIDs of transactions in which this resource is enlisted.
+     */
+    public Set getXAResourceHolderStateGtrids() {
+        synchronized (xaResourceHolderStates) {
+            return new HashSet(xaResourceHolderStates.keySet());
+        }
+    }
 }

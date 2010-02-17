@@ -74,7 +74,7 @@ public class TransactionContextHelper {
         // End resource as eagerly as possible. This allows to release connections to the pool much earlier
         // with resources fully supporting transaction interleaving.
         if (isInEnlistingGlobalTransactionContext(xaResourceHolder, currentTransaction) && !bean.getDeferConnectionRelease()) {
-            XAResourceHolderState xaResourceHolderState = xaResourceHolder.getXAResourceHolderState();
+            XAResourceHolderState xaResourceHolderState = xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid());
             if (!xaResourceHolderState.isEnded()) {
                 if (log.isDebugEnabled()) log.debug("delisting resource " + xaResourceHolderState + " from " + currentTransaction);
 
@@ -208,10 +208,10 @@ public class TransactionContextHelper {
 
     private static boolean isInEnlistingGlobalTransactionContext(XAResourceHolder xaResourceHolder, BitronixTransaction currentTransaction) {
         boolean globalTransactionMode = false;
-        if (xaResourceHolder.getXAResourceHolderState() != null && currentTransaction != null) {
+        if (currentTransaction != null && xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid()) != null) {
             Uid currentTxGtrid = currentTransaction.getResourceManager().getGtrid();
             if (log.isDebugEnabled()) log.debug("current transaction GTRID is [" + currentTxGtrid + "]");
-            BitronixXid bitronixXid = xaResourceHolder.getXAResourceHolderState().getXid();
+            BitronixXid bitronixXid = xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid()).getXid();
             Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
             if (log.isDebugEnabled()) log.debug("resource GTRID is [" + resourceGtrid + "]");
             globalTransactionMode = currentTxGtrid.equals(resourceGtrid);
@@ -236,7 +236,7 @@ public class TransactionContextHelper {
     }
 
     private static XAResourceHolderState getAlreadyEnlistedXAResourceHolderState(XAResourceHolder xaResourceHolder, BitronixTransaction currentTransaction) {
-        XAResourceHolderState xaResourceHolderState = xaResourceHolder.getXAResourceHolderState();
+        XAResourceHolderState xaResourceHolderState = xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid());
         if (xaResourceHolderState != null && xaResourceHolderState.getXid() != null && currentTransaction != null) {
             BitronixXid bitronixXid = xaResourceHolderState.getXid();
             Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
@@ -248,23 +248,24 @@ public class TransactionContextHelper {
     }
 
     private static void enlist(XAResourceHolder xaResourceHolder, ResourceBean bean, BitronixTransaction currentTransaction) throws RollbackException, SystemException {
+        Uid gtrid = currentTransaction.getResourceManager().getGtrid();
         try {
             XAResourceHolderState xaResourceHolderState = new XAResourceHolderState(xaResourceHolder, bean);
             if (log.isDebugEnabled()) log.debug("enlisting resource " + xaResourceHolderState + " into " + currentTransaction);
-            xaResourceHolder.setXAResourceHolderState(xaResourceHolderState);
+            xaResourceHolder.putXAResourceHolderState(gtrid, xaResourceHolderState);
             currentTransaction.enlistResource(xaResourceHolderState.getXAResource());
         }
-        catch (RollbackException e) {
-            xaResourceHolder.setXAResourceHolderState(null);
-            throw e;
+        catch (RollbackException ex) {
+            xaResourceHolder.removeXAResourceHolderState(gtrid);
+            throw ex;
         }
-        catch (IllegalStateException e) {
-            xaResourceHolder.setXAResourceHolderState(null);
-            throw e;
+        catch (IllegalStateException ex) {
+            xaResourceHolder.removeXAResourceHolderState(gtrid);
+            throw ex;
         }
-        catch (SystemException e) {
-            xaResourceHolder.setXAResourceHolderState(null);
-            throw e;
+        catch (SystemException ex) {
+            xaResourceHolder.removeXAResourceHolderState(gtrid);
+            throw ex;
         }
     }
 

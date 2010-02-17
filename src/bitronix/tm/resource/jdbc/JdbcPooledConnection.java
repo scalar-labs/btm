@@ -284,7 +284,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         
         if (futureState == STATE_IN_POOL || futureState == STATE_NOT_ACCESSIBLE) {
             // close all uncached statements
-            if (log.isDebugEnabled()) log.debug("closing " + uncachedStatements.size() + " uncached statement(s)");
+            if (log.isDebugEnabled()) log.debug("closing " + uncachedStatements.size() + " dangling uncached statement(s)");
             for (int i = 0; i < uncachedStatements.size(); i++) {
                 Statement statement = (Statement) uncachedStatements.get(i);
                 try {
@@ -394,12 +394,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         return lastReleaseDate;
     }
 
-    public String getTransactionGtridCurrentlyHoldingThis() {
-        try {
-            return getXAResourceHolderState().getXid().getGlobalTransactionIdUid().toString();
-        } catch (NullPointerException ex) {
-            return null;
-        }
+    public Collection getTransactionGtridsCurrentlyHoldingThis() {
+        return getXAResourceHolderStateGtrids();
     }
 
 }

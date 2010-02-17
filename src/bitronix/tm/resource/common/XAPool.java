@@ -330,7 +330,7 @@ public class XAPool implements StateChangeListener {
         if (log.isDebugEnabled()) log.debug(xaResourceHolders.size() + " xa resource(s) created by connection in NOT_ACCESSIBLE state: " + xaStatefulHolder);
         for (int i = 0; i < xaResourceHolders.size(); i++) {
             XAResourceHolder xaResourceHolder = (XAResourceHolder) xaResourceHolders.get(i);
-            XAResourceHolderState xaResourceHolderState = xaResourceHolder.getXAResourceHolderState();
+            XAResourceHolderState xaResourceHolderState = xaResourceHolder.getXAResourceHolderState(currentTxGtrid);
             if (xaResourceHolderState != null && xaResourceHolderState.getXid() != null) {
                 // compare GTRIDs
                 BitronixXid bitronixXid = xaResourceHolderState.getXid();
