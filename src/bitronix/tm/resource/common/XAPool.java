@@ -465,18 +465,7 @@ public class XAPool implements StateChangeListener {
             // This is the first time this TxGtrid/ThreadLocal is going into the map,
             // register interest in synchronization so we can remove it at commit/rollback
             try {
-                transaction.registerSynchronization(new Synchronization() {
-                    public void beforeCompletion() {
-                        // Do nothing
-                    }
-                    
-                    public void afterCompletion(int status) {
-                        synchronized (XAPool.this) {
-                            statefulHolderTransactionMap.remove(currentTxGtrid);
-                            if (log.isDebugEnabled()) log.debug("deleted shared connection mappings for " + currentTxGtrid);
-                        }
-                    }
-                });
+                transaction.registerSynchronization(new SharedStatefulHolderCleanupSynchronization(currentTxGtrid));
             } catch (Exception e) {
                 // OK, forget it.  The transaction is either rollback only or already finished.
                 return;
@@ -490,5 +479,27 @@ public class XAPool implements StateChangeListener {
         // Set the XAStatefulHolder on the ThreadLocal.  Even if we've already set it before,
         // it's safe -- checking would be more expensive than just setting it again.
         threadLocal.set(xaStatefulHolder);
+    }
+
+    private class SharedStatefulHolderCleanupSynchronization implements Synchronization {
+        private Uid gtrid;
+
+        private SharedStatefulHolderCleanupSynchronization(Uid gtrid) {
+            this.gtrid = gtrid;
+        }
+
+        public void beforeCompletion() {
+        }
+
+        public void afterCompletion(int status) {
+            synchronized (XAPool.this) {
+                statefulHolderTransactionMap.remove(gtrid);
+                if (log.isDebugEnabled()) log.debug("deleted shared connection mappings for " + gtrid);
+            }
+        }
+
+        public String toString() {
+            return "a SharedStatefulHolderCleanupSynchronization with GTRID [" + gtrid + "]";
+        }
     }
 }
