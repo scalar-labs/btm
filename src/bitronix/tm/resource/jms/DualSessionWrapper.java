@@ -132,7 +132,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         try {
             TransactionContextHelper.requeue(this, pooledConnection.getPoolingConnectionFactory());
         } catch (BitronixSystemException ex) {
-            throw (JMSException) new JMSException("error delisting " + this).initCause(ex);
+            throw (JMSException) new JMSException("error requeueing " + this).initCause(ex);
         }
     }
 
