@@ -32,7 +32,7 @@ public class MessageConsumerWrapper implements MessageConsumer {
     }
 
     /**
-     * Enlist this connection into the current transaction if automaticEnlistingEnabled = true for this resource.
+     * Enlist this session into the current transaction if automaticEnlistingEnabled = true for this resource.
      * If no transaction is running then this method does nothing.
      * @throws javax.jms.JMSException
      */
