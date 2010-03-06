@@ -23,22 +23,15 @@ public class BitronixContext implements Context {
 
     private final static Logger log = LoggerFactory.getLogger(BitronixContext.class);
     
-    private static final String DEFAULT_USER_TRANSACTION_NAME = "java:comp/UserTransaction";
-    private static final String DEFAULT_SYNCHRONIZATION_REGISTRY_NAME = "java:comp/TransactionSynchronizationRegistry";
-
     private boolean closed = false;
     private String userTransactionName;
     private String synchronizationRegistryName;
 
     public BitronixContext() {
         userTransactionName = TransactionManagerServices.getConfiguration().getJndiUserTransactionName();
-        if (userTransactionName == null)
-            userTransactionName = DEFAULT_USER_TRANSACTION_NAME;
         if (log.isDebugEnabled()) log.debug("binding transaction manager at name '" + userTransactionName + "'");
 
         synchronizationRegistryName = TransactionManagerServices.getConfiguration().getJndiTransactionSynchronizationRegistryName();
-        if (synchronizationRegistryName == null)
-            synchronizationRegistryName = DEFAULT_SYNCHRONIZATION_REGISTRY_NAME;
         if (log.isDebugEnabled()) log.debug("binding synchronization registry at name '" + synchronizationRegistryName + "'");
     }
 

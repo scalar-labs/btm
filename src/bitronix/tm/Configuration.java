@@ -88,8 +88,8 @@ public class Configuration implements Service {
             gracefulShutdownInterval = getInt(properties, "bitronix.tm.timer.gracefulShutdownInterval", 60);
             backgroundRecoveryIntervalSeconds = getInt(properties, "bitronix.tm.timer.backgroundRecoveryIntervalSeconds", 60);
             disableJmx = getBoolean(properties, "bitronix.tm.disableJmx", false);
-            jndiUserTransactionName = getString(properties, "bitronix.tm.jndi.userTransactionName", null);
-            jndiTransactionSynchronizationRegistryName = getString(properties, "bitronix.tm.jndi.transactionSynchronizationRegistryName", null);
+            jndiUserTransactionName = getString(properties, "bitronix.tm.jndi.userTransactionName", "java:comp/UserTransaction");
+            jndiTransactionSynchronizationRegistryName = getString(properties, "bitronix.tm.jndi.transactionSynchronizationRegistryName", "java:comp/TransactionSynchronizationRegistry");
             journal = getString(properties, "bitronix.tm.journal", "disk");
             currentNodeOnlyRecovery = getBoolean(properties, "bitronix.tm.currentNodeOnlyRecovery", true);
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
