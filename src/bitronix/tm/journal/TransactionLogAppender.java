@@ -50,7 +50,7 @@ public class TransactionLogAppender {
         this.header = new TransactionLogHeader(randomAccessFile, maxFileLength);
         this.lock = randomAccessFile.getChannel().tryLock(0, TransactionLogHeader.TIMESTAMP_HEADER, false);
         if (this.lock == null)
-            throw new IOException("transaction log file " + file.getName() + " is locked. Is another instance already running ?");
+            throw new IOException("transaction log file " + file.getName() + " is locked. Is another instance already running?");
 
         spawnBatcherThread();
     }

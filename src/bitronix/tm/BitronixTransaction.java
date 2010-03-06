@@ -343,6 +343,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
                     rolledBackResources.add(resourceHolderState);
                     if (log.isDebugEnabled()) log.debug("resource unilaterally rolled back: " + resourceHolderState, ex);
                 } catch (SystemException ex) {
+                    //TODO: if there was an error during delistment -> mark the transaction as rollback only
                     log.warn("error delisting resource: " + resourceHolderState, ex);
                 }
             }

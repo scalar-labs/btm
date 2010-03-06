@@ -145,7 +145,7 @@ public class RecoveryHelper {
             xaResourceHolderState.getXAResource().commit(xid, false);
         } catch (XAException ex) {
             if (ex.errorCode == XAException.XAER_NOTA) {
-                log.error("unable to commit in-doubt branch on resource " + uniqueName + " - error=XAER_NOTA. Forgotten heuristic ?", ex);
+                log.error("unable to commit in-doubt branch on resource " + uniqueName + " - error=XAER_NOTA. Forgotten heuristic?", ex);
             }
             else if (ex.errorCode == XAException.XA_HEURCOM) {
                 log.info("unable to commit in-doubt branch on resource " + uniqueName + " - error=" +
@@ -154,7 +154,7 @@ public class RecoveryHelper {
             }
             else if (ex.errorCode == XAException.XA_HEURHAZ || ex.errorCode == XAException.XA_HEURMIX || ex.errorCode == XAException.XA_HEURRB) {
                 log.error("unable to commit in-doubt branch on resource " + uniqueName + " - error=" +
-                        Decoder.decodeXAExceptionErrorCode(ex) + ". Heuristic decision incompatible with the global state of this transaction !");
+                        Decoder.decodeXAExceptionErrorCode(ex) + ". Heuristic decision incompatible with the global state of this transaction!");
                 forget = true;
                 success = false;
             }
@@ -188,7 +188,7 @@ public class RecoveryHelper {
             xaResourceHolderState.getXAResource().rollback(xid);
         } catch (XAException ex) {
             if (ex.errorCode == XAException.XAER_NOTA) {
-                log.error("unable to rollback aborted in-doubt branch on resource " + uniqueName + " - error=XAER_NOTA. Forgotten heuristic ?", ex);
+                log.error("unable to rollback aborted in-doubt branch on resource " + uniqueName + " - error=XAER_NOTA. Forgotten heuristic?", ex);
             }
             else if (ex.errorCode == XAException.XA_HEURRB) {
                 log.info("unable to rollback aborted in-doubt branch on resource " + uniqueName + " - error=" +
@@ -197,7 +197,7 @@ public class RecoveryHelper {
             }
             else if (ex.errorCode == XAException.XA_HEURHAZ || ex.errorCode == XAException.XA_HEURMIX || ex.errorCode == XAException.XA_HEURCOM) {
                 log.error("unable to rollback aborted in-doubt branch on resource " + uniqueName + " - error=" +
-                        Decoder.decodeXAExceptionErrorCode(ex) + ". Heuristic decision incompatible with the global state of this transaction !");
+                        Decoder.decodeXAExceptionErrorCode(ex) + ". Heuristic decision incompatible with the global state of this transaction!");
                 forget = true;
                 success = false;
             }

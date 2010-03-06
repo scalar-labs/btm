@@ -122,7 +122,7 @@ public class DiskJournal implements Journal {
         if (file1.length() != file2.length()) {
             if (!TransactionManagerServices.getConfiguration().isSkipCorruptedLogs())
                 throw new IOException("transaction log files are not of the same length, assuming they're corrupt");
-            log.error("transaction log files are not of the same length: corrupted files ?");
+            log.error("transaction log files are not of the same length: corrupted files?");
         }
 
         long maxFileLength = Math.max(file1.length(), file2.length());
@@ -133,7 +133,7 @@ public class DiskJournal implements Journal {
 
         byte cleanStatus = pickActiveJournalFile(tla1, tla2);
         if (cleanStatus != TransactionLogHeader.CLEAN_LOG_STATE) {
-            log.warn("active log file is unclean, previous server crash ?");
+            log.warn("active log file is unclean, did you call BitronixTransactionManager.shutdown() at the end of the last run?");
         }
 
         if (log.isDebugEnabled()) log.debug("disk journal opened");
@@ -169,7 +169,7 @@ public class DiskJournal implements Journal {
         try {
             close();
         } catch (IOException ex) {
-            log.error("error shutting down disk journal. Transaction log integrity could be compromised !", ex);
+            log.error("error shutting down disk journal. Transaction log integrity could be compromised!", ex);
         }
     }
 
