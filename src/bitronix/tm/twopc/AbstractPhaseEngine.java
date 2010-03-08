@@ -99,13 +99,13 @@ public abstract class AbstractPhaseEngine {
 
         // start threads
         while (it.hasNext()) {
-            XAResourceHolderState resourceHolder = (XAResourceHolderState) it.next();
-            if (!isParticipating(resourceHolder)) {
-                if (log.isDebugEnabled()) log.debug("skipping non-participant resource " + resourceHolder);
+            XAResourceHolderState resourceHolderState = (XAResourceHolderState) it.next();
+            if (!isParticipating(resourceHolderState)) {
+                if (log.isDebugEnabled()) log.debug("skipping not participating resource " + resourceHolderState);
                 continue;
             }
 
-            Job job = createJob(resourceHolder);
+            Job job = createJob(resourceHolderState);
             Object future = executor.submit(job);
             job.setFuture(future);
             jobs.add(job);
