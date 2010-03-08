@@ -19,7 +19,7 @@
     <property name="jar.file" value="${dir.dist}/btm-${jar.version}.jar"/>
     <property name="jar.src.file" value="${dir.dist}/btm-${jar.version}-sources.jar"/>
     <property name="zip.file" value="btm-dist-${jar.version}.zip"/>
-    <property name="pom.file" value="pom.xml"/>
+    <property name="pom.file" value="pom.xml.tpl"/>
     <property name="dir.m2.repo" value="${env.HOME}/.m2/repository"/>
 
 
