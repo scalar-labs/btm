@@ -16,11 +16,11 @@ import java.util.ArrayList;
 public class PhaseException extends Exception {
 
     private List exceptions = new ArrayList();
-    private List resources = new ArrayList();
+    private List resourceStates = new ArrayList();
 
-    public PhaseException(List exceptions, List resources) {
+    public PhaseException(List exceptions, List resourceStates) {
         this.exceptions = exceptions;
-        this.resources = resources;
+        this.resourceStates = resourceStates;
     }
 
     public String getMessage() {
@@ -32,7 +32,7 @@ public class PhaseException extends Exception {
             errorMessage.append(System.getProperty("line.separator"));
             Throwable throwable = (Throwable) exceptions.get(i);
             String message = throwable.getMessage();
-            XAResourceHolderState holderState = (XAResourceHolderState) resources.get(i);
+            XAResourceHolderState holderState = (XAResourceHolderState) resourceStates.get(i);
 
             if (holderState != null) {
                 errorMessage.append(" [");
@@ -68,7 +68,7 @@ public class PhaseException extends Exception {
      * Indices of both list always match a resource against the exception it threw.
      * @return the list of resource which threw an exception during a phase execution.
      */
-    public List getResources() {
-        return resources;
+    public List getResourceStates() {
+        return resourceStates;
     }
 }

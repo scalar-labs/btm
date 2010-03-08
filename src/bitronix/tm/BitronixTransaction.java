@@ -102,12 +102,19 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         Iterator statesForGtridIt = statesForGtrid.values().iterator();
 
         boolean result = false;
+        List exceptions = new ArrayList();
+        List resourceStates = new ArrayList();
         while (statesForGtridIt.hasNext()) {
-           XAResourceHolderState resourceHolderState = (XAResourceHolderState) statesForGtridIt.next();
-
-            // TODO: exceptions cannot be left thrown out until the while loop is over
-            result &= delistResource(resourceHolderState, flag);
+            XAResourceHolderState resourceHolderState = (XAResourceHolderState) statesForGtridIt.next();
+            try {
+                result &= delistResource(resourceHolderState, flag);
+            } catch (BitronixSystemException ex) {
+                exceptions.add(ex);
+                resourceStates.add(resourceHolderState);
+            }
         }
+        if (!exceptions.isEmpty())
+            throw new BitronixMultiSystemException("error delisting resource(s)", exceptions, resourceStates);
 
         return result;
     }
@@ -395,8 +402,8 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
             exceptions.addAll(preparePhaseEx.getExceptions());
             exceptions.addAll(rollbackPhaseEx.getExceptions());
-            resources.addAll(preparePhaseEx.getResources());
-            resources.addAll(rollbackPhaseEx.getResources());
+            resources.addAll(preparePhaseEx.getResourceStates());
+            resources.addAll(rollbackPhaseEx.getResourceStates());
 
             throw new BitronixSystemException("transaction partially prepared and only partially rolled back. Some resources might be left in doubt !", new PhaseException(exceptions, resources));
         }

@@ -92,7 +92,7 @@ public class Committer extends AbstractPhaseEngine {
 
     private void throwException(String message, PhaseException phaseException, int totalResourceCount) throws HeuristicMixedException, HeuristicRollbackException {
         List exceptions = phaseException.getExceptions();
-        List resources = phaseException.getResources();
+        List resources = phaseException.getResourceStates();
 
         boolean hazard = false;
         List heuristicResources = new ArrayList();
