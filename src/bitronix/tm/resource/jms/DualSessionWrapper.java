@@ -118,23 +118,26 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
         if (log.isDebugEnabled()) log.debug("closing " + this);
 
-        //TODO: even if delisting fails, requeuing should be done or we'll have a session leak here
-
         // delisting
         try {
             TransactionContextHelper.delistFromCurrentTransaction(this, pooledConnection.getPoolingConnectionFactory());
-        } catch (BitronixRollbackSystemException ex) {
+        }
+        catch (BitronixRollbackSystemException ex) {
             throw (JMSException) new TransactionRolledBackException("unilateral rollback of " + this).initCause(ex);
-        } catch (SystemException ex) {
+        }
+        catch (SystemException ex) {
             throw (JMSException) new JMSException("error delisting " + this).initCause(ex);
         }
-
-        // requeuing
-        try {
-            TransactionContextHelper.requeue(this, pooledConnection.getPoolingConnectionFactory());
-        } catch (BitronixSystemException ex) {
-            throw (JMSException) new JMSException("error requeueing " + this).initCause(ex);
+        finally {
+            // requeuing
+            try {
+                TransactionContextHelper.requeue(this, pooledConnection.getPoolingConnectionFactory());
+            }
+            catch (BitronixSystemException ex) {
+                log.error("error requeuing " + this, ex);
+            }
         }
+
     }
 
     public Date getLastReleaseDate() {

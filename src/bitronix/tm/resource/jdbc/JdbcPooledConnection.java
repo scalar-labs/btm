@@ -175,40 +175,40 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     }
 
     protected void release() throws SQLException {
-        --usageCount;
-
         if (log.isDebugEnabled()) log.debug("releasing to pool " + this);
-
-        //TODO: even if delisting fails, requeuing should be done or we'll have a connection leak here
+        --usageCount;
 
         // delisting
         try {
             TransactionContextHelper.delistFromCurrentTransaction(this, poolingDataSource);
-        } catch (BitronixRollbackSystemException ex) {
+        }
+        catch (BitronixRollbackSystemException ex) {
             throw (SQLException) new SQLException("unilateral rollback of " + this).initCause(ex);
-        } catch (SystemException ex) {
+        }
+        catch (SystemException ex) {
             throw (SQLException) new SQLException("error delisting " + this).initCause(ex);
         }
+        finally {
+            // Only requeue a connection if it is no longer in use.  In the case of non-shared connections,
+            // usageCount will always be 0 here, so the default behavior is unchanged.
+            if (usageCount == 0) {
+                try {
+                    TransactionContextHelper.requeue(this, poolingDataSource);
+                } catch (BitronixSystemException ex) {
+                    // Requeue failed, restore the usageCount to previous value (see testcase
+                    // NewJdbcStrangeUsageMockTest.testClosingSuspendedConnectionsInDifferentContext).
+                    // This can happen when a close is attempted while the connection is participating
+                    // in a global transaction.
+                    usageCount++;
+                    log.error("error requeuing " + this, ex);
+                }
 
-        // Only requeue a connection if it is no longer in use.  In the case of non-shared connections,
-        // usageCount will always be 0 here, so the default behavior is unchanged.
-        if (usageCount == 0) {
-            try {
-                TransactionContextHelper.requeue(this, poolingDataSource);
-            } catch (BitronixSystemException ex) {
-                // Requeue failed, restore the usageCount to previous value (see testcase 
-                // NewJdbcStrangeUsageMockTest.testClosingSuspendedConnectionsInDifferentContext).
-                // This can happen when a close is attempted while the connection is participating
-                // in a global transaction.
-                usageCount++;
-                throw (SQLException) new SQLException("error requeueing " + this).initCause(ex);
+                if (log.isDebugEnabled()) log.debug("released to pool " + this);
             }
-    
-            if (log.isDebugEnabled()) log.debug("released to pool " + this);
-        }
-        else {
-            if (log.isDebugEnabled()) log.debug("not releasing " + this + " to pool yet, connection is still shared");
-        }
+            else {
+                if (log.isDebugEnabled()) log.debug("not releasing " + this + " to pool yet, connection is still shared");
+            }
+        } // finally
     }
 
     public XAResource getXAResource() {
