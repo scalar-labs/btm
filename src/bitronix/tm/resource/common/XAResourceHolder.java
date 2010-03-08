@@ -54,4 +54,6 @@ public interface XAResourceHolder extends XAStatefulHolder {
      */
     public boolean hasStateForXAResource(XAResourceHolder xaResourceHolder);
 
+    public ResourceBean getResourceBean();
+
 }

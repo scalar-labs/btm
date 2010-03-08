@@ -36,6 +36,10 @@ public class RecoveryXAResourceHolder extends AbstractXAResourceHolder {
         return xaResourceHolder.getXAResource();
     }
 
+    public ResourceBean getResourceBean() {
+        return null;
+    }
+
     public List getXAResourceHolders() {
         return null;
     }

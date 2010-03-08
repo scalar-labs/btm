@@ -215,6 +215,10 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         return xaResource;
     }
 
+    public ResourceBean getResourceBean() {
+        return getPoolingDataSource();
+    }
+
     public PoolingDataSource getPoolingDataSource() {
         return poolingDataSource;
     }

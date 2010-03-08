@@ -64,9 +64,10 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         XAResourceHolder resourceHolder = ResourceRegistrar.findXAResourceHolder(xaResource);
         if (resourceHolder == null)
             throw new BitronixSystemException("unknown XAResource " + xaResource + ", it does not belong to a registered resource");
-        XAResourceHolderState resourceHolderState = resourceHolder.getXAResourceHolderState(resourceManager.getGtrid());
 
-        // resource timeout must be set here for manually enlisted resources to properly receive it
+        XAResourceHolderState resourceHolderState = new XAResourceHolderState(resourceHolder, resourceHolder.getResourceBean());
+
+        // resource timeout must be set here so manually enlisted resources can receive it
         resourceHolderState.setTransactionTimeoutDate(timeoutDate);
 
         try {
@@ -80,6 +81,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             throw new BitronixSystemException("cannot enlist " + resourceHolderState + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
         }
 
+        resourceHolder.putXAResourceHolderState(resourceManager.getGtrid(), resourceHolderState);
         return true;
     }
 
@@ -91,10 +93,10 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         if (isWorking())
             throw new IllegalStateException("transaction is being committed or rolled back, cannot delist any resource now");
 
-        XAResourceHolder XAResourceHolder = ResourceRegistrar.findXAResourceHolder(xaResource);
-        if (XAResourceHolder == null)
+        XAResourceHolder resourceHolder = ResourceRegistrar.findXAResourceHolder(xaResource);
+        if (resourceHolder == null)
             throw new BitronixSystemException("unknown XAResource " + xaResource + ", it does not belong to a registered resource");
-        XAResourceHolderState resourceHolderState = XAResourceHolder.getXAResourceHolderState(resourceManager.getGtrid());
+        XAResourceHolderState resourceHolderState = resourceHolder.getXAResourceHolderState(resourceManager.getGtrid());
 
         try {
             return resourceManager.delist(resourceHolderState, flag);

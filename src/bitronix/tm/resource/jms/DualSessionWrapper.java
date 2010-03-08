@@ -336,6 +336,10 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return xaResource;
     }
 
+    public ResourceBean getResourceBean() {
+        return getPoolingConnectionFactory();
+    }
+
     /* XAStatefulHolder implementation */
 
     public List getXAResourceHolders() {

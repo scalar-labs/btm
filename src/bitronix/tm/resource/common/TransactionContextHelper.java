@@ -45,7 +45,7 @@ public class TransactionContextHelper {
 
             XAResourceHolderState alreadyEnlistedXAResourceHolderState = TransactionContextHelper.getAlreadyEnlistedXAResourceHolderState(xaResourceHolder, currentTransaction);
             if (alreadyEnlistedXAResourceHolderState == null || alreadyEnlistedXAResourceHolderState.isEnded()) {
-                enlist(xaResourceHolder, bean, currentTransaction);
+                currentTransaction.enlistResource(xaResourceHolder.getXAResource());
             }
             else if (log.isDebugEnabled()) log.debug("avoiding re-enlistment of already enlisted but not ended resource " + alreadyEnlistedXAResourceHolderState);
         } // if currentTransaction != null
@@ -245,28 +245,6 @@ public class TransactionContextHelper {
                 return xaResourceHolderState;
         }
         return null;
-    }
-
-    private static void enlist(XAResourceHolder xaResourceHolder, ResourceBean bean, BitronixTransaction currentTransaction) throws RollbackException, SystemException {
-        Uid gtrid = currentTransaction.getResourceManager().getGtrid();
-        try {
-            XAResourceHolderState xaResourceHolderState = new XAResourceHolderState(xaResourceHolder, bean);
-            if (log.isDebugEnabled()) log.debug("enlisting resource " + xaResourceHolderState + " into " + currentTransaction);
-            xaResourceHolder.putXAResourceHolderState(gtrid, xaResourceHolderState);
-            currentTransaction.enlistResource(xaResourceHolderState.getXAResource());
-        }
-        catch (RollbackException ex) {
-            xaResourceHolder.removeXAResourceHolderState(gtrid);
-            throw ex;
-        }
-        catch (IllegalStateException ex) {
-            xaResourceHolder.removeXAResourceHolderState(gtrid);
-            throw ex;
-        }
-        catch (SystemException ex) {
-            xaResourceHolder.removeXAResourceHolderState(gtrid);
-            throw ex;
-        }
     }
 
 }
