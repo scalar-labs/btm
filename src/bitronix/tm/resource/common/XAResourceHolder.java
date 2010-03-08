@@ -1,9 +1,11 @@
 package bitronix.tm.resource.common;
 
+import bitronix.tm.BitronixXid;
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.utils.Uid;
 
 import javax.transaction.xa.XAResource;
+import java.util.Map;
 
 /**
  * {@link XAResource} wrappers must implement this interface. It defines a way to get access to the transactional
@@ -29,22 +31,22 @@ public interface XAResourceHolder extends XAStatefulHolder {
      * @param gtrid the GTRID of the transaction state to add.
      * @return the {@link XAResourceHolderState}.
      */
-    public XAResourceHolderState getXAResourceHolderState(Uid gtrid);
+    public Map getXAResourceHolderState(Uid gtrid);
 
     /**
      * Set the {@link XAResourceHolderState} of this wrapped resource.
-     * @param gtrid the GTRID of the transaction state to add.
+     * @param xid the Xid of the transaction state to add.
      * @param xaResourceHolderState the {@link XAResourceHolderState} to set.
      */
-    public void putXAResourceHolderState(Uid gtrid, XAResourceHolderState xaResourceHolderState);
+    public void putXAResourceHolderState(BitronixXid xid, XAResourceHolderState xaResourceHolderState);
 
 
     /**
      * Remove the specified state from this wrapped resource.
-     * @param gtrid the GTRID of the transaction state to remove.
+     * @param xid the Xid of the transaction state to remove.
      * @return true if the state actually existed before removal, false otherwise.
      */
-    public void removeXAResourceHolderState(Uid gtrid);
+    public void removeXAResourceHolderState(BitronixXid xid);
 
     /**
      * Check if this {@link XAResourceHolder} contains a state for a specific {@link XAResourceHolder}.
@@ -54,6 +56,10 @@ public interface XAResourceHolder extends XAStatefulHolder {
      */
     public boolean hasStateForXAResource(XAResourceHolder xaResourceHolder);
 
+    /**
+     * Get the ResourceBean which created this XAResourceHolder.
+     * @return the ResourceBean which created this XAResourceHolder.
+     */
     public ResourceBean getResourceBean();
 
 }

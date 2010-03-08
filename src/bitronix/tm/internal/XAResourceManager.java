@@ -1,6 +1,7 @@
 package bitronix.tm.internal;
 
 import bitronix.tm.BitronixXid;
+import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.utils.Scheduler;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;
@@ -135,14 +136,29 @@ public class XAResourceManager {
      * @throws XAException if the resource threw an exception during resume.
      */
     public void resume() throws XAException {
+        // all XAResource needs to be re-enlisted but this must happen
+        // outside the Schduler's iteration as enlist() can change the
+        // collection's content and confuse the iterator.
+        List toBeReEnlisted = new ArrayList();
+
         Iterator it = resources.iterator();
         while (it.hasNext()) {
             XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
             if (log.isDebugEnabled()) log.debug("resuming " + xaResourceHolderState);
 
-            // all XAResource needs to be re-enlisted.
+            // If a prepared statement is (re-)used after suspend/resume is performed its XAResource needs to be
+            // re-enlisted. This must be done outside this loop or that will confuse the iterator!
+            toBeReEnlisted.add(new XAResourceHolderState(xaResourceHolderState));
+        }
+
+        if (toBeReEnlisted.size() > 0 && log.isDebugEnabled()) log.debug("re-enlisting " + toBeReEnlisted.size() + " resource(s)");
+        for (int i = 0; i < toBeReEnlisted.size(); i++) {
+            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) toBeReEnlisted.get(i);
+
+            if (log.isDebugEnabled()) log.debug("re-enlisting resource " + xaResourceHolderState);
             try {
                 enlist(xaResourceHolderState);
+                xaResourceHolderState.getXAResourceHolder().putXAResourceHolderState(xaResourceHolderState.getXid(), xaResourceHolderState);
             } catch (BitronixSystemException ex) {
                 throw new BitronixXAException("error re-enlisting resource during resume: " + xaResourceHolderState, XAException.XAER_RMERR, ex);
             }
@@ -211,7 +227,7 @@ public class XAResourceManager {
             XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
 
             // clear out the current state
-            xaResourceHolderState.getXAResourceHolder().removeXAResourceHolderState(gtrid);
+            xaResourceHolderState.getXAResourceHolder().removeXAResourceHolderState(xaResourceHolderState.getXid());
 
             it.remove();
         }

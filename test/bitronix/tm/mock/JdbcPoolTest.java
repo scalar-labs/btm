@@ -19,6 +19,8 @@ public class JdbcPoolTest extends TestCase {
     private PoolingDataSource pds;
 
     protected void setUp() throws Exception {
+        TransactionManagerServices.getTransactionManager();
+
         pds = new PoolingDataSource();
         pds.setMinPoolSize(1);
         pds.setMaxPoolSize(2);
@@ -33,6 +35,8 @@ public class JdbcPoolTest extends TestCase {
 
     protected void tearDown() throws Exception {
         pds.close();
+
+        TransactionManagerServices.getTransactionManager().shutdown();        
     }
 
     public void testReEnteringRecovery() throws Exception {
@@ -138,7 +142,7 @@ public class JdbcPoolTest extends TestCase {
         Connection c2 = pds.getConnection();
         c2.createStatement();
 
-         try {
+        try {
             c2.commit();
             fail("expected SQLException");
         } catch (SQLException ex) {

@@ -16,6 +16,7 @@ import javax.transaction.SystemException;
 import javax.transaction.xa.XAResource;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Helper class that contains static logic common accross all resource types.
@@ -43,12 +44,12 @@ public class TransactionContextHelper {
             if (currentTransaction.timedOut())
                 throw new BitronixSystemException("transaction timed out");
 
-            XAResourceHolderState alreadyEnlistedXAResourceHolderState = TransactionContextHelper.getAlreadyEnlistedXAResourceHolderState(xaResourceHolder, currentTransaction);
+            XAResourceHolderState alreadyEnlistedXAResourceHolderState = TransactionContextHelper.getLatestAlreadyEnlistedXAResourceHolderState(xaResourceHolder, currentTransaction);
             if (alreadyEnlistedXAResourceHolderState == null || alreadyEnlistedXAResourceHolderState.isEnded()) {
                 currentTransaction.enlistResource(xaResourceHolder.getXAResource());
             }
             else if (log.isDebugEnabled()) log.debug("avoiding re-enlistment of already enlisted but not ended resource " + alreadyEnlistedXAResourceHolderState);
-        } // if currentTransaction != null
+        }
         else {
             if (bean.getAllowLocalTransactions()) {
                 if (log.isDebugEnabled()) log.debug("in local transaction context, skipping enlistment");
@@ -59,6 +60,37 @@ public class TransactionContextHelper {
                         "your resource supports this.");
         }
     }
+
+    private static XAResourceHolderState getLatestAlreadyEnlistedXAResourceHolderState(XAResourceHolder xaResourceHolder, BitronixTransaction currentTransaction) {
+        if (currentTransaction == null)
+            return null;
+        Map statesForGtrid = xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid());
+        if (statesForGtrid == null)
+            return null;
+        Iterator statesForGtridIt = statesForGtrid.values().iterator();
+
+        long oldest = Long.MIN_VALUE;
+        XAResourceHolderState result = null;
+
+        while (statesForGtridIt.hasNext()) {
+            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) statesForGtridIt.next();
+
+            if (xaResourceHolderState != null && xaResourceHolderState.getXid() != null) {
+                BitronixXid bitronixXid = xaResourceHolderState.getXid();
+                Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
+                Uid currentTransactionGtrid = currentTransaction.getResourceManager().getGtrid();
+
+                //TODO: the timestamp comparison of the BQUAL isn't very robust IMHO, try to find something better
+                if (currentTransactionGtrid.equals(resourceGtrid) && bitronixXid.getBranchQualifierUid().extractTimestamp() > oldest) {
+                    result = xaResourceHolderState;
+                    oldest = bitronixXid.getBranchQualifierUid().extractTimestamp();
+                }
+            }
+        }
+
+        return result;
+    }
+
 
     /**
      * Delist the {@link XAResourceHolder} from the current transaction or do nothing if there is no global transaction
@@ -74,15 +106,20 @@ public class TransactionContextHelper {
         // End resource as eagerly as possible. This allows to release connections to the pool much earlier
         // with resources fully supporting transaction interleaving.
         if (isInEnlistingGlobalTransactionContext(xaResourceHolder, currentTransaction) && !bean.getDeferConnectionRelease()) {
-            XAResourceHolderState xaResourceHolderState = xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid());
-            if (!xaResourceHolderState.isEnded()) {
-                if (log.isDebugEnabled()) log.debug("delisting resource " + xaResourceHolderState + " from " + currentTransaction);
+            Map statesForGtrid = xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid());
+            Iterator statesForGtridIt = statesForGtrid.values().iterator();
+            while (statesForGtridIt.hasNext()) {
+                XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) statesForGtridIt.next();
 
-                // Watch out: the delistResource() call might throw a BitronixRollbackSystemException to indicate a unilateral rollback.
-                // Is there something that should be done here in this regard ?
-                currentTransaction.delistResource(xaResourceHolderState.getXAResource(), XAResource.TMSUCCESS);
+                if (!xaResourceHolderState.isEnded()) {
+                    if (log.isDebugEnabled()) log.debug("delisting resource " + xaResourceHolderState + " from " + currentTransaction);
+
+                    // Watch out: the delistResource() call might throw a BitronixRollbackSystemException to indicate a unilateral rollback.
+                    currentTransaction.delistResource(xaResourceHolderState.getXAResource(), XAResource.TMSUCCESS);
+                }
+                else if (log.isDebugEnabled()) log.debug("avoiding delistment of not enlisted resource " + xaResourceHolderState);
             }
-            else if (log.isDebugEnabled()) log.debug("avoiding delistment of not enlisted resource " + xaResourceHolderState);
+
         } // isInEnlistingGlobalTransactionContext
     }
 
@@ -208,13 +245,9 @@ public class TransactionContextHelper {
 
     private static boolean isInEnlistingGlobalTransactionContext(XAResourceHolder xaResourceHolder, BitronixTransaction currentTransaction) {
         boolean globalTransactionMode = false;
+        //TODO: there is no concept of current transaction anymore on a XAResourceHolder. How to implement this?
         if (currentTransaction != null && xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid()) != null) {
-            Uid currentTxGtrid = currentTransaction.getResourceManager().getGtrid();
-            if (log.isDebugEnabled()) log.debug("current transaction GTRID is [" + currentTxGtrid + "]");
-            BitronixXid bitronixXid = xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid()).getXid();
-            Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
-            if (log.isDebugEnabled()) log.debug("resource GTRID is [" + resourceGtrid + "]");
-            globalTransactionMode = currentTxGtrid.equals(resourceGtrid);
+            globalTransactionMode = true;
         }
         if (log.isDebugEnabled()) log.debug("resource is " + (globalTransactionMode ? "" : "not ") + "in enlisting global transaction context: " + xaResourceHolder);
         return globalTransactionMode;
@@ -233,18 +266,6 @@ public class TransactionContextHelper {
         }
 
         return false;
-    }
-
-    private static XAResourceHolderState getAlreadyEnlistedXAResourceHolderState(XAResourceHolder xaResourceHolder, BitronixTransaction currentTransaction) {
-        XAResourceHolderState xaResourceHolderState = xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid());
-        if (xaResourceHolderState != null && xaResourceHolderState.getXid() != null && currentTransaction != null) {
-            BitronixXid bitronixXid = xaResourceHolderState.getXid();
-            Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
-            Uid currentTransactionGtrid = currentTransaction.getResourceManager().getGtrid();
-            if (currentTransactionGtrid.equals(resourceGtrid))
-                return xaResourceHolderState;
-        }
-        return null;
     }
 
 }

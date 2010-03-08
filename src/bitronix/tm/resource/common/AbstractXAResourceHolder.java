@@ -1,6 +1,7 @@
 package bitronix.tm.resource.common;
 
 import bitronix.tm.BitronixTransaction;
+import bitronix.tm.BitronixXid;
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
@@ -23,40 +24,72 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
 
     private final Map xaResourceHolderStates = Collections.synchronizedMap(new HashMap());
 
-    public XAResourceHolderState getXAResourceHolderState(Uid gtrid) {
+    public Map getXAResourceHolderState(Uid gtrid) {
         synchronized (xaResourceHolderStates) {
-            return (XAResourceHolderState) xaResourceHolderStates.get(gtrid);
+            return (Map) xaResourceHolderStates.get(gtrid);
         }
     }
 
-    public void putXAResourceHolderState(Uid gtrid, XAResourceHolderState xaResourceHolderState) {
+    public void putXAResourceHolderState(BitronixXid xid, XAResourceHolderState xaResourceHolderState) {
         synchronized (xaResourceHolderStates) {
-            if (log.isDebugEnabled()) log.debug("putting XAResourceHolderState [" + xaResourceHolderState + "] of GTRID [" + gtrid + "] on " + this);
+            if (log.isDebugEnabled()) log.debug("putting XAResourceHolderState [" + xaResourceHolderState + "] on " + this);
+            Uid gtrid = xid.getGlobalTransactionIdUid();
+            Uid bqual = xid.getBranchQualifierUid();
+
             if (!xaResourceHolderStates.containsKey(gtrid)) {
                 if (log.isDebugEnabled()) log.debug("GTRID [" + gtrid + "] previously unknown to " + this + ", adding it to the resource's transactions list");
-                xaResourceHolderStates.put(gtrid, xaResourceHolderState);
+
+                Map statesForGtrid = new HashMap();
+                statesForGtrid.put(bqual, xaResourceHolderState);
+                xaResourceHolderStates.put(gtrid, statesForGtrid);
             }
-            else log.warn("tried to put again known GTRID [" + gtrid + "] on " + this + " - Bug?");
+            else {
+                if (log.isDebugEnabled()) log.debug("GTRID [" + gtrid + "] previously known to " + this + ", adding it to the resource's transactions list");
+
+                Map statesForGtrid = (Map) xaResourceHolderStates.get(gtrid);
+                statesForGtrid.put(bqual, xaResourceHolderState);
+            }
         }
     }
 
-    public void removeXAResourceHolderState(Uid gtrid) {
+    public void removeXAResourceHolderState(BitronixXid xid) {
         synchronized (xaResourceHolderStates) {
-            if (log.isDebugEnabled()) log.debug("removing XAResourceHolderState of GTRID [" + gtrid + "] from " + this);
-            Object removed = xaResourceHolderStates.remove(gtrid);
-            if (removed == null) log.warn("tried to remove unknown GTRID [" + gtrid + "] from " + this + " - Bug?");
+            if (log.isDebugEnabled()) log.debug("removing XAResourceHolderState of xid " + xid + " from " + this);
+            Uid gtrid = xid.getGlobalTransactionIdUid();
+            Uid bqual = xid.getBranchQualifierUid();
+
+            Map statesForGtrid = (Map) xaResourceHolderStates.get(gtrid);
+            if (statesForGtrid == null) {
+                log.warn("tried to remove unknown GTRID [" + gtrid + "] from " + this + " - Bug?");
+                return;
+            }
+
+            Object removed = statesForGtrid.remove(bqual);
+            if (removed == null) {
+                log.warn("tried to remove unknown BQUAL [" + bqual + "] from " + this + " - Bug?");
+                return;
+            }
+
+            if (statesForGtrid.isEmpty()) {
+                xaResourceHolderStates.remove(gtrid);
+            }
         }
     }
 
     public boolean hasStateForXAResource(XAResourceHolder xaResourceHolder) {
         synchronized (xaResourceHolderStates) {
-            Iterator it = xaResourceHolderStates.values().iterator();
-            while (it.hasNext()) {
-                XAResourceHolderState otherXaResourceHolderState = (XAResourceHolderState) it.next();
+            Iterator statesForGtridIt = xaResourceHolderStates.values().iterator();
+            while (statesForGtridIt.hasNext()) {
+                Map statesForGtrid = (Map) statesForGtridIt.next();
 
-                if (otherXaResourceHolderState.getXAResource() == xaResourceHolder.getXAResource()) {
-                    if (log.isDebugEnabled()) log.debug("resource " + xaResourceHolder + " is enlisted in another transaction with " + otherXaResourceHolderState.getXid().toString());
-                    return true;
+                Iterator statesForBqualIt = statesForGtrid.values().iterator();
+                while (statesForBqualIt.hasNext()) {
+                    XAResourceHolderState otherXaResourceHolderState = (XAResourceHolderState) statesForBqualIt.next();
+
+                    if (otherXaResourceHolderState.getXAResource() == xaResourceHolder.getXAResource()) {
+                        if (log.isDebugEnabled()) log.debug("resource " + xaResourceHolder + " is enlisted in another transaction with " + otherXaResourceHolderState.getXid().toString());
+                        return true;
+                    }
                 }
             }
 
@@ -76,11 +109,18 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
             if (gtrid == null)
                 return false;
 
-            XAResourceHolderState xaResourceHolderState = getXAResourceHolderState(gtrid);
-            return xaResourceHolderState != null &&
-                    xaResourceHolderState.isStarted() &&
-                    !xaResourceHolderState.isSuspended() &&
-                    !xaResourceHolderState.isEnded();
+            Map statesForGtrid = (Map) xaResourceHolderStates.get(gtrid);
+            Iterator statesForBqualIt = statesForGtrid.values().iterator();
+            while (statesForBqualIt.hasNext()) {
+                XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) statesForBqualIt.next();
+
+                if (xaResourceHolderState != null &&
+                        xaResourceHolderState.isStarted() &&
+                        !xaResourceHolderState.isSuspended() &&
+                        !xaResourceHolderState.isEnded())
+                    return true;
+            }
+            return false;
         }
     }
 

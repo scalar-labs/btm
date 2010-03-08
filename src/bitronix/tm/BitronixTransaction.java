@@ -81,7 +81,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             throw new BitronixSystemException("cannot enlist " + resourceHolderState + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
         }
 
-        resourceHolder.putXAResourceHolderState(resourceManager.getGtrid(), resourceHolderState);
+        resourceHolder.putXAResourceHolderState(resourceHolderState.getXid(), resourceHolderState);
         return true;
     }
 
@@ -96,11 +96,28 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         XAResourceHolder resourceHolder = ResourceRegistrar.findXAResourceHolder(xaResource);
         if (resourceHolder == null)
             throw new BitronixSystemException("unknown XAResource " + xaResource + ", it does not belong to a registered resource");
-        XAResourceHolderState resourceHolderState = resourceHolder.getXAResourceHolderState(resourceManager.getGtrid());
 
+
+        Map statesForGtrid = resourceHolder.getXAResourceHolderState(resourceManager.getGtrid());
+        Iterator statesForGtridIt = statesForGtrid.values().iterator();
+
+        boolean result = false;
+        while (statesForGtridIt.hasNext()) {
+           XAResourceHolderState resourceHolderState = (XAResourceHolderState) statesForGtridIt.next();
+
+            // TODO: exceptions cannot be left thrown out until the while loop is over
+            result &= delistResource(resourceHolderState, flag);
+        }
+
+        return result;
+    }
+
+    private boolean delistResource(XAResourceHolderState resourceHolderState, int flag) throws BitronixSystemException {
         try {
-            return resourceManager.delist(resourceHolderState, flag);
-        } catch (XAException ex) {
+           return resourceManager.delist(resourceHolderState, flag);
+        }
+        catch (XAException ex) {
+
             if (BitronixXAException.isUnilateralRollback(ex)) {
                 // if the resource unilaterally rolled back, the transaction will never be able to commit -> mark it as rollback only
                 setStatus(Status.STATUS_MARKED_ROLLBACK);
@@ -340,7 +357,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             if (!resourceHolderState.isEnded()) {
                 if (log.isDebugEnabled()) log.debug("found unclosed resource to delist: " + resourceHolderState);
                 try {
-                    delistResource(resourceHolderState.getXAResource(), flag);
+                    delistResource(resourceHolderState, flag);
                 } catch (BitronixRollbackSystemException ex) {
                     rolledBackResources.add(resourceHolderState);
                     if (log.isDebugEnabled()) log.debug("resource unilaterally rolled back: " + resourceHolderState, ex);
