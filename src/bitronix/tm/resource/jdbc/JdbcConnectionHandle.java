@@ -57,7 +57,7 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
 
         if (jdbcPooledConnection.getPoolingDataSource().getAutomaticEnlistingEnabled()) {
             try {
-                TransactionContextHelper.enlistInCurrentTransaction(jdbcPooledConnection, jdbcPooledConnection.getPoolingDataSource());
+                TransactionContextHelper.enlistInCurrentTransaction(jdbcPooledConnection);
             } catch (SystemException ex) {
                 throw (SQLException) new SQLException("error enlisting " + this).initCause(ex);
             } catch (RollbackException ex) {

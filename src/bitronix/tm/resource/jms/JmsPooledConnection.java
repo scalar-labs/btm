@@ -17,7 +17,7 @@ import java.util.*;
  * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
  *
  * @author lorban
- * TODO: how can the JMS connection properly be tested ?
+ * TODO: how can the JMS connection be accurately tested?
  */
 public class JmsPooledConnection extends AbstractXAStatefulHolder implements JmsPooledConnectionMBean {
 

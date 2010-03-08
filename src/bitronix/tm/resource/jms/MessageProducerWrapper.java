@@ -39,7 +39,7 @@ public class MessageProducerWrapper implements MessageProducer {
     protected void enlistResource() throws JMSException {
         if (poolingConnectionFactory.getAutomaticEnlistingEnabled()) {
             try {
-                TransactionContextHelper.enlistInCurrentTransaction(session, poolingConnectionFactory);
+                TransactionContextHelper.enlistInCurrentTransaction(session);
             } catch (SystemException ex) {
                 throw (JMSException) new JMSException("error enlisting " + this).initCause(ex);
             } catch (RollbackException ex) {

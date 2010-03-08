@@ -32,18 +32,20 @@ public class TransactionContextHelper {
      * Enlist the {@link XAResourceHolder} in the current transaction or do nothing if there is no global transaction
      * context for this thread.
      * @param xaResourceHolder the {@link XAResourceHolder} to enlist.
-     * @param bean the {@link ResourceBean} of the {@link XAResourceHolder}.
      * @throws SystemException if an internal error happens.
      * @throws RollbackException if the current transaction has been marked as rollback only.
      */
-    public static void enlistInCurrentTransaction(XAResourceHolder xaResourceHolder, ResourceBean bean) throws SystemException, RollbackException {
+    public static void enlistInCurrentTransaction(XAResourceHolder xaResourceHolder) throws SystemException, RollbackException {
         BitronixTransaction currentTransaction = currentTransaction();
+        ResourceBean bean = xaResourceHolder.getResourceBean();
         if (log.isDebugEnabled()) log.debug("enlisting " + xaResourceHolder + " into " + currentTransaction);
 
         if (currentTransaction != null) {
             if (currentTransaction.timedOut())
                 throw new BitronixSystemException("transaction timed out");
 
+            // in case multiple unjoined branches of the current transaction have run on the resource,
+            // only the last one counts as all the first ones are ended already
             XAResourceHolderState alreadyEnlistedXAResourceHolderState = TransactionContextHelper.getLatestAlreadyEnlistedXAResourceHolderState(xaResourceHolder, currentTransaction);
             if (alreadyEnlistedXAResourceHolderState == null || alreadyEnlistedXAResourceHolderState.isEnded()) {
                 currentTransaction.enlistResource(xaResourceHolder.getXAResource());
@@ -61,46 +63,15 @@ public class TransactionContextHelper {
         }
     }
 
-    private static XAResourceHolderState getLatestAlreadyEnlistedXAResourceHolderState(XAResourceHolder xaResourceHolder, BitronixTransaction currentTransaction) {
-        if (currentTransaction == null)
-            return null;
-        Map statesForGtrid = xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid());
-        if (statesForGtrid == null)
-            return null;
-        Iterator statesForGtridIt = statesForGtrid.values().iterator();
-
-        long oldest = Long.MIN_VALUE;
-        XAResourceHolderState result = null;
-
-        while (statesForGtridIt.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) statesForGtridIt.next();
-
-            if (xaResourceHolderState != null && xaResourceHolderState.getXid() != null) {
-                BitronixXid bitronixXid = xaResourceHolderState.getXid();
-                Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
-                Uid currentTransactionGtrid = currentTransaction.getResourceManager().getGtrid();
-
-                //TODO: the timestamp comparison of the BQUAL isn't very robust IMHO, try to find something better
-                if (currentTransactionGtrid.equals(resourceGtrid) && bitronixXid.getBranchQualifierUid().extractTimestamp() > oldest) {
-                    result = xaResourceHolderState;
-                    oldest = bitronixXid.getBranchQualifierUid().extractTimestamp();
-                }
-            }
-        }
-
-        return result;
-    }
-
-
     /**
      * Delist the {@link XAResourceHolder} from the current transaction or do nothing if there is no global transaction
      * context for this thread.
      * @param xaResourceHolder the {@link XAResourceHolder} to delist.
-     * @param bean the {@link ResourceBean} of the {@link XAResourceHolder}.
      * @throws SystemException if an internal error happens.
      */
-    public static void delistFromCurrentTransaction(XAResourceHolder xaResourceHolder, ResourceBean bean) throws SystemException {
+    public static void delistFromCurrentTransaction(XAResourceHolder xaResourceHolder) throws SystemException {
         BitronixTransaction currentTransaction = currentTransaction();
+        ResourceBean bean = xaResourceHolder.getResourceBean();
         if (log.isDebugEnabled()) log.debug("delisting " + xaResourceHolder + " from " + currentTransaction);
 
         // End resource as eagerly as possible. This allows to release connections to the pool much earlier
@@ -245,7 +216,6 @@ public class TransactionContextHelper {
 
     private static boolean isInEnlistingGlobalTransactionContext(XAResourceHolder xaResourceHolder, BitronixTransaction currentTransaction) {
         boolean globalTransactionMode = false;
-        //TODO: there is no concept of current transaction anymore on a XAResourceHolder. How to implement this?
         if (currentTransaction != null && xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid()) != null) {
             globalTransactionMode = true;
         }
@@ -266,6 +236,36 @@ public class TransactionContextHelper {
         }
 
         return false;
+    }
+
+    private static XAResourceHolderState getLatestAlreadyEnlistedXAResourceHolderState(XAResourceHolder xaResourceHolder, BitronixTransaction currentTransaction) {
+        if (currentTransaction == null)
+            return null;
+        Map statesForGtrid = xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid());
+        if (statesForGtrid == null)
+            return null;
+        Iterator statesForGtridIt = statesForGtrid.values().iterator();
+
+        long oldest = Long.MIN_VALUE;
+        XAResourceHolderState result = null;
+
+        while (statesForGtridIt.hasNext()) {
+            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) statesForGtridIt.next();
+
+            if (xaResourceHolderState != null && xaResourceHolderState.getXid() != null) {
+                BitronixXid bitronixXid = xaResourceHolderState.getXid();
+                Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
+                Uid currentTransactionGtrid = currentTransaction.getResourceManager().getGtrid();
+
+                //TODO: the timestamp comparison of the BQUAL isn't very robust IMHO, try to find something better
+                if (currentTransactionGtrid.equals(resourceGtrid) && bitronixXid.getBranchQualifierUid().extractTimestamp() > oldest) {
+                    result = xaResourceHolderState;
+                    oldest = bitronixXid.getBranchQualifierUid().extractTimestamp();
+                }
+            }
+        }
+
+        return result;
     }
 
 }

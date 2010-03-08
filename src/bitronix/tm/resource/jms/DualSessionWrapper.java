@@ -120,7 +120,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
         // delisting
         try {
-            TransactionContextHelper.delistFromCurrentTransaction(this, pooledConnection.getPoolingConnectionFactory());
+            TransactionContextHelper.delistFromCurrentTransaction(this);
         }
         catch (BitronixRollbackSystemException ex) {
             throw (JMSException) new TransactionRolledBackException("unilateral rollback of " + this).initCause(ex);
@@ -467,7 +467,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         if (poolingConnectionFactory.getAutomaticEnlistingEnabled()) {
             getSession(); // make sure the session is created before enlisting it
             try {
-                TransactionContextHelper.enlistInCurrentTransaction(this, poolingConnectionFactory);
+                TransactionContextHelper.enlistInCurrentTransaction(this);
             } catch (SystemException ex) {
                 throw (JMSException) new JMSException("error enlisting " + this).initCause(ex);
             } catch (RollbackException ex) {
