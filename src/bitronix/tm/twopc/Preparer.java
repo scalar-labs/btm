@@ -78,7 +78,7 @@ public class Preparer extends AbstractPhaseEngine {
 
     private void throwException(String message, PhaseException phaseException) throws BitronixRollbackException {
         List exceptions = phaseException.getExceptions();
-        List resources = phaseException.getResources();
+        List resources = phaseException.getResourceStates();
 
         List heuristicResources = new ArrayList();
         List errorResources = new ArrayList();

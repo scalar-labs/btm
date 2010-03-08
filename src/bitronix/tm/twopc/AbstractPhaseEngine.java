@@ -159,7 +159,7 @@ public abstract class AbstractPhaseEngine {
      */
     protected void logFailedResources(PhaseException ex) {
         List exceptions = ex.getExceptions();
-        List resources = ex.getResources();
+        List resources = ex.getResourceStates();
 
         for (int i = 0; i < exceptions.size(); i++) {
             Throwable t = (Throwable) exceptions.get(i);

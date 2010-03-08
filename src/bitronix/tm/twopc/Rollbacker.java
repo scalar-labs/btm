@@ -84,7 +84,7 @@ public class Rollbacker extends AbstractPhaseEngine {
 
     private void throwException(String message, PhaseException phaseException, int totalResourceCount) throws HeuristicMixedException, HeuristicCommitException {
         List exceptions = phaseException.getExceptions();
-        List resources = phaseException.getResources();
+        List resources = phaseException.getResourceStates();
 
         boolean hazard = false;
         List heuristicResources = new ArrayList();
