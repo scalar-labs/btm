@@ -1,6 +1,7 @@
 package bitronix.tm.internal;
 
 import bitronix.tm.BitronixXid;
+import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.utils.Scheduler;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;
@@ -224,9 +225,13 @@ public class XAResourceManager {
         Iterator it = resources.iterator();
         while (it.hasNext()) {
             XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
+            XAResourceHolder resourceHolder = xaResourceHolderState.getXAResourceHolder();
 
             // clear out the current state
-            xaResourceHolderState.getXAResourceHolder().removeXAResourceHolderState(xaResourceHolderState.getXid());
+            resourceHolder.removeXAResourceHolderState(xaResourceHolderState.getXid());
+
+            if (log.isDebugEnabled()) log.debug("resource " + resourceHolder + " has now " +
+                    resourceHolder.getXAResourceHolderState(gtrid).size() + " transaction state(s) left for GTRID [" + gtrid + "]");
 
             it.remove();
         }
