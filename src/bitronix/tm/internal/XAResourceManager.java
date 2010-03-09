@@ -1,7 +1,6 @@
 package bitronix.tm.internal;
 
 import bitronix.tm.BitronixXid;
-import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.utils.Scheduler;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;

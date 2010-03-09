@@ -97,7 +97,6 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         if (resourceHolder == null)
             throw new BitronixSystemException("unknown XAResource " + xaResource + ", it does not belong to a registered resource");
 
-
         Map statesForGtrid = resourceHolder.getXAResourceHolderState(resourceManager.getGtrid());
         Iterator statesForGtridIt = statesForGtrid.values().iterator();
 
@@ -109,12 +108,18 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             try {
                 result &= delistResource(resourceHolderState, flag);
             } catch (BitronixSystemException ex) {
+                if (log.isDebugEnabled()) log.debug("failed to delist resource state " + resourceHolderState);
                 exceptions.add(ex);
                 resourceStates.add(resourceHolderState);
             }
         }
-        if (!exceptions.isEmpty())
-            throw new BitronixMultiSystemException("error delisting resource(s)", exceptions, resourceStates);
+        if (!exceptions.isEmpty()) {
+            BitronixMultiSystemException multiSystemException = new BitronixMultiSystemException("error delisting resource", exceptions, resourceStates);
+            if (!multiSystemException.isUnilateralRollback())
+                throw multiSystemException;
+            else
+                if (log.isDebugEnabled()) log.debug("unilateral rollback of resource " + resourceHolder, multiSystemException);
+        }
 
         return result;
     }
@@ -124,11 +129,10 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
            return resourceManager.delist(resourceHolderState, flag);
         }
         catch (XAException ex) {
+            // if the resource could not be delisted, the transaction must not commit -> mark it as rollback only
+            setStatus(Status.STATUS_MARKED_ROLLBACK);
 
             if (BitronixXAException.isUnilateralRollback(ex)) {
-                // if the resource unilaterally rolled back, the transaction will never be able to commit -> mark it as rollback only
-                setStatus(Status.STATUS_MARKED_ROLLBACK);
-
                 // The resource unilaterally rolled back here. We have to throw an exception to indicate this but
                 // The signature of this method is inherited from javax.transaction.Transaction. Thereof, we have choice
                 // between creating a sub-exception of SystemException or using a RuntimeException. Is that the best way
@@ -236,7 +240,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             try {
                 if (log.isDebugEnabled()) log.debug("rolling back, " + resourceManager.size() + " enlisted resource(s)");
 
-                // TODO: should resources which unilaterally rolled back be rolled back again ?
+                // TODO: should resources which unilaterally rolled back be rolled back again?
                 rollbacker.rollback(this, resourceManager.getAllResources());
 
                 if (log.isDebugEnabled()) log.debug("successfully rolled back " + this);
@@ -369,8 +373,8 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
                     rolledBackResources.add(resourceHolderState);
                     if (log.isDebugEnabled()) log.debug("resource unilaterally rolled back: " + resourceHolderState, ex);
                 } catch (SystemException ex) {
-                    //TODO: if there was an error during delistment -> mark the transaction as rollback only
-                    log.warn("error delisting resource: " + resourceHolderState, ex);
+                    rolledBackResources.add(resourceHolderState);
+                    log.error("error delisting resource: " + resourceHolderState, ex);
                 }
             }
             else
