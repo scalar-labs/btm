@@ -72,6 +72,7 @@ public abstract class AbstractPhaseEngine {
             if (report.getExceptions().size() > 0) {
                 if (log.isDebugEnabled()) log.debug(report.getExceptions().size() + " error(s) happened during execution of position '" + positionKey + "'");
                 positionErrorReports.add(report);
+                break;
             }
             if (log.isDebugEnabled()) log.debug("ran " + resources.size() + " job(s) for position '" + positionKey + "'");
         }

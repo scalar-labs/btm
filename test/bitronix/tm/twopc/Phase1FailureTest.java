@@ -15,6 +15,7 @@ import bitronix.tm.mock.events.*;
 import bitronix.tm.mock.resource.*;
 import bitronix.tm.mock.resource.jdbc.*;
 import bitronix.tm.resource.jdbc.*;
+import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
 
 /**
  * <p></p>
@@ -26,6 +27,7 @@ public class Phase1FailureTest extends TestCase {
     private PoolingDataSource poolingDataSource1;
     private PoolingDataSource poolingDataSource2;
     private PoolingDataSource poolingDataSource3;
+    private PoolingDataSource poolingDataSourceLrc;
     private BitronixTransactionManager tm;
 
     /**
@@ -172,6 +174,84 @@ public class Phase1FailureTest extends TestCase {
         assertEquals("TM haven't properly tried to prepare", 3, prepareEventCount);
         assertEquals("TM haven't properly tried to rollback", 3, rollbackEventCount);
     }
+    
+    /**
+     * Test scenario:
+     *
+     * XAResources: 2
+     * TX timeout: 10s
+     * TX resolution: rollback
+     * XAResource 1 resolution: prepare throws exception XAException.XAER_RMERR
+     * XAResource 2 resolution: it's an LRCXaResource and prepare does not happen on this resource.
+     *
+     * Expected outcome:
+     *   TM fails on resource 1 prepare and throws RollbackException. Prepare must not happen on resource 2. 
+     *   On call to rollback, the two resource rollback should succeed.
+     * Expected TM events:
+     *  1 XAResourcePrepareEvent, 1 XAResourceRollbackEvent
+     * Expected journal events:
+     *   ACTIVE, MARKED_ROLLBACK, ROLLING_BACK, ROLLEDBACK
+     * @throws Exception if any error happens.
+     */
+    public void testPrepareLrcFailure() throws Exception {
+        tm.begin();
+        tm.setTransactionTimeout(10); // TX must not timeout
+
+        Connection connection1 = poolingDataSource1.getConnection();
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection1);
+        XAConnection xaConnection1 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle.getPooledConnection());
+        connection1.createStatement();
+
+        Connection connection2 = poolingDataSourceLrc.getConnection();
+        connection2.createStatement();
+        
+        MockXAResource mockXAResource1 = (MockXAResource) xaConnection1.getXAResource();
+        mockXAResource1.setPrepareException(createXAException("resource 1 prepare failed", XAException.XAER_RMERR));
+        
+        try {
+            tm.commit();
+            fail("TM should have thrown an exception");
+        } catch (RollbackException ex) {
+            assertTrue(ex.getMessage().matches("transaction failed to prepare: a Bitronix Transaction with GTRID (.*?) status=ROLLEDBACK, 2 resource\\(s\\) enlisted (.*?)"));
+
+            assertTrue(ex.getCause().getMessage().matches("transaction failed during prepare of a Bitronix Transaction with GTRID (.*?), status=PREPARING, 2 resource\\(s\\) enlisted (.*?): resource\\(s\\) \\[pds1\\] threw unexpected exception"));
+
+            assertEquals("collected 1 exception(s):" + System.getProperty("line.separator") +
+                    " [pds1 - javax.transaction.xa.XAException(XAER_RMERR) - resource 1 prepare failed]", ex.getCause().getCause().getMessage());
+        }
+
+        System.out.println(EventRecorder.dumpToString());
+
+        // we should find a ROLLEDBACK status in the journal log
+        // and 1 prepare tries (1 failed for resource 1)
+        // and 2 rollback tries (1 rollback and 1 localRollback)
+        int journalRollbackEventCount = 0;
+        int prepareEventCount = 0;
+        int rollbackEventCount = 0;
+        int localRollbackEventCount = 0;
+        List events = EventRecorder.getOrderedEvents();
+        for (int i = 0; i < events.size(); i++) {
+            Event event = (Event) events.get(i);
+
+            if (event instanceof XAResourceRollbackEvent)
+                rollbackEventCount++;
+
+            if (event instanceof XAResourcePrepareEvent)
+                prepareEventCount++;
+            
+            if (event instanceof LocalRollbackEvent)
+                localRollbackEventCount++;
+
+            if (event instanceof JournalLogEvent) {
+                if (((JournalLogEvent) event).getStatus() == Status.STATUS_ROLLEDBACK)
+                    journalRollbackEventCount++;
+            }
+        }
+        assertEquals("TM should have journaled 1 ROLLEDBACK status", 1, journalRollbackEventCount);
+        assertEquals("TM haven't properly tried to prepare", 1, prepareEventCount);
+        assertEquals("TM haven't properly tried to rollback", 1, rollbackEventCount);
+        assertEquals("TM haven't properly tried to rollback", 1, localRollbackEventCount);
+    }
 
     public void testUnilateralRollbackOnCommitDelist() throws Exception {
         tm.begin();
@@ -301,6 +381,17 @@ public class Phase1FailureTest extends TestCase {
         poolingDataSource3.setMaxPoolSize(5);
         poolingDataSource3.setAutomaticEnlistingEnabled(true);
         poolingDataSource3.init();
+        
+        poolingDataSourceLrc = new PoolingDataSource();
+        poolingDataSourceLrc.setClassName(LrcXADataSource.class.getName());
+        poolingDataSourceLrc.setUniqueName("pds4_lrc");
+        poolingDataSourceLrc.setMinPoolSize(5);
+        poolingDataSourceLrc.setMaxPoolSize(5);
+        poolingDataSourceLrc.setAllowLocalTransactions(true);
+        poolingDataSourceLrc.getDriverProperties().setProperty("driverClassName", MockDriver.class.getName());
+        poolingDataSourceLrc.getDriverProperties().setProperty("user", "user");
+        poolingDataSourceLrc.getDriverProperties().setProperty("password", "password");
+        poolingDataSourceLrc.init();
 
         tm = TransactionManagerServices.getTransactionManager();
     }
@@ -309,6 +400,7 @@ public class Phase1FailureTest extends TestCase {
         poolingDataSource1.close();
         poolingDataSource2.close();
         poolingDataSource3.close();
+        poolingDataSourceLrc.close();
         tm.shutdown();
     }
 

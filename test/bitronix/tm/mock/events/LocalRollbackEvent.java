@@ -12,7 +12,7 @@ public class LocalRollbackEvent extends Event {
     }
 
     public String toString() {
-        return "LocalCommitEvent at " + getTimestamp();
+        return "LocalRollbackEvent at " + getTimestamp();
     }
 
 }
