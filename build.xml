@@ -43,6 +43,8 @@
         <path refid="javac.classpath"/>
     </path>
 
+    <import file="build-codehaus.xml"/>
+
     <target name="all" depends="clean,build,test,doc,dist" description="Run clean,build,test,doc,dist"/>
 
     <target name="dist" depends="build,doc" description="Generate distribution ZIP file">
@@ -165,107 +167,6 @@
                 <include name="*/**"/>
             </packageset>
         </javadoc>
-    </target>
-
-    <target name="upload-snapshot" description="Upload snapshot artifacts and distribution">
-        <antcall target="upload-dist-snapshot"/>
-        <antcall target="upload-artifact-snapshot"/>
-        <antcall target="upload-src-snapshot"/>
-    </target>
-
-    <target name="upload" description="Upload final artifacts and distribution">
-        <antcall target="upload-dist"/>
-        <antcall target="upload-artifact"/>
-        <antcall target="upload-src"/>
-    </target>
-
-    <target name="upload-artifact-snapshot" description="Upload built JAR file to snapshot maven repository">
-        <antcall target="webdav-put">
-            <param name="source" value="${jar.file}"/>
-            <param name="target" value="https://dav.codehaus.org/snapshots.repository/btm/org/codehaus/btm/btm/${jar.version}/"/>
-        </antcall>
-
-        <copy file="${pom.file}" tofile="btm-${jar.version}.pom" />
-        <replace file="btm-${jar.version}.pom" token="@version@" value="${jar.version}"/>
-        <antcall target="webdav-put">
-            <param name="source" value="btm-${jar.version}.pom"/>
-            <param name="target" value="https://dav.codehaus.org/snapshots.repository/btm/org/codehaus/btm/btm/${jar.version}/"/>
-        </antcall>
-        <delete file="btm-${jar.version}.pom"/>
-    </target>
-
-    <target name="upload-artifact" description="Upload built JAR file to maven repository">
-        <antcall target="webdav-put">
-            <param name="source" value="${jar.file}"/>
-            <param name="target" value="https://dav.codehaus.org/repository/btm/org/codehaus/btm/btm/${jar.version}/"/>
-        </antcall>
-
-        <copy file="${pom.file}" tofile="btm-${jar.version}.pom" />
-        <replace file="btm-${jar.version}.pom" token="@version@" value="${jar.version}"/>
-        <antcall target="webdav-put">
-            <param name="source" value="btm-${jar.version}.pom"/>
-            <param name="target" value="https://dav.codehaus.org/repository/btm/org/codehaus/btm/btm/${jar.version}/"/>
-        </antcall>
-        <delete file="btm-${jar.version}.pom"/>
-    </target>
-
-    <target name="upload-src-snapshot" description="Upload sources JAR file to snapshot maven repository">
-        <antcall target="webdav-put">
-            <param name="source" value="${jar.src.file}"/>
-            <param name="target" value="https://dav.codehaus.org/snapshots.repository/btm/org/codehaus/btm/btm/${jar.version}/"/>
-        </antcall>
-    </target>
-
-    <target name="upload-src" description="Upload sources JAR file to snapshot maven repository">
-        <antcall target="webdav-put">
-            <param name="source" value="${jar.src.file}"/>
-            <param name="target" value="https://dav.codehaus.org/repository/btm/org/codehaus/btm/btm/${jar.version}/"/>
-        </antcall>
-    </target>
-
-    <target name="upload-dist-snapshot" description="Upload built ZIP file to snapshot dist. server">
-        <antcall target="webdav-put">
-            <param name="source" value="${zip.file}"/>
-            <param name="target" value="https://dav.codehaus.org/snapshots.dist/btm/"/>
-        </antcall>
-    </target>
-
-    <target name="upload-dist" description="Upload built ZIP file to dist. server">
-        <antcall target="webdav-put">
-            <param name="source" value="${zip.file}"/>
-            <param name="target" value="https://dav.codehaus.org/dist/btm/${jar.version}/"/>
-            <param name="overwrite" value="false"/>
-        </antcall>
-    </target>
-
-    <target name="webdav-put" description="Upload a file and its checksums via WebDAV">
-        <property name="overwrite" value="true"/>
-        <fail message="Missing 'source' parameter." unless="source"/>
-        <fail message="Missing 'target' parameter." unless="target"/>
-        <fail message="Source file '${source}' does not exist.">
-            <condition><not><available file="${source}"/></not></condition>
-        </fail>
-        <fail message="Missing 'webdav.username' system property. Set it with -Dwebdav.username=... on the command line." unless="webdav.username"/>
-        <fail message="Missing 'webdav.password' system property. Set it with -Dwebdav.password=... on the command line." unless="webdav.password"/>
-
-        <echo message="uploading ${source} to ${target} ..."/>
-
-        <checksum file="${source}" algorithm="MD5" fileext=".md5"/>
-        <checksum file="${source}" algorithm="SHA" fileext=".sha1"/>
-
-        <taskdef resource="org/apache/webdav/ant/taskdefs.properties" classpathref="tools.classpath"/>
-        <davput url="${target}" file="${source}.md5"
-               userid="${webdav.username}" password="${webdav.password}"
-               lock="false" overwrite="${overwrite}" />
-        <davput url="${target}" file="${source}.sha1"
-               userid="${webdav.username}" password="${webdav.password}"
-               lock="false" overwrite="${overwrite}" />
-        <davput url="${target}" file="${source}"
-               userid="${webdav.username}" password="${webdav.password}"
-               lock="false" overwrite="${overwrite}" />
-
-        <delete file="${source}.md5"/>
-        <delete file="${source}.sha1"/>
     </target>
 
     <target name="m2-install" description="Install artifact and POM in local Maven2 repository.">
