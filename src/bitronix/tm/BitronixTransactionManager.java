@@ -84,7 +84,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         try {
             currentTx.getSynchronizationScheduler().add(clearContextSynchronization, Scheduler.ALWAYS_LAST_POSITION -1);
             currentTx.setActive(getOrCreateCurrentContext().getTimeout());
-            if (log.isDebugEnabled()) log.debug("begun new transaction at " + currentTx.getResourceManager().getGtrid().extractTimestamp());
+            if (log.isDebugEnabled()) log.debug("begun new transaction at " + new Date(currentTx.getResourceManager().getGtrid().extractTimestamp()));
         } catch (RuntimeException ex) {
             clearContextSynchronization.afterCompletion(Status.STATUS_NO_TRANSACTION);
             throw ex;
