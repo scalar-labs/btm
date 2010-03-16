@@ -24,12 +24,12 @@ public interface XAResourceHolder extends XAStatefulHolder {
     public XAResource getXAResource();
 
     /**
-     * Get the {@link XAResourceHolderState}s of this wrapped resource for a specific GTRID.
+     * Get all the {@link XAResourceHolderState}s of this wrapped resource for a specific GTRID.
      * <p>The returned Map is guaranteed to return states in order they were added when its values are iterated.</p>
      * @param gtrid the GTRID of the transaction state to add.
      * @return the {@link XAResourceHolderState}.
      */
-    public Map getXAResourceHolderState(Uid gtrid);
+    public Map getXAResourceHolderStatesForGtrid(Uid gtrid);
 
     /**
      * Add a {@link XAResourceHolderState} of this wrapped resource.

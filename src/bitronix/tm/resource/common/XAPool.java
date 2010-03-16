@@ -331,7 +331,7 @@ public class XAPool implements StateChangeListener {
         for (int i = 0; i < xaResourceHolders.size(); i++) {
             XAResourceHolder xaResourceHolder = (XAResourceHolder) xaResourceHolders.get(i);
 
-            Map statesForGtrid = xaResourceHolder.getXAResourceHolderState(currentTxGtrid);
+            Map statesForGtrid = xaResourceHolder.getXAResourceHolderStatesForGtrid(currentTxGtrid);
             if (statesForGtrid == null)
                 return false;
 

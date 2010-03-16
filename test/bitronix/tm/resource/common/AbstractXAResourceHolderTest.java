@@ -1,6 +1,5 @@
 package bitronix.tm.resource.common;
 
-import bitronix.tm.BitronixXid;
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;
@@ -59,7 +58,7 @@ public class AbstractXAResourceHolderTest extends TestCase {
         xaResourceHolder.putXAResourceHolderState(UidGenerator.generateXid(gtrid), state3);
 
 
-        Map statesForGtrid = xaResourceHolder.getXAResourceHolderState(gtrid);
+        Map statesForGtrid = xaResourceHolder.getXAResourceHolderStatesForGtrid(gtrid);
         Iterator statesForGtridIt = statesForGtrid.values().iterator();
 
 

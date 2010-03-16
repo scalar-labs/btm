@@ -97,7 +97,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         if (resourceHolder == null)
             throw new BitronixSystemException("unknown XAResource " + xaResource + ", it does not belong to a registered resource");
 
-        Map statesForGtrid = resourceHolder.getXAResourceHolderState(resourceManager.getGtrid());
+        Map statesForGtrid = resourceHolder.getXAResourceHolderStatesForGtrid(resourceManager.getGtrid());
         Iterator statesForGtridIt = statesForGtrid.values().iterator();
 
         boolean result = false;

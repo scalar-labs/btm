@@ -24,7 +24,7 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
 
     private final Map xaResourceHolderStates = Collections.synchronizedMap(new HashMap());
 
-    public Map getXAResourceHolderState(Uid gtrid) {
+    public Map getXAResourceHolderStatesForGtrid(Uid gtrid) {
         synchronized (xaResourceHolderStates) {
             return (Map) xaResourceHolderStates.get(gtrid);
         }

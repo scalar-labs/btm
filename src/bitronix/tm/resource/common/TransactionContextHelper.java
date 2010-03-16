@@ -77,7 +77,7 @@ public class TransactionContextHelper {
         // End resource as eagerly as possible. This allows to release connections to the pool much earlier
         // with resources fully supporting transaction interleaving.
         if (isInEnlistingGlobalTransactionContext(xaResourceHolder, currentTransaction) && !bean.getDeferConnectionRelease()) {
-            Map statesForGtrid = xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid());
+            Map statesForGtrid = xaResourceHolder.getXAResourceHolderStatesForGtrid(currentTransaction.getResourceManager().getGtrid());
             Iterator statesForGtridIt = statesForGtrid.values().iterator();
             while (statesForGtridIt.hasNext()) {
                 XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) statesForGtridIt.next();
@@ -216,7 +216,7 @@ public class TransactionContextHelper {
 
     private static boolean isInEnlistingGlobalTransactionContext(XAResourceHolder xaResourceHolder, BitronixTransaction currentTransaction) {
         boolean globalTransactionMode = false;
-        if (currentTransaction != null && xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid()) != null) {
+        if (currentTransaction != null && xaResourceHolder.getXAResourceHolderStatesForGtrid(currentTransaction.getResourceManager().getGtrid()) != null) {
             globalTransactionMode = true;
         }
         if (log.isDebugEnabled()) log.debug("resource is " + (globalTransactionMode ? "" : "not ") + "in enlisting global transaction context: " + xaResourceHolder);
@@ -241,7 +241,7 @@ public class TransactionContextHelper {
     private static XAResourceHolderState getLatestAlreadyEnlistedXAResourceHolderState(XAResourceHolder xaResourceHolder, BitronixTransaction currentTransaction) {
         if (currentTransaction == null)
             return null;
-        Map statesForGtrid = xaResourceHolder.getXAResourceHolderState(currentTransaction.getResourceManager().getGtrid());
+        Map statesForGtrid = xaResourceHolder.getXAResourceHolderStatesForGtrid(currentTransaction.getResourceManager().getGtrid());
         if (statesForGtrid == null)
             return null;
         Iterator statesForGtridIt = statesForGtrid.values().iterator();
