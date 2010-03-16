@@ -134,7 +134,10 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
                 TransactionContextHelper.requeue(this, pooledConnection.getPoolingConnectionFactory());
             }
             catch (BitronixSystemException ex) {
-                log.error("error requeuing " + this, ex);
+                // this may hide the exception thrown by delistFromCurrentTransaction() but
+                // an error requeuing must absolutely be reported as an exception.
+                // Too bad if this happens... See JdbcPooledConnection.release() as well.
+                throw (JMSException) new JMSException("error requeuing " + this).initCause(ex);
             }
         }
 

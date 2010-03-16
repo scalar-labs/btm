@@ -200,7 +200,11 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
                     // This can happen when a close is attempted while the connection is participating
                     // in a global transaction.
                     usageCount++;
-                    log.error("error requeuing " + this, ex);
+
+                    // this may hide the exception thrown by delistFromCurrentTransaction() but
+                    // an error requeuing must absolutely be reported as an exception.
+                    // Too bad if this happens... See DualSessionWrapper.close() as well.
+                    throw (SQLException) new SQLException("error requeuing " + this).initCause(ex);
                 }
 
                 if (log.isDebugEnabled()) log.debug("released to pool " + this);
