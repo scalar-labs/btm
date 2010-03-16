@@ -25,6 +25,10 @@ public class EncoderTest extends TestCase {
         result = Encoder.bytesToLong(longAsBytes, 0);
         assertEquals(timestamp, result);
 
+        byte[] intAsBytes = Encoder.intToBytes(-1);
+        int resultAsInt = Encoder.bytesToInt(intAsBytes, 0);
+        assertEquals(-1, resultAsInt);
+
 
         try {
             Encoder.bytesToLong(new byte[4], 0);

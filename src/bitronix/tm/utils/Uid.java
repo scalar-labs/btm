@@ -25,7 +25,7 @@ public final class Uid {
     }
 
     public byte[] extractServerId() {
-        int serverIdLength = array.length - 8 - 4; // - timestamp - sequence
+        int serverIdLength = array.length - 4 - 8; // - sequence - timestamp
         if (serverIdLength < 1)
             return null;
 
@@ -35,8 +35,13 @@ public final class Uid {
     }
 
     public long extractTimestamp() {
-        return Encoder.bytesToLong(array, array.length - 8 - 4); // - timestamp - sequence
+        return Encoder.bytesToLong(array, array.length - 4 - 8); // - sequence - timestamp
     }
+
+    public int extractSequence() {
+        return Encoder.bytesToInt(array, array.length - 4); // - sequence
+    }
+
 
     public boolean equals(Object obj) {
         if (obj instanceof Uid) {
@@ -67,16 +72,16 @@ public final class Uid {
     private static int arrayHashCode(byte[] uid) {
         int hash = 0;
         // Common fast but good hash with wide dispersion
-        for (int i = uid.length -1; i > 0 ;i--) {
-           // rotate left and xor
-           // (very fast in assembler, a bit clumsy in Java)
-           hash <<= 1;
+        for (int i = uid.length - 1; i > 0; i--) {
+            // rotate left and xor
+            // (very fast in assembler, a bit clumsy in Java)
+            hash <<= 1;
 
-           if ( hash < 0 ) {
-              hash |= 1;
-           }
+            if (hash < 0) {
+                hash |= 1;
+            }
 
-           hash ^= uid[i];
+            hash ^= uid[i];
         }
         return hash;
     }
@@ -90,7 +95,7 @@ public final class Uid {
         char[] hexChars = new char[uid.length * 2];
         int c = 0;
         int v;
-        for (int i = 0; i < uid.length; i++ ) {
+        for (int i = 0; i < uid.length; i++) {
             v = uid[i] & 0xFF;
             hexChars[c++] = HEX[v >> 4];
             hexChars[c++] = HEX[v & 0xF];
@@ -98,6 +103,6 @@ public final class Uid {
         return new String(hexChars);
     }
 
-    private static final char[] HEX = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+    private static final char[] HEX = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 }
 

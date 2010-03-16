@@ -23,7 +23,7 @@ public class Encoder {
         return array;
     }
 
-    public static byte[] intToBytes(long anInt) {
+    public static byte[] intToBytes(int anInt) {
         byte[] array = new byte[4];
 
         array[3] = (byte) (anInt & 0xff);
@@ -52,6 +52,20 @@ public class Encoder {
         for(int i=0; i < 8 ;i++) {
            result <<= 8;
            result ^= (long) bytes[i + pos] & 0xFF;
+        }
+
+        return result;
+    }
+
+    public static int bytesToInt(byte[] bytes, int pos) {
+        if (bytes.length + pos < 4)
+            throw new IllegalArgumentException("an integer can only be decoded from 4 bytes of an array (got a " + bytes.length + " byte(s) array, must start at position " + pos + ")");
+
+        int result = 0;
+
+        for(int i=0; i < 4 ;i++) {
+           result <<= 8;
+           result ^= (int) bytes[i + pos] & 0xFF;
         }
 
         return result;

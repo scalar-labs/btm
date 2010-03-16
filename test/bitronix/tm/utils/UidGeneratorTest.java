@@ -2,11 +2,8 @@ package bitronix.tm.utils;
 
 import junit.framework.TestCase;
 
+import java.util.Arrays;
 import java.util.HashSet;
-
-import bitronix.tm.utils.Encoder;
-import bitronix.tm.utils.Uid;
-import bitronix.tm.utils.UidGenerator;
 
 /**
  * <p></p>
@@ -50,6 +47,25 @@ public class UidGeneratorTest extends TestCase {
         assertFalse(uid1.equals(uid2));
         assertFalse(uid2.equals(uid3));
         assertTrue(uid2.equals(uid2));
+    }
+    
+    public void testExtracts() throws Exception {
+        byte[] timestamp = Encoder.longToBytes(System.currentTimeMillis());
+        byte[] sequence = Encoder.intToBytes(1);
+        byte[] serverId = "my-server-id".getBytes();
+
+        int uidLength = serverId.length + timestamp.length + sequence.length;
+        byte[] uidArray = new byte[uidLength];
+
+        System.arraycopy(serverId, 0, uidArray, 0, serverId.length);
+        System.arraycopy(timestamp, 0, uidArray, serverId.length, timestamp.length);
+        System.arraycopy(sequence, 0, uidArray, serverId.length + timestamp.length, sequence.length);
+
+        Uid uid = new Uid(uidArray);
+
+        assertTrue(Arrays.equals(serverId, uid.extractServerId()));
+        assertEquals(Encoder.bytesToLong(timestamp, 0), uid.extractTimestamp());
+        assertEquals(Encoder.bytesToInt(sequence, 0), uid.extractSequence());
     }
 
 }
