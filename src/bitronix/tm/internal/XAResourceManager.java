@@ -230,7 +230,7 @@ public class XAResourceManager {
             // clear out the current state
             resourceHolder.removeXAResourceHolderState(xaResourceHolderState.getXid());
 
-            Map statesForGtrid = resourceHolder.getXAResourceHolderState(gtrid);
+            Map statesForGtrid = resourceHolder.getXAResourceHolderStatesForGtrid(gtrid);
             if (statesForGtrid != null) log.warn("resource " + resourceHolder + " did not clean up " + statesForGtrid.size() + "transaction states for GTRID [" + gtrid + "]");
             else if (log.isDebugEnabled()) log.debug("resource " + resourceHolder + " cleaned up all transaction states for GTRID [" + gtrid + "]");
 
