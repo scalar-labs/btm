@@ -246,9 +246,9 @@ public class TransactionContextHelper {
             return null;
         Iterator statesForGtridIt = statesForGtrid.values().iterator();
 
-        long oldest = Long.MIN_VALUE;
         XAResourceHolderState result = null;
 
+        // iteration order is guraranteed so just take the latest matching one in the iterator
         while (statesForGtridIt.hasNext()) {
             XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) statesForGtridIt.next();
 
@@ -257,10 +257,8 @@ public class TransactionContextHelper {
                 Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
                 Uid currentTransactionGtrid = currentTransaction.getResourceManager().getGtrid();
 
-                //TODO: the timestamp comparison of the BQUAL isn't very robust IMHO, try to find something better
-                if (currentTransactionGtrid.equals(resourceGtrid) && bitronixXid.getBranchQualifierUid().extractTimestamp() > oldest) {
+                if (currentTransactionGtrid.equals(resourceGtrid)) {
                     result = xaResourceHolderState;
-                    oldest = bitronixXid.getBranchQualifierUid().extractTimestamp();
                 }
             }
         }

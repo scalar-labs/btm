@@ -24,17 +24,15 @@ public interface XAResourceHolder extends XAStatefulHolder {
     public XAResource getXAResource();
 
     /**
-     * Get the {@link XAResourceHolderState} of this wrapped resource.
-     * <p>Since a {@link XAResourceHolder} can participate in more than one transaction at a time (when suspending a
-     * context for instance) the transaction manager guarantees that the {@link XAResourceHolderState} related to the
-     * current transaction context will be returned.</p>
+     * Get the {@link XAResourceHolderState}s of this wrapped resource for a specific GTRID.
+     * <p>The returned Map is guaranteed to return states in order they were added when its values are iterated.</p>
      * @param gtrid the GTRID of the transaction state to add.
      * @return the {@link XAResourceHolderState}.
      */
     public Map getXAResourceHolderState(Uid gtrid);
 
     /**
-     * Set the {@link XAResourceHolderState} of this wrapped resource.
+     * Add a {@link XAResourceHolderState} of this wrapped resource.
      * @param xid the Xid of the transaction state to add.
      * @param xaResourceHolderState the {@link XAResourceHolderState} to set.
      */
@@ -42,7 +40,7 @@ public interface XAResourceHolder extends XAStatefulHolder {
 
 
     /**
-     * Remove the specified state from this wrapped resource.
+     * Remove all states related to a specific Xid from this wrapped resource.
      * @param xid the Xid of the transaction state to remove.
      * @return true if the state actually existed before removal, false otherwise.
      */

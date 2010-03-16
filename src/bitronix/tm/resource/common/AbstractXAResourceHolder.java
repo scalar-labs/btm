@@ -39,7 +39,7 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
             if (!xaResourceHolderStates.containsKey(gtrid)) {
                 if (log.isDebugEnabled()) log.debug("GTRID [" + gtrid + "] previously unknown to " + this + ", adding it to the resource's transactions list");
 
-                Map statesForGtrid = new HashMap();
+                Map statesForGtrid = new LinkedHashMap(4); // use a LinkedHashMap as iteration order must be guaranteed
                 statesForGtrid.put(bqual, xaResourceHolderState);
                 xaResourceHolderStates.put(gtrid, statesForGtrid);
             }
