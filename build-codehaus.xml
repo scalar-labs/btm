@@ -1,15 +1,19 @@
-<project name="btm">
+<project name="btm-codehaus">
 
     <target name="upload-snapshot" description="Upload snapshot artifacts and distribution">
         <antcall target="upload-dist-snapshot"/>
         <antcall target="upload-artifact-snapshot"/>
         <antcall target="upload-src-snapshot"/>
+        <antcall target="upload-tomcat-snapshot"/>
+        <antcall target="upload-jetty-snapshot"/>
     </target>
 
     <target name="upload" description="Upload final artifacts and distribution">
         <antcall target="upload-dist"/>
         <antcall target="upload-artifact"/>
         <antcall target="upload-src"/>
+        <antcall target="upload-tomcat"/>
+        <antcall target="upload-jetty"/>
     </target>
 
     <target name="upload-artifact-snapshot" description="Upload built JAR file to snapshot maven repository">
