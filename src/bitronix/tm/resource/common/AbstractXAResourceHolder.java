@@ -110,6 +110,9 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
                 return false;
 
             Map statesForGtrid = (Map) xaResourceHolderStates.get(gtrid);
+            if (statesForGtrid == null)
+                return false;
+
             Iterator statesForBqualIt = statesForGtrid.values().iterator();
             while (statesForBqualIt.hasNext()) {
                 XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) statesForBqualIt.next();

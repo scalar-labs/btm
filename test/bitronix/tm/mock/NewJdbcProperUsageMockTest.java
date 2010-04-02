@@ -1043,6 +1043,20 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
 
     }
 
+    public void testNonEnlistingMethodInTxContext() throws Exception {
+        BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+
+        tm.begin();
+        
+        Connection c = poolingDataSource1.getConnection();
+        assertTrue(c.getAutoCommit());
+        c.close();
+
+        tm.commit();
+
+        tm.shutdown();
+    }
+
     public void testSerialization() throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
