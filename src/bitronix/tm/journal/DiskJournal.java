@@ -202,7 +202,9 @@ public class DiskJournal implements Journal {
             if (!deleted)
                 throw new IOException("log file exists but cannot be overwritten: " + logfile.getAbsolutePath());
         }
-        logfile.getParentFile().mkdirs();
+        if (logfile.getParentFile() != null) {
+            logfile.getParentFile().mkdirs();
+        }
 
         RandomAccessFile raf = null;
         try {
