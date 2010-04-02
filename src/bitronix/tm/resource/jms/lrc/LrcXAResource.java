@@ -255,7 +255,8 @@ public class LrcXAResource implements XAResource {
                 throw new BitronixXAException("resource already started on XID " + this.xid + " - cannot roll it back on another XID " + xid, XAException.XAER_PROTO);
         }
         else if (state == PREPARED) {
-            throw new BitronixXAException("resource committed during prepare on XID " + this.xid, XAException.XAER_RMERR);
+            this.state = NO_TX;
+            throw new BitronixXAException("resource committed during prepare on XID " + this.xid, XAException.XA_HEURCOM);
         }
 
         try {
