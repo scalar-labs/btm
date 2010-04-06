@@ -130,11 +130,19 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
     /**
      * Simple helper method which returns a set of GTRIDs of transactions in which
      * this resource is enlisted. Useful for monitoring.
-     * @return a set of GTRIDs of transactions in which this resource is enlisted.
+     * @return a set of String-encoded GTRIDs of transactions in which this resource is enlisted.
      */
     public Set getXAResourceHolderStateGtrids() {
         synchronized (xaResourceHolderStates) {
-            return new HashSet(xaResourceHolderStates.keySet());
+            HashSet gtridsAsStrings = new HashSet();
+
+            Iterator gtridsIt = xaResourceHolderStates.keySet().iterator();
+            while (gtridsIt.hasNext()) {
+                Uid uid = (Uid) gtridsIt.next();
+                gtridsAsStrings.add(uid.toString());
+            }
+
+            return gtridsAsStrings;
         }
     }
 }
