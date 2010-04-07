@@ -94,7 +94,7 @@ public class RecoveryHelper {
                 byte[] jvmUniqueId = TransactionManagerServices.getConfiguration().buildServerIdArray();
 
                 if (extractedServerId == null) {
-                    log.error("skipping XID " + bitronixXid + " as its GTRID's serverId is null. It loooks like the disk journal is corrupted !");
+                    log.error("skipping XID " + bitronixXid + " as its GTRID's serverId is null. It looks like the disk journal is corrupted!");
                     continue;
                 }
 
@@ -102,8 +102,7 @@ public class RecoveryHelper {
                     String extractedServerIdString = new String(extractedServerId);
                     String jvmUniqueIdString = new String(jvmUniqueId);
 
-                    log.info("skipping XID " + bitronixXid + " as its GTRID's serverId <" + extractedServerIdString + "> does not match this JVM unique ID <" + jvmUniqueIdString + ">. " +
-                            "Make sure this XID is picked up by the node with serverId <" + extractedServerIdString + ">.");
+                    if (log.isDebugEnabled()) log.debug("skipping XID " + bitronixXid + " as its GTRID's serverId <" + extractedServerIdString + "> does not match this JVM unique ID <" + jvmUniqueIdString + ">");
                     continue;
                 }
             }
