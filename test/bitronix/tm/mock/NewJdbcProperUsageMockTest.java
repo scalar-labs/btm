@@ -1057,6 +1057,42 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         tm.shutdown();
     }
 
+    public void testAutoCommitFalseWhenEnlisted() throws Exception {
+        BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+
+        tm.begin();
+
+        Connection c = poolingDataSource1.getConnection();
+        c.prepareStatement("");
+        assertFalse(c.getAutoCommit());
+        c.close();
+
+        tm.commit();
+
+        tm.shutdown();
+    }
+
+    public void testAutoCommitTrueWhenEnlistedButSuspended() throws Exception {
+        BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+
+        tm.begin();
+
+        Connection c = poolingDataSource1.getConnection();
+        c.prepareStatement("");
+
+        Transaction tx = tm.suspend();
+        assertNull(tm.getTransaction());
+
+        assertTrue(c.getAutoCommit());
+
+        tm.resume(tx);
+        c.close();
+
+        tm.commit();
+
+        tm.shutdown();
+    }
+
     public void testSerialization() throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
