@@ -33,7 +33,7 @@ public class BitronixTransactionSynchronizationRegistryTest extends TestCase {
             reg.putResource("0", "zero");
             fail("expected IllegalStateException");
         } catch (IllegalStateException ex) {
-            assertEquals("no transaction started on curent thread", ex.getMessage());
+            assertEquals("no transaction started on current thread", ex.getMessage());
         }
 
         btm.begin();
@@ -45,7 +45,7 @@ public class BitronixTransactionSynchronizationRegistryTest extends TestCase {
             reg.getResource("1");
             fail("expected IllegalStateException");
         } catch (Exception ex) {
-            assertEquals("no transaction started on curent thread", ex.getMessage());
+            assertEquals("no transaction started on current thread", ex.getMessage());
         }
 
         btm.begin();

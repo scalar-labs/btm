@@ -40,7 +40,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
             if (key == null)
                 throw new NullPointerException("key cannot be null");
             if (currentTransaction() == null || currentTransaction().getStatus() == Status.STATUS_NO_TRANSACTION)
-                throw new IllegalStateException("no transaction started on curent thread");
+                throw new IllegalStateException("no transaction started on current thread");
 
             return getResources().get(key);
         } catch (SystemException ex) {
@@ -51,7 +51,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
     public boolean getRollbackOnly() {
         try {
             if (currentTransaction() == null || currentTransaction().getStatus() == Status.STATUS_NO_TRANSACTION)
-                throw new IllegalStateException("no transaction started on curent thread");
+                throw new IllegalStateException("no transaction started on current thread");
 
             return currentTransaction().getStatus() == Status.STATUS_MARKED_ROLLBACK;
         } catch (SystemException e) {
@@ -86,7 +86,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
             if (key == null)
                 throw new NullPointerException("key cannot be null");
             if (currentTransaction() == null || currentTransaction().getStatus() == Status.STATUS_NO_TRANSACTION)
-                throw new IllegalStateException("no transaction started on curent thread");
+                throw new IllegalStateException("no transaction started on current thread");
 
             getResources().put(key, value);
 
@@ -103,7 +103,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
     public void registerInterposedSynchronization(Synchronization synchronization) {
         try {
             if (currentTransaction() == null || currentTransaction().getStatus() == Status.STATUS_NO_TRANSACTION)
-                throw new IllegalStateException("no transaction started on curent thread");
+                throw new IllegalStateException("no transaction started on current thread");
             if (    currentTransaction().getStatus() == Status.STATUS_PREPARING ||
                     currentTransaction().getStatus() == Status.STATUS_PREPARED ||
                     currentTransaction().getStatus() == Status.STATUS_COMMITTING ||
@@ -122,7 +122,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
     public void setRollbackOnly() {
         try {
             if (currentTransaction() == null || currentTransaction().getStatus() == Status.STATUS_NO_TRANSACTION)
-                throw new IllegalStateException("no transaction started on curent thread");
+                throw new IllegalStateException("no transaction started on current thread");
 
             currentTransaction().setStatus(Status.STATUS_MARKED_ROLLBACK);
         } catch (SystemException ex) {
