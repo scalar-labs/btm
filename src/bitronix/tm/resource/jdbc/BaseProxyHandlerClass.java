@@ -1,6 +1,7 @@
 package bitronix.tm.resource.jdbc;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,11 +36,17 @@ public abstract class BaseProxyHandlerClass implements InvocationHandler {
      * @see java.lang.reflect.InvocationHandler
      */
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        // If the method is directly overridden by "this" (i.e. sub-class)
-        // class call "this" class' Method with "this" object, otherwise
-        // call the non-overridden Method with the proxied object
-        Method delegatedMethod = (Method) getDelegatedMethod(method);
-        return delegatedMethod.invoke(isOurMethod(delegatedMethod) ? this : getProxiedDelegate(), args);
+        try {
+            // If the method is directly overridden by "this" (i.e. sub-class)
+            // class call "this" class' Method with "this" object, otherwise
+            // call the non-overridden Method with the proxied object
+            Method delegatedMethod = (Method) getDelegatedMethod(method);
+            return delegatedMethod.invoke(isOurMethod(delegatedMethod) ? this : getProxiedDelegate(), args);
+        } catch (InvocationTargetException ite) {
+            // the InvocationTargetException's target actually is the exception thrown by the delegate
+            // throw this one to avoid the caller to receive proxy-related exceptions
+            throw ite.getTargetException();
+        }
     }
 
     /**
