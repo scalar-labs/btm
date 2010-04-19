@@ -189,6 +189,15 @@ public class Committer extends AbstractPhaseEngine {
                 case XAException.XA_HEURHAZ:
                 case XAException.XA_HEURMIX:
                 case XAException.XA_HEURRB:
+
+                case XAException.XA_RBCOMMFAIL:
+                case XAException.XA_RBDEADLOCK:
+                case XAException.XA_RBINTEGRITY:
+                case XAException.XA_RBOTHER:
+                case XAException.XA_RBPROTO:
+                case XAException.XA_RBROLLBACK:
+                case XAException.XA_RBTIMEOUT:
+                case XAException.XA_RBTRANSIENT:
                     log.error("heuristic rollback is incompatible with the global state of this transaction - guilty: " + failedResourceHolder);
                     throw xaException;
 
