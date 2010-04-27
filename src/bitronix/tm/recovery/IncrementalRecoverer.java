@@ -78,7 +78,7 @@ public class IncrementalRecoverer {
             // if recovery isn't successful we don't mark the resource as failed: heuristics might have happened
             // but communication with the resouce is working.
             if (!success)
-                throw new RecoveryException("error recovering resource '" + uniqueName + "' due to an imcompatible heuristic decision");
+                throw new RecoveryException("error recovering resource '" + uniqueName + "' due to an incompatible heuristic decision");
 
             xaResourceProducer.setFailed(false);
 
