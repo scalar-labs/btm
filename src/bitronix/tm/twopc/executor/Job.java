@@ -1,5 +1,6 @@
 package bitronix.tm.twopc.executor;
 
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.internal.XAResourceHolderState;
 
 import javax.transaction.xa.XAException;
@@ -40,4 +41,15 @@ public abstract class Job implements Runnable {
     public Object getFuture() {
         return future;
     }
+
+    public final void run() {
+        if (TransactionManagerServices.getConfiguration().isAsynchronous2Pc()) {
+            Thread.currentThread().setName("bitronix-2pc [ " +
+                    resourceHolder.getXid().toString() +
+                    " ]");
+        }
+        execute();
+    }
+
+    protected abstract void execute();
 }

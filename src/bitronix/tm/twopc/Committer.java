@@ -159,7 +159,7 @@ public class Committer extends AbstractPhaseEngine {
             return runtimeException;
         }
 
-        public void run() {
+        public void execute() {
             try {
                 commitResource(getResource(), onePhase);
             } catch (RuntimeException ex) {

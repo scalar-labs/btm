@@ -126,7 +126,7 @@ public class Preparer extends AbstractPhaseEngine {
             super(resourceHolder);
         }
 
-        public void run() {
+        public void execute() {
             try {
                 XAResourceHolderState resourceHolder = getResource();
                 if (log.isDebugEnabled()) log.debug("preparing resource " + resourceHolder);

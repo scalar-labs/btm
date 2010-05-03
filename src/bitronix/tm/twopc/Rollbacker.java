@@ -142,7 +142,7 @@ public class Rollbacker extends AbstractPhaseEngine {
             super(resourceHolder);
         }
 
-        public void run() {
+        public void execute() {
             try {
                 rollbackResource(getResource());
             } catch (RuntimeException ex) {
