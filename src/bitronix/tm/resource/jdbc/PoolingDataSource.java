@@ -85,7 +85,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     }
 
     /**
-     * When set and the underlying JDBC driver supports JDBC 4 isValid(), a {@link Connection#isValid(int)} call
+     * When set and the underlying JDBC driver supports JDBC 4 isValid(), a Connection.isValid() call
      * is performed to test the connection before handing it to the caller.
      * If both testQuery and enableJdbc4ConnectionTest are set, enableJdbc4ConnectionTest takes precedence.
      * @param enableJdbc4ConnectionTest  true if JDBC 4 isValid() testing should be performed, false otherwise.
