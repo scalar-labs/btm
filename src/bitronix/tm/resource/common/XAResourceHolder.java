@@ -42,7 +42,6 @@ public interface XAResourceHolder extends XAStatefulHolder {
     /**
      * Remove all states related to a specific Xid from this wrapped resource.
      * @param xid the Xid of the transaction state to remove.
-     * @return true if the state actually existed before removal, false otherwise.
      */
     public void removeXAResourceHolderState(BitronixXid xid);
 
