@@ -17,7 +17,7 @@ public class DiskForceBatcherThread extends Thread {
     private static DiskForceBatcherThread instance;
 
     private boolean alive = true;
-    private static DiskForceWaitQueue waitQueue = new DiskForceWaitQueue();
+    private static volatile DiskForceWaitQueue waitQueue = new DiskForceWaitQueue();
 
     /**
      * Get the single instance of the DiskForceBatcherThread.
