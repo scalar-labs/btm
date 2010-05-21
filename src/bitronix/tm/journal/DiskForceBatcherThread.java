@@ -16,8 +16,9 @@ public class DiskForceBatcherThread extends Thread {
     private final static Logger log = LoggerFactory.getLogger(DiskForceBatcherThread.class);
     private static DiskForceBatcherThread instance;
 
-    private boolean alive = true;
-    private static volatile DiskForceWaitQueue waitQueue = new DiskForceWaitQueue();
+    // both variables must be volatile to prevent race conditions with JDK 1.5+ memory model
+    private volatile boolean alive = true;
+    private volatile static DiskForceWaitQueue waitQueue = new DiskForceWaitQueue();
 
     /**
      * Get the single instance of the DiskForceBatcherThread.
