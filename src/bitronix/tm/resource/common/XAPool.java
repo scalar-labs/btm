@@ -148,7 +148,7 @@ public class XAPool implements StateChangeListener {
                     xaStatefulHolder.close();
                 }
             } catch (Exception ex) {
-                if (log.isDebugEnabled()) log.debug("ignoring catched exception while closing connection " + xaStatefulHolder, ex);
+                if (log.isDebugEnabled()) log.debug("ignoring exception while closing connection " + xaStatefulHolder, ex);
             }
         }
 
