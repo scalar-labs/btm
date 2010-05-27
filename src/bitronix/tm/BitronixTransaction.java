@@ -428,9 +428,9 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
                 if (log.isDebugEnabled()) log.debug("executing synchronization " + synchronization);
                 synchronization.beforeCompletion();
             } catch (RuntimeException ex) {
-                log.warn("Synchronization.beforeCompletion() call failed for " + synchronization + ", marking transaction as rollback only", ex);
+                if (log.isDebugEnabled()) log.debug("Synchronization.beforeCompletion() call failed for " + synchronization + ", marking transaction as rollback only - " + ex);
                 setStatus(Status.STATUS_MARKED_ROLLBACK);
-                return;
+                throw ex;
             }
         }
     }
