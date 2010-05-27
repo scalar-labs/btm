@@ -168,6 +168,26 @@ public class JtaTest extends TestCase {
         btm.commit();
     }
 
+    public void testBeforeCompletionRuntimeExceptionRethrown() throws Exception {
+        btm.begin();
+
+        btm.getTransaction().registerSynchronization(new Synchronization() {
+            public void beforeCompletion() {
+                throw new RuntimeException("beforeCompletion failure");
+            }
+            public void afterCompletion(int i) {
+            }
+        });
+
+        try {
+            btm.commit();
+            fail("expected runtime exception");
+        } catch (RuntimeException ex) {
+            assertEquals("beforeCompletion failure", ex.getMessage());
+            btm.rollback();
+        }
+     }
+
     private class SynchronizationRegisteringSynchronization implements Synchronization {
 
         private BitronixTransaction transaction;
