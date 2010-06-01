@@ -270,6 +270,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     public void timeout() throws BitronixSystemException {
         this.timeout = true;
         setStatus(Status.STATUS_MARKED_ROLLBACK);
+        log.warn("transaction timed out: " + this);
     }
 
     public boolean timedOut() {
