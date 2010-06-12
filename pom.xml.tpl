@@ -17,7 +17,7 @@
 
         <dependency>
             <groupId>org.apache.geronimo.specs</groupId>
-            <artifactId>geronimo-jta_1.1_spec</artifactId>
+            <artifactId>geronimo-jms_1.1_spec</artifactId>
             <version>1.0.1</version>
             <optional>true</optional>
         </dependency>
