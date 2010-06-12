@@ -4,6 +4,7 @@
         <antcall target="upload-dist-snapshot"/>
         <antcall target="upload-artifact-snapshot"/>
         <antcall target="upload-src-snapshot"/>
+        <antcall target="upload-javadoc-snapshot"/>
         <antcall target="upload-tomcat-snapshot"/>
         <antcall target="upload-jetty-snapshot"/>
     </target>
@@ -12,6 +13,7 @@
         <antcall target="upload-dist"/>
         <antcall target="upload-artifact"/>
         <antcall target="upload-src"/>
+        <antcall target="upload-javadoc"/>
         <antcall target="upload-tomcat"/>
         <antcall target="upload-jetty"/>
     </target>
@@ -53,9 +55,23 @@
         </antcall>
     </target>
 
+    <target name="upload-javadoc-snapshot" description="Upload javadoc JAR file to snapshot maven repository">
+        <antcall target="webdav-put">
+            <param name="source" value="${jar.doc.file}"/>
+            <param name="target" value="https://dav.codehaus.org/snapshots.repository/btm/org/codehaus/btm/btm/${jar.version}/"/>
+        </antcall>
+    </target>
+
     <target name="upload-src" description="Upload sources JAR file to snapshot maven repository">
         <antcall target="webdav-put">
             <param name="source" value="${jar.src.file}"/>
+            <param name="target" value="https://dav.codehaus.org/repository/btm/org/codehaus/btm/btm/${jar.version}/"/>
+        </antcall>
+    </target>
+
+    <target name="upload-javadoc" description="Upload javadoc JAR file to snapshot maven repository">
+        <antcall target="webdav-put">
+            <param name="source" value="${jar.doc.file}"/>
             <param name="target" value="https://dav.codehaus.org/repository/btm/org/codehaus/btm/btm/${jar.version}/"/>
         </antcall>
     </target>
