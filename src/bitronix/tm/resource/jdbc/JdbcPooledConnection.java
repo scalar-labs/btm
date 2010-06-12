@@ -1,20 +1,22 @@
 package bitronix.tm.resource.jdbc;
 
-import java.lang.reflect.*;
-import java.sql.*;
-import java.util.*;
-import java.util.Date;
+import bitronix.tm.internal.BitronixRollbackSystemException;
+import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.resource.common.*;
+import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.ManagementRegistrar;
+import bitronix.tm.utils.Scheduler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.XAConnection;
 import javax.transaction.SystemException;
 import javax.transaction.xa.XAResource;
-
-import org.slf4j.*;
-
-import bitronix.tm.internal.*;
-import bitronix.tm.resource.common.*;
-import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
-import bitronix.tm.utils.*;
+import java.lang.reflect.Method;
+import java.sql.*;
+import java.util.*;
+import java.util.Date;
 
 /**
  * Implementation of a JDBC pooled connection wrapping vendor's {@link XAConnection} implementation.
@@ -41,8 +43,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     private Date acquisitionDate;
     private Date lastReleaseDate;
 
-	private int jdbcVersionDetected;
-	private Method isValidMethod;
+    private int jdbcVersionDetected;
+    private Method isValidMethod;
 
 
     public JdbcPooledConnection(PoolingDataSource poolingDataSource, XAConnection xaConnection) throws SQLException {
@@ -80,23 +82,26 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     }
 
     private synchronized void detectJdbcVersion(Connection connection) {
-    	if (jdbcVersionDetected > 0)
-    		return;
+        if (jdbcVersionDetected > 0)
+            return;
 
-    	try {
-			isValidMethod = connection.getClass().getMethod("isValid", new Class[] { Integer.TYPE });
-			isValidMethod.invoke(connection, new Object[] {new Integer(DETECTION_TIMEOUT)}); // test invoke
-			jdbcVersionDetected = 4;
-			if (!poolingDataSource.isEnableJdbc4ConnectionTest()) {
-				if (log.isDebugEnabled()) log.debug("dataSource is JDBC4 or newer and supports isValid(), but enableJdbc4ConnectionTest is not set or is false");
-			}
-		} catch (Exception ex) {
-			jdbcVersionDetected = 3;
-		}
-		if (log.isDebugEnabled()) log.debug("detected JDBC connection class '" + connection.getClass() + "' is version " + jdbcVersionDetected + " type");
-	}
+        try {
+            isValidMethod = connection.getClass().getMethod("isValid", new Class[]{Integer.TYPE});
+            isValidMethod.invoke(connection, new Object[] {new Integer(DETECTION_TIMEOUT)}); // test invoke
+            jdbcVersionDetected = 4;
+            if (!poolingDataSource.isEnableJdbc4ConnectionTest()) {
+                if (log.isDebugEnabled()) log.debug("dataSource is JDBC4 or newer and supports isValid(), but enableJdbc4ConnectionTest is not set or is false");
+            }
+        } catch (Exception ex) {
+            jdbcVersionDetected = 3;
+        } catch (AbstractMethodError er) {
+            // this happens if the driver implements JDBC 3 but runs on JDK 1.6+ (which embeds the JDBC 4 interfaces)
+            jdbcVersionDetected = 3;
+        }
+        if (log.isDebugEnabled()) log.debug("detected JDBC connection class '" + connection.getClass() + "' is version " + jdbcVersionDetected + " type");
+    }
 
-	private void applyIsolationLevel() throws SQLException {
+    private void applyIsolationLevel() throws SQLException {
         String isolationLevel = getPoolingDataSource().getIsolationLevel();
         if (isolationLevel != null) {
             int level = translateIsolationLevel(isolationLevel);
@@ -141,23 +146,23 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     private void testConnection(Connection connection) throws SQLException {
         if (poolingDataSource.isEnableJdbc4ConnectionTest() && jdbcVersionDetected >= 4) {
-    		Boolean isValid = null;
-    		try {
-    	        if (log.isDebugEnabled()) log.debug("testing with JDBC4 isValid() method, connection of " + this);
-				isValid = (Boolean) isValidMethod.invoke(connection, new Object[] {new Integer(poolingDataSource.getAcquisitionTimeout())});
-			} catch (Exception e) {
-	            log.warn("dysfunctional JDBC4 Connection.isValid() method, or negative acquisition timeout, in call to test connection of " + this + ".  Falling back to test query.");
-				jdbcVersionDetected = 3;
-			}
-			// if isValid is null, and exception was caught above and we fall through to the query test
-			if (isValid != null) {
-				if (isValid.booleanValue()) {
+            Boolean isValid = null;
+            try {
+                if (log.isDebugEnabled()) log.debug("testing with JDBC4 isValid() method, connection of " + this);
+                isValid = (Boolean) isValidMethod.invoke(connection, new Object[]{new Integer(poolingDataSource.getAcquisitionTimeout())});
+            } catch (Exception e) {
+                log.warn("dysfunctional JDBC4 Connection.isValid() method, or negative acquisition timeout, in call to test connection of " + this + ".  Falling back to test query.");
+                jdbcVersionDetected = 3;
+            }
+            // if isValid is null, and exception was caught above and we fall through to the query test
+            if (isValid != null) {
+                if (isValid.booleanValue()) {
                     if (log.isDebugEnabled()) log.debug("isValid successfully tested connection of " + this);
-					return;
-				}
-				throw new SQLException("connection is no longer valid");
-			}
-    	}
+                    return;
+                }
+                throw new SQLException("connection is no longer valid");
+            }
+        }
 
         String query = poolingDataSource.getTestQuery();
         if (query == null) {
@@ -258,8 +263,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             applyIsolationLevel();
             applyCursorHoldabilty();
             if (TransactionContextHelper.currentTransaction() == null) {
-            	// it is safe to set the auto-commit flag outside of a global transaction
-            	applyLocalAutoCommit();
+                // it is safe to set the auto-commit flag outside of a global transaction
+                applyLocalAutoCommit();
             }
         }
         else {
@@ -289,7 +294,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
                 log.warn("usage count too high (" + usageCount + ") on connection returned to pool " + source);
             }
         }
-        
+
         if (futureState == STATE_IN_POOL || futureState == STATE_NOT_ACCESSIBLE) {
             // close all uncached statements
             if (log.isDebugEnabled()) log.debug("closing " + uncachedStatements.size() + " dangling uncached statement(s)");
@@ -372,21 +377,21 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
 
     private void applyLocalAutoCommit() throws SQLException {
-    	String localAutoCommit = getPoolingDataSource().getLocalAutoCommit();
-    	if (localAutoCommit != null) {
-    		if (localAutoCommit.equalsIgnoreCase("true")) {
+        String localAutoCommit = getPoolingDataSource().getLocalAutoCommit();
+        if (localAutoCommit != null) {
+            if (localAutoCommit.equalsIgnoreCase("true")) {
                 if (log.isDebugEnabled()) log.debug("setting connection's auto commit to true");
-    			connection.setAutoCommit(true);
-    		}
-    		else if (localAutoCommit.equalsIgnoreCase("false")) {
+                connection.setAutoCommit(true);
+            }
+            else if (localAutoCommit.equalsIgnoreCase("false")) {
                 if (log.isDebugEnabled()) log.debug("setting connection's auto commit to false");
-    			connection.setAutoCommit(false);
-    		}
-    		else {
-    			if (log.isDebugEnabled()) log.warn("invalid auto commit '" + localAutoCommit + "' configured, keeping default auto commit");
-    		}
-    	}
-	}
+                connection.setAutoCommit(false);
+            }
+            else {
+                log.warn("invalid auto commit '" + localAutoCommit + "' configured, keeping default auto commit");
+            }
+        }
+    }
 
     /* management */
 
