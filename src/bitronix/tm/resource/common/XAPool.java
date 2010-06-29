@@ -89,7 +89,7 @@ public class XAPool implements StateChangeListener {
         while (true) {
             XAStatefulHolder xaStatefulHolder = null;
             if (recycle) {
-                if (bean.isShareTransactionConnections()) {
+                if (bean.getShareTransactionConnections()) {
                     xaStatefulHolder = getSharedXAStatefulHolder();
                 }
                 else {
@@ -105,7 +105,7 @@ public class XAPool implements StateChangeListener {
                 // getConnection() here could throw an exception, if it doesn't the connection is
                 // still alive and we can share it (if sharing is enabled)
                 Object connectionHandle = xaStatefulHolder.getConnectionHandle();
-                if (bean.isShareTransactionConnections()) {
+                if (bean.getShareTransactionConnections()) {
                     putSharedXAStatefulHolder(xaStatefulHolder);
                 }                
                 return connectionHandle;

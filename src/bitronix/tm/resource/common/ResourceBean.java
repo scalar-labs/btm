@@ -285,17 +285,16 @@ public abstract class ResourceBean implements Serializable {
 	/**
 	 * Set whether connections in the ACCESSIBLE state can be shared within the context
 	 * of a transaction.
-	 *
-	 * @param shareAccessibleConnections the shareAccessibleConnections to set
+	 * @param shareAccessibleConnections the shareAccessibleConnections to set.
 	 */
 	public void setShareTransactionConnections(boolean shareAccessibleConnections) {
 		this.shareTransactionConnections = shareAccessibleConnections;
 	}
 
 	/**
-	 * @return the shareAccessibleConnections
+	 * @return true if accessible connections can be shared.
 	 */
-	public boolean isShareTransactionConnections() {
+	public boolean getShareTransactionConnections() {
 		return shareTransactionConnections;
 	}
 }
