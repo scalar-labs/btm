@@ -23,11 +23,15 @@ public class MockXAResource implements XAResource {
     private XAException rollbackException;
     private RuntimeException prepareRuntimeException;
     private XAException recoverException;
+    private long recoveryDelay;
 
     public MockXAResource(MockitoXADataSource xads) {
         this.xads = xads;
     }
 
+    public void setRecoveryDelay(long recoveryDelay) {
+        this.recoveryDelay = recoveryDelay;
+    }
 
     public void setPrepareRc(int prepareRc) {
         this.prepareRc = prepareRc;
@@ -61,6 +65,14 @@ public class MockXAResource implements XAResource {
     }
 
     public Xid[] recover(int flag) throws XAException {
+        if (recoveryDelay > 0) {
+            try {
+                Thread.sleep(recoveryDelay);
+            } catch (InterruptedException e) {
+                // ignore
+            }
+        }
+
         if (recoverException != null)
             throw recoverException;
         if (xads == null)

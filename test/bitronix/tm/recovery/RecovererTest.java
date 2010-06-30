@@ -335,6 +335,7 @@ public class RecovererTest extends TestCase {
         log.debug("Start test RecovererTest.testReentrance()");
         final int THREAD_COUNT = 10;
         Recoverer recoverer = new Recoverer();
+        xaResource.setRecoveryDelay(1000);
 
         List threads = new ArrayList();
 
