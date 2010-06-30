@@ -38,9 +38,7 @@ public class EhCacheXAResourceHolder extends AbstractXAResourceHolder {
     }
 
     /**
-     * Method is only there to remain compatible with pre-2.0.0 version of BTM
-     * @return the ResourceBean associated with this Resource
-     * @deprecated for compatibility with pre-2.0.0 version of BTM
+     * {@inheritDoc}
      */
     public ResourceBean getResourceBean() {
         return bean;
