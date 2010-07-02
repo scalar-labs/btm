@@ -18,7 +18,7 @@ public class DiskForceBatcherThread extends Thread {
 
     // both variables must be volatile to prevent race conditions with JDK 1.5+ memory model
     private volatile boolean alive = true;
-    private volatile static DiskForceWaitQueue waitQueue = new DiskForceWaitQueue();
+    private volatile DiskForceWaitQueue waitQueue = new DiskForceWaitQueue();
 
     /**
      * Get the single instance of the DiskForceBatcherThread.
@@ -50,7 +50,7 @@ public class DiskForceBatcherThread extends Thread {
      * Add the TransactionLogAppender to the wait queue and wait until the disk force is done.
      * @param tla the TransactionLogAppender
      */
-    public static void enqueue(TransactionLogAppender tla) {
+    public void enqueue(TransactionLogAppender tla) {
         waitQueue.enqueue(tla);
         if (log.isDebugEnabled()) log.debug("batching disk force, there are " + waitQueue.size() + " TransactionLogAppender in the wait queue");
         try {

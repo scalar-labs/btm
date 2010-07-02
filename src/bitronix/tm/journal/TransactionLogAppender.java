@@ -143,7 +143,7 @@ public class TransactionLogAppender {
             doForce();
         }
         else {
-            DiskForceBatcherThread.enqueue(this);
+            diskForceBatcherThread.enqueue(this);
         }
     }
 
