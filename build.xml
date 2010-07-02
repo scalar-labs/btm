@@ -1,6 +1,6 @@
 <project default="build" name="btm">
 
-    <property name="jar.version" value="2.0.0-beta2"/>
+    <property name="jar.version" value="2.0.0"/>
 
     <property environment="env"/>
     <property name="dir.src" value="src"/>
