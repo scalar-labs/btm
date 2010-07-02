@@ -28,7 +28,8 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
     private final Map contexts = Collections.synchronizedMap(new HashMap());
     private final Map inFlightTransactions = Collections.synchronizedMap(new HashMap());
-    private boolean shuttingDown;
+
+    private volatile boolean shuttingDown;
 
     /**
      * Create the {@link BitronixTransactionManager}. Open the journal, load resources and perform recovery

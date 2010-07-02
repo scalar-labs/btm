@@ -21,7 +21,7 @@ public class TaskScheduler extends Thread implements Service {
     private final static Logger log = LoggerFactory.getLogger(TaskScheduler.class);
 
     private final List tasks = Collections.synchronizedList(new ArrayList());
-    private boolean active = true;
+    private volatile boolean active = true;
 
     public TaskScheduler() {
         // it is up to the ShutdownHandler to control the lifespan of the JVM and give some time for this thread
