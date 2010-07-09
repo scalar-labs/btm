@@ -144,20 +144,27 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
 
         try {
             if (recoveryConnectionHandle != null) {
-                if (log.isDebugEnabled()) log.debug("recovery connection handle is being closed: " + recoveryConnectionHandle);
-                recoveryConnectionHandle.close();
-                recoveryConnectionHandle = null;
+                try {
+                    if (log.isDebugEnabled()) log.debug("recovery connection handle is being closed: " + recoveryConnectionHandle);
+                    recoveryConnectionHandle.close();
+                } catch (Exception ex) {
+                    throw new RecoveryException("error ending recovery", ex);
+                }
             }
+
             if (recoveryXAResourceHolder != null) {
-                if (log.isDebugEnabled()) log.debug("recovery xa resource is being closed: " + recoveryXAResourceHolder);
-                recoveryXAResourceHolder.close();
-                recoveryXAResourceHolder = null;
+                try {
+                    if (log.isDebugEnabled()) log.debug("recovery xa resource is being closed: " + recoveryXAResourceHolder);
+                    recoveryXAResourceHolder.close();
+                } catch (Exception ex) {
+                    throw new RecoveryException("error ending recovery", ex);
+                }
             }
-            if (recoveryPooledConnection != null) {
-                recoveryPooledConnection = null;
-            }
-        } catch (Exception ex) {
-            throw new RecoveryException("error ending recovery", ex);
+        }
+        finally {
+            recoveryConnectionHandle = null;
+            recoveryXAResourceHolder = null;
+            recoveryPooledConnection = null;
         }
     }
 

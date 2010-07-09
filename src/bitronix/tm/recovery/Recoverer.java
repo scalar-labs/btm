@@ -229,9 +229,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         if (producer == null)
             throw new IllegalArgumentException("recoverable resource cannot be null");
 
-        if (log.isDebugEnabled()) log.debug("running recovery on " + producer);
-        XAResourceHolderState xaResourceHolderState = producer.startRecovery();
         try {
+            if (log.isDebugEnabled()) log.debug("running recovery on " + producer);
+            XAResourceHolderState xaResourceHolderState = producer.startRecovery();
             return RecoveryHelper.recover(xaResourceHolderState);
         } finally {
             producer.endRecovery();

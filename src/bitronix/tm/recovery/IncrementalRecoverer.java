@@ -38,17 +38,11 @@ public class IncrementalRecoverer {
     public static void recover(XAResourceProducer xaResourceProducer) throws RecoveryException {
         String uniqueName = xaResourceProducer.getUniqueName();
         if (log.isDebugEnabled()) log.debug("start of incremental recovery on resource " + uniqueName);
-        XAResourceHolderState xarhs;
-        try {
-            xarhs = xaResourceProducer.startRecovery();
-        } catch (RecoveryException ex) {
-            xaResourceProducer.setFailed(true);
-            throw ex;
-        }
 
         try {
+            XAResourceHolderState xaResourceHolderState = xaResourceProducer.startRecovery();
             boolean success = true;
-            Set xids = RecoveryHelper.recover(xarhs);
+            Set xids = RecoveryHelper.recover(xaResourceHolderState);
             if (log.isDebugEnabled()) log.debug(xids.size() + " dangling transaction(s) found on resource");
             Map danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
             if (log.isDebugEnabled()) log.debug(danglingRecords.size() + " dangling transaction(s) found in journal");
@@ -63,13 +57,13 @@ public class IncrementalRecoverer {
                 TransactionLogRecord tlog = (TransactionLogRecord) danglingRecords.get(gtrid);
                 if (tlog != null) {
                     if (log.isDebugEnabled()) log.debug("committing " + xid);
-                    success &= RecoveryHelper.commit(xarhs, xid);
+                    success &= RecoveryHelper.commit(xaResourceHolderState, xid);
                     updateJournal(xid.getGlobalTransactionIdUid(), uniqueName, Status.STATUS_COMMITTED);
                     commitCount++;
                 }
                 else {
                     if (log.isDebugEnabled()) log.debug("rolling back " + xid);
-                    success &= RecoveryHelper.rollback(xarhs, xid);
+                    success &= RecoveryHelper.rollback(xaResourceHolderState, xid);
                     updateJournal(xid.getGlobalTransactionIdUid(), uniqueName, Status.STATUS_ROLLEDBACK);
                     rollbackCount++;
                 }

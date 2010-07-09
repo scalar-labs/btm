@@ -216,10 +216,15 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         try {
             if (log.isDebugEnabled()) log.debug("recovery xa resource is being closed: " + recoveryXAResourceHolder);
             recoveryConnectionHandle.close();
-            recoveryXAResourceHolder = null;
-            recoveryConnectionHandle = null;
         } catch (Exception ex) {
             throw new RecoveryException("error ending recovery on " + this, ex);
+        }
+        finally {
+            recoveryConnectionHandle = null;
+
+            // the recoveryXAResourceHolder actually wraps the recoveryConnectionHandle so closing it
+            // would close the recoveryConnectionHandle twice which must not happen
+            recoveryXAResourceHolder = null;
         }
     }
 
