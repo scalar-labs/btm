@@ -2,9 +2,7 @@ package bitronix.tm;
 
 import junit.framework.TestCase;
 
-import javax.transaction.Status;
-import javax.transaction.Synchronization;
-import javax.transaction.TransactionSynchronizationRegistry;
+import javax.transaction.*;
 
 /**
  * <p>&copy; <a href="http://www.bitronix.be">Bitronix Software</a></p>
@@ -25,6 +23,30 @@ public class BitronixTransactionSynchronizationRegistryTest extends TestCase {
         btm.shutdown();
     }
 
+    public void testMultiThreaded() throws Exception {
+        final TransactionSynchronizationRegistry reg = TransactionManagerServices.getTransactionSynchronizationRegistry();
+
+        btm.begin();
+        reg.putResource("1", "one");
+        assertEquals("one", reg.getResource("1"));
+        btm.commit();
+
+        Thread t = new Thread() {
+            public void run() {
+                try {
+                    btm.begin();
+                    reg.putResource("1", "one");
+                    assertEquals("one", reg.getResource("1"));
+                    btm.commit();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+
+        t.start();
+        t.join();
+    }
 
     public void testRegistryResources() throws Exception {
         TransactionSynchronizationRegistry reg = TransactionManagerServices.getTransactionSynchronizationRegistry();

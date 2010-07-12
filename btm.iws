@@ -29,73 +29,73 @@
     <option name="USER" value="" />
   </component>
   <component name="ChangeListManager" verified="true">
-    <list default="true" readonly="true" id="6831d909-bef4-40b4-970c-89e6a86ac38b" name="Default" comment="" />
-    <list id="e703c8d5-52ce-450f-9cee-cf2183a70103" name="DO NOT COMMIT" comment="">
+    <list default="true" readonly="true" id="6831d909-bef4-40b4-970c-89e6a86ac38b" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/btm.iws" afterPath="$PROJECT_DIR$/btm.iws" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/btm.ipr" afterPath="$PROJECT_DIR$/btm.ipr" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/btm.iml" afterPath="$PROJECT_DIR$/btm.iml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test/bitronix/tm/BitronixTransactionSynchronizationRegistryTest.java" afterPath="$PROJECT_DIR$/test/bitronix/tm/BitronixTransactionSynchronizationRegistryTest.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitronix/tm/BitronixTransactionSynchronizationRegistry.java" afterPath="$PROJECT_DIR$/src/bitronix/tm/BitronixTransactionSynchronizationRegistry.java" />
     </list>
-    <ignored path=".hg/store/data/test/" />
-    <ignored path=".hg/store/data/test/bitronix/tm/resource/jdbc/" />
-    <ignored mask=".hg" />
-    <ignored path=".hg/store/data/src/" />
-    <ignored path=".hg/store/data/test/bitronix/tm/drivers/" />
-    <ignored path=".hg/store/data/src/bitronix/tm/resource/jms/inbound/simple/" />
-    <ignored path=".hg/store/data/test-manual/bitronix/tm/journal/" />
-    <ignored path=".hg/store/data/tools-lib/" />
-    <ignored path=".hg/store/data/src/bitronix/" />
+    <list id="e703c8d5-52ce-450f-9cee-cf2183a70103" name="DO NOT COMMIT" comment="" />
     <ignored path=".hg/store/data/src/bitronix/tm/twopc/" />
-    <ignored path=".hg/store/data/src/bitronix/tm/gui/" />
-    <ignored path=".hg/store/data/test-manual/bitronix/" />
-    <ignored path=".hg/store/data/test/bitronix/tm/twopc/" />
-    <ignored path=".hg/store/data/src/bitronix/tm/resource/jms/inbound/" />
-    <ignored path=".hg/00changelog.i" />
-    <ignored path=".hg/store/data/src/bitronix/tm/resource/jms/" />
-    <ignored path=".hg/store/data/test/bitronix/tm/mock/resource/jms/" />
-    <ignored path=".hg/store/data/test/bitronix/tm/mock/" />
-    <ignored path=".hg/store/data/src/bitronix/tm/resource/jms/inbound/asf/" />
-    <ignored path=".hg/store/" />
-    <ignored path=".hg/store/data/lib/" />
-    <ignored path=".hg/store/data/test/bitronix/tm/resource/" />
-    <ignored path=".hg/store/data/test-manual/" />
-    <ignored path=".hg/store/data/test/bitronix/tm/mock/resource/jdbc/" />
-    <ignored path=".hg/branch.cache" />
-    <ignored path=".hg/store/data/test/bitronix/tm/jndi/" />
-    <ignored path=".hg/store/data/test/bitronix/" />
-    <ignored path=".hg/store/data/test/bitronix/tm/mock/events/" />
-    <ignored path=".hg/store/data/test/bitronix/tm/resource/common/" />
-    <ignored path=".hg/dirstate" />
-    <ignored path=".hg/store/data/src/bitronix/tm/utils/" />
-    <ignored path=".hg/store/data/test/bitronix/tm/timer/" />
-    <ignored path=".hg/localtags" />
-    <ignored path=".hg/store/data/doc/" />
     <ignored path=".hg/store/data/src/bitronix/tm/" />
-    <ignored path=".hg/store/data/src/bitronix/tm/timer/" />
-    <ignored path=".hg/store/data/test-manual/bitronix/tm/" />
-    <ignored path=".hg/store/data/" />
-    <ignored path=".hg/store/data/test/bitronix/tm/mock/resource/" />
-    <ignored path=".hg/undo.dirstate" />
-    <ignored path=".hg/store/data/test/bitronix/tm/" />
-    <ignored path=".hgignore" />
-    <ignored path=".hg/store/data/src/bitronix/tm/resource/jdbc/lrc/" />
-    <ignored path=".hg/branch" />
-    <ignored path=".hg/store/data/src/bitronix/tm/resource/" />
-    <ignored path=".hg/store/data/test/bitronix/tm/resource/jms/" />
-    <ignored path=".hg/store/data/src/bitronix/tm/journal/" />
-    <ignored path=".hg/store/data/test-lib/" />
-    <ignored path=".hg/undo.branch" />
-    <ignored path=".hg/store/data/src/bitronix/tm/resource/common/" />
-    <ignored path=".hg/requires" />
-    <ignored path=".hg/store/data/src/bitronix/tm/internal/" />
     <ignored path=".hg/store/data/src/bitronix/tm/recovery/" />
-    <ignored path=".hg/store/data/src/bitronix/tm/resource/jdbc/" />
-    <ignored path=".hg/store/data/test/bitronix/tm/journal/" />
-    <ignored path=".hg/store/data/src/bitronix/tm/twopc/executor/" />
+    <ignored path=".hg/store/data/src/bitronix/tm/resource/jms/inbound/asf/" />
+    <ignored path=".hg/store/data/test/bitronix/tm/timer/" />
+    <ignored path=".hg/store/data/doc/" />
     <ignored path=".hg/store/data/test/bitronix/tm/internal/" />
-    <ignored path=".hg/store/data/test/bitronix/tm/recovery/" />
-    <ignored path=".hg/store/data/test-manual/bitronix/tm/drivers/" />
+    <ignored mask=".hg" />
+    <ignored path=".hg/requires" />
+    <ignored path=".hg/store/data/test-manual/bitronix/tm/journal/" />
+    <ignored path=".hg/store/data/src/bitronix/tm/twopc/executor/" />
+    <ignored path=".hg/undo.branch" />
+    <ignored path=".hg/store/data/test/" />
+    <ignored path=".hg/store/data/src/bitronix/tm/resource/jdbc/" />
     <ignored path=".hg/store/data/src/bitronix/tm/jndi/" />
+    <ignored path=".hg/store/data/test/bitronix/tm/recovery/" />
+    <ignored path=".hg/store/data/src/" />
+    <ignored path=".hg/store/data/test/bitronix/tm/resource/common/" />
+    <ignored path=".hg/store/data/src/bitronix/tm/resource/jdbc/lrc/" />
+    <ignored path=".hg/store/data/src/bitronix/tm/resource/jms/inbound/" />
+    <ignored path=".hg/store/data/src/bitronix/tm/utils/" />
+    <ignored path=".hg/store/data/lib/" />
+    <ignored path=".hg/store/data/test/bitronix/tm/mock/" />
+    <ignored path=".hg/store/data/test-manual/bitronix/" />
+    <ignored path=".hg/store/data/test/bitronix/tm/mock/resource/" />
+    <ignored path=".hg/store/data/src/bitronix/" />
+    <ignored path=".hg/store/data/test/bitronix/" />
     <ignored path=".hg/store/data/test/bitronix/tm/utils/" />
+    <ignored path=".hg/store/data/test/bitronix/tm/mock/resource/jms/" />
+    <ignored path=".hg/store/data/test-manual/" />
+    <ignored path=".hg/store/data/test/bitronix/tm/resource/" />
+    <ignored path=".hg/store/data/test/bitronix/tm/mock/resource/jdbc/" />
+    <ignored path=".hg/00changelog.i" />
+    <ignored path=".hg/store/data/src/bitronix/tm/journal/" />
+    <ignored path=".hg/store/data/test-manual/bitronix/tm/drivers/" />
+    <ignored path=".hg/localtags" />
+    <ignored path=".hg/branch" />
+    <ignored path=".hg/store/data/test/bitronix/tm/" />
+    <ignored path=".hg/store/data/test-lib/" />
+    <ignored path=".hg/dirstate" />
+    <ignored path=".hg/store/data/src/bitronix/tm/resource/jms/inbound/simple/" />
+    <ignored path=".hg/store/data/test-manual/bitronix/tm/" />
+    <ignored path=".hg/branch.cache" />
+    <ignored path=".hg/store/data/src/bitronix/tm/resource/common/" />
+    <ignored path=".hg/store/data/src/bitronix/tm/internal/" />
+    <ignored path=".hg/store/data/src/bitronix/tm/resource/" />
+    <ignored path=".hg/store/data/" />
+    <ignored path=".hg/store/data/test/bitronix/tm/resource/jdbc/" />
+    <ignored path=".hg/store/data/test/bitronix/tm/resource/jms/" />
+    <ignored path=".hg/undo.dirstate" />
+    <ignored path=".hg/store/data/src/bitronix/tm/gui/" />
+    <ignored path=".hg/store/data/test/bitronix/tm/mock/events/" />
+    <ignored path=".hg/store/data/test/bitronix/tm/twopc/" />
+    <ignored path=".hg/store/data/tools-lib/" />
+    <ignored path=".hg/store/data/test/bitronix/tm/journal/" />
+    <ignored path=".hg/store/data/src/bitronix/tm/timer/" />
+    <ignored path=".hgignore" />
+    <ignored path=".hg/store/" />
+    <ignored path=".hg/store/data/test/bitronix/tm/jndi/" />
+    <ignored path=".hg/store/data/test/bitronix/tm/drivers/" />
+    <ignored path=".hg/store/data/src/bitronix/tm/resource/jms/" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -163,8 +163,8 @@
       <property name="field_breakpoints_groupByClasses" value="true" />
       <property name="method_breakpoints_groupByClasses" value="true" />
       <property name="exception_breakpoints_viewId" value="TABLE" />
-      <property name="exception_breakpoints_groupByClasses" value="true" />
       <property name="field_breakpoints_viewId" value="TABLE" />
+      <property name="exception_breakpoints_groupByClasses" value="true" />
       <property name="method_breakpoints_groupByMethods" value="false" />
     </ui_properties>
   </component>
@@ -197,19 +197,19 @@
   <component name="FileColors" enabled="true" enabledForTabs="true" />
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="BitronixTransactionMBean.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/bitronix/tm/BitronixTransactionMBean.java">
+      <file leaf-file-name="BitronixTransaction.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/bitronix/tm/BitronixTransaction.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="11" column="17" selection-start="246" selection-end="246" vertical-scroll-proportion="0.0">
+            <state line="224" column="16" selection-start="11194" selection-end="11194" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="BitronixTransactionManagerObjectFactory.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/bitronix/tm/BitronixTransactionManagerObjectFactory.java">
+      <file leaf-file-name="ThreadContext.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/bitronix/tm/internal/ThreadContext.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="16" column="13" selection-start="391" selection-end="391" vertical-scroll-proportion="0.0">
+            <state line="14" column="18" selection-start="465" selection-end="465" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -218,70 +218,34 @@
       <file leaf-file-name="BitronixTransactionManager.java" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/bitronix/tm/BitronixTransactionManager.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="31" column="4" selection-start="1004" selection-end="1004" vertical-scroll-proportion="0.0">
+            <state line="418" column="8" selection-start="18231" selection-end="18231" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="TransactionManagerServices.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/bitronix/tm/TransactionManagerServices.java">
+      <file leaf-file-name="BitronixTransactionSynchronizationRegistry.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/bitronix/tm/BitronixTransactionSynchronizationRegistry.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="30" column="22" selection-start="1251" selection-end="1251" vertical-scroll-proportion="0.0">
+            <state line="29" column="4" selection-start="1013" selection-end="1013" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Journal.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/bitronix/tm/journal/Journal.java">
+      <file leaf-file-name="JtaTest.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/test/bitronix/tm/JtaTest.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="16" column="0" selection-start="408" selection-end="408" vertical-scroll-proportion="0.0">
+            <state line="67" column="29" selection-start="1750" selection-end="1750" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="DiskJournal.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/bitronix/tm/journal/DiskJournal.java">
+      <file leaf-file-name="BitronixTransactionSynchronizationRegistryTest.java" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/test/bitronix/tm/BitronixTransactionSynchronizationRegistryTest.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="28" column="13" selection-start="1147" selection-end="1147" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="DiskForceBatcherThread.java" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/bitronix/tm/journal/DiskForceBatcherThread.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="72" column="21" selection-start="2517" selection-end="2517" vertical-scroll-proportion="0.40974212">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="TransactionLogAppender.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/bitronix/tm/journal/TransactionLogAppender.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="145" column="39" selection-start="6103" selection-end="6103" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="Executor.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/bitronix/tm/twopc/executor/Executor.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="11" column="17" selection-start="309" selection-end="309" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="Recoverer.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/bitronix/tm/recovery/Recoverer.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="65" column="13" selection-start="3591" selection-end="3591" vertical-scroll-proportion="0.0">
+            <state line="40" column="21" selection-start="1246" selection-end="1246" vertical-scroll-proportion="0.52717394">
               <folding />
             </state>
           </provider>
@@ -302,14 +266,6 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/src/bitronix/tm/BitronixTransaction.java" />
-        <option value="$PROJECT_DIR$/src/bitronix/tm/resource/ehcache/package.html" />
-        <option value="$PROJECT_DIR$/src/bitronix/tm/resource/ehcache/EhCacheXAResourceProducer.java" />
-        <option value="$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/JdbcPooledConnection.java" />
-        <option value="$PROJECT_DIR$/build.xml" />
-        <option value="$PROJECT_DIR$/build-codehaus.xml" />
-        <option value="$PROJECT_DIR$/pom.xml.tpl" />
-        <option value="$PROJECT_DIR$/release-notes/release-notes-2.0.0-beta2.txt" />
         <option value="$PROJECT_DIR$/src/bitronix/tm/resource/common/ResourceBean.java" />
         <option value="$PROJECT_DIR$/test/bitronix/tm/mock/resource/MockXAResource.java" />
         <option value="$PROJECT_DIR$/test/bitronix/tm/recovery/RecovererTest.java" />
@@ -318,6 +274,14 @@
         <option value="$PROJECT_DIR$/src/bitronix/tm/timer/TaskScheduler.java" />
         <option value="$PROJECT_DIR$/src/bitronix/tm/journal/TransactionLogAppender.java" />
         <option value="$PROJECT_DIR$/src/bitronix/tm/journal/DiskForceBatcherThread.java" />
+        <option value="$PROJECT_DIR$/src/bitronix/tm/journal/DiskJournal.java" />
+        <option value="$PROJECT_DIR$/build.xml" />
+        <option value="$PROJECT_DIR$/src/bitronix/tm/recovery/Recoverer.java" />
+        <option value="$PROJECT_DIR$/src/bitronix/tm/recovery/IncrementalRecoverer.java" />
+        <option value="$PROJECT_DIR$/src/bitronix/tm/resource/jms/PoolingConnectionFactory.java" />
+        <option value="$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/PoolingDataSource.java" />
+        <option value="$PROJECT_DIR$/src/bitronix/tm/BitronixTransactionSynchronizationRegistry.java" />
+        <option value="$PROJECT_DIR$/test/bitronix/tm/BitronixTransactionSynchronizationRegistryTest.java" />
       </list>
     </option>
   </component>
@@ -441,9 +405,8 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Favorites" />
-      <pane id="PackagesPane" />
       <pane id="Scope" />
+      <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -472,6 +435,38 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
+              <option name="myItemId" value="test" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="btm" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="trunk" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="test" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="tm" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="btm" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="trunk" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
               <option name="myItemId" value="src" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
@@ -512,12 +507,35 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="journal" />
+              <option name="myItemId" value="recovery" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="btm" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="trunk" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="tm" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="jndi" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
         </subPane>
       </pane>
+      <pane id="Favorites" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -534,16 +552,16 @@
     <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeWidth4" value="851" />
     <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeWidth3" value="81" />
     <property name="cvs_file_history_flatWidth2" value="235" />
-    <property name="cvs_file_history_treeOrder0" value="0" />
     <property name="cvs_file_history_flatWidth3" value="235" />
+    <property name="cvs_file_history_treeOrder0" value="0" />
     <property name="cvs_file_history_flatWidth0" value="235" />
-    <property name="GoToClass.includeLibraries" value="false" />
     <property name="cvs_file_history_flatWidth1" value="235" />
+    <property name="GoToClass.includeLibraries" value="false" />
     <property name="options.splitter.details.proportions" value="0.2" />
     <property name="GoToFile.includeJavaFiles" value="false" />
     <property name="RunManagerConfig.compileBeforeRunning" value="true" />
-    <property name="options.lastSelected" value="preferences.sourceCode.General" />
     <property name="FileHistory.com.dcx.hg.MercurialHistoryProvider_flatOrder1" value="1" />
+    <property name="options.lastSelected" value="preferences.sourceCode.General" />
     <property name="FileHistory.com.dcx.hg.MercurialHistoryProvider_flatOrder0" value="0" />
     <property name="FileHistory.com.dcx.hg.MercurialHistoryProvider_flatOrder3" value="3" />
     <property name="FileHistory.com.dcx.hg.MercurialHistoryProvider_flatOrder2" value="2" />
@@ -571,30 +589,30 @@
     <property name="FileHistory.com.dcx.hg.MercurialHistoryProvider_flatWidth0" value="74" />
     <property name="FileHistory.com.dcx.hg.MercurialHistoryProvider_flatWidth1" value="110" />
     <property name="FileHistory.com.dcx.hg.MercurialHistoryProvider_flatWidth2" value="103" />
-    <property name="FileHistory.com.dcx.hg.MercurialHistoryProvider_treeWidth3" value="890" />
-    <property name="FileHistory.com.dcx.hg.MercurialHistoryProvider_flatWidth3" value="896" />
     <property name="cvs_file_history_treeWidth0" value="235" />
+    <property name="FileHistory.com.dcx.hg.MercurialHistoryProvider_flatWidth3" value="896" />
+    <property name="FileHistory.com.dcx.hg.MercurialHistoryProvider_treeWidth3" value="890" />
     <property name="cvs_file_history_treeWidth1" value="235" />
     <property name="cvs_file_history_treeWidth2" value="235" />
     <property name="cvs_file_history_treeWidth3" value="235" />
     <property name="MemberChooser.showClasses" value="true" />
     <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatWidth4" value="869" />
-    <property name="cvs_file_history_flatOrder2" value="2" />
     <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder3" value="3" />
-    <property name="cvs_file_history_flatOrder3" value="3" />
+    <property name="cvs_file_history_flatOrder2" value="2" />
     <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder4" value="4" />
-    <property name="cvs_file_history_flatOrder0" value="0" />
+    <property name="cvs_file_history_flatOrder3" value="3" />
     <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder1" value="1" />
-    <property name="cvs_file_history_flatOrder1" value="1" />
+    <property name="cvs_file_history_flatOrder0" value="0" />
     <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder2" value="2" />
-    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder0" value="0" />
+    <property name="cvs_file_history_flatOrder1" value="1" />
     <property name="Web Module Deployment Descriptor Default Version" value="2.3" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder0" value="0" />
     <property name="FileHistory.com.dcx.hg.MercurialHistoryProvider_treeOrder1" value="1" />
     <property name="FileHistory.com.dcx.hg.MercurialHistoryProvider_treeOrder2" value="2" />
     <property name="FileHistory.com.dcx.hg.MercurialHistoryProvider_treeOrder0" value="0" />
     <property name="FileHistory.com.dcx.hg.MercurialHistoryProvider_treeOrder3" value="3" />
-    <property name="options.searchVisible" value="true" />
     <property name="dynamic.classpath" value="false" />
+    <property name="options.searchVisible" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="CopyClassDialog.RECENTS_KEY">
@@ -619,29 +637,7 @@
       <recent name="bitronix.tm.resource" />
     </key>
   </component>
-  <component name="RunManager" selected="JUnit.RecovererTest.testReentrance">
-    <configuration default="false" name="BitronixTransactionSynchronizationRegistryTest" type="JUnit" factoryName="JUnit" temporary="true">
-      <extension name="snapshooter" />
-      <module name="btm" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
-      <option name="PACKAGE_NAME" value="bitronix.tm" />
-      <option name="MAIN_CLASS_NAME" value="bitronix.tm.BitronixTransactionSynchronizationRegistryTest" />
-      <option name="METHOD_NAME" />
-      <option name="TEST_OBJECT" value="class" />
-      <option name="VM_PARAMETERS" />
-      <option name="PARAMETERS" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
-      <option name="TEST_SEARCH_SCOPE">
-        <value defaultName="wholeProject" />
-      </option>
-      <envs />
-      <RunnerSettings RunnerId="Run" />
-      <ConfigurationWrapper RunnerId="Run" />
-      <method />
-    </configuration>
+  <component name="RunManager" selected="JUnit.BitronixTransactionSynchronizationRegistryTest.testMultiThreaded">
     <configuration default="false" name="ResourceLoaderTest" type="JUnit" factoryName="JUnit" temporary="true">
       <extension name="snapshooter" />
       <module name="btm" />
@@ -716,6 +712,28 @@
       <option name="PACKAGE_NAME" value="bitronix.tm.recovery" />
       <option name="MAIN_CLASS_NAME" value="bitronix.tm.recovery.RecovererTest" />
       <option name="METHOD_NAME" value="testReentrance" />
+      <option name="TEST_OBJECT" value="method" />
+      <option name="VM_PARAMETERS" />
+      <option name="PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="wholeProject" />
+      </option>
+      <envs />
+      <RunnerSettings RunnerId="Run" />
+      <ConfigurationWrapper RunnerId="Run" />
+      <method />
+    </configuration>
+    <configuration default="false" name="BitronixTransactionSynchronizationRegistryTest.testMultiThreaded" type="JUnit" factoryName="JUnit" temporary="true">
+      <extension name="snapshooter" />
+      <module name="btm" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" />
+      <option name="PACKAGE_NAME" value="bitronix.tm" />
+      <option name="MAIN_CLASS_NAME" value="bitronix.tm.BitronixTransactionSynchronizationRegistryTest" />
+      <option name="METHOD_NAME" value="testMultiThreaded" />
       <option name="TEST_OBJECT" value="method" />
       <option name="VM_PARAMETERS" />
       <option name="PARAMETERS" />
@@ -876,13 +894,13 @@
       <method />
     </configuration>
     <list size="7">
-      <item index="0" class="java.lang.String" itemvalue="JUnit.BitronixTransactionSynchronizationRegistryTest" />
-      <item index="1" class="java.lang.String" itemvalue="JUnit.ResourceLoaderTest" />
-      <item index="2" class="java.lang.String" itemvalue="JUnit.&lt;default&gt;" />
-      <item index="3" class="java.lang.String" itemvalue="JUnit.JtaTest.testBeforeCompletionRuntimeExceptionRethrown" />
-      <item index="4" class="java.lang.String" itemvalue="JUnit.RecovererTest.testReentrance" />
-      <item index="5" class="java.lang.String" itemvalue="Application.Console" />
-      <item index="6" class="java.lang.String" itemvalue="Remote.Remote VM" />
+      <item index="0" class="java.lang.String" itemvalue="JUnit.ResourceLoaderTest" />
+      <item index="1" class="java.lang.String" itemvalue="JUnit.&lt;default&gt;" />
+      <item index="2" class="java.lang.String" itemvalue="JUnit.JtaTest.testBeforeCompletionRuntimeExceptionRethrown" />
+      <item index="3" class="java.lang.String" itemvalue="JUnit.RecovererTest.testReentrance" />
+      <item index="4" class="java.lang.String" itemvalue="Application.Console" />
+      <item index="5" class="java.lang.String" itemvalue="Remote.Remote VM" />
+      <item index="6" class="java.lang.String" itemvalue="JUnit.BitronixTransactionSynchronizationRegistryTest.testMultiThreaded" />
     </list>
   </component>
   <component name="ScopeViewComponent">
@@ -1022,18 +1040,19 @@
     <frame x="0" y="22" width="1280" height="774" extended-state="0" />
     <editor active="false" />
     <layout>
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32352942" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.35735294" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.312" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.2282697" sideWeight="0.6661765" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.31764707" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3985294" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" x="22" y="64" width="1235" height="884" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32647058" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32352942" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.312" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24939074" sideWeight="0.63235295" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32981315" sideWeight="0.63235295" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Dependency Viewer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24776605" sideWeight="0.63235295" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3985294" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" x="22" y="64" width="1235" height="884" />
+      <window_info id="Dependency Viewer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.36764705" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" x="24" y="20" width="1218" height="922" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32647058" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="IDEtalk Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="IDEtalk" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32927817" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -1043,13 +1062,12 @@
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="SvnUp" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3301282" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.31764707" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32959184" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Web" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="EJB" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.39967507" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="CVS" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Module Dependencies" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="CVS" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Duplicates" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.39872408" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" x="22" y="245" width="980" height="250" />
     </layout>
@@ -1072,7 +1090,7 @@
     <option name="PERFORM_ROLLBACK_IN_BACKGROUND" value="false" />
     <option name="CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND" value="true" />
     <option name="FORCE_NON_EMPTY_COMMENT" value="false" />
-    <option name="LAST_COMMIT_MESSAGE" value="made enqueue method non-static" />
+    <option name="LAST_COMMIT_MESSAGE" value="changed version to 2.0.1-SNAPSHOT" />
     <option name="MAKE_NEW_CHANGELIST_ACTIVE" value="true" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_FILES_UP_TO_DATE_BEFORE_COMMIT" value="false" />
@@ -1085,8 +1103,6 @@
     <option name="UPDATE_GROUP_BY_CHANGELIST" value="false" />
     <option name="SHOW_FILE_HISTORY_AS_TREE" value="false" />
     <option name="FILE_HISTORY_SPLITTER_PROPORTION" value="0.6" />
-    <MESSAGE value="Pools' TransactionGtridsCurrentlyHoldingThis MBean attribute now renders fine in jconsole" />
-    <MESSAGE value="lowered currentNodeOnlyRecovery log message to debug when XIDs are skipped" />
     <MESSAGE value="fixed autocommit test + added new ones" />
     <MESSAGE value="re-introduced InvocationTargetException handling to make proxy more transparent" />
     <MESSAGE value="fixed typos" />
@@ -1110,6 +1126,8 @@
     <MESSAGE value="javadoc cleanup" />
     <MESSAGE value="marked thread-shared variables as volatile to prevent potential race conditions" />
     <MESSAGE value="made enqueue method non-static" />
+    <MESSAGE value="fixed BTM-84: cleanup of recovery (both background and incremental) so that errors during recovery do not leave the connection in an invalid state anymore" />
+    <MESSAGE value="changed version to 2.0.1-SNAPSHOT" />
   </component>
   <component name="VssConfiguration">
     <option name="CLIENT_PATH" value="" />
@@ -1192,84 +1210,94 @@
     <option name="myLastEditedConfigurable" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/recovery/RecoveryHelper.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/ehcache/EhCacheXAResourceProducer.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="92" column="88" selection-start="4221" selection-end="4221" vertical-scroll-proportion="1.4693878" />
+        <state line="115" column="33" selection-start="4331" selection-end="4331" vertical-scroll-proportion="0.1884058" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/BitronixXid.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/common/XAResourceProducer.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="44" column="18" selection-start="1910" selection-end="1910" vertical-scroll-proportion="0.0" />
+        <state line="29" column="0" selection-start="1057" selection-end="1057" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/BitronixUserTransactionObjectFactory.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/JdbcPooledConnection.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="9" column="13" selection-start="319" selection-end="319" vertical-scroll-proportion="0.0" />
+        <state line="143" column="34" selection-start="6470" selection-end="6470" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/BitronixTransactionSynchronizationRegistryObjectFactory.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/JdbcConnectionHandle.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="16" column="13" selection-start="419" selection-end="419" vertical-scroll-proportion="0.0" />
+        <state line="75" column="16" selection-start="2662" selection-end="2662" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/BitronixTransactionSynchronizationRegistry.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/common/RecoveryXAResourceHolder.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="24" column="13" selection-start="722" selection-end="722" vertical-scroll-proportion="0.0" />
+        <state line="26" column="16" selection-start="843" selection-end="843" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/timer/TaskScheduler.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jms/JmsPooledConnection.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="23" column="31" selection-start="693" selection-end="693" vertical-scroll-proportion="-2.7724137" />
+        <state line="60" column="49" selection-start="2827" selection-end="2827" vertical-scroll-proportion="0.20565149" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/BitronixTransactionMBean.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jms/JmsConnectionHandle.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="11" column="17" selection-start="246" selection-end="246" vertical-scroll-proportion="0.0" />
+        <state line="34" column="16" selection-start="1035" selection-end="1035" vertical-scroll-proportion="0.20565149" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/BitronixTransactionManagerObjectFactory.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jdbc/PoolingDataSource.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="16" column="13" selection-start="391" selection-end="391" vertical-scroll-proportion="0.0" />
+        <state line="225" column="83" selection-start="8157" selection-end="8157" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/resource/jms/PoolingConnectionFactory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="148" column="48" selection-start="5015" selection-end="5015" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/build-codehaus.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test/bitronix/tm/JtaTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="67" column="29" selection-start="1750" selection-end="1750" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/BitronixTransaction.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="224" column="16" selection-start="11194" selection-end="11194" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/internal/ThreadContext.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="14" column="18" selection-start="465" selection-end="465" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/bitronix/tm/BitronixTransactionManager.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="31" column="4" selection-start="1004" selection-end="1004" vertical-scroll-proportion="0.0" />
+        <state line="418" column="8" selection-start="18231" selection-end="18231" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/TransactionManagerServices.java">
+    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/BitronixTransactionSynchronizationRegistry.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="30" column="22" selection-start="1251" selection-end="1251" vertical-scroll-proportion="0.0" />
+        <state line="29" column="4" selection-start="1013" selection-end="1013" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/journal/Journal.java">
+    <entry file="file://$PROJECT_DIR$/test/bitronix/tm/BitronixTransactionSynchronizationRegistryTest.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="16" column="0" selection-start="408" selection-end="408" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/journal/DiskJournal.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="28" column="13" selection-start="1147" selection-end="1147" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/journal/TransactionLogAppender.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="145" column="39" selection-start="6103" selection-end="6103" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/twopc/executor/Executor.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="11" column="17" selection-start="309" selection-end="309" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/recovery/Recoverer.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="65" column="13" selection-start="3591" selection-end="3591" vertical-scroll-proportion="0.0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/bitronix/tm/journal/DiskForceBatcherThread.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="72" column="21" selection-start="2517" selection-end="2517" vertical-scroll-proportion="0.40974212">
+        <state line="40" column="21" selection-start="1246" selection-end="1246" vertical-scroll-proportion="0.52717394">
           <folding />
         </state>
       </provider>

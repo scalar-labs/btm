@@ -27,12 +27,16 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionSynchronizationRegistry.class);
 
     private static BitronixTransactionManager transactionManager;
-    private final static ThreadLocal resourcesTl = new ThreadLocal();
+    
+    private final static ThreadLocal resourcesTl = new ThreadLocal() {
+        protected Object initialValue() {
+            return new HashMap();
+        }
+    };
 
 
     public BitronixTransactionSynchronizationRegistry() {
         transactionManager = TransactionManagerServices.getTransactionManager();
-        resourcesTl.set(new HashMap());
     }
 
     public Object getResource(Object key) {
