@@ -181,8 +181,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     public String toString() {
         synchronized (sessions) {
             return "a JmsPooledConnection of pool " + poolingConnectionFactory.getUniqueName() + " in state " +
-                    Decoder.decodeXAStatefulHolderState(getState()) + " with underlying connection " + xaConnection +
-                    " with " + sessions.size() + " opened session(s)";
+                    Decoder.decodeXAStatefulHolderState(getState()) + " with underlying connection " + xaConnection;
         }
     }
 
