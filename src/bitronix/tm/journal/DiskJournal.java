@@ -56,10 +56,11 @@ public class DiskJournal implements Journal {
     /**
      * Log a new transaction status to journal. Note that the DiskJournal will not check the flow of the transaction.
      * If you call this method with erroneous data, it will be added to the journal anyway.
-     * @param status transaction status to log. See {@link javax.transaction.Status} constants
-     * @param gtrid raw GTRID of the transaction
-     * @param uniqueNames unique names of the {@link javax.sql.XADataSource}s participating in this transaction
-     * @throws IOException
+     * @param status transaction status to log. See {@link javax.transaction.Status} constants.
+     * @param gtrid raw GTRID of the transaction.
+     * @param uniqueNames unique names of the {@link bitronix.tm.resource.common.ResourceBean}s participating in
+     * this transaction.
+     * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
     public void log(int status, Uid gtrid, Set uniqueNames) throws IOException {
         if (activeTla == null)
@@ -88,7 +89,7 @@ public class DiskJournal implements Journal {
 
     /**
      * Force active log file to synchronize with the underlying disk device.
-     * @throws IOException
+     * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
     public void force() throws IOException {
         if (activeTla == null)
@@ -100,7 +101,7 @@ public class DiskJournal implements Journal {
     /**
      * Open the disk journal. Files are checked for integrity and DiskJournal will refuse to open corrupted log files.
      * If files are not present on disk, this method will create and pre-allocate them.
-     * @throws IOException
+     * @throws java.io.IOException in case of disk IO failure.
      */
     public synchronized void open() throws IOException {
         if (activeTla != null) {
@@ -141,7 +142,7 @@ public class DiskJournal implements Journal {
 
     /**
      * Close the disk journal and the underlying files.
-     * @throws IOException
+     * @throws java.io.IOException in case of disk IO failure.
      */
     public synchronized void close() throws IOException {
         if (activeTla == null) {
@@ -176,7 +177,7 @@ public class DiskJournal implements Journal {
     /**
      * Collect all dangling records of the active log file.
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
-     * @throws IOException
+     * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
     public Map collectDanglingRecords() throws IOException {
         if (activeTla == null)
