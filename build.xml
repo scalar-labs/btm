@@ -1,6 +1,6 @@
 <project default="build" name="btm">
 
-    <property name="jar.version" value="2.0.1-SNAPSHOT"/>
+    <property name="jar.version" value="2.0.1"/>
 
     <property environment="env"/>
     <property name="dir.src" value="src"/>
@@ -171,7 +171,7 @@
         </jar>
     </target>
 
-    <target name="m2-install" description="Install artifact and POM in local Maven2 repository.">
+    <target name="m2-install" description="Install artifacts and POMs in local Maven2 repository.">
         <property name="m2.location" value="${dir.m2.repo}/org/codehaus/btm/btm/${jar.version}"/>
         <mkdir dir="${m2.location}"/>
         <copy file="${pom.file}" tofile="${m2.location}/btm-${jar.version}.pom" />
