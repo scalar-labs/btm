@@ -89,6 +89,9 @@ public class IncrementalRecoverer {
         } catch (RuntimeException ex) {
             xaResourceProducer.setFailed(true);
             throw new RecoveryException("failed recovering resource " + uniqueName, ex);
+        } catch (RecoveryException ex) {
+            xaResourceProducer.setFailed(true);
+            throw ex;
         } finally {
             xaResourceProducer.endRecovery();
             if (log.isDebugEnabled()) log.debug("end of incremental recovery on resource " + uniqueName);
