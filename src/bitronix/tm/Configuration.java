@@ -114,10 +114,12 @@ public class Configuration implements Service {
      * truncated.
      * @see #getServerId()
      * @param serverId the unique ID of this TM instance.
+     * @return this.
      */
-    public void setServerId(String serverId) {
+    public Configuration setServerId(String serverId) {
         checkNotStarted();
         this.serverId = serverId;
+        return this;
     }
 
     /**
@@ -133,10 +135,12 @@ public class Configuration implements Service {
      * Set the journal fragment file 1 name.
      * @see #getLogPart1Filename()
      * @param logPart1Filename the journal fragment file 1 name.
+     * @return this.
      */
-    public void setLogPart1Filename(String logPart1Filename) {
+    public Configuration setLogPart1Filename(String logPart1Filename) {
         checkNotStarted();
         this.logPart1Filename = logPart1Filename;
+        return this;
     }
 
     /**
@@ -152,10 +156,12 @@ public class Configuration implements Service {
      * Set the journal fragment file 2 name.
      * @see #getLogPart2Filename()
      * @param logPart2Filename the journal fragment file 2 name.
+     * @return this.
      */
-    public void setLogPart2Filename(String logPart2Filename) {
+    public Configuration setLogPart2Filename(String logPart2Filename) {
         checkNotStarted();
         this.logPart2Filename = logPart2Filename;
+        return this;
     }
 
     /**
@@ -173,10 +179,12 @@ public class Configuration implements Service {
      * guaranteed.
      * @see #isForcedWriteEnabled()
      * @param forcedWriteEnabled true if logs should be forced to disk, false otherwise.
+     * @return this.
      */
-    public void setForcedWriteEnabled(boolean forcedWriteEnabled) {
+    public Configuration setForcedWriteEnabled(boolean forcedWriteEnabled) {
         checkNotStarted();
         this.forcedWriteEnabled = forcedWriteEnabled;
+        return this;
     }
 
     /**
@@ -192,10 +200,12 @@ public class Configuration implements Service {
      * Set if disk forces are batched. Disabling batching can seriously lower the transaction manager's throughput.
      * @see #isForceBatchingEnabled()
      * @param forceBatchingEnabled true if disk forces are batched, false otherwise.
+     * @return this.
      */
-    public void setForceBatchingEnabled(boolean forceBatchingEnabled) {
+    public Configuration setForceBatchingEnabled(boolean forceBatchingEnabled) {
         checkNotStarted();
         this.forceBatchingEnabled = forceBatchingEnabled;
+        return this;
     }
 
     /**
@@ -213,10 +223,12 @@ public class Configuration implements Service {
      * in-doubt but the TM pauses longer when a fragment is full.
      * @see #getMaxLogSizeInMb()
      * @param maxLogSizeInMb the maximum size in megabytes of the journal fragments.
+     * @return this.
      */
-    public void setMaxLogSizeInMb(int maxLogSizeInMb) {
+    public Configuration setMaxLogSizeInMb(int maxLogSizeInMb) {
         checkNotStarted();
         this.maxLogSizeInMb = maxLogSizeInMb;
+        return this;
     }
 
     /**
@@ -234,10 +246,12 @@ public class Configuration implements Service {
      * makes debugging more complex.
      * @see #isFilterLogStatus()
      * @param filterLogStatus true if only mandatory logs should be written.
+     * @return this.
      */
-    public void setFilterLogStatus(boolean filterLogStatus) {
+    public Configuration setFilterLogStatus(boolean filterLogStatus) {
         checkNotStarted();
         this.filterLogStatus = filterLogStatus;
+        return this;
     }
 
     /**
@@ -253,9 +267,11 @@ public class Configuration implements Service {
      * Set if corrupted logs should be skipped.
      * @see #isSkipCorruptedLogs()
      * @param skipCorruptedLogs true if corrupted logs should be skipped.
+     * @return this.
      */
-    public void setSkipCorruptedLogs(boolean skipCorruptedLogs) {
+    public Configuration setSkipCorruptedLogs(boolean skipCorruptedLogs) {
         this.skipCorruptedLogs = skipCorruptedLogs;
+        return this;
     }
 
     /**
@@ -275,10 +291,12 @@ public class Configuration implements Service {
      * spawning requirements. It also makes debugging more complex.
      * @see #isAsynchronous2Pc()
      * @param asynchronous2Pc true if two phase commit should be executed asynchronously.
+     * @return this.
      */
-    public void setAsynchronous2Pc(boolean asynchronous2Pc) {
+    public Configuration setAsynchronous2Pc(boolean asynchronous2Pc) {
         checkNotStarted();
         this.asynchronous2Pc = asynchronous2Pc;
+        return this;
     }
 
     /**
@@ -297,10 +315,12 @@ public class Configuration implements Service {
      * @see #isWarnAboutZeroResourceTransaction()
      * @param warnAboutZeroResourceTransaction true if transactions executed without a single enlisted resource should
      *        result in a warning.
+     * @return this.
      */
-    public void setWarnAboutZeroResourceTransaction(boolean warnAboutZeroResourceTransaction) {
+    public Configuration setWarnAboutZeroResourceTransaction(boolean warnAboutZeroResourceTransaction) {
         checkNotStarted();
         this.warnAboutZeroResourceTransaction = warnAboutZeroResourceTransaction;
+        return this;
     }
 
     /**
@@ -316,10 +336,12 @@ public class Configuration implements Service {
      * Set the default transaction timeout in seconds.
      * @see #getDefaultTransactionTimeout()
      * @param defaultTransactionTimeout the default transaction timeout in seconds.
+     * @return this.
      */
-    public void setDefaultTransactionTimeout(int defaultTransactionTimeout) {
+    public Configuration setDefaultTransactionTimeout(int defaultTransactionTimeout) {
         checkNotStarted();
         this.defaultTransactionTimeout = defaultTransactionTimeout;
+        return this;
     }
 
     /**
@@ -336,10 +358,12 @@ public class Configuration implements Service {
      * time.
      * @see #getGracefulShutdownInterval()
      * @param gracefulShutdownInterval the maximum amount of time in seconds.
+     * @return this.
      */
-    public void setGracefulShutdownInterval(int gracefulShutdownInterval) {
+    public Configuration setGracefulShutdownInterval(int gracefulShutdownInterval) {
         checkNotStarted();
         this.gracefulShutdownInterval = gracefulShutdownInterval;
+        return this;
     }
 
     /**
@@ -357,10 +381,12 @@ public class Configuration implements Service {
      * @see #getBackgroundRecoveryInterval()
      * @param backgroundRecoveryInterval the interval in minutes.
      * @deprecated superceded by #setBackgroundRecoveryIntervalSeconds(int).
+     * @return this.
      */
-    public void setBackgroundRecoveryInterval(int backgroundRecoveryInterval) {
+    public Configuration setBackgroundRecoveryInterval(int backgroundRecoveryInterval) {
         log.warn("setBackgroundRecoveryInterval() is deprecated, consider using setBackgroundRecoveryIntervalSeconds() instead.");
         setBackgroundRecoveryIntervalSeconds(backgroundRecoveryInterval * 60);
+        return this;
     }
 
     /**
@@ -376,10 +402,12 @@ public class Configuration implements Service {
      * Set the interval in seconds at which to run the recovery process in the background. Disabled when set to 0.
      * @see #getBackgroundRecoveryIntervalSeconds()
      * @param backgroundRecoveryIntervalSeconds the interval in minutes.
+     * @return this.
      */
-    public void setBackgroundRecoveryIntervalSeconds(int backgroundRecoveryIntervalSeconds) {
+    public Configuration setBackgroundRecoveryIntervalSeconds(int backgroundRecoveryIntervalSeconds) {
         checkNotStarted();
         this.backgroundRecoveryIntervalSeconds = backgroundRecoveryIntervalSeconds;
+        return this;
     }
 
     /**
@@ -395,9 +423,11 @@ public class Configuration implements Service {
      * Set to true if JMX Mbeans should not be registered even if a JMX MBean server is detected.
      * @see #isDisableJmx()
      * @param disableJmx true if JMX MBeans should never be registered.
+     * @return this.
      */
-    public void setDisableJmx(boolean disableJmx) {
+    public Configuration setDisableJmx(boolean disableJmx) {
         this.disableJmx = disableJmx;
+        return this;
     }
 
     /**
@@ -416,10 +446,12 @@ public class Configuration implements Service {
      * @see #getJndiUserTransactionName()
      * @param jndiUserTransactionName the name the {@link javax.transaction.UserTransaction} should
      *        be bound under in the {@link bitronix.tm.jndi.BitronixContext}.
+     * @return this.
      */
-    public void setJndiUserTransactionName(String jndiUserTransactionName) {
+    public Configuration setJndiUserTransactionName(String jndiUserTransactionName) {
         checkNotStarted();
         this.jndiUserTransactionName = jndiUserTransactionName;
+        return this;
     }
 
     /**
@@ -438,10 +470,12 @@ public class Configuration implements Service {
      * @see #getJndiUserTransactionName()
      * @param jndiTransactionSynchronizationRegistryName the name the {@link javax.transaction.TransactionSynchronizationRegistry} should
      *        be bound under in the {@link bitronix.tm.jndi.BitronixContext}.
+     * @return this.
      */
-    public void setJndiTransactionSynchronizationRegistryName(String jndiTransactionSynchronizationRegistryName) {
+    public Configuration setJndiTransactionSynchronizationRegistryName(String jndiTransactionSynchronizationRegistryName) {
         checkNotStarted();
         this.jndiTransactionSynchronizationRegistryName = jndiTransactionSynchronizationRegistryName;
+        return this;
     }
 
     /**
@@ -456,9 +490,11 @@ public class Configuration implements Service {
      * Set the journal name. Can be <code>disk</code>, <code>null</code> or a class name.
      * @see #getJournal()
      * @param journal the journal name.
+     * @return this.
      */
-    public void setJournal(String journal) {
+    public Configuration setJournal(String journal) {
         this.journal = journal;
+        return this;
     }
 
     /**
@@ -475,9 +511,11 @@ public class Configuration implements Service {
      * Set to true if recovery should filter out recovered XIDs that do not contain this JVM's unique ID, false otherwise.
      * @see #isCurrentNodeOnlyRecovery()
      * @param currentNodeOnlyRecovery true if recovery should filter out recovered XIDs that do not contain this JVM's unique ID, false otherwise.
+     * @return this.
      */
-    public void setCurrentNodeOnlyRecovery(boolean currentNodeOnlyRecovery) {
+    public Configuration setCurrentNodeOnlyRecovery(boolean currentNodeOnlyRecovery) {
         this.currentNodeOnlyRecovery = currentNodeOnlyRecovery;
+        return this;
     }
 
     /**
@@ -495,10 +533,12 @@ public class Configuration implements Service {
      * @see #getResourceConfigurationFilename()
      * @param resourceConfigurationFilename the filename of the resources configuration file or null you do not want to
      *        use the {@link bitronix.tm.resource.ResourceLoader}.
+     * @return this.
      */
-    public void setResourceConfigurationFilename(String resourceConfigurationFilename) {
+    public Configuration setResourceConfigurationFilename(String resourceConfigurationFilename) {
         checkNotStarted();
         this.resourceConfigurationFilename = resourceConfigurationFilename;
+        return this;
     }
 
     /**
