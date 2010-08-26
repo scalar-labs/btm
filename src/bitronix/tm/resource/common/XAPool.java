@@ -47,12 +47,16 @@ public class XAPool implements StateChangeListener {
     }
 
     private void init() throws Exception {
-        for (int i=0; i < bean.getMinPoolSize() ;i++) {
-            createPooledObject(xaFactory);
-        }
+        growUntilMinPoolSize();
 
         if (bean.getMaxIdleTime() > 0) {
             TransactionManagerServices.getTaskScheduler().schedulePoolShrinking(this);
+        }
+    }
+
+    private void growUntilMinPoolSize() throws Exception {
+        for (int i = (int)totalPoolSize(); i < bean.getMinPoolSize() ;i++) {
+            createPooledObject(xaFactory);
         }
     }
 
@@ -212,11 +216,6 @@ public class XAPool implements StateChangeListener {
         List toRemoveXaStatefulHolders = new ArrayList();
         long now = System.currentTimeMillis();
         for (int i = 0; i < totalPoolSize(); i++) {
-            if (totalPoolSize() - toRemoveXaStatefulHolders.size() <= bean.getMinPoolSize()) {
-                if (log.isDebugEnabled()) log.debug("pool reached min size");
-                break;
-            }
-
             XAStatefulHolder xaStatefulHolder = (XAStatefulHolder) objects.get(i);
             if (xaStatefulHolder.getState() != XAStatefulHolder.STATE_IN_POOL)
                 continue;
@@ -232,6 +231,7 @@ public class XAPool implements StateChangeListener {
         } // for
         if (log.isDebugEnabled()) log.debug("closed " + toRemoveXaStatefulHolders.size() + " idle connection(s)");
         objects.removeAll(toRemoveXaStatefulHolders);
+        growUntilMinPoolSize();
         if (log.isDebugEnabled()) log.debug("shrunk " + this);
     }
 
