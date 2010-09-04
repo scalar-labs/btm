@@ -261,10 +261,11 @@ public class LrcXAResource implements XAResource {
 
         try {
             session.rollback();
-            this.state = NO_TX;
-            this.xid = null;
         } catch (JMSException ex) {
             throw new BitronixXAException("error preparing non-XA resource", XAException.XAER_RMERR, ex);
+        } finally {
+            this.state = NO_TX;
+            this.xid = null;
         }
     }
 
