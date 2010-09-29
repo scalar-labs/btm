@@ -136,8 +136,6 @@ public class MockitoXADataSource implements XADataSource {
     public static Connection createMockConnection() throws SQLException {
         // Setup mock connection
         final Connection mockConnection = mock(Connection.class);
-        // Handle Connection.isValid()
-        when(mockConnection.isValid(anyInt())).thenReturn(true);
         // Autocommit is always true by default
         when(mockConnection.getAutoCommit()).thenReturn(true);
         // Handle Connection.createStatement()
