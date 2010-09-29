@@ -1,6 +1,8 @@
 package bitronix.tm.mock;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.*;
 
 import javax.sql.DataSource;
@@ -246,6 +248,14 @@ public class JdbcPoolTest extends TestCase {
     }
 
     public void testWrappers() throws Exception {
+        try {
+            Connection.class.getMethod("isWrapperFor");
+        } catch (NoSuchMethodException e) {
+            // if there is no such method this means the JVM is running with pre-JDBC4 classes
+            // so this test becomes pointless and must be skipped
+            return;
+        }
+
         // XADataSource
         assertTrue(pds.isWrapperFor(XADataSource.class));
         assertFalse(pds.isWrapperFor(DataSource.class));
@@ -254,26 +264,37 @@ public class JdbcPoolTest extends TestCase {
 
         // Connection
         Connection c = pds.getConnection();
-        assertTrue(c.isWrapperFor(Connection.class));
-        Connection unwrappedConnection = c.unwrap(Connection.class);
+        assertTrue(isWrapperFor(c, Connection.class));
+        Connection unwrappedConnection = (Connection) unwrap(c, Connection.class);
         assertTrue(unwrappedConnection.getClass().getName().contains("java.sql.Connection") && unwrappedConnection.getClass().getName().contains("EnhancerByMockito"));
 
         // Statement
         Statement stmt = c.createStatement();
-        assertTrue(stmt.isWrapperFor(Statement.class));
-        Statement unwrappedStmt = stmt.unwrap(Statement.class);
+        assertTrue(isWrapperFor(stmt, Statement.class));
+        Statement unwrappedStmt = (Statement) unwrap(stmt, Statement.class);
         assertTrue(unwrappedStmt.getClass().getName().contains("java.sql.Statement") && unwrappedStmt.getClass().getName().contains("EnhancerByMockito"));
 
         // PreparedStatement
         PreparedStatement pstmt = c.prepareStatement("mock sql");
-        assertTrue(pstmt.isWrapperFor(PreparedStatement.class));
-        Statement unwrappedPStmt = pstmt.unwrap(PreparedStatement.class);
+        assertTrue(isWrapperFor(pstmt, PreparedStatement.class));
+        Statement unwrappedPStmt = (Statement) unwrap(pstmt, PreparedStatement.class);
         assertTrue(unwrappedPStmt.getClass().getName().contains("java.sql.PreparedStatement") && unwrappedPStmt.getClass().getName().contains("EnhancerByMockito"));
 
         // CallableStatement
         CallableStatement cstmt = c.prepareCall("mock stored proc");
-        assertTrue(cstmt.isWrapperFor(CallableStatement.class));
-        Statement unwrappedCStmt = cstmt.unwrap(CallableStatement.class);
+        assertTrue(isWrapperFor(cstmt, CallableStatement.class));
+        Statement unwrappedCStmt = (Statement) unwrap(cstmt, CallableStatement.class);
         assertTrue(unwrappedCStmt.getClass().getName().contains("java.sql.CallableStatement") && unwrappedCStmt.getClass().getName().contains("EnhancerByMockito"));
     }
+
+    private static boolean isWrapperFor(Object obj, Class param) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method isWrapperForMethod = obj.getClass().getMethod("isWrapperFor", Class.class);
+        return (Boolean) isWrapperForMethod.invoke(obj, param);
+    }
+
+    private static Object unwrap(Object obj, Class param) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method unwrapMethod = obj.getClass().getMethod("unwrap", Class.class);
+        return unwrapMethod.invoke(obj, param);
+    }
+
 }
