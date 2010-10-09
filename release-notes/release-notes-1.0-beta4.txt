@@ -1,7 +1,0 @@
-* Fixed race condition in JMS resource wrapper.
-* Changed JTA and JMS 1.1 spec files from Sun for the ones coming from Apache as the license is more permissive.
-* Refactored 2PC logic to make it possible to use any kind of execution mechanism (synchronous, JDK 1.5+ concurrent package, ...).
-* Hardened transaction log files integrity checks and added bitronix.tm.journal.disk.skipCorruptedLogs configuration property to allow the recovery process to skip corrupted log entries.
-* Transaction log files are now locked to avoid unexpected collisions.
-* JndiXAConnectionFactory now allows security Principal and Credentials to be provided.
-* Added resource parameter allowLocalTransactions to disallow non-explicit mixing of xa and non-xa transactions.
