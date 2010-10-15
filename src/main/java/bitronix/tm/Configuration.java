@@ -644,7 +644,7 @@ public class Configuration implements Service {
         String result = value;
 
         int startIndex = value.indexOf('$');
-        if (startIndex > -1 && value.charAt(startIndex +1) == '{') {
+        if (startIndex > -1 && value.length() > startIndex +1 && value.charAt(startIndex +1) == '{') {
             int endIndex = value.indexOf('}');
             if (startIndex +2 == endIndex)
                 throw new IllegalArgumentException("property ref cannot refer to an empty name: ${}");

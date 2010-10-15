@@ -42,6 +42,8 @@ public class ConfigurationTest extends TestCase {
         props.setProperty("14", "${1} ${}");
         props.setProperty("15", "${1} ${tatata");
         props.setProperty("16", "${1} ${4}");
+        props.setProperty("17", "x$");
+        props.setProperty("18", "x${");
 
         assertEquals("one", Configuration.getString(props, "1", null));
         assertEquals("two", Configuration.getString(props, "2", null));
@@ -62,6 +64,15 @@ public class ConfigurationTest extends TestCase {
             fail("expected IllegalArgumentException: unclosed property ref: ${tatata");
         } catch (IllegalArgumentException ex) {
             assertEquals("unclosed property ref: ${tatata", ex.getMessage());
+        }
+
+        assertEquals("x$", Configuration.getString(props, "17", null));
+
+        try {
+            Configuration.getString(props, "18", null);
+            fail("expected IllegalArgumentException: unclosed property ref: ${");
+        } catch (IllegalArgumentException ex) {
+            assertEquals("unclosed property ref: ${", ex.getMessage());
         }
     }
 
