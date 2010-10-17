@@ -15,4 +15,18 @@
         <module>btm-tomcat55-lifecycle</module>
         <module>assembly</module>
     </modules>
+    
+    <distributionManagement>
+        <snapshotRepository>
+            <id>file.snapshots.repo</id>
+            <name>file snapshots repository</name>
+            <url>file:${basedir}/target/snapshots.repo</url>
+        </snapshotRepository>
+        <repository>
+            <id>file.repo</id>
+            <name>file repository</name>
+            <url>file:${basedir}/target/repo</url>
+        </repository>
+    </distributionManagement>
+    
 </project>
