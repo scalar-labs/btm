@@ -11,7 +11,7 @@
 
     <fileSets>
         <fileSet>
-            <directory>${basedir}/target</directory>
+            <directory>${basedir}/../btm/target</directory>
             <includes>
                 <include>*.jar</include>
             </includes>
@@ -45,35 +45,35 @@
         </fileSet>
 
         <fileSet>
-            <directory>${basedir}/target/apidocs</directory>
+            <directory>${basedir}/../btm/target/apidocs</directory>
             <includes>
                 <include>**/*</include>
             </includes>
             <outputDirectory>/doc/api</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/src/main/java</directory>
+            <directory>${basedir}/../btm/src/main/java</directory>
             <includes>
                 <include>**/*</include>
             </includes>
             <outputDirectory>/src</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/src/main/resources</directory>
+            <directory>${basedir}/../btm/src/main/resources</directory>
             <includes>
                 <include>**/*</include>
             </includes>
             <outputDirectory>/src</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/src/test/java</directory>
+            <directory>${basedir}/../btm/src/test/java</directory>
             <includes>
                 <include>**/*</include>
             </includes>
             <outputDirectory>/test</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/src/test/resources</directory>
+            <directory>${basedir}/../btm/src/test/resources</directory>
             <includes>
                 <include>**/*</include>
             </includes>
@@ -112,6 +112,9 @@
             <outputDirectory>/lib</outputDirectory>
             <unpack>false</unpack>
             <scope>runtime</scope>
+            <excludes>
+                <exclude>org.codehaus.btm:*</exclude>
+            </excludes>
         </dependencySet>
         <dependencySet>
             <outputDirectory>/test-lib</outputDirectory>

@@ -151,17 +151,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.2</version>
-                <configuration>
-                    <descriptors>
-                        <descriptor>${basedir}/src/assemble/distribution.xml</descriptor>
-                    </descriptors>
-                    <tarLongFileMode>gnu</tarLongFileMode>
-                </configuration>
-            </plugin>
         </plugins>
 
         <extensions>
@@ -177,12 +166,12 @@
         <snapshotRepository>
             <id>codehaus.snapshots.repo</id>
             <name>Codehaus snapshots repository</name>
-            <url>dav+https://dav.codehaus.org/snapshots.repository/btm/</url>
+            <url>dav+https://dav.codehaus.org/snapshots.repository/btm</url>
         </snapshotRepository>
         <repository>
             <id>codehaus.repo</id>
             <name>Codehaus repository</name>
-            <url>dav+https://dav.codehaus.org/repository/btm/</url>
+            <url>dav+https://dav.codehaus.org/repository/btm</url>
         </repository>
     </distributionManagement>
 

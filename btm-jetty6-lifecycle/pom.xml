@@ -136,12 +136,12 @@
         <snapshotRepository>
             <id>codehaus.snapshots.repo</id>
             <name>Codehaus snapshots repository</name>
-            <url>dav+https://dav.codehaus.org/snapshots.repository/btm/</url>
+            <url>dav+https://dav.codehaus.org/snapshots.repository/btm</url>
         </snapshotRepository>
         <repository>
             <id>codehaus.repo</id>
             <name>Codehaus repository</name>
-            <url>dav+https://dav.codehaus.org/repository/btm/</url>
+            <url>dav+https://dav.codehaus.org/repository/btm</url>
         </repository>
     </distributionManagement>
 
