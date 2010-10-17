@@ -1,4 +1,8 @@
-<assembly>
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.1"
+          xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.1 http://maven.apache.org/xsd/assembly-1.1.1.xsd"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
     <id>dist</id>
     <formats>
         <format>tar.gz</format>
@@ -17,6 +21,29 @@
             </excludes>
             <outputDirectory>/</outputDirectory>
         </fileSet>
+        <fileSet>
+            <directory>${basedir}/../btm-jetty6-lifecycle/target</directory>
+            <includes>
+                <include>*.jar</include>
+            </includes>
+            <excludes>
+                <exclude>*-sources.jar</exclude>
+                <exclude>*-javadoc.jar</exclude>
+            </excludes>
+            <outputDirectory>/integration</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/../btm-tomcat55-lifecycle/target</directory>
+            <includes>
+                <include>*.jar</include>
+            </includes>
+            <excludes>
+                <exclude>*-sources.jar</exclude>
+                <exclude>*-javadoc.jar</exclude>
+            </excludes>
+            <outputDirectory>/integration</outputDirectory>
+        </fileSet>
+
         <fileSet>
             <directory>${basedir}/target/apidocs</directory>
             <includes>
@@ -56,8 +83,8 @@
             <directory>${basedir}/src/assemble</directory>
             <includes>
                 <include>license.txt</include>
+                <include>build.xml</include>
                 <include>doc/**/*</include>
-                <include>integration/**/*</include>
             </includes>
             <filtered>true</filtered>
             <outputDirectory>/</outputDirectory>
@@ -69,7 +96,6 @@
             </includes>
             <filtered>true</filtered>
             <outputDirectory>/</outputDirectory>
-            <useStrictFiltering>true</useStrictFiltering>
         </fileSet>
         <fileSet>
             <directory>${basedir}/src/assemble/3rdparty-licenses</directory>
@@ -86,9 +112,16 @@
             <outputDirectory>/lib</outputDirectory>
             <unpack>false</unpack>
             <scope>runtime</scope>
-            <excludes>
-                <exclude>${project.groupId}:${project.artifactId}</exclude>
-            </excludes>
+        </dependencySet>
+        <dependencySet>
+            <outputDirectory>/test-lib</outputDirectory>
+            <unpack>false</unpack>
+            <scope>test</scope>
+            <includes>
+                <include>junit:*</include>
+                <include>org.mockito:*</include>
+            </includes>
         </dependencySet>
     </dependencySets>
+
 </assembly>
