@@ -35,10 +35,10 @@
     <scm>
         <url>http://git.codehaus.org/gitweb.cgi?p=btm-git.git</url>
         <connection>
-            scm:git://git.codehaus.org/btm-git.git
+            scm:git:git://git.codehaus.org/btm-git.git
         </connection>
         <developerConnection>
-            scm:ssh://git@git.codehaus.org/btm-git.git
+            scm:git:ssh://git@git.codehaus.org/btm-git.git
         </developerConnection>
     </scm>
 
