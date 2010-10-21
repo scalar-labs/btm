@@ -33,12 +33,12 @@
     </licenses>
 
     <scm>
-        <url>http://gitorious.org/bitronix-transaction-manager/</url>
+        <url>http://git.codehaus.org/gitweb.cgi?p=btm-git.git</url>
         <connection>
-            scm:git:git@gitorious.org:bitronix-transaction-manager/bitronix-transaction-manager.git
+            scm:git://git.codehaus.org/btm-git.git
         </connection>
         <developerConnection>
-            scm:git:git@gitorious.org:bitronix-transaction-manager/bitronix-transaction-manager.git
+            scm:ssh://git@git.codehaus.org/btm-git.git
         </developerConnection>
     </scm>
 
