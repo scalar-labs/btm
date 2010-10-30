@@ -203,7 +203,12 @@
             <modules>
                 <module>btm-dist</module>
             </modules>
-
+        </profile>
+        <profile>
+            <id>codehaus-ci</id>
+            <properties>
+                <codehausDistMgmtSnapshotsUrl>file:///opt/ci.repository.codehaus.org/</codehausDistMgmtSnapshotsUrl>
+            </properties>
         </profile>
     </profiles>
 
