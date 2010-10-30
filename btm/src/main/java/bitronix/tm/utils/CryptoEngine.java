@@ -20,6 +20,7 @@
  */
 package bitronix.tm.utils;
 
+import bitronix.tm.Version;
 import bitronix.tm.internal.BitronixRuntimeException;
 
 import javax.crypto.*;
@@ -128,14 +129,14 @@ public class CryptoEngine {
      * @throws Exception when an error occurs crypting the given resource password.
      */
     public static void main(String[] args) throws Exception {
-        System.out.println("Bitronix Transaction Manager password property crypter");
+        System.out.println("Bitronix Transaction Manager " + Version.getVersion() + " password property crypter");
         System.out.flush();
         if (args.length < 1 || args.length > 2) {
             System.err.println("Usage: CryptoEngine <password> [cipher]");
             System.err.println("  where:");
             System.err.println("    <password> is mandatory and is the resource password to crypt");
             System.err.println("    [cipher]   is optional and is the cipher to be used to crypt the password");
-            System.exit(-1);
+            System.exit(1);
         }
 
         String data = args[0];

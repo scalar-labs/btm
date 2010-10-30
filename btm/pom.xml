@@ -60,7 +60,7 @@
                                 <echo file="${basedir}/target/generated-sources/btm/bitronix/tm/Version.java">
                                     package bitronix.tm;
 
-                                        public final class Version {
+                                    public final class Version {
                                         public static String getVersion() {
                                             return "${project.version}";
                                         }
@@ -115,6 +115,17 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>bitronix.tm.utils.CryptoEngine</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
             </plugin>
         </plugins>
     </build>
