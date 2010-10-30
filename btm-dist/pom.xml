@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.codehaus.btm</groupId>
         <artifactId>btm-parent</artifactId>
-        <version>2.1.0-SNAPSHOT</version>
+        <version>2.1.1-SNAPSHOT</version>
     </parent>
     <artifactId>btm-dist</artifactId>
     <packaging>pom</packaging>
@@ -86,7 +86,6 @@
                         <descriptor>${basedir}/src/main/assembly/distribution.xml</descriptor>
                     </descriptors>
                     <tarLongFileMode>gnu</tarLongFileMode>
-                    <finalName>btm-${project.version}</finalName>
                 </configuration>
             </plugin>
         </plugins>
