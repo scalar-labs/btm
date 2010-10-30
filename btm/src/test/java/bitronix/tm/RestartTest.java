@@ -90,7 +90,7 @@ public class RestartTest extends TestCase {
 
     public void testRestartWithLoader() throws Exception {
         for (int i=0; i<3 ;i++) {
-            TransactionManagerServices.getConfiguration().setResourceConfigurationFilename("src/test/resources/" + getClass().getName().replace('.', '/') + ".properties");
+            TransactionManagerServices.getConfiguration().setResourceConfigurationFilename(getClass().getResource("RestartTest.properties").getFile());
             BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
             assertEquals("at loop iteration #" + (i+1), 1, ResourceRegistrar.getResourcesUniqueNames().size());
             tm.shutdown();
