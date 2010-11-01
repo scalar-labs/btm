@@ -106,6 +106,7 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
                     <doctitle>Bitronix Transaction Manager ${project.version} API</doctitle>
+                    <detectOfflineLinks>false</detectOfflineLinks>
                 </configuration>
                 <executions>
                     <execution>
