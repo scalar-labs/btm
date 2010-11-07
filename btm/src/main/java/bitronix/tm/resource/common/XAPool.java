@@ -61,8 +61,10 @@ public class XAPool implements StateChangeListener {
             throw new IllegalArgumentException("cannot create a pool with a connection acquisition increment less than 1, configured value is " + bean.getAcquireIncrement());
 
         xaFactory = createXAFactory(bean);
-
         init();
+
+        if (bean.getIgnoreRecoveryFailures())
+            log.warn("resource '" + bean.getUniqueName() + "' is configured to ignore recovery failures, make sure this setting is not enabled on a production system!");
     }
 
     private void init() throws Exception {

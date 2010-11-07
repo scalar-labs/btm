@@ -119,6 +119,10 @@ public class XAResourceHolderState {
         return bean.getTwoPcOrderingPosition();
     }
 
+    public boolean getIgnoreRecoveryFailures() {
+        return bean.getIgnoreRecoveryFailures();
+    }
+
     public boolean isEnded() {
         return ended;
     }

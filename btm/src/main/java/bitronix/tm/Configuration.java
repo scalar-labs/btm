@@ -68,6 +68,7 @@ public class Configuration implements Service {
     private String jndiTransactionSynchronizationRegistryName;
     private String journal;
     private boolean currentNodeOnlyRecovery;
+    private boolean allowMultipleLrc;
     private String resourceConfigurationFilename;
 
 
@@ -111,6 +112,7 @@ public class Configuration implements Service {
             jndiTransactionSynchronizationRegistryName = getString(properties, "bitronix.tm.jndi.transactionSynchronizationRegistryName", "java:comp/TransactionSynchronizationRegistry");
             journal = getString(properties, "bitronix.tm.journal", "disk");
             currentNodeOnlyRecovery = getBoolean(properties, "bitronix.tm.currentNodeOnlyRecovery", true);
+            allowMultipleLrc = getBoolean(properties, "bitronix.tm.allowMultipleLrc", false);
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
         } catch (IOException ex) {
             throw new InitializationException("error loading configuration", ex);
@@ -184,7 +186,7 @@ public class Configuration implements Service {
     }
 
     /**
-     * Are logs forced to disk ?  Do not set to false in production since without disk force, integrity is not
+     * Are logs forced to disk?  Do not set to false in production since without disk force, integrity is not
      * guaranteed.
      * <p>Property name:<br/><b>bitronix.tm.journal.disk.forcedWriteEnabled -</b> <i>(defaults to true)</i></p>
      * @return true if logs are forced to disk, false otherwise.
@@ -207,7 +209,7 @@ public class Configuration implements Service {
     }
 
     /**
-     * Are disk forces batched ? Disabling batching can seriously lower the transaction manager's throughput.
+     * Are disk forces batched? Disabling batching can seriously lower the transaction manager's throughput.
      * <p>Property name:<br/><b>bitronix.tm.journal.disk.forceBatchingEnabled -</b> <i>(defaults to true)</i></p>
      * @return true if disk forces are batched, false otherwise.
      */
@@ -251,7 +253,7 @@ public class Configuration implements Service {
     }
 
     /**
-     * Should only mandatory logs be written ? Enabling this parameter lowers space usage of the fragments but makes
+     * Should only mandatory logs be written? Enabling this parameter lowers space usage of the fragments but makes
      * debugging more complex.
      * <p>Property name:<br/><b>bitronix.tm.journal.disk.filterLogStatus -</b> <i>(defaults to false)</i></p>
      * @return true if only mandatory logs should be written.
@@ -274,7 +276,7 @@ public class Configuration implements Service {
     }
 
     /**
-     * Should corrupted logs be skipped ?
+     * Should corrupted logs be skipped?
      * <p>Property name:<br/><b>bitronix.tm.journal.disk.skipCorruptedLogs -</b> <i>(defaults to false)</i></p>
      * @return true if corrupted logs should be skipped.
      */
@@ -289,12 +291,13 @@ public class Configuration implements Service {
      * @return this.
      */
     public Configuration setSkipCorruptedLogs(boolean skipCorruptedLogs) {
+        checkNotStarted();
         this.skipCorruptedLogs = skipCorruptedLogs;
         return this;
     }
 
     /**
-     * Should two phase commit be executed asynchronously ? Asynchronous two phase commit can improve performance when
+     * Should two phase commit be executed asynchronously? Asynchronous two phase commit can improve performance when
      * there are many resources enlisted in transactions but is more CPU intensive due to the dynamic thread spawning
      * requirements. It also makes debugging more complex.
      * <p>Property name:<br/><b>bitronix.tm.2pc.async -</b> <i>(defaults to false)</i></p>
@@ -319,7 +322,7 @@ public class Configuration implements Service {
     }
 
     /**
-     * Should transactions executed without a single enlisted resource result in a warning or not ? Most of the time
+     * Should transactions executed without a single enlisted resource result in a warning or not? Most of the time
      * transactions executed with no enlisted resource reflect a bug or a mis-configuration somewhere.
      * <p>Property name:<br/><b>bitronix.tm.2pc.warnAboutZeroResourceTransactions -</b> <i>(defaults to true)</i></p>
      * @return true if transactions executed without a single enlisted resource should result in a warning.
@@ -430,7 +433,7 @@ public class Configuration implements Service {
     }
 
     /**
-     * Should JMX Mbeans not be registered even if a JMX MBean server is detected ?
+     * Should JMX Mbeans not be registered even if a JMX MBean server is detected?
      * <p>Property name:<br/><b>bitronix.tm.disableJmx -</b> <i>(defaults to false)</i></p>
      * @return true if JMX MBeans should never be registered.
      */
@@ -445,6 +448,7 @@ public class Configuration implements Service {
      * @return this.
      */
     public Configuration setDisableJmx(boolean disableJmx) {
+        checkNotStarted();
         this.disableJmx = disableJmx;
         return this;
     }
@@ -512,12 +516,13 @@ public class Configuration implements Service {
      * @return this.
      */
     public Configuration setJournal(String journal) {
+        checkNotStarted();
         this.journal = journal;
         return this;
     }
 
     /**
-     * Should the recovery process <b>not</b> recover XIDs generated with another JVM unique ID ? Setting this property to true
+     * Should the recovery process <b>not</b> recover XIDs generated with another JVM unique ID? Setting this property to true
      * is useful in clustered environments where multiple instances of BTM are running on different nodes.
      * @see #getServerId() contains the value used as the JVM unique ID.
      * @return true if recovery should filter out recovered XIDs that do not contain this JVM's unique ID, false otherwise.
@@ -533,7 +538,28 @@ public class Configuration implements Service {
      * @return this.
      */
     public Configuration setCurrentNodeOnlyRecovery(boolean currentNodeOnlyRecovery) {
+        checkNotStarted();
         this.currentNodeOnlyRecovery = currentNodeOnlyRecovery;
+        return this;
+    }
+
+    /**
+     * Should the transaction manager allow enlistment of multiple LRC resources in a single transaction?
+     * This is highly unsafe but could be useful for testing.
+     * @return true if the transaction manager should allow enlistment of multiple LRC resources in a single transaction, false otherwise.
+     */
+    public boolean isAllowMultipleLrc() {
+        return allowMultipleLrc;
+    }
+
+    /**
+     * Set to true if the transaction manager should allow enlistment of multiple LRC resources in a single transaction.
+     * @param allowMultipleLrc true if the transaction manager should allow enlistment of multiple LRC resources in a single transaction, false otherwise.
+     * @return this
+     */
+    public Configuration setAllowMultipleLrc(boolean allowMultipleLrc) {
+        checkNotStarted();
+        this.allowMultipleLrc = allowMultipleLrc;
         return this;
     }
 

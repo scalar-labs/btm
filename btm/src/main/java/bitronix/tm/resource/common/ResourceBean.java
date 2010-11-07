@@ -47,6 +47,7 @@ public abstract class ResourceBean implements Serializable {
     private int twoPcOrderingPosition = 1;
     private boolean applyTransactionTimeout = false;
     private boolean shareTransactionConnections = false;
+    private boolean ignoreRecoveryFailures = false;
     private transient int createdResourcesCounter;
 
     /**
@@ -316,4 +317,20 @@ public abstract class ResourceBean implements Serializable {
 	public boolean getShareTransactionConnections() {
 		return shareTransactionConnections;
 	}
+
+    /**
+     * Set whether XA recovery errors should quarantine the resource or be ignored.
+     * @param ignoreRecoveryFailures true if recovery errors should be ignored, false otherwise.
+     */
+    public void setIgnoreRecoveryFailures(boolean ignoreRecoveryFailures) {
+        this.ignoreRecoveryFailures = ignoreRecoveryFailures;
+    }
+
+    /**
+     * @return true if recovery errors should be ignored, false otherwise.
+     */
+    public boolean getIgnoreRecoveryFailures() {
+        return ignoreRecoveryFailures;
+    }
+
 }

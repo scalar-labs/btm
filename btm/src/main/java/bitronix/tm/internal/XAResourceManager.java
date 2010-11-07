@@ -21,6 +21,7 @@
 package bitronix.tm.internal;
 
 import bitronix.tm.BitronixXid;
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.utils.Scheduler;
 import bitronix.tm.utils.Uid;
@@ -98,9 +99,11 @@ public class XAResourceManager {
         }
 
         // check for enlistment of a 2nd LRC resource, forbid this if the 2nd resource cannot be joined with the 1st one
-        if (flag != XAResource.TMJOIN && xaResourceHolderState.getTwoPcOrderingPosition() == Scheduler.ALWAYS_LAST_POSITION) {
+        // unless this is explicitly allowed in the config
+        if (flag != XAResource.TMJOIN && xaResourceHolderState.getTwoPcOrderingPosition() == Scheduler.ALWAYS_LAST_POSITION &&
+                !TransactionManagerServices.getConfiguration().isAllowMultipleLrc()) {
             List alwaysLastResources = resources.getByNaturalOrderForPosition(Scheduler.ALWAYS_LAST_POSITION_KEY);
-            if (alwaysLastResources != null && alwaysLastResources.size() > 0)
+            if (alwaysLastResources != null && !alwaysLastResources.isEmpty())
                 throw new BitronixSystemException("cannot enlist more than one non-XA resource, tried enlisting " + xaResourceHolderState + ", already enlisted: " + alwaysLastResources.get(0));
         }
 

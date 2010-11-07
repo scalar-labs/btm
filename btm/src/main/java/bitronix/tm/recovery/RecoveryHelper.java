@@ -29,6 +29,7 @@ import bitronix.tm.utils.Decoder;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
+import java.util.Collections;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Arrays;
@@ -55,7 +56,16 @@ public class RecoveryHelper {
         Set xids = new HashSet();
 
         if (log.isDebugEnabled()) log.debug("recovering with STARTRSCAN");
-        int xidCount = recover(xaResourceHolderState, xids, XAResource.TMSTARTRSCAN);
+        int xidCount;
+        try {
+            xidCount = recover(xaResourceHolderState, xids, XAResource.TMSTARTRSCAN);
+        } catch (XAException ex) {
+            if (xaResourceHolderState.getIgnoreRecoveryFailures()) {
+                if (log.isDebugEnabled()) log.debug("ignoring recovery failure on resource " + xaResourceHolderState, ex);
+                return Collections.emptySet();
+            }
+            throw ex;
+        }
         if (log.isDebugEnabled()) log.debug("STARTRSCAN recovered " + xidCount + " xid(s) on " + xaResourceHolderState);
 
         try {
