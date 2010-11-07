@@ -111,9 +111,9 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
             if (currentTransaction() == null || currentTransaction().getStatus() == Status.STATUS_NO_TRANSACTION)
                 throw new IllegalStateException("no transaction started on current thread");
 
-            getResources().put(key, value);
+            Object oldValue = getResources().put(key, value);
 
-            if (getResources().size() == 1) {
+            if (oldValue == null && getResources().size() == 1) {
                 if (log.isDebugEnabled()) log.debug("first resource put in synchronization registry, registering a ClearRegistryResourcesSynchronization");
                 Synchronization synchronization = new ClearRegistryResourcesSynchronization();
                 currentTransaction().getSynchronizationScheduler().add(synchronization, Scheduler.ALWAYS_LAST_POSITION);
