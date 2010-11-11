@@ -205,10 +205,12 @@ public class Committer extends AbstractPhaseEngine {
                     forgetHeuristicCommit(failedResourceHolder);
                     return;
 
+                case XAException.XAER_NOTA:
+                    throw new BitronixXAException("unknown heuristic termination, global state of this transaction is unknown - guilty: " + failedResourceHolder, XAException.XA_HEURHAZ, xaException);
+
                 case XAException.XA_HEURHAZ:
                 case XAException.XA_HEURMIX:
                 case XAException.XA_HEURRB:
-
                 case XAException.XA_RBCOMMFAIL:
                 case XAException.XA_RBDEADLOCK:
                 case XAException.XA_RBINTEGRITY:
