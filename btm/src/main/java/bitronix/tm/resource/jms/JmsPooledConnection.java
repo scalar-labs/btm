@@ -54,6 +54,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     protected JmsPooledConnection(PoolingConnectionFactory poolingConnectionFactory, XAConnection connection) {
         this.poolingConnectionFactory = poolingConnectionFactory;
         this.xaConnection = connection;
+        this.lastReleaseDate = new Date();
         addStateChangeEventListener(new JmsPooledConnectionStateChangeListener());
         
         if (poolingConnectionFactory.getClassName().equals(LrcXAConnectionFactory.class.getName())) {

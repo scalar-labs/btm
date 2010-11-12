@@ -122,6 +122,10 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
 
 
     public Connection createConnection() throws JMSException {
+        if (isDisabled()) {
+            throw new JMSException("JMS connection pool '" + getUniqueName() + "' is disabled, cannot get a connection from it");
+        }
+
         try {
             init();
             return (Connection) pool.getConnectionHandle();
@@ -189,6 +193,10 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
 
     public void setFailed(boolean failed) {
         pool.setFailed(failed);
+    }
+
+    public boolean isFailed() {
+        return pool.isFailed();
     }
 
     public void close() {

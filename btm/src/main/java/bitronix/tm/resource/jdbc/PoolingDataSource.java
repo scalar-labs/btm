@@ -186,6 +186,10 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     /* Implementation of DataSource interface */
 
     public Connection getConnection() throws SQLException {
+        if (isDisabled()) {
+            throw new SQLException("JDBC connection pool '" + getUniqueName() + "' is disabled, cannot get a connection from it");
+        }
+
         init();
         if (log.isDebugEnabled()) log.debug("acquiring connection from " + this);
         if (pool == null) {
@@ -249,6 +253,10 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
 
     public void setFailed(boolean failed) {
         pool.setFailed(failed);
+    }
+
+    public boolean isFailed() {
+        return pool.isFailed();
     }
 
     public void close() {

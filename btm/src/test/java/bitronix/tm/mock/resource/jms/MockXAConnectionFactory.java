@@ -36,7 +36,12 @@ import bitronix.tm.mock.resource.MockXAResource;
  */
 public class MockXAConnectionFactory implements XAConnectionFactory {
 
+    private static JMSException staticCloseXAConnectionException;
+    private static JMSException staticCreateXAConnectionException;
+
     public XAConnection createXAConnection() throws JMSException {
+        if (staticCreateXAConnectionException != null)
+            throw staticCreateXAConnectionException;
 
     	Answer xaSessionAnswer = new Answer<XASession>() {
     		public XASession answer(InvocationOnMock invocation)throws Throwable {
@@ -70,10 +75,21 @@ public class MockXAConnectionFactory implements XAConnectionFactory {
     	XAConnection mockXAConnection = mock(XAConnection.class);
     	when(mockXAConnection.createXASession()).thenAnswer(xaSessionAnswer);
     	when(mockXAConnection.createSession(anyBoolean(), anyInt())).thenAnswer(xaSessionAnswer);
+        if (staticCloseXAConnectionException != null)
+            doThrow(staticCloseXAConnectionException).when(mockXAConnection).close();
+
         return mockXAConnection;
     }
 
     public XAConnection createXAConnection(String jndiName, String jndiName1) throws JMSException {
         return createXAConnection();
+    }
+
+    public static void setStaticCloseXAConnectionException(JMSException e) {
+        staticCloseXAConnectionException = e;
+    }
+
+    public static void setStaticCreateXAConnectionException(JMSException e) {
+        staticCreateXAConnectionException = e;
     }
 }

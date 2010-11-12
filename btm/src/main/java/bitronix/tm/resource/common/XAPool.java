@@ -89,6 +89,10 @@ public class XAPool implements StateChangeListener {
         this.failed = failed;
     }
 
+    public synchronized boolean isFailed() {
+        return failed;
+    }
+
     public synchronized Object getConnectionHandle() throws Exception {
         return getConnectionHandle(true);
     }
@@ -240,13 +244,15 @@ public class XAPool implements StateChangeListener {
             XAStatefulHolder xaStatefulHolder = (XAStatefulHolder) objects.get(i);
             if (xaStatefulHolder.getState() != XAStatefulHolder.STATE_IN_POOL)
                 continue;
-            if (xaStatefulHolder.getLastReleaseDate() == null)
-                continue;
 
             long expirationTime = (xaStatefulHolder.getLastReleaseDate().getTime() + (bean.getMaxIdleTime() * 1000));
             if (log.isDebugEnabled()) log.debug("checking if connection can be closed: " + xaStatefulHolder + " - closing time: " + expirationTime + ", now time: " + now);
             if (expirationTime <= now) {
+                try {
                 xaStatefulHolder.close();
+                } catch (Exception ex) {
+                    log.warn("error closing " + xaStatefulHolder, ex);
+                }
                 toRemoveXaStatefulHolders.add(xaStatefulHolder);
             }
         } // for
@@ -260,20 +266,20 @@ public class XAPool implements StateChangeListener {
         if (log.isDebugEnabled()) log.debug("resetting " + this);
         List toRemoveXaStatefulHolders = new ArrayList();
         for (int i = 0; i < totalPoolSize(); i++) {
-            if (totalPoolSize() - toRemoveXaStatefulHolders.size() <= bean.getMinPoolSize()) {
-                if (log.isDebugEnabled()) log.debug("pool reached min size");
-                break;
-            }
-
             XAStatefulHolder xaStatefulHolder = (XAStatefulHolder) objects.get(i);
             if (xaStatefulHolder.getState() != XAStatefulHolder.STATE_IN_POOL)
                 continue;
 
+            try {
             xaStatefulHolder.close();
+            } catch (Exception ex) {
+                log.warn("error closing " + xaStatefulHolder, ex);
+            }
             toRemoveXaStatefulHolders.add(xaStatefulHolder);
         }
         if (log.isDebugEnabled()) log.debug("closed " + toRemoveXaStatefulHolders.size() + " connection(s)");
         objects.removeAll(toRemoveXaStatefulHolders);
+        growUntilMinPoolSize();
         if (log.isDebugEnabled()) log.debug("reset " + this);
     }
 

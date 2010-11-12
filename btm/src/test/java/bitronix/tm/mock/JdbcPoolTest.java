@@ -20,21 +20,24 @@
  */
 package bitronix.tm.mock;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.sql.*;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
+import bitronix.tm.recovery.RecoveryException;
+import bitronix.tm.resource.common.XAPool;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+import junit.framework.TestCase;
 
 import javax.sql.DataSource;
 import javax.sql.XADataSource;
 import javax.transaction.TransactionManager;
-
-import bitronix.tm.recovery.RecoveryException;
-import junit.framework.TestCase;
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.mock.resource.jdbc.*;
-import bitronix.tm.resource.common.XAPool;
-import bitronix.tm.resource.jdbc.PoolingDataSource;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  *
@@ -46,6 +49,9 @@ public class JdbcPoolTest extends TestCase {
 
     protected void setUp() throws Exception {
         TransactionManagerServices.getTransactionManager();
+
+        MockitoXADataSource.setStaticCloseXAConnectionException(null);
+        MockitoXADataSource.setStaticGetXAConnectionException(null);
 
         pds = new PoolingDataSource();
         pds.setMinPoolSize(1);
@@ -69,7 +75,7 @@ public class JdbcPoolTest extends TestCase {
         pds.startRecovery();
         try {
             pds.startRecovery();
-            fail("excpected RecoveryException");
+            fail("expected RecoveryException");
         } catch (RecoveryException ex) {
             assertEquals("recovery already in progress on a PoolingDataSource containing an XAPool of resource pds with 1 connection(s) (0 still available)", ex.getMessage());
         }
@@ -128,10 +134,95 @@ public class JdbcPoolTest extends TestCase {
         c1.close();
         c2.close();
 
-        Thread.sleep(2500);
+        Thread.sleep(1100); // leave enough time for the ide connections to expire
+        TransactionManagerServices.getTaskScheduler().interrupt(); // wake up the task scheduler
+        Thread.sleep(100); // leave enough time for the scheduled shrinking task to do its work
 
         assertEquals(1, pool.inPoolSize());
         assertEquals(1, pool.totalPoolSize());
+    }
+
+    public void testPoolShrinkErrorHandling() throws Exception {
+        Field poolField = pds.getClass().getDeclaredField("pool");
+        poolField.setAccessible(true);
+        XAPool pool = (XAPool) poolField.get(pds);
+
+        pds.setMinPoolSize(0);
+        pds.reset();
+        pds.setMinPoolSize(1);
+        MockitoXADataSource.setStaticCloseXAConnectionException(new SQLException("close fails because datasource broken"));
+        pds.reset();
+
+        // the pool is now loaded with one connection which will throw an exception when closed
+        Thread.sleep(1100); // leave enough time for the ide connections to expire
+        TransactionManagerServices.getTaskScheduler().interrupt(); // wake up the task scheduler
+        Thread.sleep(100); // leave enough time for the scheduled shrinking task to do its work
+        assertEquals(1, pool.inPoolSize());
+
+        MockitoXADataSource.setStaticGetXAConnectionException(new SQLException("getXAConnection fails because datasource broken"));
+        Thread.sleep(1100); // leave enough time for the ide connections to expire
+        TransactionManagerServices.getTaskScheduler().interrupt(); // wake up the task scheduler
+        Thread.sleep(100); // leave enough time for the scheduled shrinking task to do its work
+        assertEquals(0, pool.inPoolSize());
+
+        MockitoXADataSource.setStaticGetXAConnectionException(null);
+        Thread.sleep(1100); // leave enough time for the ide connections to expire
+        TransactionManagerServices.getTaskScheduler().interrupt(); // wake up the task scheduler
+        Thread.sleep(100); // leave enough time for the scheduled shrinking task to do its work
+        assertEquals(1, pool.inPoolSize());
+    }
+
+    public void testPoolReset() throws Exception {
+        Field poolField = pds.getClass().getDeclaredField("pool");
+        poolField.setAccessible(true);
+        XAPool pool = (XAPool) poolField.get(pds);
+
+        assertEquals(1, pool.inPoolSize());
+        assertEquals(1, pool.totalPoolSize());
+
+        Connection c1 = pds.getConnection();
+        assertEquals(0, pool.inPoolSize());
+        assertEquals(1, pool.totalPoolSize());
+
+        Connection c2 = pds.getConnection();
+        assertEquals(0, pool.inPoolSize());
+        assertEquals(2, pool.totalPoolSize());
+
+        c1.close();
+        c2.close();
+
+        pds.reset();
+
+        assertEquals(1, pool.inPoolSize());
+        assertEquals(1, pool.totalPoolSize());
+    }
+
+    public void testPoolResetErrorHandling() throws Exception {
+        Field poolField = pds.getClass().getDeclaredField("pool");
+        poolField.setAccessible(true);
+        XAPool pool = (XAPool) poolField.get(pds);
+
+        pds.setMinPoolSize(0);
+        pds.reset();
+        pds.setMinPoolSize(1);
+        MockitoXADataSource.setStaticCloseXAConnectionException(new SQLException("close fails because datasource broken"));
+        pds.reset();
+
+        // the pool is now loaded with one connection which will throw an exception when closed
+        pds.reset();
+
+        try {
+            MockitoXADataSource.setStaticGetXAConnectionException(new SQLException("getXAConnection fails because datasource broken"));
+            pds.reset();
+            fail("expected SQLException");
+        } catch (SQLException ex) {
+            assertEquals("getXAConnection fails because datasource broken", ex.getMessage());
+            assertEquals(0, pool.inPoolSize());
+        }
+
+        MockitoXADataSource.setStaticGetXAConnectionException(null);
+        pds.reset();
+        assertEquals(1, pool.inPoolSize());
     }
 
     public void testCloseLocalContext() throws Exception {

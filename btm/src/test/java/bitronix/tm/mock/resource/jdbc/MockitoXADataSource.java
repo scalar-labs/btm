@@ -49,6 +49,7 @@ public class MockitoXADataSource implements XADataSource {
     private List inDoubtXids = new ArrayList();
     private SQLException getXAConnectionException;
     private static SQLException staticGetXAConnectionException;
+    private static SQLException staticCloseXAConnectionException;
 
     public int getLoginTimeout() throws SQLException {
         return 0;
@@ -88,6 +89,9 @@ public class MockitoXADataSource implements XADataSource {
         when(mockXAConnection.getXAResource()).thenReturn(xaResource);
         Connection mockConnection = createMockConnection();
         when(mockXAConnection.getConnection()).thenReturn(mockConnection);
+
+        if (staticCloseXAConnectionException != null)
+            doThrow(staticCloseXAConnectionException).when(mockXAConnection).close();
 
         xaConnections.add(mockXAConnection);
         return mockXAConnection;
@@ -150,6 +154,10 @@ public class MockitoXADataSource implements XADataSource {
 
     public static void setStaticGetXAConnectionException(SQLException ex) {
         staticGetXAConnectionException = ex;
+    }
+
+    public static void setStaticCloseXAConnectionException(SQLException ex) {
+        staticCloseXAConnectionException = ex;
     }
 
     public static Connection createMockConnection() throws SQLException {

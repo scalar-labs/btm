@@ -31,7 +31,7 @@ import java.util.Properties;
  */
 public abstract class ResourceBean implements Serializable {
 
-	private String className;
+    private String className;
     private String uniqueName;
     private boolean automaticEnlistingEnabled = true;
     private boolean useTmJoin = true;
@@ -47,6 +47,7 @@ public abstract class ResourceBean implements Serializable {
     private int twoPcOrderingPosition = 1;
     private boolean applyTransactionTimeout = false;
     private boolean shareTransactionConnections = false;
+    private boolean disabled = false;
     private boolean ignoreRecoveryFailures = false;
     private transient int createdResourcesCounter;
 
@@ -295,28 +296,20 @@ public abstract class ResourceBean implements Serializable {
     }
 
     /**
-     * Increment a transient counter. This is used for assigning per-resource numbers to connections.
-     * @return the current value of the counter.
+     * Set whether connections in the ACCESSIBLE state can be shared within the context
+     * of a transaction.
+     * @param shareAccessibleConnections the shareAccessibleConnections to set.
      */
-    public int incCreatedResourcesCounter() {
-        return this.createdResourcesCounter++;
+    public void setShareTransactionConnections(boolean shareAccessibleConnections) {
+        this.shareTransactionConnections = shareAccessibleConnections;
     }
 
-	/**
-	 * Set whether connections in the ACCESSIBLE state can be shared within the context
-	 * of a transaction.
-	 * @param shareAccessibleConnections the shareAccessibleConnections to set.
-	 */
-	public void setShareTransactionConnections(boolean shareAccessibleConnections) {
-		this.shareTransactionConnections = shareAccessibleConnections;
-	}
-
-	/**
-	 * @return true if accessible connections can be shared.
-	 */
-	public boolean getShareTransactionConnections() {
-		return shareTransactionConnections;
-	}
+    /**
+     * @return true if accessible connections can be shared.
+     */
+    public boolean getShareTransactionConnections() {
+        return shareTransactionConnections;
+    }
 
     /**
      * Set whether XA recovery errors should quarantine the resource or be ignored.
@@ -331,6 +324,30 @@ public abstract class ResourceBean implements Serializable {
      */
     public boolean getIgnoreRecoveryFailures() {
         return ignoreRecoveryFailures;
+    }
+
+    /**
+     * Set whether this resource is disabled, meaning it's temporarily forbidden to acquire
+     * a connection from its pool.
+     * @param disabled true to disable the resource, false to enable it.
+     */
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
+    }
+
+    /**
+     * @return true if the resource is disabled, false if it is enabled.
+     */
+    public boolean isDisabled() {
+        return disabled;
+    }
+
+    /**
+     * Increment a transient counter. This is used for assigning per-resource numbers to connections.
+     * @return the current value of the counter.
+     */
+    public int incCreatedResourcesCounter() {
+        return this.createdResourcesCounter++;
     }
 
 }

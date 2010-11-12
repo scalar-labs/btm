@@ -23,13 +23,18 @@ package bitronix.tm.mock;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.mock.resource.jms.MockXAConnectionFactory;
 import bitronix.tm.recovery.RecoveryException;
+import bitronix.tm.resource.common.XAPool;
 import bitronix.tm.resource.jms.PoolingConnectionFactory;
 import junit.framework.TestCase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.Connection;
+import javax.jms.JMSException;
 import javax.jms.Session;
 import javax.jms.Queue;
 import javax.jms.MessageProducer;
+import java.lang.reflect.Field;
 
 /**
  *
@@ -40,6 +45,11 @@ public class JmsPoolTest extends TestCase {
     private PoolingConnectionFactory pcf;
 
     protected void setUp() throws Exception {
+        TransactionManagerServices.getTransactionManager();
+
+        MockXAConnectionFactory.setStaticCloseXAConnectionException(null);
+        MockXAConnectionFactory.setStaticCreateXAConnectionException(null);
+
         pcf = new PoolingConnectionFactory();
         pcf.setMinPoolSize(1);
         pcf.setMaxPoolSize(2);
@@ -54,6 +64,8 @@ public class JmsPoolTest extends TestCase {
 
     protected void tearDown() throws Exception {
         pcf.close();
+
+        TransactionManagerServices.getTransactionManager().shutdown();
     }
 
     public void testReEnteringRecovery() throws Exception {
@@ -104,4 +116,114 @@ public class JmsPoolTest extends TestCase {
         assertFalse(TransactionManagerServices.isTransactionManagerRunning());
     }
 
+    public void testPoolShrink() throws Exception {
+        Field poolField = pcf.getClass().getDeclaredField("pool");
+        poolField.setAccessible(true);
+        XAPool pool = (XAPool) poolField.get(pcf);
+
+        assertEquals(1, pool.inPoolSize());
+        assertEquals(1, pool.totalPoolSize());
+
+        Connection c1 = pcf.createConnection();
+        assertEquals(0, pool.inPoolSize());
+        assertEquals(1, pool.totalPoolSize());
+
+        Connection c2 = pcf.createConnection();
+        assertEquals(0, pool.inPoolSize());
+        assertEquals(2, pool.totalPoolSize());
+
+        c1.close();
+        c2.close();
+
+        Thread.sleep(1100); // leave enough time for the ide connections to expire
+        TransactionManagerServices.getTaskScheduler().interrupt(); // wake up the task scheduler
+        Thread.sleep(100); // leave enough time for the scheduled shrinking task to do its work
+
+        assertEquals(1, pool.inPoolSize());
+        assertEquals(1, pool.totalPoolSize());
+    }
+
+    public void testPoolShrinkErrorHandling() throws Exception {
+        Field poolField = pcf.getClass().getDeclaredField("pool");
+        poolField.setAccessible(true);
+        XAPool pool = (XAPool) poolField.get(pcf);
+
+        pcf.setMinPoolSize(0);
+        pcf.reset();
+        pcf.setMinPoolSize(1);
+        MockXAConnectionFactory.setStaticCloseXAConnectionException(new JMSException("close fails because connection factory broken"));
+        pcf.reset();
+
+        // the pool is now loaded with one connection which will throw an exception when closed
+        Thread.sleep(1100); // leave enough time for the ide connections to expire
+        TransactionManagerServices.getTaskScheduler().interrupt(); // wake up the task scheduler
+        Thread.sleep(100); // leave enough time for the scheduled shrinking task to do its work
+        assertEquals(1, pool.inPoolSize());
+
+        MockXAConnectionFactory.setStaticCreateXAConnectionException(new JMSException("createXAConnection fails because connection factory broken"));
+        Thread.sleep(1100); // leave enough time for the ide connections to expire
+        TransactionManagerServices.getTaskScheduler().interrupt(); // wake up the task scheduler
+        Thread.sleep(100); // leave enough time for the scheduled shrinking task to do its work
+        assertEquals(0, pool.inPoolSize());
+
+        MockXAConnectionFactory.setStaticCreateXAConnectionException(null);
+        Thread.sleep(1100); // leave enough time for the ide connections to expire
+        TransactionManagerServices.getTaskScheduler().interrupt(); // wake up the task scheduler
+        Thread.sleep(100); // leave enough time for the scheduled shrinking task to do its work
+        assertEquals(1, pool.inPoolSize());
+    }
+
+    public void testPoolReset() throws Exception {
+        Field poolField = pcf.getClass().getDeclaredField("pool");
+        poolField.setAccessible(true);
+        XAPool pool = (XAPool) poolField.get(pcf);
+
+        assertEquals(1, pool.inPoolSize());
+        assertEquals(1, pool.totalPoolSize());
+
+        Connection c1 = pcf.createConnection();
+        assertEquals(0, pool.inPoolSize());
+        assertEquals(1, pool.totalPoolSize());
+
+        Connection c2 = pcf.createConnection();
+        assertEquals(0, pool.inPoolSize());
+        assertEquals(2, pool.totalPoolSize());
+
+        c1.close();
+        c2.close();
+
+        pcf.reset();
+
+        assertEquals(1, pool.inPoolSize());
+        assertEquals(1, pool.totalPoolSize());
+    }
+
+    public void testPoolResetErrorHandling() throws Exception {
+        Field poolField = pcf.getClass().getDeclaredField("pool");
+        poolField.setAccessible(true);
+        XAPool pool = (XAPool) poolField.get(pcf);
+
+        pcf.setMinPoolSize(0);
+        pcf.reset();
+        pcf.setMinPoolSize(1);
+        MockXAConnectionFactory.setStaticCloseXAConnectionException(new JMSException("close fails because connection factory broken"));
+        pcf.reset();
+
+        // the pool is now loaded with one connection which will throw an exception when closed
+        pcf.reset();
+
+        try {
+            MockXAConnectionFactory.setStaticCreateXAConnectionException(new JMSException("createXAConnection fails because connection factory broken"));
+            pcf.reset();
+            fail("expected JMSException");
+        } catch (JMSException ex) {
+            assertEquals("createXAConnection fails because connection factory broken", ex.getMessage());
+            assertEquals(0, pool.inPoolSize());
+        }
+
+        MockXAConnectionFactory.setStaticCreateXAConnectionException(null);
+        pcf.reset();
+        assertEquals(1, pool.inPoolSize());
+    }
+    
 }

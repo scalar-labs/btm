@@ -72,6 +72,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         this.xaResource = xaConnection.getXAResource();
         this.statementsCache = new LruStatementCache(poolingDataSource.getPreparedStatementCacheSize());
         this.uncachedStatements = Collections.synchronizedList(new ArrayList());
+        this.lastReleaseDate = new Date();
         statementsCache.addEvictionListener(new LruEvictionListener() {
             public void onEviction(Object value) {
                 PreparedStatement stmt = (PreparedStatement) value;
