@@ -137,7 +137,7 @@ public class JmsPoolTest extends TestCase {
 
         Thread.sleep(1100); // leave enough time for the ide connections to expire
         TransactionManagerServices.getTaskScheduler().interrupt(); // wake up the task scheduler
-        Thread.sleep(100); // leave enough time for the scheduled shrinking task to do its work
+        Thread.sleep(1100); // leave enough time for the scheduled shrinking task to do its work
 
         assertEquals(1, pool.inPoolSize());
         assertEquals(1, pool.totalPoolSize());
