@@ -34,7 +34,8 @@ public final class Uid {
     private String toStringValue;
 
     public Uid(byte[] array) {
-        this.array = array;
+        this.array = new byte[array.length];
+        System.arraycopy(array, 0, this.array, 0, array.length);
         this.hashCodeValue = arrayHashCode(array);
         this.toStringValue = arrayToString(array);
     }

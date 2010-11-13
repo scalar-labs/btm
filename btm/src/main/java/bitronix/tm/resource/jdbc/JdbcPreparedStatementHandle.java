@@ -85,12 +85,14 @@ public class JdbcPreparedStatementHandle extends BaseProxyHandlerClass { // impl
 
     public JdbcPreparedStatementHandle(String sql, int[] columnIndexes) {
         this.sql = sql;
-        this.columnIndexes = columnIndexes;
+        this.columnIndexes = new int[columnIndexes.length];
+        System.arraycopy(columnIndexes, 0, this.columnIndexes, 0, columnIndexes.length);
     }
 
     public JdbcPreparedStatementHandle(String sql, String[] columnNames) {
         this.sql = sql;
-        this.columnNames = columnNames;
+        this.columnNames = new String[columnNames.length];
+        System.arraycopy(columnNames, 0, this.columnNames, 0, columnNames.length);
     }
 
     /* java.sql.Wrapper implementation */
