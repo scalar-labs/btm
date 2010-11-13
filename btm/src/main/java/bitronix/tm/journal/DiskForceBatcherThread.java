@@ -30,7 +30,7 @@ import java.io.IOException;
  *
  * @author lorban
  */
-public class DiskForceBatcherThread extends Thread {
+public final class DiskForceBatcherThread extends Thread {
 
     private final static Logger log = LoggerFactory.getLogger(DiskForceBatcherThread.class);
     private static DiskForceBatcherThread instance;

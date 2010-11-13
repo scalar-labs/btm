@@ -213,7 +213,7 @@ public abstract class AbstractPhaseEngine {
         return result;
     }
 
-    private class JobsExecutionReport {
+    private final static class JobsExecutionReport {
         private List exceptions;
         private List resources;
 

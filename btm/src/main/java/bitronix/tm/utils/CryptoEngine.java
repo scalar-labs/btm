@@ -156,7 +156,7 @@ public class CryptoEngine {
      * @author Robert Harder
      * @author rob@iharder.net
      */
-    private static class Base64 {
+    private final static class Base64 {
 
         public final static int NO_OPTIONS = 0;
         public final static int ENCODE = 1;

@@ -413,7 +413,7 @@ public class XAPool implements StateChangeListener {
         }
     }
 
-    private synchronized void waitForConnectionInPool() throws Exception {
+    private synchronized void waitForConnectionInPool() {
         long remainingTime = bean.getAcquisitionTimeout() * 1000L;
         if (log.isDebugEnabled()) log.debug("waiting for IN_POOL connections count to be > 0, currently is " + inPoolSize());
         while (inPoolSize() == 0) {
@@ -432,7 +432,7 @@ public class XAPool implements StateChangeListener {
                 if (log.isDebugEnabled()) log.debug("connection pool dequeue timed out");
                 if (TransactionManagerServices.isTransactionManagerRunning())
                     TransactionManagerServices.getTransactionManager().dumpTransactionContexts();
-                throw new Exception("XA pool of resource " + bean.getUniqueName() + " still empty after " + bean.getAcquisitionTimeout() + "s wait time");
+                throw new BitronixRuntimeException("XA pool of resource " + bean.getUniqueName() + " still empty after " + bean.getAcquisitionTimeout() + "s wait time");
             }
         } // while
     }
@@ -515,7 +515,7 @@ public class XAPool implements StateChangeListener {
         threadLocal.set(xaStatefulHolder);
     }
 
-    private class SharedStatefulHolderCleanupSynchronization implements Synchronization {
+    private final class SharedStatefulHolderCleanupSynchronization implements Synchronization {
         private Uid gtrid;
 
         private SharedStatefulHolderCleanupSynchronization(Uid gtrid) {

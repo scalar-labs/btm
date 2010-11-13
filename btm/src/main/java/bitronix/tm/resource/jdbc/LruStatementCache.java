@@ -216,7 +216,7 @@ public class LruStatementCache {
         evictionListners.remove(listener);
     }
 
-    private class StatementTracker
+    private final static class StatementTracker
     {
         private PreparedStatement statement;
         private int usageCount;
