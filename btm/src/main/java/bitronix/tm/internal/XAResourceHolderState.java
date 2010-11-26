@@ -207,6 +207,7 @@ public class XAResourceHolderState {
 
         if (!isTimeoutAlreadySet && transactionTimeoutDate != null && bean.getApplyTransactionTimeout()) {
             int timeoutInSeconds = (int) ((transactionTimeoutDate.getTime() - System.currentTimeMillis() + 999L) / 1000L);
+            timeoutInSeconds = Math.max(1, timeoutInSeconds); // setting a timeout of 0 means resetting -> set it to at least 1
             if (log.isDebugEnabled()) log.debug("applying resource timeout of " + timeoutInSeconds + "s on " + this);
             getXAResource().setTransactionTimeout(timeoutInSeconds);
             isTimeoutAlreadySet = true;
