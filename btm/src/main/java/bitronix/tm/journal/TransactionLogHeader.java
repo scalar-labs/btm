@@ -74,7 +74,7 @@ public class TransactionLogHeader {
     public final static byte UNCLEAN_LOG_STATE = -1;
 
 
-    private RandomAccessFile randomAccessFile;
+    private final RandomAccessFile randomAccessFile;
     private int formatId;
     private long timestamp;
     private byte state;
@@ -84,9 +84,9 @@ public class TransactionLogHeader {
     /**
      * TransactionLogHeader are used to control headers of the specified RandomAccessFile.
      * All calls to setters are synchronized on the passed-in RandomAccessFile.
-     * @param randomAccessFile
-     * @param maxFileLength
-     * @throws IOException
+     * @param randomAccessFile the random access file to read from.
+     * @param maxFileLength the max file length.
+     * @throws IOException if an I/O error occurs.
      */
     public TransactionLogHeader(RandomAccessFile randomAccessFile, long maxFileLength) throws IOException {
         this.randomAccessFile = randomAccessFile;
@@ -142,7 +142,7 @@ public class TransactionLogHeader {
      * Set FORMAT_ID_HEADER.
      * @see #FORMAT_ID_HEADER
      * @param formatId the FORMAT_ID_HEADER value.
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public void setFormatId(int formatId) throws IOException {
         synchronized (randomAccessFile) {
@@ -159,7 +159,7 @@ public class TransactionLogHeader {
      * Set TIMESTAMP_HEADER.
      * @see #TIMESTAMP_HEADER
      * @param timestamp the TIMESTAMP_HEADER value.
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public void setTimestamp(long timestamp) throws IOException {
         synchronized (randomAccessFile) {
@@ -176,7 +176,7 @@ public class TransactionLogHeader {
      * Set STATE_HEADER.
      * @see #STATE_HEADER
      * @param state the STATE_HEADER value.
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public void setState(byte state) throws IOException {
         synchronized (randomAccessFile) {
@@ -193,7 +193,7 @@ public class TransactionLogHeader {
      * Set CURRENT_POSITION_HEADER.
      * @see #CURRENT_POSITION_HEADER
      * @param position the CURRENT_POSITION_HEADER value.
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public void setPosition(long position) throws IOException {
         if (position < HEADER_LENGTH)
@@ -214,7 +214,7 @@ public class TransactionLogHeader {
      * Advance CURRENT_POSITION_HEADER.
      * @see #setPosition
      * @param distance the value to add to the current position.
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public void goAhead(long distance) throws IOException {
         setPosition(getPosition() + distance);
@@ -223,7 +223,7 @@ public class TransactionLogHeader {
     /**
      * Rewind CURRENT_POSITION_HEADER back to the beginning of the file.
      * @see #setPosition
-     * @throws IOException
+     * @throws IOException if an I/O error occurs.
      */
     public void rewind() throws IOException {
         setPosition(HEADER_LENGTH);
