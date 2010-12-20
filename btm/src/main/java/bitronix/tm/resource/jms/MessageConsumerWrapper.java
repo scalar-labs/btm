@@ -57,6 +57,7 @@ public class MessageConsumerWrapper implements MessageConsumer {
      */
     protected void enlistResource() throws JMSException {
         if (poolingConnectionFactory.getAutomaticEnlistingEnabled()) {
+            session.getSession(); // make sure the session is created before enlisting it
             try {
                 TransactionContextHelper.enlistInCurrentTransaction(session);
             } catch (SystemException ex) {
