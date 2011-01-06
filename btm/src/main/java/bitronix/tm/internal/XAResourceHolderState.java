@@ -57,6 +57,7 @@ public class XAResourceHolderState {
     private boolean suspended;
     private Date transactionTimeoutDate;
     private boolean isTimeoutAlreadySet;
+    private boolean failed;
 
     public XAResourceHolderState(XAResourceHolder resourceHolder, ResourceBean bean) {
         this.bean = bean;
@@ -135,6 +136,10 @@ public class XAResourceHolderState {
         return suspended;
     }
 
+    public boolean isFailed() {
+        return failed;
+    }
+
     public void end(int flags) throws XAException {
         boolean ended = this.ended;
         boolean suspended = this.suspended;
@@ -164,18 +169,16 @@ public class XAResourceHolderState {
 
         try {
             getXAResource().end(xid, flags);
-        } catch (XAException ex) {
-            // if the resource unilaterally rolled back, its state should nevertheless be set to ended.
-            if (BitronixXAException.isUnilateralRollback(ex)) {
-                this.ended = true;
-                this.started = false;
-            }
+            if (log.isDebugEnabled()) log.debug("ended " + this + " with " + Decoder.decodeXAResourceFlag(flags));
+        } catch(XAException ex) {
+            // could mean failed or unilaterally rolled back
+            failed = true;
             throw ex;
+        } finally {
+            this.suspended = suspended;
+            this.ended = ended;
+            this.started = false;
         }
-        this.suspended = suspended;
-        this.ended = ended;
-        this.started = false;
-        if (log.isDebugEnabled()) log.debug("ended " + this + " with " + Decoder.decodeXAResourceFlag(flags));
     }
 
     public void start(int flags) throws XAException {
