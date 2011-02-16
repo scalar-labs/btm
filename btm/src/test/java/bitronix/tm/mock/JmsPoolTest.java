@@ -26,8 +26,6 @@ import bitronix.tm.recovery.RecoveryException;
 import bitronix.tm.resource.common.XAPool;
 import bitronix.tm.resource.jms.PoolingConnectionFactory;
 import junit.framework.TestCase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.jms.Connection;
 import javax.jms.JMSException;
@@ -45,6 +43,7 @@ public class JmsPoolTest extends TestCase {
     private PoolingConnectionFactory pcf;
 
     protected void setUp() throws Exception {
+        TransactionManagerServices.getConfiguration().setJournal("null").setGracefulShutdownInterval(0);
         TransactionManagerServices.getTransactionManager();
 
         MockXAConnectionFactory.setStaticCloseXAConnectionException(null);
@@ -66,6 +65,35 @@ public class JmsPoolTest extends TestCase {
         pcf.close();
 
         TransactionManagerServices.getTransactionManager().shutdown();
+    }
+
+    public void testInitFailure() throws Exception {
+        pcf.close();
+
+        pcf = new PoolingConnectionFactory();
+        pcf.setMinPoolSize(0);
+        pcf.setMaxPoolSize(2);
+        pcf.setMaxIdleTime(1);
+        pcf.setClassName(MockXAConnectionFactory.class.getName());
+        pcf.setUniqueName("pcf");
+        pcf.setAllowLocalTransactions(true);
+        pcf.setAcquisitionTimeout(1);
+
+        TransactionManagerServices.getTransactionManager().begin();
+
+        MockXAConnectionFactory.setStaticCreateXAConnectionException(new JMSException("not yet started"));
+        try {
+            pcf.init();
+        } catch (Exception e) {
+
+        }
+
+        MockXAConnectionFactory.setStaticCreateXAConnectionException(null);
+        pcf.init();
+
+        pcf.createConnection().createSession(true, 0).createProducer(null).send(null);
+
+        TransactionManagerServices.getTransactionManager().commit();
     }
 
     public void testReEnteringRecovery() throws Exception {

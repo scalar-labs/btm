@@ -48,6 +48,7 @@ public class JdbcPoolTest extends TestCase {
     private PoolingDataSource pds;
 
     protected void setUp() throws Exception {
+        TransactionManagerServices.getConfiguration().setJournal("null").setGracefulShutdownInterval(0);
         TransactionManagerServices.getTransactionManager();
 
         MockitoXADataSource.setStaticCloseXAConnectionException(null);
@@ -69,6 +70,35 @@ public class JdbcPoolTest extends TestCase {
         pds.close();
 
         TransactionManagerServices.getTransactionManager().shutdown();        
+    }
+
+    public void testInitFailure() throws Exception {
+        pds.close();
+
+        pds = new PoolingDataSource();
+        pds.setMinPoolSize(0);
+        pds.setMaxPoolSize(2);
+        pds.setMaxIdleTime(1);
+        pds.setClassName(MockitoXADataSource.class.getName());
+        pds.setUniqueName("pds");
+        pds.setAllowLocalTransactions(true);
+        pds.setAcquisitionTimeout(1);
+
+        TransactionManagerServices.getTransactionManager().begin();
+
+        MockitoXADataSource.setStaticGetXAConnectionException(new SQLException("not yet started"));
+        try {
+            pds.init();
+        } catch (Exception e) {
+            
+        }
+
+        MockitoXADataSource.setStaticGetXAConnectionException(null);
+        pds.init();
+
+        pds.getConnection().prepareStatement("");
+
+        TransactionManagerServices.getTransactionManager().commit();
     }
 
     public void testReEnteringRecovery() throws Exception {
