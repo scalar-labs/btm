@@ -78,13 +78,19 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     }
 
     private void buildXAPool() throws Exception {
-        if (this.pool != null)
+        if (pool != null)
             return;
 
         if (log.isDebugEnabled()) log.debug("building XA pool for " + getUniqueName() + " with " + getMinPoolSize() + " connection(s)");
-        this.pool = new XAPool(this, this);
-        this.xaDataSource = (XADataSource) pool.getXAFactory();
-        ResourceRegistrar.register(this);
+        pool = new XAPool(this, this);
+        xaDataSource = (XADataSource) pool.getXAFactory();
+        try {
+            ResourceRegistrar.register(this);
+        } catch (RecoveryException ex) {
+            pool = null;
+            xaDataSource = null;
+            throw ex;
+        }
     }
 
     /**

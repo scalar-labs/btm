@@ -117,7 +117,12 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
 
         if (log.isDebugEnabled()) log.debug("building JMS XA pool for " + getUniqueName() + " with " + getMinPoolSize() + " connection(s)");
         pool = new XAPool(this, this);
-        ResourceRegistrar.register(this);
+        try {
+            ResourceRegistrar.register(this);
+        } catch (RecoveryException ex) {
+            pool = null;
+            throw ex;
+        }
     }
 
 
