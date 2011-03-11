@@ -70,12 +70,16 @@ public final class DiskForceBatcherThread extends Thread {
      * @param tla the TransactionLogAppender
      */
     public void enqueue(TransactionLogAppender tla) {
-        waitQueue.enqueue(tla);
-        if (log.isDebugEnabled()) log.debug("batching disk force, there are " + waitQueue.size() + " TransactionLogAppender in the wait queue");
+        DiskForceWaitQueue currrentWaitQueue = waitQueue;
+        while (!currrentWaitQueue.enqueue(tla)) {
+            if (log.isDebugEnabled()) log.debug("current DiskForceWaitQueue [" + currrentWaitQueue + "] is cleared, trying next one: [" + waitQueue + "]");
+            currrentWaitQueue = waitQueue;
+        }
+        if (log.isDebugEnabled()) log.debug("batching disk force, there are " + currrentWaitQueue.size() + " TransactionLogAppender(s) in the wait queue");
         try {
-            waitQueue.waitUntilNotContains(tla);
+            currrentWaitQueue.waitUntilNotContains(tla);
         } catch (InterruptedException ex) {
-            if (log.isDebugEnabled()) log.debug("interrupted while waiting for journal log to be forced but disk force will happen anyway");
+            if (log.isDebugEnabled()) log.debug("interrupted while waiting for journal log to be forced, ignored as disk force will happen anyway");
         }
         if (log.isDebugEnabled()) log.debug("wait queue got emptied, disk force is done");
     }

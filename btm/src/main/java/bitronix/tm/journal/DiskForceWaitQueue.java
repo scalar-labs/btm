@@ -23,7 +23,7 @@ package bitronix.tm.journal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 import bitronix.tm.utils.CollectionUtils;
@@ -37,16 +37,24 @@ public class DiskForceWaitQueue {
 
     private final static Logger log = LoggerFactory.getLogger(DiskForceWaitQueue.class);
 
-    private List objects = new LinkedList();
+    private final List objects = new ArrayList();
+    private boolean isCleared = false;
 
 
     public DiskForceWaitQueue() {
     }
 
-    public synchronized void enqueue(TransactionLogAppender tla) {
+    /**
+     * @return true if the tla was successfully enqueued, false otherwise
+     */
+    public synchronized boolean enqueue(TransactionLogAppender tla) {
+        if (isCleared) {
+            return false;
+        }
         objects.add(tla);
-        if (log.isDebugEnabled()) log.debug("enqueued " + tla + ", " + objects.size() + " TransactionLogAppender waiting for a disk force");
+        if (log.isDebugEnabled()) log.debug("enqueued " + tla + ", " + objects.size() + " TransactionLogAppender waiting for a disk force in " + this);
         notifyAll();
+        return true;
     }
 
     public synchronized TransactionLogAppender head() {
@@ -55,8 +63,9 @@ public class DiskForceWaitQueue {
     }
 
     public synchronized void clear() {
-        if (log.isDebugEnabled()) log.debug("clearing list of waiting TransactionLogAppender");
+        if (log.isDebugEnabled()) log.debug("clearing list of " + objects.size() +  " waiting TransactionLogAppender(s) in " + this);
         objects.clear();
+        isCleared = true;
         notifyAll();
     }
 
