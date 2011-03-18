@@ -25,6 +25,7 @@ import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.internal.XAResourceHolderState;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.List;
 
@@ -227,6 +228,38 @@ public class SchedulerTest extends TestCase {
         it.remove();
         assertTrue(xarhs0 == it.next());
         it.remove();
+    }
+
+    public void testHasNext() {
+        Scheduler resourceScheduler = new Scheduler();
+
+        XAResourceHolderState xarhs0 = new XAResourceHolderState(null, new MockResourceBean(0));
+        XAResourceHolderState xarhs1 = new XAResourceHolderState(null, new MockResourceBean(10));
+
+        resourceScheduler.add(xarhs0, xarhs0.getTwoPcOrderingPosition());
+        resourceScheduler.add(xarhs1, xarhs1.getTwoPcOrderingPosition());
+
+
+        Iterator it = resourceScheduler.iterator();
+
+        for (int i=0; i<10 ;i++) {
+            assertTrue(it.hasNext());
+        }
+        it.next();
+        for (int i=0; i<10 ;i++) {
+            assertTrue(it.hasNext());
+        }
+        it.next();
+        for (int i=0; i<10 ;i++) {
+            assertFalse(it.hasNext());
+        }
+
+        try {
+            it.next();
+            fail("expected NoSuchElementException");
+        } catch (NoSuchElementException ex) {
+            // expected
+        }
     }
 
     private static int counter = 0;
