@@ -123,48 +123,52 @@ public class Scheduler {
         }
 
         public void remove() {
-            if (objectsOfCurrentKey == null)
-                throw new NoSuchElementException("iterator not yet placed on an element");
+            synchronized (Scheduler.this) {
+                if (objectsOfCurrentKey == null)
+                    throw new NoSuchElementException("iterator not yet placed on an element");
 
-            objectsOfCurrentKeyIndex--;
-            objectsOfCurrentKey.remove(objectsOfCurrentKeyIndex);
-            if (objectsOfCurrentKey.size() == 0) {
-                // there are no more objects in the current position's list -> remove it
-                nextKeyIndex--;
-                Object key = Scheduler.this.keys.get(nextKeyIndex);
-                Scheduler.this.keys.remove(nextKeyIndex);
-                Scheduler.this.objects.remove(key);
-                objectsOfCurrentKey = null;
+                objectsOfCurrentKeyIndex--;
+                objectsOfCurrentKey.remove(objectsOfCurrentKeyIndex);
+                if (objectsOfCurrentKey.size() == 0) {
+                    // there are no more objects in the current position's list -> remove it
+                    nextKeyIndex--;
+                    Object key = Scheduler.this.keys.get(nextKeyIndex);
+                    Scheduler.this.keys.remove(nextKeyIndex);
+                    Scheduler.this.objects.remove(key);
+                    objectsOfCurrentKey = null;
+                }
+                Scheduler.this.size--;
             }
-            Scheduler.this.size--;
         }
 
         public boolean hasNext() {
-            if (objectsOfCurrentKey == null || objectsOfCurrentKeyIndex >= objectsOfCurrentKey.size()) {
-                // we reached the end of the current position's list
+            synchronized (Scheduler.this) {
+                if (objectsOfCurrentKey == null || objectsOfCurrentKeyIndex >= objectsOfCurrentKey.size()) {
+                    // we reached the end of the current position's list
 
-                if (nextKeyIndex < Scheduler.this.keys.size()) {
-                    // there is another position after this one
-                    Integer currentKey = (Integer) Scheduler.this.keys.get(nextKeyIndex++);
-                    objectsOfCurrentKey = (List) Scheduler.this.objects.get(currentKey);
-                    objectsOfCurrentKeyIndex = 0;
-                    return true;
+                    if (nextKeyIndex < Scheduler.this.keys.size()) {
+                        // there is another position after this one
+                        Integer currentKey = (Integer) Scheduler.this.keys.get(nextKeyIndex++);
+                        objectsOfCurrentKey = (List) Scheduler.this.objects.get(currentKey);
+                        objectsOfCurrentKeyIndex = 0;
+                        return true;
+                    } else {
+                        // there is no other position after this one
+                        return false;
+                    }
                 }
-                else {
-                    // there is no other position after this one
-                    return false;
-                }
-                
+
+                // there are still objects in the current position's list
+                return true;
             }
-
-            // there are still objects in the current position's list
-            return true;
         }
 
         public Object next() {
-            if (!hasNext())
-                throw new NoSuchElementException("iterator bounds reached");
-            return objectsOfCurrentKey.get(objectsOfCurrentKeyIndex++);
+            synchronized (Scheduler.this) {
+                if (!hasNext())
+                    throw new NoSuchElementException("iterator bounds reached");
+                return objectsOfCurrentKey.get(objectsOfCurrentKeyIndex++);
+            }
         }
     }
 
@@ -181,47 +185,51 @@ public class Scheduler {
         }
 
         public void remove() {
-            if (objectsOfCurrentKey == null)
-                throw new NoSuchElementException("iterator not yet placed on an element");
+            synchronized (Scheduler.this) {
+                if (objectsOfCurrentKey == null)
+                    throw new NoSuchElementException("iterator not yet placed on an element");
 
-            objectsOfCurrentKeyIndex--;
-            objectsOfCurrentKey.remove(objectsOfCurrentKeyIndex);
-            if (objectsOfCurrentKey.size() == 0) {
-                // there are no more objects in the current position's list -> remove it
-                Object key = Scheduler.this.keys.get(nextKeyIndex+1);
-                Scheduler.this.keys.remove(nextKeyIndex+1);
-                Scheduler.this.objects.remove(key);
-                objectsOfCurrentKey = null;
+                objectsOfCurrentKeyIndex--;
+                objectsOfCurrentKey.remove(objectsOfCurrentKeyIndex);
+                if (objectsOfCurrentKey.size() == 0) {
+                    // there are no more objects in the current position's list -> remove it
+                    Object key = Scheduler.this.keys.get(nextKeyIndex+1);
+                    Scheduler.this.keys.remove(nextKeyIndex+1);
+                    Scheduler.this.objects.remove(key);
+                    objectsOfCurrentKey = null;
+                }
+                Scheduler.this.size--;
             }
-            Scheduler.this.size--;
         }
 
         public boolean hasNext() {
-            if (objectsOfCurrentKey == null || objectsOfCurrentKeyIndex >= objectsOfCurrentKey.size()) {
-                // we reached the end of the current position's list
+            synchronized (Scheduler.this) {
+                if (objectsOfCurrentKey == null || objectsOfCurrentKeyIndex >= objectsOfCurrentKey.size()) {
+                    // we reached the end of the current position's list
 
-                if (nextKeyIndex >= 0) {
-                    // there is another position after this one
-                    Integer currentKey = (Integer) Scheduler.this.keys.get(nextKeyIndex--);
-                    objectsOfCurrentKey = (List) Scheduler.this.objects.get(currentKey);
-                    objectsOfCurrentKeyIndex = 0;
-                    return true;
-                }
-                else {
-                    // there is no other position after this one
-                    return false;
+                    if (nextKeyIndex >= 0) {
+                        // there is another position after this one
+                        Integer currentKey = (Integer) Scheduler.this.keys.get(nextKeyIndex--);
+                        objectsOfCurrentKey = (List) Scheduler.this.objects.get(currentKey);
+                        objectsOfCurrentKeyIndex = 0;
+                        return true;
+                    } else {
+                        // there is no other position after this one
+                        return false;
+                    }
                 }
 
+                // there are still objects in the current position's list
+                return true;
             }
-
-            // there are still objects in the current position's list
-            return true;
         }
 
         public Object next() {
-            if (!hasNext())
-                throw new NoSuchElementException("iterator bounds reached");
-            return objectsOfCurrentKey.get(objectsOfCurrentKeyIndex++);
+            synchronized (Scheduler.this) {
+                if (!hasNext())
+                    throw new NoSuchElementException("iterator bounds reached");
+                return objectsOfCurrentKey.get(objectsOfCurrentKeyIndex++);
+            }
         }
     }
 
