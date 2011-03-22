@@ -44,7 +44,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
     private final static Logger log = LoggerFactory.getLogger(BitronixTransaction.class);
 
-    private int status = Status.STATUS_NO_TRANSACTION;
+    private volatile int status = Status.STATUS_NO_TRANSACTION;
     private XAResourceManager resourceManager;
     private Scheduler synchronizationScheduler = new Scheduler();
     private List transactionStatusListeners = new ArrayList();
