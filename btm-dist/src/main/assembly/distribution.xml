@@ -27,6 +27,7 @@
             <outputDirectory>integration</outputDirectory>
             <includes>
                 <include>org.codehaus.btm:btm-jetty6-lifecycle:jar</include>
+                <include>org.codehaus.btm:btm-jetty7-lifecycle:jar</include>
                 <include>org.codehaus.btm:btm-tomcat55-lifecycle:jar</include>
             </includes>
             <useProjectArtifact>false</useProjectArtifact>
@@ -78,6 +79,7 @@
             <outputDirectory>/lib</outputDirectory>
             <scope>runtime</scope>
             <excludes>
+                <exclude>javax.transaction:*</exclude>
                 <exclude>org.codehaus.btm:*</exclude>
             </excludes>
             <useProjectArtifact>false</useProjectArtifact>

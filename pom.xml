@@ -89,6 +89,11 @@
                 <artifactId>btm-jetty6-lifecycle</artifactId>
                 <version>2.1.1-SNAPSHOT</version>
             </dependency>
+            <dependency>
+                <groupId>org.codehaus.btm</groupId>
+                <artifactId>btm-jetty7-lifecycle</artifactId>
+                <version>2.1.1-SNAPSHOT</version>
+            </dependency>
 
             <dependency>
                 <groupId>javax.transaction</groupId>
@@ -97,8 +102,13 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.geronimo.specs</groupId>
+                <artifactId>geronimo-jta_1.1_spec</artifactId>
+                <version>1.1.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.geronimo.specs</groupId>
                 <artifactId>geronimo-jms_1.1_spec</artifactId>
-                <version>1.0.1</version>
+                <version>1.1.1</version>
             </dependency>
 
             <dependency>
@@ -109,6 +119,11 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
+                <version>1.6.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-jdk14</artifactId>
                 <version>1.6.1</version>
             </dependency>
 
@@ -211,7 +226,7 @@
 
     <profiles>
         <profile>
-            <id>codehaus-release</id>
+            <id>dist</id>
             <modules>
                 <module>btm-dist</module>
             </modules>
