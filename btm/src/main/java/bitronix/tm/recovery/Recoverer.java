@@ -98,7 +98,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
 
 
     public Recoverer() {
-        this.jmxName = "bitronix.tm:type=Recoverer,ServerId=" + ManagementRegistrar.makeValidName(TransactionManagerServices.getConfiguration().getServerId());
+        String serverId = TransactionManagerServices.getConfiguration().getServerId();
+        if (serverId == null) serverId = "";
+        this.jmxName = "bitronix.tm:type=Recoverer,ServerId=" + ManagementRegistrar.makeValidName(serverId);
         ManagementRegistrar.register(jmxName, this);
     }
 
