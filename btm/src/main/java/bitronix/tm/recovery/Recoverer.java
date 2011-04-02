@@ -86,22 +86,24 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
 
     private final static Logger log = LoggerFactory.getLogger(Recoverer.class);
 
-    private Map registeredResources = new HashMap();
-    private Map recoveredXidSets = new HashMap();
+    private final Map registeredResources = new HashMap();
+    private final Map recoveredXidSets = new HashMap();
 
-    private Exception completionException;
-    private int committedCount;
-    private int rolledbackCount;
+    private volatile Exception completionException;
+    private volatile int committedCount;
+    private volatile int rolledbackCount;
+    private volatile int executionsCount;
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
-    private int executionsCount = 0;
+    private final String jmxName;
 
 
     public Recoverer() {
-        ManagementRegistrar.register("bitronix.tm:type=Recoverer", this);
+        this.jmxName = "bitronix.tm:type=Recoverer,ServerId=" + ManagementRegistrar.makeValidName(TransactionManagerServices.getConfiguration().getServerId());
+        ManagementRegistrar.register(jmxName, this);
     }
 
     public void shutdown() {
-        ManagementRegistrar.unregister("bitronix.tm:type=Recoverer");
+        ManagementRegistrar.unregister(jmxName);
     }
 
     /**
