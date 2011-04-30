@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.codehaus</groupId>
@@ -8,7 +9,7 @@
     </parent>
     <groupId>org.codehaus.btm</groupId>
     <artifactId>btm-parent</artifactId>
-    <version>2.1.2-SNAPSHOT</version>
+    <version>2.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Bitronix Transaction Manager</name>
     <inceptionYear>2006</inceptionYear>
@@ -49,6 +50,7 @@
 
     <modules>
         <module>btm</module>
+        <module>btm-nio-journal</module>
         <module>btm-jetty6-lifecycle</module>
         <module>btm-jetty7-lifecycle</module>
         <module>btm-tomcat55-lifecycle</module>
@@ -59,40 +61,40 @@
             <dependency>
                 <groupId>org.codehaus.btm</groupId>
                 <artifactId>btm</artifactId>
-                <version>2.1.2-SNAPSHOT</version>
+                <version>2.2.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.btm</groupId>
                 <artifactId>btm</artifactId>
-                <version>2.1.2-SNAPSHOT</version>
+                <version>2.2.0-SNAPSHOT</version>
                 <classifier>test-sources</classifier>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.btm</groupId>
                 <artifactId>btm</artifactId>
-                <version>2.1.2-SNAPSHOT</version>
+                <version>2.2.0-SNAPSHOT</version>
                 <classifier>sources</classifier>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.btm</groupId>
                 <artifactId>btm</artifactId>
-                <version>2.1.2-SNAPSHOT</version>
+                <version>2.2.0-SNAPSHOT</version>
                 <classifier>javadoc</classifier>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.btm</groupId>
                 <artifactId>btm-tomcat55-lifecycle</artifactId>
-                <version>2.1.2-SNAPSHOT</version>
+                <version>2.2.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.btm</groupId>
                 <artifactId>btm-jetty6-lifecycle</artifactId>
-                <version>2.1.2-SNAPSHOT</version>
+                <version>2.2.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.btm</groupId>
                 <artifactId>btm-jetty7-lifecycle</artifactId>
-                <version>2.1.2-SNAPSHOT</version>
+                <version>2.2.0-SNAPSHOT</version>
             </dependency>
 
             <dependency>
