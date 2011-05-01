@@ -22,6 +22,7 @@ package bitronix.tm.recovery;
 
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.ManagementRegistrar;
 import bitronix.tm.utils.Uid;
@@ -278,7 +279,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         while (it.hasNext()) {
             Map.Entry entry = (Map.Entry) it.next();
             Uid gtrid = (Uid) entry.getKey();
-            TransactionLogRecord tlog = (TransactionLogRecord) entry.getValue();
+            JournalRecord tlog = (JournalRecord) entry.getValue();
 
             Set uniqueNames = tlog.getUniqueNames();
             Set danglingTransactions = getDanglingTransactionsInRecoveredXids(uniqueNames, tlog.getGtrid());
