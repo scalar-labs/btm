@@ -143,7 +143,7 @@ class NioLogRecord extends TransactionLogRecord {
         buffer.putInt(getRecordLength());
         buffer.putInt(getHeaderLength());
         buffer.putLong(getTime());
-        buffer.putInt(getSequenceNumber());
+        buffer.putInt((int) getSequenceNumber());
 
         if (buffer.position() != CRC32_POSITION) {
             throw new IllegalStateException("There a bug in the implementation " +

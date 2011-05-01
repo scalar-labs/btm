@@ -29,6 +29,7 @@ import bitronix.tm.mock.events.JournalLogEvent;
 import javax.transaction.Status;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -68,6 +69,10 @@ public class MockJournal implements Journal {
 
     public Map collectDanglingRecords() throws IOException {
         return danglingRecords;
+    }
+
+    public Iterator readRecords(boolean includeInvalid) throws IOException {
+        return danglingRecords.values().iterator();
     }
 
     public void shutdown() {

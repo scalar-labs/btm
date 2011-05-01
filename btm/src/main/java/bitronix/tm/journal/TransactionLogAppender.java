@@ -102,7 +102,7 @@ public class TransactionLogAppender {
             randomAccessFile.writeInt(tlog.getRecordLength());
             randomAccessFile.writeInt(tlog.getHeaderLength());
             randomAccessFile.writeLong(tlog.getTime());
-            randomAccessFile.writeInt(tlog.getSequenceNumber());
+            randomAccessFile.writeInt((int) tlog.getSequenceNumber());
             randomAccessFile.writeInt(tlog.getCrc32());
             randomAccessFile.writeByte((byte) tlog.getGtrid().getArray().length);
             randomAccessFile.write(tlog.getGtrid().getArray());

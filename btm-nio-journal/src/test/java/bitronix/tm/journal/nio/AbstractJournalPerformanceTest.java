@@ -19,8 +19,8 @@
 
 package bitronix.tm.journal.nio;
 
+import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.journal.NullJournal;
-import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;
 import org.junit.Test;
@@ -89,7 +89,7 @@ public abstract class AbstractJournalPerformanceTest extends AbstractJournalTest
         int sizeBefore = map.size();
 
         for (Uid uid : danglingUids) {
-            TransactionLogRecord removed = (TransactionLogRecord) map.remove(uid);
+            JournalRecord removed = (JournalRecord) map.remove(uid);
             if (removed == null)
                 continue;
             // cleanup

@@ -41,9 +41,9 @@ import java.util.*;
  * proposed by Mike Spille.</p>
  * <p>Configurable properties are all starting with <code>bitronix.tm.journal.disk</code>.</p>
  *
+ * @author lorban
  * @see bitronix.tm.Configuration
  * @see <a href="http://jroller.com/page/pyrasun?entry=xa_exposed_part_iii_the">XA Exposed, Part III: The Implementor's Notebook</a>
- * @author lorban
  */
 public class DiskJournal implements Journal {
 
@@ -75,10 +75,11 @@ public class DiskJournal implements Journal {
     /**
      * Log a new transaction status to journal. Note that the DiskJournal will not check the flow of the transaction.
      * If you call this method with erroneous data, it will be added to the journal anyway.
-     * @param status transaction status to log. See {@link javax.transaction.Status} constants.
-     * @param gtrid raw GTRID of the transaction.
+     *
+     * @param status      transaction status to log. See {@link javax.transaction.Status} constants.
+     * @param gtrid       raw GTRID of the transaction.
      * @param uniqueNames unique names of the {@link bitronix.tm.resource.common.ResourceBean}s participating in
-     * this transaction.
+     *                    this transaction.
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
     public void log(int status, Uid gtrid, Set uniqueNames) throws IOException {
@@ -108,6 +109,7 @@ public class DiskJournal implements Journal {
 
     /**
      * Force active log file to synchronize with the underlying disk device.
+     *
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
     public void force() throws IOException {
@@ -120,6 +122,7 @@ public class DiskJournal implements Journal {
     /**
      * Open the disk journal. Files are checked for integrity and DiskJournal will refuse to open corrupted log files.
      * If files are not present on disk, this method will create and pre-allocate them.
+     *
      * @throws java.io.IOException in case of disk IO failure.
      */
     public synchronized void open() throws IOException {
@@ -161,6 +164,7 @@ public class DiskJournal implements Journal {
 
     /**
      * Close the disk journal and the underlying files.
+     *
      * @throws java.io.IOException in case of disk IO failure.
      */
     public synchronized void close() throws IOException {
@@ -195,6 +199,7 @@ public class DiskJournal implements Journal {
 
     /**
      * Collect all dangling records of the active log file.
+     *
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
@@ -204,9 +209,19 @@ public class DiskJournal implements Journal {
         return collectDanglingRecords(activeTla);
     }
 
-    /*
-     * Internal impl.
+    /**
+     * {@inheritDoc}
      */
+    @Override
+    public Iterator readRecords(boolean includeInvalid) throws IOException {
+        if (activeTla == null)
+            throw new IOException("cannot read records, disk logger is not open");
+        return iterateRecords(activeTla, includeInvalid);
+    }
+
+    /*
+    * Internal impl.
+    */
 
     /**
      * Create a fresh log file on disk. If the specified file already exists it will be deleted then recreated.
@@ -249,11 +264,12 @@ public class DiskJournal implements Journal {
     /**
      * Initialize the activeTla member variable with the TransactionLogAppender object having the latest timestamp
      * header.
-     * @see TransactionLogHeader
+     *
      * @param tla1 the first of the two candidate active TransactionLogAppenders
      * @param tla2 the second of the two candidate active TransactionLogAppenders
      * @return the state of the designated active TransactionLogAppender as returned by TransactionLogHeader.getState()
      * @throws java.io.IOException in case of disk IO failure.
+     * @see TransactionLogHeader
      */
     private byte pickActiveJournalFile(TransactionLogAppender tla1, TransactionLogAppender tla2) throws IOException {
         if (tla1.getHeader().getTimestamp() > tla2.getHeader().getTimestamp()) {
@@ -283,6 +299,7 @@ public class DiskJournal implements Journal {
      *   <li>do a force on passive log file. It is now the active file.</li>
      *   <li>switch references of active/passive files.</li>
      * </ul>
+     *
      * @throws java.io.IOException in case of disk IO failure.
      */
     private void swapJournalFiles() throws IOException {
@@ -321,8 +338,9 @@ public class DiskJournal implements Journal {
 
     /**
      * Copy all records that have status COMMITTING and no corresponding COMMITTED record from the fromTla to the toTla.
+     *
      * @param fromTla the source where to search for COMMITTING records with no corresponding COMMITTED record
-     * @param toTla the destination where the COMMITTING records will be copied to
+     * @param toTla   the destination where the COMMITTING records will be copied to
      * @throws java.io.IOException in case of disk IO failure.
      */
     private static void copyDanglingRecords(TransactionLogAppender fromTla, TransactionLogAppender toTla) throws IOException {
@@ -341,6 +359,7 @@ public class DiskJournal implements Journal {
     /**
      * Create a Map of TransactionLogRecord with COMMITTING status objects using the GTRID byte[] as key that have
      * no corresponding COMMITTED record
+     *
      * @param tla the TransactionLogAppender to scan
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
      * @throws java.io.IOException in case of disk IO failure.
@@ -392,4 +411,67 @@ public class DiskJournal implements Journal {
         return danglingRecords;
     }
 
+    /**
+     * Implements {@link Journal#readRecords(boolean)}.
+     *
+     * @param tla          the TransactionLogAppender to scan
+     * @param skipCrcCheck sets whether CRC checks are applied or not.
+     * @return an iterator over all contained log records.
+     * @throws java.io.IOException in case of the initial disk IO failed (subsequent errors are unchecked exceptions).
+     */
+    private static Iterator iterateRecords(TransactionLogAppender tla, final boolean skipCrcCheck) throws IOException {
+        final TransactionLogCursor tlc = tla.getCursor();
+        final Iterator it = new Iterator() {
+
+            TransactionLogRecord tlog;
+
+            @Override
+            public boolean hasNext() {
+                while (tlog == null) {
+                    try {
+                        try {
+                            tlog = tlc.readLog(skipCrcCheck);
+                            if (tlog == null)
+                                break;
+                        } catch (CorruptedTransactionLogException ex) {
+                            if (TransactionManagerServices.getConfiguration().isSkipCorruptedLogs()) {
+                                log.error("skipping corrupted log", ex);
+                                continue;
+                            }
+                            throw ex;
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                return tlog != null;
+            }
+
+            @Override
+            public Object next() {
+                if (!hasNext())
+                    throw new NoSuchElementException();
+                try {
+                    return tlog;
+                } finally {
+                    tlog = null;
+                }
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+
+        try {
+            it.hasNext();
+            return it;
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof IOException)
+                throw (IOException) e.getCause();
+            throw e;
+        }
+    }
 }

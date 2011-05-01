@@ -31,10 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Nio & 'java.util.concurrent' based implementation of a transaction journal.
@@ -244,6 +241,15 @@ public class NioJournal implements Journal, NioJournalConstants {
     public Map collectDanglingRecords() throws IOException {
         assertJournalIsOpen();
         return new HashMap<Uid, NioLogRecord>(danglingTransactions.getTracked());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Iterator readRecords(boolean includeInvalid) throws IOException {
+        assertJournalIsOpen();
+        return journalFile.readAll().iterator();
     }
 
     /**
