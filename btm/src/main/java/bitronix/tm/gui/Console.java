@@ -23,8 +23,8 @@ package bitronix.tm.gui;
 import bitronix.tm.BitronixXid;
 import bitronix.tm.Configuration;
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.utils.Uid;
-import bitronix.tm.journal.TransactionLogRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -253,7 +253,7 @@ public class Console extends JFrame {
         HashMap redundantGtrids = new HashMap();
 
         for (int i = 0; i < transactionTableModel.getRowCount(); i++) {
-            TransactionLogRecord tlog = transactionTableModel.getRow(i);
+            JournalRecord tlog = transactionTableModel.getRow(i);
             if (tlog.getStatus() == Status.STATUS_COMMITTING) {
                 Uid gtrid = tlog.getGtrid();
                 if (gtrids.containsKey(gtrid)) {
@@ -293,7 +293,7 @@ public class Console extends JFrame {
         int unknown = 0;
 
         for (int i = 0; i < transactionTableModel.getRowCount(); i++) {
-            TransactionLogRecord tlog = transactionTableModel.getRow(i);
+            JournalRecord tlog = transactionTableModel.getRow(i);
             switch (tlog.getStatus()) {
                 case Status.STATUS_ACTIVE:
                     active++;
@@ -382,7 +382,7 @@ public class Console extends JFrame {
         int startIndex = table.getSelectedRow() + 1;
 
         for (int i = startIndex; i < transactionTableModel.getRowCount(); i++) {
-            TransactionLogRecord tlog = transactionTableModel.getRow(i);
+            JournalRecord tlog = transactionTableModel.getRow(i);
             if (tlog.getSequenceNumber() == sequenceNumber) {
                 selectTableRow(table, i);
                 return;
@@ -392,7 +392,7 @@ public class Console extends JFrame {
         // if it is not found, search starting back at the beginning of the list up to where we previously started
         if (startIndex > 0) {
             for (int i = 0; i < startIndex; i++) {
-                TransactionLogRecord tlog = transactionTableModel.getRow(i);
+                JournalRecord tlog = transactionTableModel.getRow(i);
                 if (tlog.getSequenceNumber() == sequenceNumber) {
                     selectTableRow(table, i);
                     return;
@@ -407,7 +407,7 @@ public class Console extends JFrame {
         int startIndex = table.getSelectedRow() + 1;
 
         for (int i = startIndex; i < transactionTableModel.getRowCount(); i++) {
-            TransactionLogRecord tlog = transactionTableModel.getRow(i);
+            JournalRecord tlog = transactionTableModel.getRow(i);
             if (tlog.getGtrid().toString().equals(gtrid)) {
                 selectTableRow(table, i);
                 return;
@@ -417,7 +417,7 @@ public class Console extends JFrame {
         // if it is not found, search starting back at the beginning of the list up to where we previously started
         if (startIndex > 0) {
             for (int i = 0; i < startIndex; i++) {
-                TransactionLogRecord tlog = transactionTableModel.getRow(i);
+                JournalRecord tlog = transactionTableModel.getRow(i);
                 if (tlog.getGtrid().toString().equals(gtrid)) {
                     selectTableRow(table, i);
                     return;

@@ -20,6 +20,7 @@
  */
 package bitronix.tm.gui;
 
+import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.journal.TransactionLogRecord;
 
 import javax.swing.*;
@@ -38,8 +39,8 @@ public class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        TransactionLogRecord tlog = (TransactionLogRecord) ((RawTransactionTableModel)table.getModel()).getRow(row);
-        if (!tlog.isCrc32Correct()) {
+        JournalRecord tlog = ((RawTransactionTableModel)table.getModel()).getRow(row);
+        if (!tlog.isValid()) {
             if (isSelected)
                 setBackground(table.getSelectionBackground());
             else
