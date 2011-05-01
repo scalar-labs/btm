@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.nio.channels.FileLock;
 
@@ -46,12 +48,15 @@ public class TransactionLogAppender {
      */
     public static final int END_RECORD = 0x786e7442;
 
+    private static final Charset NAME_CHARSET = Charset.forName("US-ASCII");
+
     private final File file;
     private final RandomAccessFile randomAccessFile;
     private final FileLock lock;
     private final TransactionLogHeader header;
     
     private long maxFileLength;
+    private ByteBuffer appendBuffer;
 
     private static DiskForceBatcherThread diskForceBatcherThread;
 
@@ -90,7 +95,8 @@ public class TransactionLogAppender {
      */
     public boolean writeLog(TransactionLogRecord tlog) throws IOException {
         synchronized (randomAccessFile) {
-            long futureFilePosition = getHeader().getPosition() + tlog.calculateTotalRecordSize();
+            int totalRecordSize = tlog.calculateTotalRecordSize();
+            long futureFilePosition = getHeader().getPosition() + totalRecordSize;
             if (futureFilePosition >= maxFileLength) { // see TransactionLogHeader.setPosition() as it double-checks this
                 if (log.isDebugEnabled())
                     log.debug("log file is full (size would be: " + futureFilePosition + ", max allowed: " + maxFileLength + ")");
@@ -98,27 +104,37 @@ public class TransactionLogAppender {
             }
             if (log.isDebugEnabled()) log.debug("between " + getHeader().getPosition() + " and " + futureFilePosition + ", writing " + tlog);
 
-            randomAccessFile.writeInt(tlog.getStatus());
-            randomAccessFile.writeInt(tlog.getRecordLength());
-            randomAccessFile.writeInt(tlog.getHeaderLength());
-            randomAccessFile.writeLong(tlog.getTime());
-            randomAccessFile.writeInt((int) tlog.getSequenceNumber());
-            randomAccessFile.writeInt(tlog.getCrc32());
-            randomAccessFile.writeByte((byte) tlog.getGtrid().getArray().length);
-            randomAccessFile.write(tlog.getGtrid().getArray());
-            randomAccessFile.writeInt(tlog.getUniqueNames().size());
+            ByteBuffer buffer = prepareAppendBuffer(totalRecordSize);
+            buffer.putInt(tlog.getStatus());
+            buffer.putInt(tlog.getRecordLength());
+            buffer.putInt(tlog.getHeaderLength());
+            buffer.putLong(tlog.getTime());
+            buffer.putInt((int) tlog.getSequenceNumber());
+            buffer.putInt(tlog.getCrc32());
+            buffer.put((byte) tlog.getGtrid().getArray().length);
+            buffer.put(tlog.getGtrid().getArray());
+            buffer.putInt(tlog.getUniqueNames().size());
             Iterator it = tlog.getUniqueNames().iterator();
             while (it.hasNext()) {
                 String uniqueName = (String) it.next();
-                randomAccessFile.writeShort(uniqueName.length());
-                randomAccessFile.writeBytes(uniqueName); // this writes each character discarding the 8th bit. Isn't that US-ASCII ?
+                buffer.putShort((short) uniqueName.length());
+                buffer.put(NAME_CHARSET.encode(uniqueName)); // this writes each character discarding the 8th bit. Isn't that US-ASCII ?
             }
-            randomAccessFile.writeInt(tlog.getEndRecord());
-            getHeader().goAhead(tlog.calculateTotalRecordSize());
+            buffer.putInt(tlog.getEndRecord());
+            randomAccessFile.getChannel().write((ByteBuffer) buffer.flip());
+            getHeader().goAhead(totalRecordSize);
             if (log.isDebugEnabled()) log.debug("disk journal appender now at position " + getHeader().getPosition());
 
             return true;
         }
+    }
+
+    private ByteBuffer prepareAppendBuffer(int requiredBytes) {
+        if (appendBuffer == null || appendBuffer.capacity() < requiredBytes)
+            appendBuffer = ByteBuffer.allocateDirect(requiredBytes);
+        else
+            appendBuffer.clear();
+        return appendBuffer;
     }
 
     /**
