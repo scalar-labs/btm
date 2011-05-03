@@ -20,6 +20,7 @@
 package bitronix.tm.journal.nio;
 
 import bitronix.tm.journal.DiskJournal;
+import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;
@@ -42,7 +43,7 @@ import static org.junit.Assert.fail;
  */
 public abstract class AbstractJournalFunctionalTest extends AbstractJournalTest {
 
-    protected abstract TransactionLogRecord getLogRecord(int status, int recordLength, int headerLength, long time,
+    protected abstract JournalRecord getLogRecord(int status, int recordLength, int headerLength, long time,
                                                          int sequenceNumber, int crc32, Uid gtrid, Set uniqueNames,
                                                          int endRecord);
 

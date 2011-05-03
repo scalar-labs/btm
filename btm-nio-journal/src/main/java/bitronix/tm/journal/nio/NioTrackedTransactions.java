@@ -39,9 +39,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @author juergen kellerer, 2011-04-30
  */
-class NioDanglingTransactions implements NioJournalConstants {
+class NioTrackedTransactions implements NioJournalConstants {
 
-    private static final Logger log = LoggerFactory.getLogger(NioDanglingTransactions.class);
+    private static final Logger log = LoggerFactory.getLogger(NioTrackedTransactions.class);
 
     private static boolean isFinalStatus(int status) {
         return status == Status.STATUS_COMMITTED ||
@@ -50,14 +50,14 @@ class NioDanglingTransactions implements NioJournalConstants {
                 status == Status.STATUS_UNKNOWN;
     }
 
-    private final ConcurrentMap<Uid, NioLogRecord> tracked = new ConcurrentHashMap<Uid, NioLogRecord>();
+    private final ConcurrentMap<Uid, NioJournalRecord> tracked = new ConcurrentHashMap<Uid, NioJournalRecord>();
 
     /**
      * Track the given transaction log record entry.
      *
      * @param record the record to track.
      */
-    public void track(final NioLogRecord record) {
+    public void track(final NioJournalRecord record) {
         track(record.getStatus(), record.getGtrid(), record);
     }
 
@@ -68,9 +68,9 @@ class NioDanglingTransactions implements NioJournalConstants {
      * @param gtrid  the global transaction id.
      * @param record the record to track.
      */
-    public void track(final int status, final Uid gtrid, final NioLogRecord record) {
+    public void track(final int status, final Uid gtrid, final NioJournalRecord record) {
         if (isFinalStatus(status)) {
-            final NioLogRecord existing = tracked.get(gtrid);
+            final NioJournalRecord existing = tracked.get(gtrid);
             if (existing != null) {
                 existing.removeUniqueNames(record.getUniqueNames());
                 if (existing.getUniqueNames().isEmpty()) {
@@ -85,7 +85,7 @@ class NioDanglingTransactions implements NioJournalConstants {
                 }
             }
         } else {
-            final NioLogRecord removed = tracked.put(gtrid, record);
+            final NioJournalRecord removed = tracked.put(gtrid, record);
 
             // Note: Merging names between removed and record is not required as the external implementation
             // should not change the unique names unless isFinalStatus returns true. Logging an error if the
@@ -108,13 +108,13 @@ class NioDanglingTransactions implements NioJournalConstants {
      */
     public void purgeTransactionsExceedingLifetime() {
         final long now = System.currentTimeMillis();
-        for (Iterator<NioLogRecord> i = tracked.values().iterator(); i.hasNext();) {
-            NioLogRecord logRecord = i.next();
-            final long age = now - logRecord.getTime();
+        for (Iterator<NioJournalRecord> i = tracked.values().iterator(); i.hasNext();) {
+            NioJournalRecord journalRecord = i.next();
+            final long age = now - journalRecord.getTime();
             if (age > TRANSACTION_MAX_LIFETIME) {
                 log.warn("Max life time of {}m exeeded (age was {}m). Discarding dangling transaction {}",
                         new Object[]{TimeUnit.MILLISECONDS.toMinutes(TRANSACTION_MAX_LIFETIME),
-                                TimeUnit.MILLISECONDS.toMinutes(age), logRecord});
+                                TimeUnit.MILLISECONDS.toMinutes(age), journalRecord});
                 i.remove();
             }
         }
@@ -133,7 +133,7 @@ class NioDanglingTransactions implements NioJournalConstants {
      *
      * @return an unmodifiable map of tracked transactions.
      */
-    public Map<Uid, NioLogRecord> getTracked() {
+    public Map<Uid, NioJournalRecord> getTracked() {
         return Collections.unmodifiableMap(tracked);
     }
 
@@ -142,7 +142,7 @@ class NioDanglingTransactions implements NioJournalConstants {
      */
     @Override
     public String toString() {
-        return "NioDanglingTransactions{" +
+        return "NioTrackedTransactions{" +
                 "tracked=" + tracked.size() +
                 '}';
     }

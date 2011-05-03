@@ -44,39 +44,25 @@ class NioJournalFileRecord {
 
     private static final Logger log = LoggerFactory.getLogger(NioJournalFileRecord.class);
 
-    private static byte[][] txStatusStrings = {
-            "0-ACT:".getBytes(NioLogRecord.NAME_CHARSET), // Status.STATUS_ACTIVE
-            "1-MRB:".getBytes(NioLogRecord.NAME_CHARSET), // Status.STATUS_MARKED_ROLLBACK
-            "2-PRE:".getBytes(NioLogRecord.NAME_CHARSET), // Status.STATUS_PREPARED
-            "3-CTD:".getBytes(NioLogRecord.NAME_CHARSET), // Status.STATUS_COMMITTED
-            "4-RBA:".getBytes(NioLogRecord.NAME_CHARSET), // Status.STATUS_ROLLEDBACK
-            "5-UKN:".getBytes(NioLogRecord.NAME_CHARSET), // Status.STATUS_UNKNOWN
-            "6-NTX:".getBytes(NioLogRecord.NAME_CHARSET), // Status.STATUS_NO_TRANSACTION
-            "7-PRI:".getBytes(NioLogRecord.NAME_CHARSET), // Status.STATUS_PREPARING
-            "8-COM:".getBytes(NioLogRecord.NAME_CHARSET), // Status.STATUS_COMMITTING
-            "9-ROL:".getBytes(NioLogRecord.NAME_CHARSET), // Status.STATUS_ROLLINGBACK
-            "<unkn>".getBytes(NioLogRecord.NAME_CHARSET), // out of bounds
-    };
+    private static final byte[] RECORD_DELIMITER_PREFIX = "\r\nLR[".getBytes(NioJournalRecord.NAME_CHARSET);
+    private static final byte[] RECORD_DELIMITER_SUFFIX = "][".getBytes(NioJournalRecord.NAME_CHARSET);
+    private static final byte[] RECORD_DELIMITER_TRAILER = "]-".getBytes(NioJournalRecord.NAME_CHARSET);
 
-    private static final byte[] RECORD_DELIMITER_PREFIX = "\r\nLR[".getBytes(NioLogRecord.NAME_CHARSET);
-    private static final byte[] RECORD_DELIMITER_SUFFIX = "][".getBytes(NioLogRecord.NAME_CHARSET);
-    private static final byte[] RECORD_DELIMITER_TRAILER = "]-".getBytes(NioLogRecord.NAME_CHARSET);
-
-    public static final int RECORD_LENGTH_OFFSET = RECORD_DELIMITER_PREFIX.length +
-            16 + txStatusStrings[0].length;
+    public static final int RECORD_LENGTH_OFFSET = RECORD_DELIMITER_PREFIX.length + 16;
     public static final int RECORD_CRC32_OFFSET = RECORD_LENGTH_OFFSET + 4;
 
-    public static final int RECORD_HEADER_SIZE = RECORD_DELIMITER_PREFIX.length +
-            RECORD_DELIMITER_SUFFIX.length +
-            16 + 4 + 4 +
-            txStatusStrings[0].length;
+    public static final int RECORD_HEADER_SIZE =
+            RECORD_DELIMITER_PREFIX.length +
+                    16 + 4 + 4 +
+                    RECORD_DELIMITER_SUFFIX.length;
 
     public static final int RECORD_TRAILER_SIZE = RECORD_DELIMITER_TRAILER.length + 16;
+
     private static final boolean trace = log.isTraceEnabled();
 
-    private int status = -1;
     private UUID delimiter;
     private ByteBuffer payload, recordBuffer;
+    private boolean valid = true;
 
     /**
      * Utility methods that converts the buffer to a string.
@@ -97,13 +83,15 @@ class NioJournalFileRecord {
     /**
      * Reads all records contained in the given file channel.
      *
-     * @param delimiter the delimiter used to identify records.
-     * @param channel   the channel to read from.
+     * @param delimiter      the delimiter used to identify records.
+     * @param channel        the channel to read from.
+     * @param includeInvalid include those records that do not pass CRC checks.
      * @return a new iterable that returns a repeatable iteration over records.
      * @throws IOException in case of the IO operation fails initially.
      */
-    public static Iterable<NioJournalFileRecord> readRecords(UUID delimiter, FileChannel channel) throws IOException {
-        return new NioJournalFileIterable(delimiter, channel);
+    public static Iterable<NioJournalFileRecord> readRecords(UUID delimiter, FileChannel channel,
+                                                             boolean includeInvalid) throws IOException {
+        return new NioJournalFileIterable(delimiter, channel, includeInvalid);
     }
 
     /**
@@ -170,15 +158,13 @@ class NioJournalFileRecord {
     /**
      * Creates an empty payload buffer of the given size and transaction status.
      *
-     * @param status      the transaction status to add to the journal. (informational only)
      * @param payloadSize the size of the payload to create.
      * @return the created buffer.
      */
-    public ByteBuffer createEmptyPayload(int status, int payloadSize) {
-        this.status = status;
+    public ByteBuffer createEmptyPayload(int payloadSize) {
         recordBuffer = NioBufferPool.getInstance().poll(payloadSize + RECORD_HEADER_SIZE + RECORD_TRAILER_SIZE);
 
-        writeRecordHeaderFor(status, payloadSize, delimiter, recordBuffer);
+        writeRecordHeaderFor(payloadSize, delimiter, recordBuffer);
         payload = (ByteBuffer) recordBuffer.slice().limit(payloadSize);
         writeRecordTrailerFor(delimiter, (ByteBuffer) recordBuffer.position(recordBuffer.position() + payloadSize));
 
@@ -206,7 +192,7 @@ class NioJournalFileRecord {
         if (recordBuffer == null || payload == null) {
             if (payload != null) {
                 final ByteBuffer pl = payload; // must be assigned to a local var.
-                createEmptyPayload(status, pl.remaining()).put(pl);
+                createEmptyPayload(pl.remaining()).put(pl);
             } else
                 throw new IllegalStateException("The payload was not yet written. Cannot write this record.");
         }
@@ -241,6 +227,14 @@ class NioJournalFileRecord {
         return delimiter;
     }
 
+    public boolean isValid() {
+        return valid;
+    }
+
+    void markInvalid() {
+        valid = false;
+    }
+
     @Override
     public String toString() {
         return "NioJournalFileRecord{" +
@@ -258,15 +252,8 @@ class NioJournalFileRecord {
         return new UUID(buffer.getLong(), buffer.getLong());
     }
 
-    private static byte[] statusToBytes(int status) {
-        if (status > 0 && status < txStatusStrings.length)
-            return txStatusStrings[status];
-        return txStatusStrings[txStatusStrings.length - 1];
-    }
-
-    private static void writeRecordHeaderFor(int status, int payloadSize, UUID delimiter, ByteBuffer target) {
+    private static void writeRecordHeaderFor(int payloadSize, UUID delimiter, ByteBuffer target) {
         target.put(RECORD_DELIMITER_PREFIX);
-        target.put(statusToBytes(status));
         writeUUID(delimiter, target);
         target.putInt(payloadSize); // record length
         target.putInt(0); // reserved for CRC32 (comes later)
@@ -291,9 +278,6 @@ class NioJournalFileRecord {
 
             if (similarBytes < 1)
                 return ReadStatus.noHeaderAtCurrentPosition.encode();
-
-            // skipping the status entry.
-            source.position(source.position() + txStatusStrings[0].length);
 
             final UUID uuid = readUUID(source);
             if (!delimiter.equals(uuid)) {

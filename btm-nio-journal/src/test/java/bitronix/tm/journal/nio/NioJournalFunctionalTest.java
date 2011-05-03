@@ -20,6 +20,7 @@
 package bitronix.tm.journal.nio;
 
 import bitronix.tm.journal.Journal;
+import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;
@@ -42,11 +43,10 @@ import static org.junit.Assert.assertFalse;
  */
 public class NioJournalFunctionalTest extends AbstractJournalFunctionalTest {
     @Override
-    protected TransactionLogRecord getLogRecord(int status, int recordLength, int headerLength,
+    protected JournalRecord getLogRecord(int status, int recordLength, int headerLength,
                                                 long time, int sequenceNumber, int crc32, Uid gtrid,
                                                 Set uniqueNames, int endRecord) {
-        return new NioLogRecord(status, recordLength, headerLength, time,
-                sequenceNumber, crc32, gtrid, uniqueNames, endRecord);
+        return new NioJournalRecord(status, recordLength, time, sequenceNumber, gtrid, uniqueNames, true);
     }
 
     @Override
@@ -73,7 +73,7 @@ public class NioJournalFunctionalTest extends AbstractJournalFunctionalTest {
         Uid gtrid = UidGenerator.generateUid();
         HashSet<String> uniqueNames = new HashSet<String>(Arrays.asList("1"));
         int rawRecordSize = NioJournalFileRecord.RECORD_HEADER_SIZE + NioJournalFileRecord.RECORD_TRAILER_SIZE +
-                new NioLogRecord(Status.STATUS_ACTIVE, gtrid, uniqueNames).getEffectiveRecordLength();
+                new NioJournalRecord(Status.STATUS_ACTIVE, gtrid, uniqueNames).getRecordLength();
 
         journal.open();
         for (int i = 0; i < iterations; i++)

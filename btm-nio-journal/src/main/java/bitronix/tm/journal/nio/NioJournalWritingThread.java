@@ -24,9 +24,7 @@ package bitronix.tm.journal.nio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.transaction.Status;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -47,11 +45,6 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
 
     private static final Logger log = LoggerFactory.getLogger(NioJournalWritingThread.class);
 
-    private static boolean needsForce(ByteBuffer buffer) {
-        int status = NioLogRecord.readStatus(buffer);
-        return status == Status.STATUS_COMMITTED;
-    }
-
     // Incoming Work-Queue
     private final BlockingQueue<NioForceSynchronizer<NioJournalFileRecord>.ForceableElement> incomingQueue =
             new ArrayBlockingQueue<NioForceSynchronizer<NioJournalFileRecord>.ForceableElement>(CONCURRENCY);
@@ -64,7 +57,7 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     private final NioForceSynchronizer<NioJournalFileRecord> forceSynchronizer;
 
     private final NioJournalFile journalFile;
-    private final NioDanglingTransactions danglingTransactions;
+    private final NioTrackedTransactions trackedTransactions;
 
     private long processedCount;
 
@@ -86,15 +79,15 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     /**
      * Constructs and starts a thread on the given journal that handles writes.
      *
-     * @param danglingTransactions the shared map of dangling transactions.
-     * @param journalFile          the journal to operate on.
-     * @param forceSynchronizer    the synchronizer used allowing logging threads to wait on the force command.
-     *                             Set to 'null' if force shall be skipped.
+     * @param trackedTransactions the shared map of dangling transactions.
+     * @param journalFile         the journal to operate on.
+     * @param forceSynchronizer   the synchronizer used allowing logging threads to wait on the force command.
+     *                            Set to 'null' if force shall be skipped.
      */
-    public NioJournalWritingThread(NioDanglingTransactions danglingTransactions, NioJournalFile journalFile,
+    public NioJournalWritingThread(NioTrackedTransactions trackedTransactions, NioJournalFile journalFile,
                                    NioForceSynchronizer<NioJournalFileRecord> forceSynchronizer) {
         super("Bitronix - Nio Transaction Journal - JournalWriter");
-        this.danglingTransactions = danglingTransactions;
+        this.trackedTransactions = trackedTransactions;
         this.journalFile = journalFile;
         this.forceSynchronizer = forceSynchronizer;
         start();
@@ -116,9 +109,9 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
         closed.set(true);
 
         try {
-            for (int i = 0; i < 6 && isAlive(); i++) {
+            for (int i = 0; i < 60 && isAlive(); i++) {
                 boolean isWaiting = getState() != State.RUNNABLE,
-                        forceInterrupt = i >= 5;
+                        forceInterrupt = i >= 59;
 
                 if (forceInterrupt || isWaiting) {
                     boolean doInterrupt = forceInterrupt || (incomingQueue.isEmpty() && elementsToWorkOn.isEmpty());
@@ -143,7 +136,7 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
                         interrupt();
                 }
 
-                int maxWait = 100; // 10 seconds
+                int maxWait = 10; // 1 second
                 while (isAlive() && maxWait-- > 0)
                     wait(100);
             }
@@ -208,8 +201,10 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
                         processedCount += recordsToWorkOn.size();
                     } catch (Exception e) {
                         log.error("Failed storing " + recordsToWorkOn.size() + " transaction log records.", e);
-                        for (NioJournalFileRecord record : recordsToWorkOn)
-                            log.error("Failed storing transaction {}.", new NioLogRecord(record.getPayload()));
+                        for (NioJournalFileRecord record : recordsToWorkOn) {
+                            log.error("Failed storing transaction {}.",
+                                    new NioJournalRecord(record.getPayload(), record.isValid()));
+                        }
                     } finally {
                         disposeAll(recordsToWorkOn);
                     }
@@ -268,9 +263,9 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     }
 
     private void dumpDanglingTransactionsToJournal() throws IOException {
-        danglingTransactions.purgeTransactionsExceedingLifetime();
+        trackedTransactions.purgeTransactionsExceedingLifetime();
 
-        final List<NioLogRecord> records = new ArrayList<NioLogRecord>(danglingTransactions.getTracked().values());
+        final List<NioJournalRecord> records = new ArrayList<NioJournalRecord>(trackedTransactions.getTracked().values());
         if (!records.isEmpty()) {
             if (log.isTraceEnabled()) {
                 log.trace("Adding {} unfinished transactions to the journal after performing the rollover.",
@@ -278,9 +273,9 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
             }
 
             final List<NioJournalFileRecord> chunks = new ArrayList<NioJournalFileRecord>(CONCURRENCY);
-            for (NioLogRecord record : records) {
+            for (NioJournalRecord record : records) {
                 final NioJournalFileRecord fileRecord = journalFile.createEmptyRecord();
-                record.encodeTo(fileRecord.createEmptyPayload(record.getStatus(), record.getEffectiveRecordLength()));
+                record.encodeTo(fileRecord.createEmptyPayload(record.getRecordLength()));
                 chunks.add(fileRecord);
 
                 if (chunks.size() == CONCURRENCY) {

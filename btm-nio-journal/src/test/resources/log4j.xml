@@ -15,7 +15,7 @@
 	<appender name="file" class="org.apache.log4j.FileAppender">
 		<param name="File" value="target/tests.log"/>
 		<param name="Append" value="false"/>
-		<param name="BufferedIO" value="true"/>
+		<!--param name="BufferedIO" value="true"/-->
 		<param name="Threshold" value="DEBUG"/>
 
 		<layout class="org.apache.log4j.PatternLayout">

@@ -31,11 +31,11 @@ import java.util.TreeSet;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Smoke test on the NioLogRecord.
+ * Smoke test on the NioJournalRecord.
  *
  * @author juergen kellerer, 2011-04-30
  */
-public class NioLogRecordTest {
+public class NioJournalRecordTest {
     @Test
     public void testWriteToBuffer() throws Exception {
         ByteBuffer bb = ByteBuffer.allocate(1024);
@@ -43,16 +43,16 @@ public class NioLogRecordTest {
         for (int i = 0; i < 10; i++) {
             Uid gtrid = UidGenerator.generateUid();
             Set<String> names = new TreeSet<String>(Arrays.asList("a", "", "another-name", "äöü"));
-            NioLogRecord lr = new NioLogRecord(1, gtrid, names);
+            NioJournalRecord lr = new NioJournalRecord(1, gtrid, names);
 
             lr.encodeTo((ByteBuffer) bb.clear());
-            NioLogRecord decodedLr = new NioLogRecord(bb);
+            NioJournalRecord decodedLr = new NioJournalRecord((ByteBuffer) bb.flip(), true);
 
-            assertEquals(lr.getCrc32(), decodedLr.getCrc32());
             assertEquals(gtrid, decodedLr.getGtrid());
             assertEquals(names, decodedLr.getUniqueNames());
+            assertEquals(lr, decodedLr);
 
-            assertEquals(lr.getEffectiveRecordLength(), bb.position());
+            assertEquals(lr.getRecordLength(), bb.position());
         }
     }
 }

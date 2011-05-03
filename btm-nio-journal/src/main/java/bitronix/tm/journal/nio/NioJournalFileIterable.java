@@ -44,11 +44,13 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
 
     private UUID delimiter;
     private long journalSize;
+    private boolean readInvalid;
     private FileChannel fileChannel;
 
-    NioJournalFileIterable(UUID delimiter, FileChannel fileChannel) throws IOException {
+    NioJournalFileIterable(UUID delimiter, FileChannel fileChannel, boolean readInvalid) throws IOException {
         this.delimiter = delimiter;
         this.fileChannel = fileChannel;
+        this.readInvalid = readInvalid;
         this.journalSize = fileChannel.size();
     }
 
@@ -100,8 +102,13 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
                 nextEntry = new NioJournalFileRecord(delimiter, buffer);
                 readEntries++;
                 if (buffer.getInt(buffer.position() + reverseCrc32Offset) != nextEntry.calculateCrc32()) {
-                    log.warn("CRC32 differs in payload of record {}, skipping the entry.", nextEntry);
-                    nextEntry = null;
+                    if (readInvalid) {
+                        log.warn("CRC32 differs in payload of record for {}, marking the entry as invalid.", nextEntry);
+                        nextEntry.markInvalid();
+                    } else {
+                        log.warn("CRC32 differs in payload of record {}, skipping the entry.", nextEntry);
+                        nextEntry = null;
+                    }
                     brokenEntries++;
                 } else {
                     positionAfterLastRecord = bufferPosition + buffer.limit() + NioJournalFileRecord.RECORD_TRAILER_SIZE;

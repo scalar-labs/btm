@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static bitronix.tm.journal.nio.NioJournalFileRecord.readRecords;
+
 /**
  * Low level file handling implementation.
  *
@@ -45,8 +47,8 @@ class NioJournalFile implements NioJournalConstants {
 
     private static final Logger log = LoggerFactory.getLogger(NioJournalFile.class);
 
-    private static final byte[] JOURNAL_HEADER_PREFIX = "\r\nNio TX Journal [Version 1.0] - ".getBytes(NioLogRecord.NAME_CHARSET);
-    private static final byte[] JOURNAL_HEADER_SUFFIX = "\r\n".getBytes(NioLogRecord.NAME_CHARSET);
+    private static final byte[] JOURNAL_HEADER_PREFIX = "\r\nNio TX Journal [Version 1.0] - ".getBytes(NioJournalRecord.NAME_CHARSET);
+    private static final byte[] JOURNAL_HEADER_SUFFIX = "\r\n".getBytes(NioJournalRecord.NAME_CHARSET);
 
     static final int FIXED_HEADER_SIZE = 512;
 
@@ -87,8 +89,9 @@ class NioJournalFile implements NioJournalConstants {
         if (createHeader)
             writeJournalHeader();
         else {
-            long p = ((NioJournalFileIterable) NioJournalFileRecord.readRecords(delimiter, fileChannel)).findPositionAfterLastRecord();
-            fileChannel.position(Math.max(FIXED_HEADER_SIZE, p));
+            NioJournalFileIterable it = (NioJournalFileIterable) readRecords(delimiter, fileChannel, false);
+            long position = it.findPositionAfterLastRecord();
+            fileChannel.position(Math.max(FIXED_HEADER_SIZE, position));
         }
     }
 
@@ -128,9 +131,9 @@ class NioJournalFile implements NioJournalConstants {
         }
     }
 
-    public synchronized Iterable<NioJournalFileRecord> readAll() throws IOException {
-        final Iterable<NioJournalFileRecord> first = NioJournalFileRecord.readRecords(previousDelimiter, fileChannel);
-        final Iterable<NioJournalFileRecord> second = NioJournalFileRecord.readRecords(delimiter, fileChannel);
+    public synchronized Iterable<NioJournalFileRecord> readAll(boolean includeInvalid) throws IOException {
+        final Iterable<NioJournalFileRecord> first = readRecords(previousDelimiter, fileChannel, includeInvalid);
+        final Iterable<NioJournalFileRecord> second = readRecords(delimiter, fileChannel, includeInvalid);
 
         return new Iterable<NioJournalFileRecord>() {
             @Override
@@ -271,7 +274,7 @@ class NioJournalFile implements NioJournalConstants {
      * @throws IOException in case of the operation failed.
      */
     public long remainingCapacity() throws IOException {
-        return journalSize - fileChannel.position();
+        return Math.max(0, journalSize - fileChannel.position());
     }
 
     /**
