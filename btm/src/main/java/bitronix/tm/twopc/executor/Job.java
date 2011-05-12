@@ -62,12 +62,17 @@ public abstract class Job implements Runnable {
     }
 
     public final void run() {
+        String oldThreadName = null;
         if (TransactionManagerServices.getConfiguration().isAsynchronous2Pc()) {
+            oldThreadName = Thread.currentThread().getName();
             Thread.currentThread().setName("bitronix-2pc [ " +
                     resourceHolder.getXid().toString() +
                     " ]");
         }
         execute();
+        if (oldThreadName != null) {
+            Thread.currentThread().setName(oldThreadName);
+        }
     }
 
     protected abstract void execute();
