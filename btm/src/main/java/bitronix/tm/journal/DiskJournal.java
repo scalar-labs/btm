@@ -136,7 +136,7 @@ public class DiskJournal implements Journal {
             log.debug("creation of log files");
             createLogfile(file2, TransactionManagerServices.getConfiguration().getMaxLogSizeInMb());
             // let the clock run a little before creating the 2nd log file to make the timestamp headers not the same
-            try { Thread.sleep(10); } catch (InterruptedException ex) { /* ignore */ }
+            try { Thread.sleep(50); } catch (InterruptedException ex) { /* ignore */ }
             createLogfile(file1, TransactionManagerServices.getConfiguration().getMaxLogSizeInMb());
         }
 
