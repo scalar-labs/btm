@@ -124,6 +124,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             rolledbackCount = 0;
             long oldestTransactionTimestamp = Long.MAX_VALUE;
 
+            // Collect dangling records from journal, must run before oldestTransactionTimestamp is calculated
+            Map danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
+
             // Query resources from ResourceRegistrar
             synchronized (ResourceRegistrar.class) {
                 Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
@@ -136,8 +139,6 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                     oldestTransactionTimestamp = TransactionManagerServices.getTransactionManager().getOldestInFlightTransactionTimestamp();
                 }
             }
-
-            Map danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
 
             // 1. call recover on all known resources
             recoverAllResources();
@@ -264,6 +265,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
 
     /**
      * Commit transactions that have a dangling COMMITTING record in the journal.
+     * Transactions younger than oldestTransactionTimestamp are ignored.
      * Step 2.
      * @param oldestTransactionTimestamp the timestamp of the oldest transaction still in-flight.
      * @param danglingRecords a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value.
