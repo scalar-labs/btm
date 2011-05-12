@@ -312,8 +312,8 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             throw new IllegalStateException("transaction has already started");
 
         setStatus(Status.STATUS_ACTIVE);
-        this.startDate = new Date();
-        this.timeoutDate = new Date(System.currentTimeMillis() + (timeout * 1000L));
+        this.startDate = new Date(MonotonicClock.currentTimeMillis());
+        this.timeoutDate = new Date(MonotonicClock.currentTimeMillis() + (timeout * 1000L));
 
         TransactionManagerServices.getTaskScheduler().scheduleTransactionTimeout(this, timeoutDate);
     }

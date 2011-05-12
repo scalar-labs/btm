@@ -26,6 +26,7 @@ import bitronix.tm.resource.common.*;
 import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.ManagementRegistrar;
+import bitronix.tm.utils.MonotonicClock;
 import bitronix.tm.utils.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +73,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         this.xaResource = xaConnection.getXAResource();
         this.statementsCache = new LruStatementCache(poolingDataSource.getPreparedStatementCacheSize());
         this.uncachedStatements = Collections.synchronizedList(new ArrayList());
-        this.lastReleaseDate = new Date();
+        this.lastReleaseDate = new Date(MonotonicClock.currentTimeMillis());
         statementsCache.addEvictionListener(new LruEvictionListener() {
             public void onEviction(Object value) {
                 PreparedStatement stmt = (PreparedStatement) value;
@@ -302,10 +303,10 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
         if (newState == STATE_IN_POOL) {
             if (log.isDebugEnabled()) log.debug("requeued JDBC connection of " + poolingDataSource);
-            lastReleaseDate = new Date();
+            lastReleaseDate = new Date(MonotonicClock.currentTimeMillis());
         }
         if (oldState == STATE_IN_POOL && newState == STATE_ACCESSIBLE) {
-            acquisitionDate = new Date();
+            acquisitionDate = new Date(MonotonicClock.currentTimeMillis());
         }
         if (oldState == STATE_NOT_ACCESSIBLE && newState == STATE_ACCESSIBLE) {
             TransactionContextHelper.recycle(this);

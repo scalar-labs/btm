@@ -23,6 +23,7 @@ package bitronix.tm.resource.jms;
 import bitronix.tm.internal.BitronixSystemException;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.ManagementRegistrar;
+import bitronix.tm.utils.MonotonicClock;
 import bitronix.tm.utils.Scheduler;
 import bitronix.tm.resource.common.*;
 import bitronix.tm.resource.jms.lrc.LrcXAConnectionFactory;
@@ -54,7 +55,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     protected JmsPooledConnection(PoolingConnectionFactory poolingConnectionFactory, XAConnection connection) {
         this.poolingConnectionFactory = poolingConnectionFactory;
         this.xaConnection = connection;
-        this.lastReleaseDate = new Date();
+        this.lastReleaseDate = new Date(MonotonicClock.currentTimeMillis());
         addStateChangeEventListener(new JmsPooledConnectionStateChangeListener());
         
         if (poolingConnectionFactory.getClassName().equals(LrcXAConnectionFactory.class.getName())) {
@@ -235,10 +236,10 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
         public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
             if (newState == STATE_IN_POOL) {
                 if (log.isDebugEnabled()) log.debug("requeued JMS connection of " + poolingConnectionFactory);
-                lastReleaseDate = new Date();
+                lastReleaseDate = new Date(MonotonicClock.currentTimeMillis());
             }
             if (oldState == STATE_IN_POOL && newState == STATE_ACCESSIBLE) {
-                acquisitionDate = new Date();
+                acquisitionDate = new Date(MonotonicClock.currentTimeMillis());
             }
             if (newState == STATE_CLOSED) {
                 ManagementRegistrar.unregister(jmxName);
