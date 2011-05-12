@@ -45,12 +45,12 @@ public class XAPool implements StateChangeListener {
     private final static Logger log = LoggerFactory.getLogger(XAPool.class);
     private final static String PASSWORD_PROPERTY_NAME = "password";
 
-    private Map statefulHolderTransactionMap = new HashMap();
-    private List objects = new ArrayList();
-    private ResourceBean bean;
-    private XAResourceProducer xaResourceProducer;
-    private Object xaFactory;
-    private boolean failed = false;
+    private final Map statefulHolderTransactionMap = new HashMap();
+    private final List objects = new ArrayList();
+    private final ResourceBean bean;
+    private final XAResourceProducer xaResourceProducer;
+    private final Object xaFactory;
+    private volatile boolean failed = false;
 
     public XAPool(XAResourceProducer xaResourceProducer, ResourceBean bean) throws Exception {
         this.xaResourceProducer = xaResourceProducer;
@@ -85,11 +85,11 @@ public class XAPool implements StateChangeListener {
         return xaFactory;
     }
 
-    public synchronized void setFailed(boolean failed) {
+    public void setFailed(boolean failed) {
         this.failed = failed;
     }
 
-    public synchronized boolean isFailed() {
+    public boolean isFailed() {
         return failed;
     }
 
@@ -229,7 +229,7 @@ public class XAPool implements StateChangeListener {
     }
 
     public List getXAResourceHolders() {
-        return objects;
+        return Collections.unmodifiableList(objects);
     }
 
     public Date getNextShrinkDate() {

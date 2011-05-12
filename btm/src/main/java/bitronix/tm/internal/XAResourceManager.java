@@ -43,8 +43,8 @@ public class XAResourceManager {
 
     private final static Logger log = LoggerFactory.getLogger(XAResourceManager.class);
 
-    private Uid gtrid;
-    private Scheduler resources = new Scheduler();
+    private final Uid gtrid;
+    private final Scheduler resources = new Scheduler();
 
     /**
      * Create a resource manager for the specified GTRID.

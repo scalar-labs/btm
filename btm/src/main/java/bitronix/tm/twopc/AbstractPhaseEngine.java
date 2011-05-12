@@ -42,7 +42,7 @@ public abstract class AbstractPhaseEngine {
 
     private final static Logger log = LoggerFactory.getLogger(AbstractPhaseEngine.class);
 
-    private Executor executor;
+    private final Executor executor;
 
     protected AbstractPhaseEngine(Executor executor) {
         this.executor = executor;

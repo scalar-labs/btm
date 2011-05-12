@@ -50,15 +50,15 @@ public class XAResourceHolderState {
 
     private final static Logger log = LoggerFactory.getLogger(XAResourceHolderState.class);
 
-    private ResourceBean bean;
-    private BitronixXid xid;
-    private XAResourceHolder xaResourceHolder;
-    private boolean started;
-    private boolean ended;
-    private boolean suspended;
-    private Date transactionTimeoutDate;
-    private boolean isTimeoutAlreadySet;
-    private boolean failed;
+    private final ResourceBean bean;
+    private final XAResourceHolder xaResourceHolder;
+    private volatile BitronixXid xid;
+    private volatile boolean started;
+    private volatile boolean ended;
+    private volatile boolean suspended;
+    private volatile Date transactionTimeoutDate;
+    private volatile boolean isTimeoutAlreadySet;
+    private volatile boolean failed;
 
     public XAResourceHolderState(XAResourceHolder resourceHolder, ResourceBean bean) {
         this.bean = bean;

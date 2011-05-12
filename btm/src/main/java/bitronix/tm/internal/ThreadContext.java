@@ -35,8 +35,8 @@ public class ThreadContext {
 
     private final static Logger log = LoggerFactory.getLogger(ThreadContext.class);
 
-    private BitronixTransaction transaction;
-    private int timeout = TransactionManagerServices.getConfiguration().getDefaultTransactionTimeout();
+    private volatile BitronixTransaction transaction;
+    private volatile int timeout = TransactionManagerServices.getConfiguration().getDefaultTransactionTimeout();
 
     /**
      * Return the transaction linked with this thread context.
