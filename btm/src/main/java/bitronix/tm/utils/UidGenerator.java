@@ -44,7 +44,7 @@ public class UidGenerator {
      * @return the generated UID.
      */
     public static Uid generateUid() {
-        byte[] timestamp = Encoder.longToBytes(System.currentTimeMillis());
+        byte[] timestamp = Encoder.longToBytes(MonotonicClock.currentTimeMillis());
         byte[] sequence = Encoder.intToBytes(sequenceGenerator.incrementAndGet());
         byte[] serverId = TransactionManagerServices.getConfiguration().buildServerIdArray();
 

@@ -23,6 +23,7 @@ package bitronix.tm.journal;
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.MonotonicClock;
 import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -232,7 +233,7 @@ public class DiskJournal implements Journal {
 
             raf.seek(TransactionLogHeader.FORMAT_ID_HEADER);
             raf.writeInt(BitronixXid.FORMAT_ID);
-            raf.writeLong(System.currentTimeMillis());
+            raf.writeLong(MonotonicClock.currentTimeMillis());
             raf.writeByte(TransactionLogHeader.CLEAN_LOG_STATE);
             raf.writeLong((long) TransactionLogHeader.HEADER_LENGTH);
 
@@ -294,7 +295,7 @@ public class DiskJournal implements Journal {
         copyDanglingRecords(activeTla, passiveTla);
 
         //step 2
-        passiveTla.getHeader().setTimestamp(System.currentTimeMillis());
+        passiveTla.getHeader().setTimestamp(MonotonicClock.currentTimeMillis());
 
         //step 3
         passiveTla.force();

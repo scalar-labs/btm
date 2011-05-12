@@ -104,7 +104,7 @@ public class TransactionLogRecord {
      */
     public TransactionLogRecord(int status, Uid gtrid, Set uniqueNames) {
         this.status = status;
-        time = System.currentTimeMillis();
+        time = MonotonicClock.currentTimeMillis();
         sequenceNumber = sequenceGenerator.incrementAndGet();
         this.gtrid = gtrid;
         this.uniqueNames = new TreeSet(uniqueNames);

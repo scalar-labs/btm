@@ -24,6 +24,7 @@ import bitronix.tm.BitronixTransaction;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.recovery.Recoverer;
 import bitronix.tm.resource.common.XAPool;
+import bitronix.tm.utils.MonotonicClock;
 import bitronix.tm.utils.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -211,7 +212,7 @@ public class TaskScheduler extends Thread implements Service {
         Iterator it = tasks.iterator();
         while (it.hasNext()) {
             Task task = (Task) it.next();
-            if (task.getExecutionTime().compareTo(new Date()) <= 0) { // if the execution time is now or in the past
+            if (task.getExecutionTime().compareTo(new Date(MonotonicClock.currentTimeMillis())) <= 0) { // if the execution time is now or in the past
                 if (log.isDebugEnabled()) log.debug("running " + task);
                 try {
                     task.execute();

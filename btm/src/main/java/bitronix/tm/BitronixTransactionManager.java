@@ -69,7 +69,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             }
 
             if (log.isDebugEnabled()) log.debug("recovery will run in the background every " + backgroundRecoveryInterval + " second(s)");
-            Date nextExecutionDate = new Date(System.currentTimeMillis() + (backgroundRecoveryInterval * 1000L));
+            Date nextExecutionDate = new Date(MonotonicClock.currentTimeMillis() + (backgroundRecoveryInterval * 1000L));
             TransactionManagerServices.getTaskScheduler().scheduleRecovery(TransactionManagerServices.getRecoverer(), nextExecutionDate);
         } catch (IOException ex) {
             throw new InitializationException("cannot open disk journal", ex);
