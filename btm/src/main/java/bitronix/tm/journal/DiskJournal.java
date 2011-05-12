@@ -368,11 +368,12 @@ public class DiskJournal implements Journal {
                 if (tlog == null)
                     break;
 
-                if (tlog.getStatus() == Status.STATUS_COMMITTING) {
+                int status = tlog.getStatus();
+                if (status == Status.STATUS_COMMITTING) {
                     danglingRecords.put(tlog.getGtrid(), tlog);
                     committing++;
                 }
-                if (tlog.getStatus() == Status.STATUS_COMMITTED) {
+                if (status == Status.STATUS_COMMITTED || status == Status.STATUS_UNKNOWN) {
                     TransactionLogRecord rec = (TransactionLogRecord) danglingRecords.get(tlog.getGtrid());
                     if (rec != null) {
                         rec.removeUniqueNames(tlog.getUniqueNames());
