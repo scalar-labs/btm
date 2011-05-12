@@ -47,8 +47,7 @@ public class TaskSchedulerTest extends TestCase {
         Thread.sleep(1100);
         assertEquals(0, ts.countTasksQueued());
 
-        ts.setActive(false);
-        ts.join();
+        ts.shutdown();
     }
 
 }
