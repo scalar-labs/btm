@@ -44,20 +44,21 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
     private final static Logger log = LoggerFactory.getLogger(BitronixTransaction.class);
 
-    private volatile int status = Status.STATUS_NO_TRANSACTION;
-    private XAResourceManager resourceManager;
-    private Scheduler synchronizationScheduler = new Scheduler();
-    private List transactionStatusListeners = new ArrayList();
-    private boolean timeout = false;
-    private Date timeoutDate;
+    private final XAResourceManager resourceManager;
+    private final Scheduler synchronizationScheduler = new Scheduler();
+    private final List transactionStatusListeners = new ArrayList();
 
-    private Preparer preparer = new Preparer(TransactionManagerServices.getExecutor());
-    private Committer committer = new Committer(TransactionManagerServices.getExecutor());
-    private Rollbacker rollbacker = new Rollbacker(TransactionManagerServices.getExecutor());
+    private volatile int status = Status.STATUS_NO_TRANSACTION;
+    private volatile boolean timeout = false;
+    private volatile Date timeoutDate;
+
+    private final Preparer preparer = new Preparer(TransactionManagerServices.getExecutor());
+    private final Committer committer = new Committer(TransactionManagerServices.getExecutor());
+    private final Rollbacker rollbacker = new Rollbacker(TransactionManagerServices.getExecutor());
 
     /* management */
-    private String threadName;
-    private Date startDate;
+    private volatile String threadName;
+    private volatile Date startDate;
 
 
     public BitronixTransaction() {
@@ -312,8 +313,8 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             throw new IllegalStateException("transaction has already started");
 
         setStatus(Status.STATUS_ACTIVE);
-        this.startDate = new Date();
-        this.timeoutDate = new Date(System.currentTimeMillis() + (timeout * 1000L));
+        this.startDate = new Date(MonotonicClock.currentTimeMillis());
+        this.timeoutDate = new Date(MonotonicClock.currentTimeMillis() + (timeout * 1000L));
 
         TransactionManagerServices.getTaskScheduler().scheduleTransactionTimeout(this, timeoutDate);
     }

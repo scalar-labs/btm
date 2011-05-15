@@ -31,6 +31,7 @@ import javax.transaction.*;
 import javax.transaction.xa.XAException;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Implementation of {@link TransactionManager} and {@link UserTransaction}.
@@ -42,8 +43,8 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionManager.class);
     private final static String MDC_GTRID_KEY = "btm-gtrid";
 
-    private final Map contexts = Collections.synchronizedMap(new HashMap());
-    private final Map inFlightTransactions = Collections.synchronizedMap(new HashMap());
+    private final Map contexts = new ConcurrentHashMap();
+    private final Map inFlightTransactions = new ConcurrentHashMap();
 
     private volatile boolean shuttingDown;
 
@@ -69,7 +70,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             }
 
             if (log.isDebugEnabled()) log.debug("recovery will run in the background every " + backgroundRecoveryInterval + " second(s)");
-            Date nextExecutionDate = new Date(System.currentTimeMillis() + (backgroundRecoveryInterval * 1000L));
+            Date nextExecutionDate = new Date(MonotonicClock.currentTimeMillis() + (backgroundRecoveryInterval * 1000L));
             TransactionManagerServices.getTaskScheduler().scheduleRecovery(TransactionManagerServices.getRecoverer(), nextExecutionDate);
         } catch (IOException ex) {
             throw new InitializationException("cannot open disk journal", ex);
@@ -216,7 +217,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @return a map of {@link BitronixTransaction} objects using {@link Uid} as key and {@link BitronixTransaction} as value.
      */
     public Map getInFlightTransactions() {
-        return inFlightTransactions;
+        return Collections.unmodifiableMap(inFlightTransactions);
     }
 
     /**
@@ -224,27 +225,25 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @return the timestamp or Long.MIN_VALUE if there is no in-flight transaction.
      */
     public long getOldestInFlightTransactionTimestamp() {
-        synchronized (inFlightTransactions) {
-            if (inFlightTransactions.size() == 0) {
-                if (log.isDebugEnabled()) log.debug("oldest in-flight transaction's timestamp: " + Long.MIN_VALUE);
-                return Long.MIN_VALUE;
-            }
-
-            long oldestTimestamp = Long.MAX_VALUE;
-
-            Iterator it = inFlightTransactions.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry entry = (Map.Entry) it.next();
-                Uid gtrid = (Uid) entry.getKey();
-                long currentTimestamp = gtrid.extractTimestamp();
-
-                if (currentTimestamp < oldestTimestamp)
-                    oldestTimestamp = currentTimestamp;
-            }
-
-            if (log.isDebugEnabled()) log.debug("oldest in-flight transaction's timestamp: " + oldestTimestamp);    
-            return oldestTimestamp;
+        if (inFlightTransactions.isEmpty()) {
+            if (log.isDebugEnabled()) log.debug("oldest in-flight transaction's timestamp: " + Long.MIN_VALUE);
+            return Long.MIN_VALUE;
         }
+
+        long oldestTimestamp = Long.MAX_VALUE;
+
+        Iterator it = inFlightTransactions.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry entry = (Map.Entry) it.next();
+            Uid gtrid = (Uid) entry.getKey();
+            long currentTimestamp = gtrid.extractTimestamp();
+
+            if (currentTimestamp < oldestTimestamp)
+                oldestTimestamp = currentTimestamp;
+        }
+
+        if (log.isDebugEnabled()) log.debug("oldest in-flight transaction's timestamp: " + oldestTimestamp);
+        return oldestTimestamp;
     }
 
     /**
@@ -271,15 +270,13 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     public void dumpTransactionContexts() {
         if (log.isDebugEnabled()) {
             if (log.isDebugEnabled()) log.debug("dumping " + inFlightTransactions.size() + " transaction context(s)");
-            synchronized (inFlightTransactions) {
-                Iterator it = inFlightTransactions.entrySet().iterator();
-                while (it.hasNext()) {
-                    Map.Entry entry = (Map.Entry) it.next();
-                    BitronixTransaction tx = (BitronixTransaction) entry.getValue();
-                    if (log.isDebugEnabled()) log.debug(tx.toString());
-                }
-            } // synchronized (inFlightTransactions)
-        } // if
+            Iterator it = inFlightTransactions.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry entry = (Map.Entry) it.next();
+                BitronixTransaction tx = (BitronixTransaction) entry.getValue();
+                if (log.isDebugEnabled()) log.debug(tx.toString());
+            }
+        }
     }
 
     /**
@@ -433,18 +430,17 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         }
 
         public void afterCompletion(int status) {
-            synchronized (contexts) {
-                Iterator it = contexts.entrySet().iterator();
-                while (it.hasNext()) {
-                    Map.Entry entry = (Map.Entry) it.next();
-                    ThreadContext context = (ThreadContext) entry.getValue();
-                    if (context.getTransaction() == currentTx) {
-                        if (log.isDebugEnabled()) log.debug("clearing thread context: " + context);
-                        it.remove();
-                        break;
-                    }
-                } // while
+            Iterator it = contexts.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry entry = (Map.Entry) it.next();
+                ThreadContext context = (ThreadContext) entry.getValue();
+                if (context.getTransaction() == currentTx) {
+                    if (log.isDebugEnabled()) log.debug("clearing thread context: " + context);
+                    it.remove();
+                    break;
+                }
             }
+
             inFlightTransactions.remove(currentTx.getResourceManager().getGtrid());
             MDC.remove(MDC_GTRID_KEY);
         }

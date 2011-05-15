@@ -24,11 +24,14 @@ import bitronix.tm.BitronixTransaction;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.recovery.Recoverer;
 import bitronix.tm.resource.common.XAPool;
+import bitronix.tm.utils.MonotonicClock;
 import bitronix.tm.utils.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Timed tasks service.
@@ -39,8 +42,8 @@ public class TaskScheduler extends Thread implements Service {
 
     private final static Logger log = LoggerFactory.getLogger(TaskScheduler.class);
 
-    private final List tasks = Collections.synchronizedList(new ArrayList());
-    private volatile boolean active = true;
+    private final Queue tasks = new ConcurrentLinkedQueue();
+    private final AtomicBoolean active = new AtomicBoolean(true);
 
     public TaskScheduler() {
         // it is up to the ShutdownHandler to control the lifespan of the JVM and give some time for this thread
@@ -57,14 +60,17 @@ public class TaskScheduler extends Thread implements Service {
         return tasks.size();
     }
 
-    public synchronized void shutdown() {
-        try {
-            long gracefulShutdownTime = TransactionManagerServices.getConfiguration().getGracefulShutdownInterval() * 1000;
-            if (log.isDebugEnabled()) log.debug("graceful scheduler shutdown interval: " + gracefulShutdownTime + "ms");
-            setActive(false);
-            join(gracefulShutdownTime);
-        } catch (InterruptedException ex) {
-            log.error("could not stop the task scheduler within " + TransactionManagerServices.getConfiguration().getGracefulShutdownInterval() + "s");
+    public void shutdown() {
+        boolean wasActive = setActive(false);
+
+        if (wasActive) {
+            try {
+                long gracefulShutdownTime = TransactionManagerServices.getConfiguration().getGracefulShutdownInterval() * 1000;
+                if (log.isDebugEnabled()) log.debug("graceful scheduler shutdown interval: " + gracefulShutdownTime + "ms");
+                join(gracefulShutdownTime);
+            } catch (InterruptedException ex) {
+                log.error("could not stop the task scheduler within " + TransactionManagerServices.getConfiguration().getGracefulShutdownInterval() + "s");
+            }
         }
     }
 
@@ -157,34 +163,32 @@ public class TaskScheduler extends Thread implements Service {
     }
 
     private void addTask(Task task) {
-        synchronized (tasks) {
-            removeTaskByObject(task.getObject());
-            tasks.add(task);
-        }
+        removeTaskByObject(task.getObject());
+        tasks.add(task);
     }
 
     private boolean removeTaskByObject(Object obj) {
-        synchronized (tasks) {
-            if (log.isDebugEnabled()) log.debug("removing task by " + obj);
-            for (int i = 0; i < tasks.size(); i++) {
-                Task task = (Task) tasks.get(i);
+        if (log.isDebugEnabled()) log.debug("removing task by " + obj);
 
-                if (task.getObject() == obj) {
-                    tasks.remove(task);
-                    if (log.isDebugEnabled()) log.debug("cancelled " + task + ", total task(s) still queued: " + tasks.size());
-                    return true;
-                }
+        Iterator it = tasks.iterator();
+        while (it.hasNext()) {
+            Task task = (Task) it.next();
+
+            if (task.getObject() == obj) {
+                tasks.remove(task);
+                if (log.isDebugEnabled()) log.debug("cancelled " + task + ", total task(s) still queued: " + tasks.size());
+                return true;
             }
-            return false;
         }
+        return false;
     }
 
-    void setActive(boolean active) {
-        this.active = active;
+    boolean setActive(boolean active) {
+        return this.active.getAndSet(active);
     }
 
     private boolean isActive() {
-        return active;
+        return active.get();
     }
 
     public void run() {
@@ -199,19 +203,13 @@ public class TaskScheduler extends Thread implements Service {
     }
 
     private void executeElapsedTasks() {
-        if (this.tasks.size() == 0)
+        if (this.tasks.isEmpty())
             return;
-
-        // Copying a collection means iterating it so this block must be synchronized
-        List tasks;
-        synchronized (this.tasks) {
-            tasks = new ArrayList(this.tasks);
-        }
 
         Iterator it = tasks.iterator();
         while (it.hasNext()) {
             Task task = (Task) it.next();
-            if (task.getExecutionTime().compareTo(new Date()) <= 0) { // if the execution time is now or in the past
+            if (task.getExecutionTime().compareTo(new Date(MonotonicClock.currentTimeMillis())) <= 0) { // if the execution time is now or in the past
                 if (log.isDebugEnabled()) log.debug("running " + task);
                 try {
                     task.execute();

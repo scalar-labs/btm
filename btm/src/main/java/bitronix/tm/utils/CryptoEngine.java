@@ -57,7 +57,7 @@ public class CryptoEngine {
      * @throws IOException if an I/O error occurs.
      */
     public static String crypt(String cipher, String data) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeySpecException, IOException {
-        byte[] prependedBytes = Encoder.longToBytes(System.currentTimeMillis());
+        byte[] prependedBytes = Encoder.longToBytes(MonotonicClock.currentTimeMillis());
 
         byte[] dataBytes = data.getBytes("US-ASCII");
         byte[] toCrypt = new byte[LONG_SIZE_IN_BYTES + dataBytes.length];

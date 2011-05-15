@@ -1,7 +1,7 @@
 /*
  * Bitronix Transaction Manager
  *
- * Copyright (c) 2010, Bitronix Software.
+ * Copyright (c) 2011, Bitronix Software.
  *
  * This copyrighted material is made available to anyone wishing to use, modify,
  * copy, or redistribute it subject to the terms and conditions of the GNU
@@ -18,24 +18,29 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA 02110-1301 USA
  */
-package bitronix.tm.twopc.executor;
+package bitronix.tm.utils;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Abstraction of the <code>java.util.concurrent</code>
- * <a href="http://www.dcl.mathcs.emory.edu/util/backport-util-concurrent/">backport</a> implementation.
+ * A System.currentTimeMillis() replacement which guarantees monotonic time increment.
  *
  * @author lorban
  */
-public class BackportConcurrentExecutor extends ConcurrentExecutor {
+public class MonotonicClock {
+    private static final AtomicLong lastTime = new AtomicLong();
 
-    private final static String[] implementations = {
-        "edu.emory.mathcs.backport.java.util.concurrent.Executors",
-        "edu.emory.mathcs.backport.java.util.concurrent.ExecutorService",
-        "edu.emory.mathcs.backport.java.util.concurrent.Future",
-        "edu.emory.mathcs.backport.java.util.concurrent.TimeUnit"
-    };
-
-    public BackportConcurrentExecutor() {
-        super(implementations);
+    /**
+     * Return the current time in milliseconds, guaranteeing monotonic time increment.
+     * @return the current time in milliseconds.
+     */
+    public static long currentTimeMillis() {
+        long now = System.nanoTime() / 1000000;
+        long time = lastTime.get();
+        if (now > time) {
+            lastTime.compareAndSet(time, now);
+            return lastTime.get();
+        }
+        return time;
     }
 }

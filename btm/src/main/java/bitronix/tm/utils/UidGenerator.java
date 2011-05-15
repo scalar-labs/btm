@@ -23,6 +23,8 @@ package bitronix.tm.utils;
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Helper that offers UID generation (GTRID, XID, sequences) needed by the transaction manager.
  * <p>Generated UIDs are at most 64 bytes long and are made of 3 subparts: the current time in milliseconds since
@@ -35,15 +37,15 @@ import bitronix.tm.TransactionManagerServices;
  */
 public class UidGenerator {
 
-    private static int sequenceNumber = 0;
+    private final static AtomicInteger sequenceGenerator = new AtomicInteger();
 
     /**
      * Generate a UID, globally unique. This method relies on the configured serverId for network uniqueness.
      * @return the generated UID.
      */
     public static Uid generateUid() {
-        byte[] timestamp = Encoder.longToBytes(System.currentTimeMillis());
-        byte[] sequence = Encoder.intToBytes(getNextSequenceNumber());
+        byte[] timestamp = Encoder.longToBytes(MonotonicClock.currentTimeMillis());
+        byte[] sequence = Encoder.intToBytes(sequenceGenerator.incrementAndGet());
         byte[] serverId = TransactionManagerServices.getConfiguration().buildServerIdArray();
 
         int uidLength = serverId.length + timestamp.length + sequence.length;
@@ -54,15 +56,6 @@ public class UidGenerator {
         System.arraycopy(sequence, 0, uidArray, serverId.length + timestamp.length, sequence.length);
 
         return new Uid(uidArray);
-    }
-
-    /**
-     * Atomically generate general-purpose sequence numbers starting at 0. The counter is reset at every
-     * JVM startup.
-     * @return a sequence number unique for the lifespan of this JVM.
-     */
-    public static synchronized int getNextSequenceNumber() {
-        return sequenceNumber++;
     }
 
     /**

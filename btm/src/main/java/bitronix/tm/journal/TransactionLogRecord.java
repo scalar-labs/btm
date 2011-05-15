@@ -20,15 +20,14 @@
  */
 package bitronix.tm.journal;
 
-import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.Encoder;
-import bitronix.tm.utils.Uid;
-import bitronix.tm.utils.UidGenerator;
+import bitronix.tm.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
 /**
@@ -54,12 +53,14 @@ import java.util.zip.CRC32;
  * is A bytes long (A being the GTRID length) and there can be X unique names that are Y characters long, Y being eventually
  * different for each name.</p>
  *
- * @author lorban
  * @see <a href="http://jroller.com/page/pyrasun?entry=xa_exposed_part_iii_the">XA Exposed, Part III: The Implementor's Notebook</a>
+ * @author lorban
  */
 public class TransactionLogRecord implements JournalRecord {
 
     private final static Logger log = LoggerFactory.getLogger(TransactionLogRecord.class);
+
+    private final static AtomicInteger sequenceGenerator = new AtomicInteger();
 
     private int status;
     private int recordLength;
@@ -106,8 +107,8 @@ public class TransactionLogRecord implements JournalRecord {
      */
     public TransactionLogRecord(int status, Uid gtrid, Set uniqueNames) {
         this.status = status;
-        time = System.currentTimeMillis();
-        sequenceNumber = UidGenerator.getNextSequenceNumber();
+        time = MonotonicClock.currentTimeMillis();
+        sequenceNumber = sequenceGenerator.incrementAndGet();
         this.gtrid = gtrid;
         this.uniqueNames = new TreeSet(uniqueNames);
         endRecord = TransactionLogAppender.END_RECORD;

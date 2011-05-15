@@ -149,16 +149,8 @@ public class TransactionManagerServices {
         if (executor == null) {
             boolean async = getConfiguration().isAsynchronous2Pc();
             if (async) {
-                if (log.isDebugEnabled()) log.debug("trying to use ConcurrentExecutor");
-                executor = new ConcurrentExecutor();
-                if (!executor.isUsable()) {
-                    if (log.isDebugEnabled()) log.debug("trying to use BackportConcurrentExecutor");
-                    executor = new BackportConcurrentExecutor();
-                }
-                if (!executor.isUsable()) {
-                    if (log.isDebugEnabled()) log.debug("using SimpleAsyncExecutor");
-                    executor = new SimpleAsyncExecutor();
-                }
+                if (log.isDebugEnabled()) log.debug("using AsyncExecutor");
+                executor = new AsyncExecutor();
             }
             else {
                 if (log.isDebugEnabled()) log.debug("using SyncExecutor");

@@ -45,16 +45,16 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
 
     private final static Logger log = LoggerFactory.getLogger(PoolingConnectionFactory.class);
 
-    private transient XAPool pool;
-    private transient JmsPooledConnection recoveryPooledConnection;
-    private transient RecoveryXAResourceHolder recoveryXAResourceHolder;
+    private volatile transient XAPool pool;
+    private volatile transient JmsPooledConnection recoveryPooledConnection;
+    private volatile transient RecoveryXAResourceHolder recoveryXAResourceHolder;
 
-    private boolean cacheProducersConsumers = true;
-    private boolean testConnections = false;
-    private String user;
-    private String password;
-    private JmsConnectionHandle recoveryConnectionHandle;
-    private String jmxName;
+    private volatile boolean cacheProducersConsumers = true;
+    private volatile boolean testConnections = false;
+    private volatile String user;
+    private volatile String password;
+    private volatile JmsConnectionHandle recoveryConnectionHandle;
+    private volatile String jmxName;
 
 
     public PoolingConnectionFactory() {

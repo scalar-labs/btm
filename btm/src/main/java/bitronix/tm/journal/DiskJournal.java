@@ -23,6 +23,7 @@ package bitronix.tm.journal;
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.MonotonicClock;
 import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,9 +42,9 @@ import java.util.*;
  * proposed by Mike Spille.</p>
  * <p>Configurable properties are all starting with <code>bitronix.tm.journal.disk</code>.</p>
  *
- * @author lorban
  * @see bitronix.tm.Configuration
  * @see <a href="http://jroller.com/page/pyrasun?entry=xa_exposed_part_iii_the">XA Exposed, Part III: The Implementor's Notebook</a>
+ * @author lorban
  */
 public class DiskJournal implements Journal {
 
@@ -138,7 +139,7 @@ public class DiskJournal implements Journal {
             log.debug("creation of log files");
             createLogfile(file2, TransactionManagerServices.getConfiguration().getMaxLogSizeInMb());
             // let the clock run a little before creating the 2nd log file to make the timestamp headers not the same
-            try { Thread.sleep(10); } catch (InterruptedException ex) { /* ignore */ }
+            try { Thread.sleep(50); } catch (InterruptedException ex) { /* ignore */ }
             createLogfile(file1, TransactionManagerServices.getConfiguration().getMaxLogSizeInMb());
         }
 
@@ -247,7 +248,7 @@ public class DiskJournal implements Journal {
 
             raf.seek(TransactionLogHeader.FORMAT_ID_HEADER);
             raf.writeInt(BitronixXid.FORMAT_ID);
-            raf.writeLong(System.currentTimeMillis());
+            raf.writeLong(MonotonicClock.currentTimeMillis());
             raf.writeByte(TransactionLogHeader.CLEAN_LOG_STATE);
             raf.writeLong((long) TransactionLogHeader.HEADER_LENGTH);
 
@@ -311,7 +312,7 @@ public class DiskJournal implements Journal {
         copyDanglingRecords(activeTla, passiveTla);
 
         //step 2
-        passiveTla.getHeader().setTimestamp(System.currentTimeMillis());
+        passiveTla.getHeader().setTimestamp(MonotonicClock.currentTimeMillis());
 
         //step 3
         passiveTla.force();
@@ -387,11 +388,12 @@ public class DiskJournal implements Journal {
                 if (tlog == null)
                     break;
 
-                if (tlog.getStatus() == Status.STATUS_COMMITTING) {
+                int status = tlog.getStatus();
+                if (status == Status.STATUS_COMMITTING) {
                     danglingRecords.put(tlog.getGtrid(), tlog);
                     committing++;
                 }
-                if (tlog.getStatus() == Status.STATUS_COMMITTED) {
+                if (status == Status.STATUS_COMMITTED || status == Status.STATUS_UNKNOWN) {
                     TransactionLogRecord rec = (TransactionLogRecord) danglingRecords.get(tlog.getGtrid());
                     if (rec != null) {
                         rec.removeUniqueNames(tlog.getUniqueNames());

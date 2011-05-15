@@ -20,7 +20,6 @@
  */
 package bitronix.tm.twopc.executor;
 
-import bitronix.tm.internal.BitronixRuntimeException;
 import bitronix.tm.utils.Service;
 
 /**
@@ -51,13 +50,6 @@ public interface Executor extends Service {
      * @return true if the job is done, false otherwise.
      */
     public boolean isDone(Object future);
-
-    /**
-     * Check if the thread pool can be used. The thread pool migh rely on an underlying implementation that may not be
-     * available. All other methods will throw a {@link BitronixRuntimeException} when called if this method returns false.
-     * @return true if the {@link Executor} can be used, false otherwise.
-     */
-    public boolean isUsable();
 
     /**
      * Shutdown the thead pool.

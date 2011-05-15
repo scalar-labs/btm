@@ -1,7 +1,7 @@
 /*
  * Bitronix Transaction Manager
  *
- * Copyright (c) 2010, Bitronix Software.
+ * Copyright (c) 2011, Bitronix Software.
  *
  * This copyrighted material is made available to anyone wishing to use, modify,
  * copy, or redistribute it subject to the terms and conditions of the GNU
@@ -22,38 +22,52 @@ package bitronix.tm.twopc.executor;
 
 import bitronix.tm.internal.BitronixRuntimeException;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 /**
- * This implementation spawns a new thread per request.
+ * This implementation executes submitted jobs using a <code>java.util.concurrent</code> cached thread pool.
  *
  * @author lorban
  */
-public class SimpleAsyncExecutor implements Executor {
+public class AsyncExecutor implements Executor {
+
+    private final ExecutorService executorService;
+
+
+    public AsyncExecutor() {
+        executorService = Executors.newCachedThreadPool();
+    }
 
     public Object submit(Job job) {
-        Thread t = new Thread(job);
-        t.setDaemon(true);
-        t.start();
-        return t;
+        return executorService.submit(job);
     }
 
     public void waitFor(Object future, long timeout) {
-        Thread t = (Thread) future;
+        Future<?> f = (Future<?>) future;
+
         try {
-            t.join(timeout);
+            f.get(timeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException ex) {
             throw new BitronixRuntimeException("job interrupted", ex);
+        } catch (ExecutionException ex) {
+            throw new BitronixRuntimeException("job execution exception", ex);
+        } catch (TimeoutException ex) {
+            // ok, just return
         }
     }
 
     public boolean isDone(Object future) {
-        Thread t = (Thread) future;
-        return !t.isAlive();
-    }
+        Future<?> f = (Future<?>) future;
 
-    public boolean isUsable() {
-        return true;
+        return f.isDone();
     }
 
     public void shutdown() {
+        executorService.shutdownNow();
     }
 }

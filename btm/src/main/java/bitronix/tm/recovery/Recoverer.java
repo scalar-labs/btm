@@ -41,6 +41,7 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Recovery process implementation. Here is Mike Spille's description of XA recovery:
@@ -124,6 +125,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             rolledbackCount = 0;
             long oldestTransactionTimestamp = Long.MAX_VALUE;
 
+            // Collect dangling records from journal, must run before oldestTransactionTimestamp is calculated
+            Map danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
+
             // Query resources from ResourceRegistrar
             synchronized (ResourceRegistrar.class) {
                 Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
@@ -136,8 +140,6 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                     oldestTransactionTimestamp = TransactionManagerServices.getTransactionManager().getOldestInFlightTransactionTimestamp();
                 }
             }
-
-            Map danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
 
             // 1. call recover on all known resources
             recoverAllResources();
@@ -264,6 +266,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
 
     /**
      * Commit transactions that have a dangling COMMITTING record in the journal.
+     * Transactions younger than oldestTransactionTimestamp are ignored.
      * Step 2.
      * @param oldestTransactionTimestamp the timestamp of the oldest transaction still in-flight.
      * @param danglingRecords a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value.
@@ -508,42 +511,6 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 resourcesUniqueNames.append(", ");
         }
         return resourcesUniqueNames.toString();
-    }
-
-    /**
-     * A boolean value that may be updated atomically. This is a simplified subset of the JDK 1.5+
-     * java.util.concurrent.atomic.AtomicBoolean class.
-     */
-    private static class AtomicBoolean {
-        private boolean value;
-
-        public AtomicBoolean(boolean value) {
-            this.value = value;
-        }
-
-        public synchronized boolean get() {
-            return value;
-        }
-
-        public synchronized void set(boolean value) {
-            this.value = value;
-        }
-
-        /**
-         * Atomically sets the value to the given updated value if the current value == the expected value.
-         *
-         * @param expect the expected value.
-         * @param update the new value.
-         * @return true if successful. False return indicates that the actual value was not equal to the expected value.
-         */
-        public synchronized boolean compareAndSet(boolean expect, boolean update) {
-            if (this.value == expect) {
-                this.value = update;
-                return true;
-            }
-            return false;
-        }
-
     }
 
 }

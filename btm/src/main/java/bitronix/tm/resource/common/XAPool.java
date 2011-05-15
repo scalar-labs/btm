@@ -45,12 +45,12 @@ public class XAPool implements StateChangeListener {
     private final static Logger log = LoggerFactory.getLogger(XAPool.class);
     private final static String PASSWORD_PROPERTY_NAME = "password";
 
-    private Map statefulHolderTransactionMap = new HashMap();
-    private List objects = new ArrayList();
-    private ResourceBean bean;
-    private XAResourceProducer xaResourceProducer;
-    private Object xaFactory;
-    private boolean failed = false;
+    private final Map statefulHolderTransactionMap = new HashMap();
+    private final List objects = new ArrayList();
+    private final ResourceBean bean;
+    private final XAResourceProducer xaResourceProducer;
+    private final Object xaFactory;
+    private volatile boolean failed = false;
 
     public XAPool(XAResourceProducer xaResourceProducer, ResourceBean bean) throws Exception {
         this.xaResourceProducer = xaResourceProducer;
@@ -85,11 +85,11 @@ public class XAPool implements StateChangeListener {
         return xaFactory;
     }
 
-    public synchronized void setFailed(boolean failed) {
+    public void setFailed(boolean failed) {
         this.failed = failed;
     }
 
-    public synchronized boolean isFailed() {
+    public boolean isFailed() {
         return failed;
     }
 
@@ -114,7 +114,7 @@ public class XAPool implements StateChangeListener {
         }
 
         long remainingTime = bean.getAcquisitionTimeout() * 1000L;
-        long before = System.currentTimeMillis();
+        long before = MonotonicClock.currentTimeMillis();
         while (true) {
             XAStatefulHolder xaStatefulHolder = null;
             if (recycle) {
@@ -156,7 +156,7 @@ public class XAPool implements StateChangeListener {
                 }
 
                 // check for timeout
-                long now = System.currentTimeMillis();
+                long now = MonotonicClock.currentTimeMillis();
                 remainingTime -= (now - before);
                 if (remainingTime <= 0) {
                     throw new BitronixRuntimeException("cannot get valid connection from " + this + " after trying for " + bean.getAcquisitionTimeout() + "s", ex);
@@ -229,17 +229,17 @@ public class XAPool implements StateChangeListener {
     }
 
     public List getXAResourceHolders() {
-        return objects;
+        return Collections.unmodifiableList(objects);
     }
 
     public Date getNextShrinkDate() {
-        return new Date(System.currentTimeMillis() + bean.getMaxIdleTime() * 1000);
+        return new Date(MonotonicClock.currentTimeMillis() + bean.getMaxIdleTime() * 1000);
     }
 
     public synchronized void shrink() throws Exception {
         if (log.isDebugEnabled()) log.debug("shrinking " + this);
         List toRemoveXaStatefulHolders = new ArrayList();
-        long now = System.currentTimeMillis();
+        long now = MonotonicClock.currentTimeMillis();
         for (int i = 0; i < totalPoolSize(); i++) {
             XAStatefulHolder xaStatefulHolder = (XAStatefulHolder) objects.get(i);
             if (xaStatefulHolder.getState() != XAStatefulHolder.STATE_IN_POOL)
@@ -417,7 +417,7 @@ public class XAPool implements StateChangeListener {
         long remainingTime = bean.getAcquisitionTimeout() * 1000L;
         if (log.isDebugEnabled()) log.debug("waiting for IN_POOL connections count to be > 0, currently is " + inPoolSize());
         while (inPoolSize() == 0) {
-            long before = System.currentTimeMillis();
+            long before = MonotonicClock.currentTimeMillis();
             try {
                 if (log.isDebugEnabled()) log.debug("waiting " + remainingTime + "ms");
                 wait(remainingTime);
@@ -426,7 +426,7 @@ public class XAPool implements StateChangeListener {
                 // ignore
             }
 
-            long now = System.currentTimeMillis();
+            long now = MonotonicClock.currentTimeMillis();
             remainingTime -= (now - before);
             if (remainingTime <= 0 && inPoolSize() == 0) {
                 if (log.isDebugEnabled()) log.debug("connection pool dequeue timed out");

@@ -97,6 +97,7 @@
                         <descriptor>${basedir}/src/main/assembly/distribution.xml</descriptor>
                     </descriptors>
                     <tarLongFileMode>gnu</tarLongFileMode>
+                    <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
             </plugin>
         </plugins>

@@ -46,17 +46,17 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
 
     private final static Logger log = LoggerFactory.getLogger(PoolingDataSource.class);
 
-    private transient XAPool pool;
-    private transient XADataSource xaDataSource;
-    private transient RecoveryXAResourceHolder recoveryXAResourceHolder;
-    private transient JdbcConnectionHandle recoveryConnectionHandle;
-    private String testQuery;
-    private boolean enableJdbc4ConnectionTest;
-    private int preparedStatementCacheSize = 0;
-    private String isolationLevel;
-	private String cursorHoldability;
-	private String localAutoCommit;
-    private String jmxName;
+    private volatile transient XAPool pool;
+    private volatile transient XADataSource xaDataSource;
+    private volatile transient RecoveryXAResourceHolder recoveryXAResourceHolder;
+    private volatile transient JdbcConnectionHandle recoveryConnectionHandle;
+    private volatile String testQuery;
+    private volatile boolean enableJdbc4ConnectionTest;
+    private volatile int preparedStatementCacheSize = 0;
+    private volatile String isolationLevel;
+	private volatile String cursorHoldability;
+	private volatile String localAutoCommit;
+    private volatile String jmxName;
 
     public PoolingDataSource() {
     }
