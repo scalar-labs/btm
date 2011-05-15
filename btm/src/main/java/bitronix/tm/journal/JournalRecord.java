@@ -23,6 +23,7 @@ package bitronix.tm.journal;
 
 import bitronix.tm.utils.Uid;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -52,7 +53,7 @@ public interface JournalRecord {
      *
      * @return an unmodifiable set of the unique names identifying the components that are part of this transaction.
      */
-    Set getUniqueNames();
+    Set<String> getUniqueNames();
 
     /**
      * Returns the time when this record was created.
@@ -62,25 +63,16 @@ public interface JournalRecord {
     long getTime();
 
     /**
-     * Informational property returning the record's increasing sequence.
-     * This value is only unique for the runtime of a single journal instance on one machine.
-     * Restarting a journal resets the sequence. Journals may or may not implement this.
-     *
-     * @return the record's increasing sequence.
-     */
-    long getSequenceNumber();
-
-    /**
-     * Informational property returning the length of the record in bytes.
-     *
-     * @return the length of the record if known.
-     */
-    int getRecordLength();
-
-    /**
      * Returns true if the record could not only be loaded but does also pass internal checksum verifications.
      *
      * @return true if the record could not only be loaded but does also pass internal checksum verifications.
      */
     boolean isValid();
+
+    /**
+     * Returns a map of additional properties that provide access to implementation specific record details.
+     *
+     * @return a map of additional properties that provide access to implementation specific record details.
+     */
+    Map<String, ?> getRecordProperties();
 }

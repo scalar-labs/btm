@@ -24,6 +24,9 @@ package bitronix.tm.journal.nio;
 import bitronix.tm.Configuration;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.journal.Journal;
+import bitronix.tm.journal.JournalRecord;
+import bitronix.tm.journal.MigratableJournal;
+import bitronix.tm.journal.ReadableJournal;
 import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +45,7 @@ import static javax.transaction.Status.STATUS_ROLLING_BACK;
  * @author juergen kellerer, 2011-04-30
  * @see bitronix.tm.journal.Journal
  */
-public class NioJournal implements Journal, NioJournalConstants {
+public class NioJournal implements Journal, MigratableJournal, ReadableJournal, NioJournalConstants {
 
     private final static Logger log = LoggerFactory.getLogger(NioJournal.class);
 
@@ -76,7 +79,7 @@ public class NioJournal implements Journal, NioJournalConstants {
      * {@inheritDoc}
      */
     @Override
-    public void log(final int status, final Uid gtrid, Set uniqueNames) throws IOException {
+    public void log(final int status, final Uid gtrid, Set<String> uniqueNames) throws IOException {
         assertJournalIsOpen();
 
         if (gtrid == null)
@@ -84,7 +87,6 @@ public class NioJournal implements Journal, NioJournalConstants {
         if (uniqueNames == null)
             uniqueNames = Collections.emptySet();
 
-        @SuppressWarnings("unchecked")
         final NioJournalRecord record = new NioJournalRecord(status, gtrid, uniqueNames);
         trackedTransactions.track(status, gtrid, record);
 
@@ -133,7 +135,7 @@ public class NioJournal implements Journal, NioJournalConstants {
     public synchronized void open() throws IOException {
         journalFilePath = getJournalFilePath();
 
-         // HACK: Start
+        // HACK: Start
         long journalSize = TransactionManagerServices.getConfiguration().getMaxLogSizeInMb() *
                 1024L * 1024L * 3L;
         // Default is 2, however 6mb seems to be the best trade-off between size and performance for this impl.
@@ -156,20 +158,13 @@ public class NioJournal implements Journal, NioJournalConstants {
             log.debug("Scanning for unfinished transactions within {}.", journalFilePath);
 
         for (NioJournalFileRecord fileRecord : journalFile.readAll(false)) {
-            ByteBuffer buffer = fileRecord.getPayload();
-            try {
-                buffer.mark();
-                NioJournalRecord record = new NioJournalRecord(buffer, fileRecord.isValid());
-                if (!fileRecord.isValid()) {
+            NioJournalRecord record = decodeFileRecord(fileRecord);
+            if (record != null) {
+                if (!record.isValid()) {
                     log.error("Transaction log entry {} loaded from journal {} fails CRC32 check. " +
                             "Discarding the entry.", record, journalFilePath);
                 } else
                     trackedTransactions.track(record);
-            } catch (Exception e) {
-                buffer.reset();
-                String contentString = NioJournalFileRecord.bufferToString(buffer);
-                log.error("Transaction log entry buffer with content <{}> loaded from journal {} cannot be " +
-                        "decoded. Discarding the entry.", contentString, journalFilePath);
             }
         }
 
@@ -179,6 +174,20 @@ public class NioJournal implements Journal, NioJournalConstants {
         journalWritingThread = new NioJournalWritingThread(trackedTransactions, journalFile,
                 skipForce ? null : forceSynchronizer);
         log.info("Successfully started a new log appender on the journal file {}.", journalFilePath);
+    }
+
+    private NioJournalRecord decodeFileRecord(NioJournalFileRecord fileRecord) {
+        ByteBuffer buffer = fileRecord.getPayload();
+        try {
+            buffer.mark();
+            return new NioJournalRecord(buffer, fileRecord.isValid());
+        } catch (Exception e) {
+            buffer.reset();
+            String contentString = NioJournalFileRecord.bufferToString(buffer);
+            log.error("Transaction log entry buffer with content <{}> loaded from journal {} cannot be " +
+                    "decoded. Discarding the entry.", contentString, journalFilePath);
+        }
+        return null;
     }
 
     /**
@@ -242,7 +251,7 @@ public class NioJournal implements Journal, NioJournalConstants {
      * {@inheritDoc}
      */
     @Override
-    public Map collectDanglingRecords() throws IOException {
+    public Map<Uid, ? extends JournalRecord> collectDanglingRecords() throws IOException {
         assertJournalIsOpen();
         final Map<Uid, NioJournalRecord> tracked = trackedTransactions.getTracked();
         final Map<Uid, NioJournalRecord> dangling = new HashMap<Uid, NioJournalRecord>(tracked.size());
@@ -257,13 +266,29 @@ public class NioJournal implements Journal, NioJournalConstants {
         return dangling;
     }
 
+    @Override
+    public void migrateTo(Journal other) throws IOException, IllegalArgumentException {
+        if (other == this)
+            throw new IllegalArgumentException("Cannot migrate a journal to itself (this == otherJournal).");
+        if (other == null)
+            throw new IllegalArgumentException("The migration target journal may not be 'null'.");
+
+        for (JournalRecord record : collectDanglingRecords().values())
+            other.log(record.getStatus(), record.getGtrid(), record.getUniqueNames());
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public Iterator readRecords(boolean includeInvalid) throws IOException {
+    public synchronized void unsafeReadRecordsInto(boolean includeInvalid,
+                                                   Collection<JournalRecord> target) throws IOException {
         assertJournalIsOpen();
-        return journalFile.readAll(includeInvalid).iterator();
+        for (NioJournalFileRecord record : journalFile.readAll(includeInvalid)) {
+            NioJournalRecord journalRecord = decodeFileRecord(record);
+            if (journalRecord != null)
+                target.add(journalRecord);
+        }
     }
 
     /**

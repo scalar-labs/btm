@@ -24,7 +24,6 @@ import bitronix.tm.utils.Service;
 import bitronix.tm.utils.Uid;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -45,7 +44,7 @@ public interface Journal extends Service {
      * @param uniqueNames unique names of the RecoverableXAResourceProducers participating in the transaction.
      * @throws IOException if an I/O error occurs.
      */
-    public void log(int status, Uid gtrid, Set uniqueNames) throws IOException;
+    public void log(int status, Uid gtrid, Set<String> uniqueNames) throws IOException;
 
     /**
      * Open the journal. Integrity should be checked and an exception should be thrown in case the journal is corrupt.
@@ -74,14 +73,5 @@ public interface Journal extends Service {
      * @return a Map using Uid objects GTRID as key and implementations of {@link JournalRecord} as value.
      * @throws IOException if an I/O error occurs.
      */
-    public Map collectDanglingRecords() throws IOException;
-
-    /**
-     * Reads all raw journal records and returns them one by one using implementations of {@link JournalRecord}.
-     *
-     * @param includeInvalid specified whether broken records are attempted to be included.
-     * @return an iterator over all records contained in the journal.
-     * @throws IOException In case of reading the first record fails.
-     */
-    public Iterator readRecords(boolean includeInvalid) throws IOException;
+    public Map<Uid, ? extends JournalRecord> collectDanglingRecords() throws IOException;
 }

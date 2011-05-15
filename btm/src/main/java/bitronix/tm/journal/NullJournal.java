@@ -24,7 +24,6 @@ import bitronix.tm.utils.Uid;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -54,10 +53,6 @@ public class NullJournal implements Journal {
 
     public Map collectDanglingRecords() throws IOException {
         return Collections.EMPTY_MAP;
-    }
-
-    public Iterator readRecords(boolean includeInvalid) throws IOException {
-        return Collections.EMPTY_LIST.iterator();
     }
 
     public void shutdown() {

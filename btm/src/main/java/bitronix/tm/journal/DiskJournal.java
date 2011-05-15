@@ -46,7 +46,7 @@ import java.util.*;
  * @see <a href="http://jroller.com/page/pyrasun?entry=xa_exposed_part_iii_the">XA Exposed, Part III: The Implementor's Notebook</a>
  * @author lorban
  */
-public class DiskJournal implements Journal {
+public class DiskJournal implements Journal, MigratableJournal, ReadableJournal {
 
     private final static Logger log = LoggerFactory.getLogger(DiskJournal.class);
 
@@ -214,10 +214,29 @@ public class DiskJournal implements Journal {
      * {@inheritDoc}
      */
     @Override
-    public Iterator readRecords(boolean includeInvalid) throws IOException {
+    public void migrateTo(Journal other) throws IOException, IllegalArgumentException {
+        if (other == this)
+            throw new IllegalArgumentException("Cannot migrate a journal to itself (this == otherJournal).");
+        if (other == null)
+            throw new IllegalArgumentException("The migration target journal may not be 'null'.");
+
+        for (Object record : collectDanglingRecords().values()) {
+            JournalRecord jr = (JournalRecord) record;
+            other.log(jr.getStatus(), jr.getGtrid(), jr.getUniqueNames());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public synchronized void unsafeReadRecordsInto(boolean includeInvalid,
+                                                   Collection<JournalRecord> target) throws IOException {
         if (activeTla == null)
             throw new IOException("cannot read records, disk logger is not open");
-        return iterateRecords(activeTla, includeInvalid);
+
+        for (Iterator<TransactionLogRecord> i = iterateRecords(activeTla, includeInvalid); i.hasNext(); )
+            target.add(i.next());
     }
 
     /*
@@ -414,16 +433,17 @@ public class DiskJournal implements Journal {
     }
 
     /**
-     * Implements {@link Journal#readRecords(boolean)}.
+     * Implements a low level iterator over all entries contained in the active TX log.
      *
      * @param tla          the TransactionLogAppender to scan
      * @param skipCrcCheck sets whether CRC checks are applied or not.
      * @return an iterator over all contained log records.
      * @throws java.io.IOException in case of the initial disk IO failed (subsequent errors are unchecked exceptions).
      */
-    private static Iterator iterateRecords(TransactionLogAppender tla, final boolean skipCrcCheck) throws IOException {
+    private static Iterator<TransactionLogRecord> iterateRecords(
+            TransactionLogAppender tla, final boolean skipCrcCheck) throws IOException {
         final TransactionLogCursor tlc = tla.getCursor();
-        final Iterator it = new Iterator() {
+        final Iterator<TransactionLogRecord> it = new Iterator<TransactionLogRecord>() {
 
             TransactionLogRecord tlog;
 
@@ -451,7 +471,7 @@ public class DiskJournal implements Journal {
             }
 
             @Override
-            public Object next() {
+            public TransactionLogRecord next() {
                 if (!hasNext())
                     throw new NoSuchElementException();
                 try {

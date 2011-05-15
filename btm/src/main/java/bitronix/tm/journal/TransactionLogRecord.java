@@ -121,7 +121,6 @@ public class TransactionLogRecord implements JournalRecord {
         return status;
     }
 
-    @Override
     public int getRecordLength() {
         return recordLength;
     }
@@ -135,8 +134,7 @@ public class TransactionLogRecord implements JournalRecord {
         return time;
     }
 
-    @Override
-    public long getSequenceNumber() {
+    public int getSequenceNumber() {
         return sequenceNumber;
     }
 
@@ -189,6 +187,19 @@ public class TransactionLogRecord implements JournalRecord {
     @Override
     public boolean isValid() {
         return isCrc32Correct();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Map<String, ?> getRecordProperties() {
+        Map<String, Object> props = new LinkedHashMap<String, Object>(4);
+        props.put("recordLength", recordLength);
+        props.put("headerLength", headerLength);
+        props.put("sequenceNumber", sequenceNumber);
+        props.put("crc32", crc32);
+        return props;
     }
 
     /**

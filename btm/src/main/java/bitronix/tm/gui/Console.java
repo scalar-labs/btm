@@ -36,6 +36,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.font.NumericShaper;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -380,10 +381,11 @@ public class Console extends JFrame {
 
     private void selectTLogMatchingSequence(TransactionTableModel transactionTableModel, int sequenceNumber, JTable table) {
         int startIndex = table.getSelectedRow() + 1;
+        Number sequence = sequenceNumber;
 
         for (int i = startIndex; i < transactionTableModel.getRowCount(); i++) {
             JournalRecord tlog = transactionTableModel.getRow(i);
-            if (tlog.getSequenceNumber() == sequenceNumber) {
+            if (sequence.equals(tlog.getRecordProperties().get("sequenceNumber"))) {
                 selectTableRow(table, i);
                 return;
             }
@@ -393,7 +395,7 @@ public class Console extends JFrame {
         if (startIndex > 0) {
             for (int i = 0; i < startIndex; i++) {
                 JournalRecord tlog = transactionTableModel.getRow(i);
-                if (tlog.getSequenceNumber() == sequenceNumber) {
+                if (sequence.equals(tlog.getRecordProperties().get("sequenceNumber"))) {
                     selectTableRow(table, i);
                     return;
                 }

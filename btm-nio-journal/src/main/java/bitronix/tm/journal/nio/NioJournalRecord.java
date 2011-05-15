@@ -25,6 +25,7 @@ import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.security.krb5.internal.crypto.crc32;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -40,9 +41,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 class NioJournalRecord implements JournalRecord, NioJournalConstants {
 
-    // creates a rather unique sequence that does not guarantee any uniqueness
-    // between invocations but is rather unique when used on the same machine.
-    private static final AtomicLong JOURNAL_RECORD_SEQUENCE = new AtomicLong(System.currentTimeMillis());
+    // Starts from 0 for every new runtime session.
+    private static final AtomicLong JOURNAL_RECORD_SEQUENCE = new AtomicLong();
 
     public static final ThreadLocal<CharsetEncoder> NAME_ENCODERS = new ThreadLocal<CharsetEncoder>() {
         @Override
@@ -250,20 +250,23 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
         return time;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public long getSequenceNumber() {
         return sequenceNumber;
+    }
+
+    public int getRecordLength() {
+        return recordLength;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public int getRecordLength() {
-        return recordLength;
+    public Map<String, ?> getRecordProperties() {
+        Map<String, Object> props = new LinkedHashMap<String, Object>(4);
+        props.put("recordLength", recordLength);
+        props.put("sequenceNumber", sequenceNumber);
+        return props;
     }
 
     /**
@@ -296,9 +299,9 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof JournalRecord)) return false;
+        if (!(o instanceof NioJournalRecord)) return false;
 
-        JournalRecord that = (JournalRecord) o;
+        NioJournalRecord that = (NioJournalRecord) o;
 
         if (recordLength != that.getRecordLength()) return false;
         if (sequenceNumber != that.getSequenceNumber()) return false;

@@ -148,7 +148,7 @@ class NioJournalFile implements NioJournalConstants {
         };
     }
 
-    private void asserHeaderPartEquals(ByteBuffer buffer, byte[] value) throws IOException {
+    private void assertHeaderPartEquals(ByteBuffer buffer, byte[] value) throws IOException {
         byte[] prefix = new byte[value.length];
         buffer.get(prefix);
         if (!Arrays.equals(prefix, value)) {
@@ -170,10 +170,10 @@ class NioJournalFile implements NioJournalConstants {
         buffer.flip();
 
         try {
-            asserHeaderPartEquals(buffer, JOURNAL_HEADER_PREFIX);
+            assertHeaderPartEquals(buffer, JOURNAL_HEADER_PREFIX);
             previousDelimiter = NioJournalFileRecord.readUUID(buffer);
             delimiter = NioJournalFileRecord.readUUID(buffer);
-            asserHeaderPartEquals(buffer, JOURNAL_HEADER_SUFFIX);
+            assertHeaderPartEquals(buffer, JOURNAL_HEADER_SUFFIX);
             startPosition = buffer.position();
         } catch (IOException e) {
             previousDelimiter = UUID.randomUUID();

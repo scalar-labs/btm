@@ -73,7 +73,7 @@ public class DuplicatedGtridTableModel extends DefaultTableModel {
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < tlogs.size(); i++) {
             JournalRecord tlog = (JournalRecord) tlogs.get(i);
-            sb.append(tlog.getSequenceNumber());
+            sb.append(tlog.getRecordProperties().get("sequenceNumber"));
             if (i < tlogs.size() -1)
                 sb.append(", ");
         }
