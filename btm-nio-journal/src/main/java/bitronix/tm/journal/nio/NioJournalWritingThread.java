@@ -53,7 +53,7 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     private final List<NioForceSynchronizer<NioJournalFileRecord>.ForceableElement> elementsToWorkOn =
             new ArrayList<NioForceSynchronizer<NioJournalFileRecord>.ForceableElement>(CONCURRENCY);
 
-    private final AtomicBoolean closed = new AtomicBoolean();
+    private final AtomicBoolean closeRequested = new AtomicBoolean();
     private final NioForceSynchronizer<NioJournalFileRecord> forceSynchronizer;
 
     private final NioJournalFile journalFile;
@@ -106,7 +106,7 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
      * Attempts to closes the thread gracefully.
      */
     public synchronized void close() {
-        closed.set(true);
+        closeRequested.set(true);
 
         try {
             for (int i = 0; i < 60 && isAlive(); i++) {
@@ -176,7 +176,7 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     public void run() {
         final List<NioJournalFileRecord> recordsToWorkOn = new ArrayList<NioJournalFileRecord>(CONCURRENCY);
 
-        while (!isInterrupted() && !closed.get()) {
+        while (!isInterrupted() && !closeRequested.get()) {
             try {
                 int iterationsBeforeForce = WRITE_ITERATIONS_BEFORE_FORCE;
                 elementsToWorkOn.clear();
@@ -222,9 +222,16 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
                     reportAllRemainingElementsAsFailed();
                 }
                 interrupt();
-            } catch (Throwable t) {
+            } catch (Throwable t) { //NOSONAR: The log writer must not stop execution even when a fatal error occurred.
                 reportAllRemainingElementsAsFailed();
-                log.error("Fatal error when storing logs.", t);
+                log.error("Fatal error when storing logs. Reporting all remaining elements as failures.", t);
+
+                // Waiting for 1 second to avoid running in endless loops when every invocation causes a fatal error.
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    break;
+                }
             }
         }
 
@@ -265,7 +272,9 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     private void dumpDanglingTransactionsToJournal() throws IOException {
         trackedTransactions.purgeTransactionsExceedingLifetime();
 
-        final List<NioJournalRecord> records = new ArrayList<NioJournalRecord>(trackedTransactions.getTracked().values());
+        final List<NioJournalRecord> records = new ArrayList<NioJournalRecord>(
+                trackedTransactions.getTracked().values());
+
         if (!records.isEmpty()) {
             if (log.isTraceEnabled()) {
                 log.trace("Adding {} unfinished transactions to the journal after performing the rollover.",
@@ -330,7 +339,7 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
                 ", processedCount=" + processedCount +
                 ", forceSynchronizer=" + forceSynchronizer +
                 ", state=" + getState() +
-                ", closed=" + closed.get() +
+                ", closeRequested=" + closeRequested.get() +
                 '}';
     }
 }

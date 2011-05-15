@@ -38,16 +38,12 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author juergen kellerer, 2011-04-30
  */
-class NioJournalRecord implements JournalRecord {
-
-    private static final Logger log = LoggerFactory.getLogger(NioJournalRecord.class);
+class NioJournalRecord implements JournalRecord, NioJournalConstants {
 
     // creates a rather unique sequence that does not guarantee any uniqueness
     // between invocations but is rather unique when used on the same machine.
     private static final AtomicLong JOURNAL_RECORD_SEQUENCE = new AtomicLong(System.currentTimeMillis());
 
-    // must be a charset of constant size, using 8 bit encoding
-    public static final Charset NAME_CHARSET = Charset.forName("ISO-8859-1");
     public static final ThreadLocal<CharsetEncoder> NAME_ENCODERS = new ThreadLocal<CharsetEncoder>() {
         @Override
         protected CharsetEncoder initialValue() {
@@ -69,7 +65,7 @@ class NioJournalRecord implements JournalRecord {
             "<unkn>".getBytes(NAME_CHARSET), // out of bounds
     };
 
-    public static int STATIC_RECORD_LENGTH =
+    public static final int STATIC_RECORD_LENGTH =
             /* status-string        */ txStatusStrings[0].length +
             /* status               */ 4 +
             /* recordLength         */ 4 +
@@ -300,7 +296,7 @@ class NioJournalRecord implements JournalRecord {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || !(o instanceof JournalRecord)) return false;
+        if (!(o instanceof JournalRecord)) return false;
 
         JournalRecord that = (JournalRecord) o;
 

@@ -183,9 +183,10 @@ class NioForceSynchronizer<E> {
             } catch (Exception e) {
                 recordFailures(elements);
                 throw e;
+            } finally {
+                performedForce.signalAll();
             }
         } finally {
-            performedForce.signalAll();
             forceLock.unlock();
         }
     }

@@ -21,12 +21,20 @@
 
 package bitronix.tm.journal.nio;
 
+import java.nio.charset.Charset;
+
 /**
  * Collection of 'runtime' constants used by the nio journal implementation.
  *
  * @author juergen kellerer, 2011-04-30
  */
 public interface NioJournalConstants {
+    /**
+     * Is the charset used for unique names and for human readable content in the headers.
+     * Important: must be a charset of constant size, using 8 bit encoding and be able to cover US-ASCII.
+     */
+    Charset NAME_CHARSET = Charset.forName("ISO-8859-1");
+
     /**
      * Hard limit, defining the maximum time that a transaction may be held in the journal.
      * (= the maximum supported timeout for a transaction, defaults to 14 days)

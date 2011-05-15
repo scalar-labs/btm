@@ -47,12 +47,12 @@ class NioJournalFile implements NioJournalConstants {
 
     private static final Logger log = LoggerFactory.getLogger(NioJournalFile.class);
 
-    private static final byte[] JOURNAL_HEADER_PREFIX = "\r\nNio TX Journal [Version 1.0] - ".getBytes(NioJournalRecord.NAME_CHARSET);
-    private static final byte[] JOURNAL_HEADER_SUFFIX = "\r\n".getBytes(NioJournalRecord.NAME_CHARSET);
+    private static final byte[] JOURNAL_HEADER_PREFIX = "\r\nNio TX Journal [Version 1.0] - ".getBytes(NAME_CHARSET);
+    private static final byte[] JOURNAL_HEADER_SUFFIX = "\r\n".getBytes(NAME_CHARSET);
 
     static final int FIXED_HEADER_SIZE = 512;
 
-    private UUID previousDelimiter = UUID.randomUUID();
+    private volatile UUID previousDelimiter = UUID.randomUUID();
     private volatile UUID delimiter = UUID.randomUUID();
 
     ByteBuffer writeBuffer;
@@ -62,8 +62,9 @@ class NioJournalFile implements NioJournalConstants {
 
     private FileLock lock;
     private FileChannel fileChannel;
-    private long journalSize, startPosition;
+    private long startPosition;
 
+    private final AtomicLong journalSize = new AtomicLong();
     private final AtomicLong lastModified = new AtomicLong(), lastForced = new AtomicLong();
 
     public NioJournalFile(File file, long initialJournalSize) throws IOException {
@@ -83,8 +84,8 @@ class NioJournalFile implements NioJournalConstants {
         }
 
         // We can increase but not shrink the journal.
-        this.journalSize = Math.max(initialJournalSize, raf.length());
-        growJournal(this.journalSize);
+        this.journalSize.set(Math.max(initialJournalSize, raf.length()));
+        growJournal(this.journalSize.get());
 
         if (createHeader)
             writeJournalHeader();
@@ -100,7 +101,7 @@ class NioJournalFile implements NioJournalConstants {
     }
 
     public synchronized long getSize() {
-        return journalSize;
+        return journalSize.get();
     }
 
     public long getPosition() throws IOException {
@@ -116,7 +117,11 @@ class NioJournalFile implements NioJournalConstants {
         try {
             if (fileChannel != null) {
                 force();
-                fileChannel.close();
+                try {
+                    lock.release();
+                } finally {
+                    fileChannel.close();
+                }
             }
         } finally {
             fileChannel = null;
@@ -125,9 +130,9 @@ class NioJournalFile implements NioJournalConstants {
     }
 
     public synchronized void growJournal(long newSize) throws IOException {
-        if (newSize >= journalSize) {
+        if (newSize >= journalSize.get()) {
             raf.setLength(newSize);
-            journalSize = newSize;
+            journalSize.set(newSize);
         }
     }
 
@@ -274,7 +279,7 @@ class NioJournalFile implements NioJournalConstants {
      * @throws IOException in case of the operation failed.
      */
     public long remainingCapacity() throws IOException {
-        return Math.max(0, journalSize - fileChannel.position());
+        return Math.max(0, journalSize.get() - fileChannel.position());
     }
 
     /**

@@ -31,6 +31,10 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+import static bitronix.tm.journal.nio.NioJournalFileRecord.RECORD_CRC32_OFFSET;
+import static bitronix.tm.journal.nio.NioJournalFileRecord.RECORD_HEADER_SIZE;
+import static bitronix.tm.journal.nio.NioJournalFileRecord.RECORD_TRAILER_SIZE;
+
 /**
  * Low level file iterator.
  * <p/>
@@ -80,7 +84,7 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
 
     private class RecordIterator implements Iterator<NioJournalFileRecord> {
 
-        private int reverseCrc32Offset = NioJournalFileRecord.RECORD_CRC32_OFFSET - NioJournalFileRecord.RECORD_HEADER_SIZE;
+        private int reverseCrc32Offset = RECORD_CRC32_OFFSET - RECORD_HEADER_SIZE;
 
         private long position, bufferPosition, positionAfterLastRecord, readEntries, brokenEntries;
         private ByteBuffer buffer = ByteBuffer.allocate(64 * 1024);
@@ -111,7 +115,7 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
                     }
                     brokenEntries++;
                 } else {
-                    positionAfterLastRecord = bufferPosition + buffer.limit() + NioJournalFileRecord.RECORD_TRAILER_SIZE;
+                    positionAfterLastRecord = bufferPosition + buffer.limit() + RECORD_TRAILER_SIZE;
                 }
             }
             return nextEntry != null;
@@ -143,7 +147,7 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
                 NioJournalFileRecord.ReadStatus readStatus = NioJournalFileRecord.ReadStatus.decode(recordLength);
 
                 switch (readStatus) {
-                    case foundPartialRecord:
+                    case FoundPartialRecord:
                         if (buffer.position() == 0) {
 
                             int newSize = buffer.capacity() + 4 * 1024;
@@ -163,12 +167,12 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
                             buffer.compact();
                         }
                         break;
-                    case noHeaderInBuffer:
+                    case NoHeaderInBuffer:
                         buffer.clear();
                         break;
                 }
 
-                if (readStatus != NioJournalFileRecord.ReadStatus.readOk) {
+                if (readStatus != NioJournalFileRecord.ReadStatus.ReadOk) {
                     try {
                         // Capture the position of the buffer within the file.
                         bufferPosition = position - buffer.position();
@@ -192,7 +196,7 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
         private void consumePreviousRecord() {
             if (buffer.hasRemaining()) {
                 final int limit = buffer.limit(), cap = buffer.capacity();
-                buffer.limit(cap).position(Math.min(cap, limit + NioJournalFileRecord.RECORD_TRAILER_SIZE));
+                buffer.limit(cap).position(Math.min(cap, limit + RECORD_TRAILER_SIZE));
             }
         }
 

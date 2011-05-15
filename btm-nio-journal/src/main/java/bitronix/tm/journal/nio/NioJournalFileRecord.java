@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.UUID;
@@ -40,7 +39,7 @@ import java.util.zip.CRC32;
  *
  * @author juergen kellerer, 2011-04-30
  */
-class NioJournalFileRecord {
+class NioJournalFileRecord implements NioJournalConstants {
 
     private static final Logger log = LoggerFactory.getLogger(NioJournalFileRecord.class);
 
@@ -77,7 +76,7 @@ class NioJournalFileRecord {
         buffer = buffer.duplicate();
         byte[] content = new byte[buffer.remaining()];
         buffer.get(content);
-        return new String(content, Charset.forName("ISO-8859-1"));
+        return new String(content, NAME_CHARSET);
     }
 
     /**
@@ -214,19 +213,39 @@ class NioJournalFileRecord {
         return (int) crc.getValue();
     }
 
+    /**
+     * Returns the total size of the serialized record in bytes (including header, trailer and payload).
+     *
+     * @return the total size of the serialized record in bytes (including header, trailer and payload).
+     */
     public int getRecordSize() {
         return recordBuffer != null ? recordBuffer.limit() :
                 payload.limit() + RECORD_HEADER_SIZE + RECORD_TRAILER_SIZE;
     }
 
+    /**
+     * Returns a writable, fixed size buffer containing the payload.
+     *
+     * @return a writable, fixed size buffer containing the payload.
+     */
     public ByteBuffer getPayload() {
         return payload.duplicate();
     }
 
+    /**
+     * Returns the delimiter used to separate log records belonging to the same list.
+     *
+     * @return the delimiter used to separate log records belonging to the same list.
+     */
     public UUID getDelimiter() {
         return delimiter;
     }
 
+    /**
+     * Returns true if this record can be considered valid.
+     *
+     * @return true if this record can be considered valid.
+     */
     public boolean isValid() {
         return valid;
     }
@@ -273,11 +292,11 @@ class NioJournalFileRecord {
 
             if (willBePartial || (similarBytes < 0 && !source.hasRemaining())) {
                 if (trace) log.trace("Read a partial header, reporting -5.");
-                return ReadStatus.foundPartialRecord.encode();
+                return ReadStatus.FoundPartialRecord.encode();
             }
 
             if (similarBytes < 1)
-                return ReadStatus.noHeaderAtCurrentPosition.encode();
+                return ReadStatus.NoHeaderAtCurrentPosition.encode();
 
             final UUID uuid = readUUID(source);
             if (!delimiter.equals(uuid)) {
@@ -285,21 +304,23 @@ class NioJournalFileRecord {
                     log.trace("Found an record header of delimiter {}, while expecting {}, skipping it.",
                             uuid, delimiter);
                 }
-                return ReadStatus.foundHeaderWithDifferentDelimiter.encode();
+                return ReadStatus.FoundHeaderWithDifferentDelimiter.encode();
             }
 
             int recordLength = source.getInt();
-            int crc32 = source.getInt(); // currently un-used.
+
+            // jump over crc32
+            source.getInt(); // checksum is not needed here
 
             if (bufferContainsSequence(source, RECORD_DELIMITER_SUFFIX) <= 0)
-                return ReadStatus.noHeaderAtCurrentPosition.encode();
+                return ReadStatus.NoHeaderAtCurrentPosition.encode();
 
             if (recordLength + RECORD_TRAILER_SIZE > source.remaining()) {
                 if (trace) {
                     log.trace("Found partial record, the length {} exceeds the remaining bytes {}.",
                             recordLength, source.remaining());
                 }
-                return ReadStatus.foundPartialRecord.encode();
+                return ReadStatus.FoundPartialRecord.encode();
             }
 
             // Marking the beginning of the payload.
@@ -310,7 +331,7 @@ class NioJournalFileRecord {
                     !delimiter.equals(readUUID(source))) {
                 if (log.isDebugEnabled())
                     log.debug("Found an invalid record trailer for delimiter {}. Will skip this entry.", delimiter);
-                return ReadStatus.noHeaderAtCurrentPosition.encode();
+                return ReadStatus.NoHeaderAtCurrentPosition.encode();
             }
 
             return recordLength;
@@ -332,11 +353,11 @@ class NioJournalFileRecord {
                     final ReadStatus readStatus = ReadStatus.decode(recordLength);
 
                     switch (readStatus) {
-                        case readOk:
+                        case ReadOk:
                             return recordLength;
-                        case foundPartialRecord:
-                            return ReadStatus.foundPartialRecord.encode();
-                        case foundHeaderWithDifferentDelimiter:
+                        case FoundPartialRecord:
+                            return ReadStatus.FoundPartialRecord.encode();
+                        case FoundHeaderWithDifferentDelimiter:
                             if (source.remaining() > RECORD_HEADER_SIZE) {
                                 if (trace) {
                                     log.trace("Found other header entry, try to use length as hint to " +
@@ -361,7 +382,7 @@ class NioJournalFileRecord {
             } while (source.hasRemaining());
         }
 
-        return ReadStatus.noHeaderInBuffer.encode();
+        return ReadStatus.NoHeaderInBuffer.encode();
     }
 
     private static int bufferContainsSequence(final ByteBuffer source, final byte[] sequence) {
@@ -381,27 +402,27 @@ class NioJournalFileRecord {
         /**
          * Header was successfully read, the record is fully contained in the buffer and it is valid.
          */
-        readOk,
+        ReadOk,
         /**
          * There's no header at the current buffer position.
          */
-        noHeaderAtCurrentPosition,
+        NoHeaderAtCurrentPosition,
         /**
          * There's no header in the whole buffer.
          */
-        noHeaderInBuffer,
+        NoHeaderInBuffer,
         /**
          * There's a header but it doesn't belong to the current delimiter.
          */
-        foundHeaderWithDifferentDelimiter,
+        FoundHeaderWithDifferentDelimiter,
         /**
          * There's a valid header but the record is not complete.
          */
-        foundPartialRecord,;
+        FoundPartialRecord,;
 
         static ReadStatus decode(int recordLength) {
             if (recordLength >= 0)
-                return readOk;
+                return ReadOk;
             return values()[-recordLength];
         }
 
@@ -413,5 +434,4 @@ class NioJournalFileRecord {
             return encode(this);
         }
     }
-
 }

@@ -65,10 +65,11 @@ public class NioJournal implements Journal, NioJournalConstants {
             new NioForceSynchronizer<NioJournalFileRecord>();
 
     // Worker
-    NioJournalWritingThread journalWritingThread;
+    volatile NioJournalWritingThread journalWritingThread;
 
-    File journalFilePath;
-    NioJournalFile journalFile;
+    volatile File journalFilePath;
+    volatile NioJournalFile journalFile;
+
     boolean skipForce = SKIP_FSYNC;
 
     /**
@@ -122,10 +123,7 @@ public class NioJournal implements Journal, NioJournalConstants {
      * @return true if the journal is open.
      */
     public final boolean isOpen() {
-        // Weak check for open, avoiding synchronization here.
-        // Gains performance under the assumption that the journal is opened
-        // first before log calls are performed from multiple threads.
-        return journalFile != null; //NOSONAR
+        return journalFile != null;
     }
 
     /**
@@ -134,8 +132,13 @@ public class NioJournal implements Journal, NioJournalConstants {
     @Override
     public synchronized void open() throws IOException {
         journalFilePath = getJournalFilePath();
+
+         // HACK: Start
         long journalSize = TransactionManagerServices.getConfiguration().getMaxLogSizeInMb() *
-                1024 * 1024 * 3; // doubling the value as we use only 1 file.
+                1024L * 1024L * 3L;
+        // Default is 2, however 6mb seems to be the best trade-off between size and performance for this impl.
+        // Configuration must be adjusted later to cover this correctly.
+        // HACK: End
 
         if (log.isDebugEnabled()) {
             log.debug("Attempting to open the journal file {} with a min fixed size of {}mb",
