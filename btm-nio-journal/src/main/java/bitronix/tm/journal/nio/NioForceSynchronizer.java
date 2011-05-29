@@ -40,6 +40,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p/>
  * This class is also responsible for transmitting failure cases back to the requester (if it is waiting
  * on force to complete).
+ * <p/>
+ * Note: This is a low level implementation that is not meant to be used externally.
  *
  * @author juergen kellerer, 2011-04-30
  */
@@ -92,6 +94,10 @@ class NioForceSynchronizer<E> {
 
     /**
      * Wait on the latest, previously enlisted element to get forced or failed.
+     * <p/>
+     * Important: A call to this method measures the storage of all enlisted element that
+     * were enlisted in the current thread under the assumption that elements are stored
+     * in the order they were placed in the queue.
      *
      * @return returns true if the force operation succeeded and false if an IO error was reported.
      */
@@ -111,6 +117,9 @@ class NioForceSynchronizer<E> {
         try {
             // Wait until we have our entry forced (may not require a wait at all if it already happened).
             while (enlistedElementNumber > latestForcedElement.get()) {
+                if (verifyIsInFailedRange(enlistedElementNumber))
+                    return false;
+
                 forceLock.lockInterruptibly();
                 try {
                     if (trace) log.trace("Waiting until entry with sequence {} was forced.", enlistedElementNumber);
@@ -123,7 +132,6 @@ class NioForceSynchronizer<E> {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
-
 
         // Check if we had an exception.
         if (verifyIsInFailedRange(enlistedElementNumber)) {
@@ -152,7 +160,7 @@ class NioForceSynchronizer<E> {
         try {
             final int waitingThreads = forceLock.getWaitQueueLength(performedForce);
             if (waitingThreads > 0) {
-                if (log.isTraceEnabled()) {
+                if (trace) {
                     log.trace("Found {} threads waiting on force to happen. Forcing {} " +
                             "log entries to disk now.", waitingThreads, elements);
                 }
@@ -219,11 +227,12 @@ class NioForceSynchronizer<E> {
 
     private boolean verifyIsInFailedRange(long enlistedElementNumber) {
         if (latestFailedElement.get() >= enlistedElementNumber) {
-            for (ListIterator<FailedRange> i = failures.listIterator(failures.size() - 1); i.hasPrevious();) {
+            final boolean debug = log.isDebugEnabled();
+            for (ListIterator<FailedRange> i = failures.listIterator(failures.size()); i.hasPrevious(); ) {
                 FailedRange failedRange = i.previous();
                 if (failedRange.isInRange(enlistedElementNumber)) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Reporting that forced failed on entry with sequence number {} ({}).",
+                    if (debug) {
+                        log.debug("Reporting that force failed on entry with sequence number {} ({}).",
                                 enlistedElementNumber, failedRange);
                     }
                     return true;
@@ -290,7 +299,7 @@ class NioForceSynchronizer<E> {
 
         boolean isInRange(final long elementNumber) {
             final long lowerBound = firstFailedElement.get(), upperBound = lastFailedElement.get();
-            return elementNumber >= lowerBound || elementNumber <= upperBound;
+            return elementNumber >= lowerBound && elementNumber <= upperBound;
         }
 
         boolean addToRange(final long elementNumber) {
