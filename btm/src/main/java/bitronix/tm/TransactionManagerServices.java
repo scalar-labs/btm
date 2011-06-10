@@ -179,7 +179,7 @@ public class TransactionManagerServices {
     /**
      * Clear services references. Called at the end of the shutdown procedure.
      */
-    protected static synchronized void clear() {
+    protected synchronized static void clear() {
         transactionManager = null;
         transactionSynchronizationRegistry = null;
         configuration = null;

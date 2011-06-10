@@ -54,7 +54,7 @@ public class DiskJournal implements Journal {
      * The active log appender. This is exactly the same reference as tla1 or tla2 depending on which one is
      * currently active
      */
-    private TransactionLogAppender activeTla;
+    private volatile TransactionLogAppender activeTla;
 
     /**
      * The transaction log appender writing on the 1st file
@@ -199,7 +199,7 @@ public class DiskJournal implements Journal {
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
-    public Map collectDanglingRecords() throws IOException {
+    public synchronized Map collectDanglingRecords() throws IOException {
         if (activeTla == null)
             throw new IOException("cannot collect dangling records, disk logger is not open");
         return collectDanglingRecords(activeTla);
@@ -286,7 +286,7 @@ public class DiskJournal implements Journal {
      * </ul>
      * @throws java.io.IOException in case of disk IO failure.
      */
-    private void swapJournalFiles() throws IOException {
+    private synchronized void swapJournalFiles() throws IOException {
         if (log.isDebugEnabled()) log.debug("swapping journal log file to " + getPassiveTransactionLogAppender());
 
         //step 1
@@ -314,7 +314,7 @@ public class DiskJournal implements Journal {
     /**
      * @return the TransactionFileAppender of the passive journal file.
      */
-    private TransactionLogAppender getPassiveTransactionLogAppender() {
+    private synchronized TransactionLogAppender getPassiveTransactionLogAppender() {
         if (tla1 == activeTla)
             return tla2;
         return tla1;
