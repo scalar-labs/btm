@@ -23,13 +23,9 @@ package bitronix.tm.journal.nio;
 
 import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.utils.Uid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import sun.security.krb5.internal.crypto.crc32;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -96,11 +92,13 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
         final Set<String> names = new HashSet<String>(count);
 
         for (int i = 0, len; i < count; i++) {
+            // Note: Decoding may be implemented without max. speed optimization as it is only used when
+            //       reading the journal file (happens only once)
             len = buffer.getShort();
             String name = NAME_CHARSET.decode((ByteBuffer) buffer.slice().limit(len)).toString();
 
-            // unique names should be only a couple, but many log records may be created when reading a file.
-            // internalizing strings can significantly reduce the memory footprint.
+            // Note: Unique names should be only a couple, but many log records may be created when reading a file.
+            //       internalizing strings can significantly reduce the memory footprint.
             names.add(name.intern());
 
             buffer.position(buffer.position() + len);
@@ -166,11 +164,27 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
         this.valid = valid;
     }
 
+    /**
+     * Constructs a new record of the given values.
+     *
+     * @param status      the TX status,  see {@link javax.transaction.Status}.
+     * @param gtrid       the global transaction id.
+     * @param uniqueNames the unique names identifying the resources participating in the transaction.
+     */
     public NioJournalRecord(int status, Uid gtrid, Set<String> uniqueNames) {
         this(status, calculateRecordLength(gtrid, uniqueNames), System.currentTimeMillis(),
                 JOURNAL_RECORD_SEQUENCE.incrementAndGet(), gtrid, uniqueNames, true);
     }
 
+    /**
+     * Constructs a new record by de-serializing the state from the given byte buffer.
+     * <p/>
+     * Note: When valid is set to false, the buffer must still contain decodeable data.
+     * Data that fails decoding will cause runtime exceptions.
+     *
+     * @param buffer the buffer containing the serialized record state.
+     * @param valid  specifies whether the record should be marked valid.
+     */
     public NioJournalRecord(ByteBuffer buffer, boolean valid) {
         this(
                 skipStatusString(buffer).getInt(), // status
@@ -179,7 +193,7 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
                 buffer.getLong(), // sequenceNumber
                 uidFromBuffer(buffer), // gtrid
                 namesFromBuffer(buffer), // uniqueNames
-                valid  // endRecord
+                valid
         );
     }
 
