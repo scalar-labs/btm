@@ -48,8 +48,8 @@ public class BitronixXid implements Xid {
      */
     public static final int FORMAT_ID = 0x42746e78;
 
-    private Uid globalTransactionId;
-    private Uid branchQualifier;
+    private final Uid globalTransactionId;
+    private final Uid branchQualifier;
 
     /**
      * Create a new XID using the specified GTRID and BQUAL.
