@@ -57,9 +57,7 @@ public abstract class AbstractPhaseEngine {
      * @param reverse true if jobs should be executed in reverse position / enlistment order, false for natural position / enlistment order.
      * @throws PhaseException if one or more resource threw an exception during phase execution.
      * @see bitronix.tm.twopc.executor.SyncExecutor
-     * @see bitronix.tm.twopc.executor.SimpleAsyncExecutor
-     * @see bitronix.tm.twopc.executor.ConcurrentExecutor
-     * @see bitronix.tm.twopc.executor.BackportConcurrentExecutor 
+     * @see bitronix.tm.twopc.executor.AsyncExecutor
      */
     protected void executePhase(XAResourceManager resourceManager, boolean reverse) throws PhaseException {
         SortedSet positions;
