@@ -29,8 +29,8 @@ import javax.jms.*;
  */
 public class JmsConnectionHandle implements Connection {
 
-    private XAConnection xaConnection;
-    private JmsPooledConnection pooledConnection;
+    private volatile XAConnection xaConnection;
+    private final JmsPooledConnection pooledConnection;
 
     public JmsConnectionHandle(JmsPooledConnection pooledConnection, XAConnection xaConnection) {
         this.pooledConnection = pooledConnection;

@@ -41,9 +41,9 @@ public class LrcXAConnection extends BaseProxyHandlerClass { // implements XACon
 
     private final static Logger log = LoggerFactory.getLogger(LrcXAConnection.class);
 
-    private Connection connection;
-    private LrcXAResource xaResource;
-    private List connectionEventListeners = new ArrayList();
+    private final Connection connection;
+    private final LrcXAResource xaResource;
+    private final List connectionEventListeners = new ArrayList();
 
     public LrcXAConnection(Connection connection) {
         this.connection = connection;

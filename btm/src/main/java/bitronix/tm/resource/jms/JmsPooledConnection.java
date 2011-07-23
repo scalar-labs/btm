@@ -43,14 +43,14 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
 
     private final static Logger log = LoggerFactory.getLogger(JmsPooledConnection.class);
 
-    private XAConnection xaConnection;
-    private PoolingConnectionFactory poolingConnectionFactory;
+    private volatile XAConnection xaConnection;
+    private final PoolingConnectionFactory poolingConnectionFactory;
     private final List sessions = Collections.synchronizedList(new ArrayList());
 
     /* management */
-    private String jmxName;
-    private Date acquisitionDate;
-    private Date lastReleaseDate;
+    private volatile String jmxName;
+    private volatile Date acquisitionDate;
+    private volatile Date lastReleaseDate;
 
     protected JmsPooledConnection(PoolingConnectionFactory poolingConnectionFactory, XAConnection connection) {
         this.poolingConnectionFactory = poolingConnectionFactory;

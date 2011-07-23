@@ -50,21 +50,21 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     private final static int DETECTION_TIMEOUT = 5; // seconds
 
-    private XAConnection xaConnection;
-    private Connection connection;
-    private XAResource xaResource;
-    private PoolingDataSource poolingDataSource;
-    private LruStatementCache statementsCache;
-    private List uncachedStatements;
-    private int usageCount;
+    private final XAConnection xaConnection;
+    private final Connection connection;
+    private final XAResource xaResource;
+    private final PoolingDataSource poolingDataSource;
+    private final LruStatementCache statementsCache;
+    private final List uncachedStatements;
+    private volatile int usageCount;
 
     /* management */
-    private String jmxName;
-    private Date acquisitionDate;
-    private Date lastReleaseDate;
+    private volatile String jmxName;
+    private volatile Date acquisitionDate;
+    private volatile Date lastReleaseDate;
 
-    private int jdbcVersionDetected;
-    private Method isValidMethod;
+    private volatile int jdbcVersionDetected;
+    private volatile Method isValidMethod;
 
 
     public JdbcPooledConnection(PoolingDataSource poolingDataSource, XAConnection xaConnection) throws SQLException {

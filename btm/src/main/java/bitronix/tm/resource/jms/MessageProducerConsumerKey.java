@@ -35,17 +35,20 @@ import javax.jms.JMSException;
  */
 public class MessageProducerConsumerKey {
 
-    private Destination destination;
-    private String messageSelector;
-    private Boolean noLocal;
+    private final Destination destination;
+    private final String messageSelector;
+    private final Boolean noLocal;
 
     public MessageProducerConsumerKey(Destination destination) {
         this.destination = destination;
+        this.messageSelector = null;
+        this.noLocal = null;
     }
 
     public MessageProducerConsumerKey(Destination destination, String messageSelector) {
         this.destination = destination;
         this.messageSelector = messageSelector;
+        this.noLocal = null;
     }
 
     public MessageProducerConsumerKey(Destination destination, String messageSelector, boolean noLocal) {

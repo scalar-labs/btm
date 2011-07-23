@@ -36,14 +36,15 @@ import javax.transaction.SystemException;
  */
 public class MessageConsumerWrapper implements MessageConsumer {
 
-    private MessageConsumer messageConsumer;
-    protected DualSessionWrapper session;
-    private PoolingConnectionFactory poolingConnectionFactory;
+    private final MessageConsumer messageConsumer;
+    private final PoolingConnectionFactory poolingConnectionFactory;
+
+    protected final DualSessionWrapper session;
 
     public MessageConsumerWrapper(MessageConsumer messageConsumer, DualSessionWrapper session, PoolingConnectionFactory poolingConnectionFactory) {
         this.messageConsumer = messageConsumer;
-        this.session = session;
         this.poolingConnectionFactory = poolingConnectionFactory;
+        this.session = session;
     }
 
     public MessageConsumer getMessageConsumer() {

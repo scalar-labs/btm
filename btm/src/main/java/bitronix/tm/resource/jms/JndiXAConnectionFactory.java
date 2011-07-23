@@ -38,15 +38,15 @@ import java.util.Properties;
  */
 public class JndiXAConnectionFactory implements XAConnectionFactory {
 
-    private String initialContextFactory;
-    private String providerUrl;
-    private String urlPkgPrefixes;
-    private String name;
-    private String securityPrincipal;
-    private String securityCredentials;
-    private Properties extraJndiProperties = new Properties();
-    private boolean narrowJndiObject = false;
-    private XAConnectionFactory wrappedFactory;
+    private volatile String initialContextFactory;
+    private volatile String providerUrl;
+    private volatile String urlPkgPrefixes;
+    private volatile String name;
+    private volatile String securityPrincipal;
+    private volatile String securityCredentials;
+    private volatile Properties extraJndiProperties = new Properties();
+    private volatile boolean narrowJndiObject = false;
+    private volatile XAConnectionFactory wrappedFactory;
 
 
     public JndiXAConnectionFactory() {

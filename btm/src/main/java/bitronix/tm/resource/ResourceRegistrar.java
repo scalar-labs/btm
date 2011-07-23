@@ -41,7 +41,7 @@ public class ResourceRegistrar {
 
     private final static Logger log = LoggerFactory.getLogger(ResourceRegistrar.class);
 
-    private static Map resources = new HashMap();
+    private final static Map resources = new HashMap();
 
     /**
      * Get a registered {@link XAResourceProducer}.

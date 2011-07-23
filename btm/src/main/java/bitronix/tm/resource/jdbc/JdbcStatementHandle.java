@@ -39,7 +39,7 @@ public class JdbcStatementHandle extends BaseProxyHandlerClass { // implements S
 
     // The 'parent' connection. Used to remove this statement delegate
     // from the un-closed statements list when close() is called.
-    private JdbcPooledConnection parentConnection;
+    private final JdbcPooledConnection parentConnection;
 
     private Statement delegate;
 

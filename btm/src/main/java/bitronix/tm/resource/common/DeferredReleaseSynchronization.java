@@ -35,7 +35,7 @@ public class DeferredReleaseSynchronization implements Synchronization {
 
     private final static Logger log = LoggerFactory.getLogger(DeferredReleaseSynchronization.class);
 
-    private XAStatefulHolder xaStatefulHolder;
+    private final XAStatefulHolder xaStatefulHolder;
 
     public DeferredReleaseSynchronization(XAStatefulHolder xaStatefulHolder) {
         this.xaStatefulHolder = xaStatefulHolder;

@@ -31,8 +31,8 @@ import bitronix.tm.resource.jdbc.BaseProxyHandlerClass;
  */
 public class LrcConnectionHandle extends BaseProxyHandlerClass { // implements Connection
 
-    private Connection delegate;
-    private LrcXAResource xaResource;
+    private volatile Connection delegate;
+    private final LrcXAResource xaResource;
 
     public LrcConnectionHandle(LrcXAResource xaResource, Connection delegate) {
         this.delegate = delegate;

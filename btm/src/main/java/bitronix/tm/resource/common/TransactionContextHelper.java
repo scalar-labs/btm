@@ -43,7 +43,11 @@ import java.util.Map;
  *
  * @author lorban
  */
-public class TransactionContextHelper {
+public final class TransactionContextHelper {
+
+    // do not instantiate
+    private TransactionContextHelper() {
+    }
 
     private final static Logger log = LoggerFactory.getLogger(TransactionContextHelper.class);
 

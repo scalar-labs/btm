@@ -31,11 +31,11 @@ import javax.transaction.xa.XAException;
  * @author lorban
  */
 public abstract class Job implements Runnable {
-    private Object future;
-    private XAResourceHolderState resourceHolder;
+    private volatile Object future;
+    private final XAResourceHolderState resourceHolder;
 
-    protected XAException xaException;
-    protected RuntimeException runtimeException;
+    protected volatile XAException xaException;
+    protected volatile RuntimeException runtimeException;
 
     public Job(XAResourceHolderState resourceHolder) {
         this.resourceHolder = resourceHolder;

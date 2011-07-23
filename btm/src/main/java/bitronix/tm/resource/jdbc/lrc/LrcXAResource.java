@@ -70,10 +70,10 @@ public class LrcXAResource implements XAResource {
     public static final int ENDED = 2;
     public static final int PREPARED = 3;
 
-    private Connection connection;
-    private Xid xid;
-    private boolean autocommitActiveBeforeStart;
-    private int state = NO_TX;
+    private final Connection connection;
+    private volatile Xid xid;
+    private volatile boolean autocommitActiveBeforeStart;
+    private volatile int state = NO_TX;
 
     public LrcXAResource(Connection connection) {
         this.connection = connection;

@@ -46,7 +46,7 @@ public class Rollbacker extends AbstractPhaseEngine {
 
     private final static Logger log = LoggerFactory.getLogger(Rollbacker.class);
 
-    private List interestedResources;
+    private volatile List interestedResources;
     // this list has to be thread-safe as the RollbackJobs can be executed in parallel (when async 2PC is configured)
     private final List rolledbackResources = Collections.synchronizedList(new ArrayList());
 

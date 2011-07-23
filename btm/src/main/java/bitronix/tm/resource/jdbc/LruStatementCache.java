@@ -48,7 +48,7 @@ public class LruStatementCache {
      * in use and therefore nothing can be evicted.  But eventually 
      * (probably quickly) the cache will return to maxSize.
      */
-    private int maxSize;
+    private volatile int maxSize;
     
     /**
      * We use a LinkedHashMap with _access order_ specified in the
@@ -63,13 +63,13 @@ public class LruStatementCache {
      *   completes).
      * </pre>
      */
-    private LinkedHashMap cache;
+    private final LinkedHashMap cache;
 
     /**
      * A list of listeners concerned with prepared statement cache
      * evictions.
      */
-    private List evictionListners;
+    private final List evictionListners;
 
     /**
      * See the LinkedHashMap documentation.  We maintain our own size
@@ -78,7 +78,7 @@ public class LruStatementCache {
      * calling size() must traverse the entire list and count the elements.
      * Tracking size ourselves provides O(1) access.
      */
-    private int size;
+    private volatile int size;
 
     public LruStatementCache(int maxSize) {
         this.maxSize = maxSize;

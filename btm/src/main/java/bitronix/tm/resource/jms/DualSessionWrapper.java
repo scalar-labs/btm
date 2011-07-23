@@ -46,19 +46,19 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
     private final static Logger log = LoggerFactory.getLogger(DualSessionWrapper.class);
 
-    private JmsPooledConnection pooledConnection;
-    private boolean transacted;
-    private int acknowledgeMode;
+    private final JmsPooledConnection pooledConnection;
+    private volatile boolean transacted;
+    private volatile int acknowledgeMode;
 
-    private XASession xaSession;
-    private Session session;
-    private XAResource xaResource;
-    private MessageListener listener;
+    private volatile XASession xaSession;
+    private volatile Session session;
+    private volatile XAResource xaResource;
+    private volatile MessageListener listener;
 
     //TODO: shouldn't producers/consumers/subscribers be separated between XA and non-XA session ?
-    private Map messageProducers = new HashMap();
-    private Map messageConsumers = new HashMap();
-    private Map topicSubscribers = new HashMap();
+    private final Map messageProducers = new HashMap();
+    private final Map messageConsumers = new HashMap();
+    private final Map topicSubscribers = new HashMap();
 
     public DualSessionWrapper(JmsPooledConnection pooledConnection, boolean transacted, int acknowledgeMode) {
         this.pooledConnection = pooledConnection;

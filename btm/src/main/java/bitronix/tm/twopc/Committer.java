@@ -46,8 +46,8 @@ public class Committer extends AbstractPhaseEngine {
 
     private final static Logger log = LoggerFactory.getLogger(Committer.class);
 
-    private boolean onePhase;
-    private List interestedResources;
+    private volatile boolean onePhase;
+    private volatile List interestedResources;
     // this list has to be thread-safe as the CommitJobs can be executed in parallel (when async 2PC is configured)
     private final List committedResources = Collections.synchronizedList(new ArrayList());
 

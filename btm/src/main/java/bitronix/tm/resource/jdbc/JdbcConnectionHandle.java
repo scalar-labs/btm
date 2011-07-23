@@ -44,8 +44,8 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
 
     private final static Logger log = LoggerFactory.getLogger(JdbcConnectionHandle.class);
 
-    private JdbcPooledConnection jdbcPooledConnection;
-    private Connection delegate;
+    private volatile JdbcPooledConnection jdbcPooledConnection;
+    private final Connection delegate;
 
     public JdbcConnectionHandle(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
         this.jdbcPooledConnection = jdbcPooledConnection;

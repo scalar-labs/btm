@@ -70,9 +70,9 @@ public class LrcXAResource implements XAResource {
     public static final int ENDED = 2;
     public static final int PREPARED = 3;
 
-    private Session session;
-    private Xid xid;
-    private int state = NO_TX;
+    private final Session session;
+    private volatile Xid xid;
+    private volatile int state = NO_TX;
 
     public LrcXAResource(Session session) {
         this.session = session;
