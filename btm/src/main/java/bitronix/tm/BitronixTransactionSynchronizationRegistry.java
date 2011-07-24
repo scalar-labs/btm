@@ -170,7 +170,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
         );
     }
 
-    private class ClearRegistryResourcesSynchronization implements Synchronization {
+    private final class ClearRegistryResourcesSynchronization implements Synchronization {
         public void beforeCompletion() {
         }
 

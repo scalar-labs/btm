@@ -164,7 +164,7 @@ public class Committer extends AbstractPhaseEngine {
     }
 
 
-    private class CommitJob extends Job {
+    private final class CommitJob extends Job {
 
         public CommitJob(XAResourceHolderState resourceHolder) {
             super(resourceHolder);

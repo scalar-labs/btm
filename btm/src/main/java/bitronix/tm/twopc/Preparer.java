@@ -140,7 +140,7 @@ public class Preparer extends AbstractPhaseEngine {
     }
 
 
-    private class PrepareJob extends Job {
+    private final class PrepareJob extends Job {
         public PrepareJob(XAResourceHolderState resourceHolder) {
             super(resourceHolder);
         }

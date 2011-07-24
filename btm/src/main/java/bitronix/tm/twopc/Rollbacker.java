@@ -155,7 +155,7 @@ public class Rollbacker extends AbstractPhaseEngine {
         return false;
     }
 
-    private class RollbackJob extends Job {
+    private final class RollbackJob extends Job {
 
         public RollbackJob(XAResourceHolderState resourceHolder) {
             super(resourceHolder);

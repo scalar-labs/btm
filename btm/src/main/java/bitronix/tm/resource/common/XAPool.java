@@ -249,7 +249,7 @@ public class XAPool implements StateChangeListener {
             if (log.isDebugEnabled()) log.debug("checking if connection can be closed: " + xaStatefulHolder + " - closing time: " + expirationTime + ", now time: " + now);
             if (expirationTime <= now) {
                 try {
-                xaStatefulHolder.close();
+                    xaStatefulHolder.close();
                 } catch (Exception ex) {
                     log.warn("error closing " + xaStatefulHolder, ex);
                 }
@@ -271,7 +271,7 @@ public class XAPool implements StateChangeListener {
                 continue;
 
             try {
-            xaStatefulHolder.close();
+                xaStatefulHolder.close();
             } catch (Exception ex) {
                 log.warn("error closing " + xaStatefulHolder, ex);
             }
@@ -379,7 +379,7 @@ public class XAPool implements StateChangeListener {
         return false;
     }
 
-    private XAStatefulHolder getInPool() throws Exception {
+    private synchronized XAStatefulHolder getInPool() throws Exception {
         if (log.isDebugEnabled()) log.debug("getting a IN_POOL connection from " + this);
 
         if (inPoolSize() == 0) {
@@ -516,7 +516,7 @@ public class XAPool implements StateChangeListener {
     }
 
     private final class SharedStatefulHolderCleanupSynchronization implements Synchronization {
-        private Uid gtrid;
+        private final Uid gtrid;
 
         private SharedStatefulHolderCleanupSynchronization(Uid gtrid) {
             this.gtrid = gtrid;

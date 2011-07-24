@@ -283,9 +283,9 @@ public class ResourceLoader implements Service {
     }
 
 
-    private class PropertyPair {
-        private String name;
-        private String value;
+    private final class PropertyPair {
+        private final String name;
+        private final String value;
 
         public PropertyPair(String key, String value) {
             this.name = key;

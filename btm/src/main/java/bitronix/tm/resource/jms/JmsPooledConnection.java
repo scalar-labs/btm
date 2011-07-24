@@ -232,7 +232,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
      * When state changes to STATE_CLOSED, the conenction is unregistered from
      * {@link bitronix.tm.utils.ManagementRegistrar}.
      */
-    private class JmsPooledConnectionStateChangeListener implements StateChangeListener {
+    private final class JmsPooledConnectionStateChangeListener implements StateChangeListener {
         public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
             if (newState == STATE_IN_POOL) {
                 if (log.isDebugEnabled()) log.debug("requeued JMS connection of " + poolingConnectionFactory);
@@ -254,7 +254,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
      * {@link JmsConnectionHandle} {@link bitronix.tm.resource.common.StateChangeListener}.
      * When state changes to STATE_CLOSED, the session is removed from the list of opened sessions.
      */
-    private class JmsConnectionHandleStateChangeListener implements StateChangeListener {
+    private final class JmsConnectionHandleStateChangeListener implements StateChangeListener {
         public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
             if (newState == XAResourceHolder.STATE_CLOSED) {
                 synchronized (sessions) {
