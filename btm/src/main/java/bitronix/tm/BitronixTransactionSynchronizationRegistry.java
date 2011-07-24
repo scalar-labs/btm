@@ -45,7 +45,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
 
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionSynchronizationRegistry.class);
 
-    private static BitronixTransactionManager transactionManager;
+    private final BitronixTransactionManager transactionManager;
     
     private final static ThreadLocal resourcesTl = new ThreadLocal() {
         protected Object initialValue() {
