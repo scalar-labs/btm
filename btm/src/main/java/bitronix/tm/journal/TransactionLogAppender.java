@@ -93,10 +93,10 @@ public class TransactionLogAppender {
             long futureFilePosition = getHeader().getPosition() + tlog.calculateTotalRecordSize();
             if (futureFilePosition >= maxFileLength) { // see TransactionLogHeader.setPosition() as it double-checks this
                 if (log.isDebugEnabled())
-                    log.debug("log file is full (size would be: " + futureFilePosition + ", max allowed: " + maxFileLength + ")");
+                    { log.debug("log file is full (size would be: " + futureFilePosition + ", max allowed: " + maxFileLength + ")"); }
                 return false;
             }
-            if (log.isDebugEnabled()) log.debug("between " + getHeader().getPosition() + " and " + futureFilePosition + ", writing " + tlog);
+            if (log.isDebugEnabled()) { log.debug("between " + getHeader().getPosition() + " and " + futureFilePosition + ", writing " + tlog); }
 
             randomAccessFile.writeInt(tlog.getStatus());
             randomAccessFile.writeInt(tlog.getRecordLength());
@@ -115,7 +115,7 @@ public class TransactionLogAppender {
             }
             randomAccessFile.writeInt(tlog.getEndRecord());
             getHeader().goAhead(tlog.calculateTotalRecordSize());
-            if (log.isDebugEnabled()) log.debug("disk journal appender now at position " + getHeader().getPosition());
+            if (log.isDebugEnabled()) { log.debug("disk journal appender now at position " + getHeader().getPosition()); }
 
             return true;
         }
@@ -153,12 +153,12 @@ public class TransactionLogAppender {
      */
     public void force() throws IOException {
         if (!TransactionManagerServices.getConfiguration().isForcedWriteEnabled()) {
-            if (log.isDebugEnabled()) log.debug("disk forces have been disabled");
+            if (log.isDebugEnabled()) { log.debug("disk forces have been disabled"); }
             return;
         }
 
         if (!TransactionManagerServices.getConfiguration().isForceBatchingEnabled()) {
-            if (log.isDebugEnabled()) log.debug("not batching disk force");
+            if (log.isDebugEnabled()) { log.debug("not batching disk force"); }
             doForce();
         }
         else {
@@ -173,9 +173,9 @@ public class TransactionLogAppender {
 
     protected void doForce() throws IOException {
         synchronized (randomAccessFile) {
-            if (log.isDebugEnabled()) log.debug("forcing log writing");
+            if (log.isDebugEnabled()) { log.debug("forcing log writing"); }
             randomAccessFile.getFD().sync();
-            if (log.isDebugEnabled()) log.debug("done forcing log");
+            if (log.isDebugEnabled()) { log.debug("done forcing log"); }
         }
     }
 
@@ -184,7 +184,7 @@ public class TransactionLogAppender {
             if (diskForceBatcherThread != null)
                 return;
 
-            if (log.isDebugEnabled()) log.debug("spawning disk force batcher thread");
+            if (log.isDebugEnabled()) { log.debug("spawning disk force batcher thread"); }
             diskForceBatcherThread = DiskForceBatcherThread.getInstance();
 
             if (!TransactionManagerServices.getConfiguration().isForcedWriteEnabled()) {
@@ -203,19 +203,19 @@ public class TransactionLogAppender {
             if (diskForceBatcherThread == null)
                 return;
 
-            if (log.isDebugEnabled()) log.debug("requesting disk force batcher thread to shutdown");
+            if (log.isDebugEnabled()) { log.debug("requesting disk force batcher thread to shutdown"); }
             diskForceBatcherThread.setAlive(false);
             diskForceBatcherThread.interrupt();
             do {
                 try {
-                    if (log.isDebugEnabled()) log.debug("waiting for disk force batcher thread to die");
+                    if (log.isDebugEnabled()) { log.debug("waiting for disk force batcher thread to die"); }
                     diskForceBatcherThread.join();
                 } catch (InterruptedException ex) {
                     //ignore
                 }
             }
             while (diskForceBatcherThread.isInterrupted());
-            if (log.isDebugEnabled()) log.debug("disk force batcher thread has shutdown");
+            if (log.isDebugEnabled()) { log.debug("disk force batcher thread has shutdown"); }
 
             diskForceBatcherThread = null;
         } // synchronized

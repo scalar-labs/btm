@@ -85,7 +85,7 @@ public class TransactionLogHeaderPanel extends JPanel {
         RandomAccessFile raf = new RandomAccessFile(logFile, "r");
         TransactionLogHeader header = new TransactionLogHeader(raf, 0L);
         raf.close();
-        if (log.isDebugEnabled()) log.debug("read header: " + header);
+        if (log.isDebugEnabled()) { log.debug("read header: " + header); }
         setLogFile(logFile);
         setTimestamp(header.getTimestamp());
         setState(header.getState());

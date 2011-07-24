@@ -184,7 +184,7 @@ public class Console extends JFrame {
         if (activeLogFile == null) {
             activeLogFile = pickCurrentLogFile(new File(configuration.getLogPart1Filename()), new File(configuration.getLogPart2Filename()));
             realActiveLogFile = activeLogFile;
-            if (log.isDebugEnabled()) log.debug("active file is " + activeLogFile.getName());
+            if (log.isDebugEnabled()) { log.debug("active file is " + activeLogFile.getName()); }
         }
         return activeLogFile;
     }

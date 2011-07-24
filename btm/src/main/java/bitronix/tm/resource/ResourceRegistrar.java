@@ -74,7 +74,7 @@ public class ResourceRegistrar {
             throw new IllegalArgumentException("resource with uniqueName '" + producer.getUniqueName() + "' has already been registered");
 
         if (TransactionManagerServices.isTransactionManagerRunning()) {
-            if (log.isDebugEnabled()) log.debug("transaction manager is running, recovering resource " + uniqueName);
+            if (log.isDebugEnabled()) { log.debug("transaction manager is running, recovering resource " + uniqueName); }
             IncrementalRecoverer.recover(producer);
         }
 
@@ -90,7 +90,7 @@ public class ResourceRegistrar {
         if (producer.getUniqueName() == null)
             throw new IllegalArgumentException("invalid resource with null uniqueName");
         if (!resources.containsKey(uniqueName)) {
-            if (log.isDebugEnabled()) log.debug("resource with uniqueName '" + producer.getUniqueName() + "' has not been registered");
+            if (log.isDebugEnabled()) { log.debug("resource with uniqueName '" + producer.getUniqueName() + "' has not been registered"); }
             return;
         }
         resources.remove(uniqueName);
@@ -109,10 +109,10 @@ public class ResourceRegistrar {
 
             XAResourceHolder resourceHolder = producer.findXAResourceHolder(xaResource);
             if (resourceHolder != null) {
-                if (log.isDebugEnabled()) log.debug("XAResource " + xaResource + " belongs to " + resourceHolder + " that itself belongs to " + producer);
+                if (log.isDebugEnabled()) { log.debug("XAResource " + xaResource + " belongs to " + resourceHolder + " that itself belongs to " + producer); }
                 return resourceHolder;
             }
-            if (log.isDebugEnabled()) log.debug("XAResource " + xaResource + " does not belong to any resource of " + producer);
+            if (log.isDebugEnabled()) { log.debug("XAResource " + xaResource + " does not belong to any resource of " + producer); }
         }
         return null;
     }

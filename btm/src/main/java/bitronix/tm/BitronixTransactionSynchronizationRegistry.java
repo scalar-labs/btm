@@ -114,7 +114,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
             Object oldValue = getResources().put(key, value);
 
             if (oldValue == null && getResources().size() == 1) {
-                if (log.isDebugEnabled()) log.debug("first resource put in synchronization registry, registering a ClearRegistryResourcesSynchronization");
+                if (log.isDebugEnabled()) { log.debug("first resource put in synchronization registry, registering a ClearRegistryResourcesSynchronization"); }
                 Synchronization synchronization = new ClearRegistryResourcesSynchronization();
                 currentTransaction().getSynchronizationScheduler().add(synchronization, Scheduler.ALWAYS_LAST_POSITION);
             }
@@ -175,7 +175,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
         }
 
         public void afterCompletion(int status) {
-            if (log.isDebugEnabled()) log.debug("clearing resources");
+            if (log.isDebugEnabled()) { log.debug("clearing resources"); }
             getResources().clear();
         }
     }

@@ -78,7 +78,7 @@ public class Rollbacker extends AbstractPhaseEngine {
             throwException("transaction failed during rollback of " + transaction, ex, interestedResources.size());
         }
 
-        if (log.isDebugEnabled()) log.debug("rollback executed on resources " + Decoder.collectResourcesNames(rolledbackResources));
+        if (log.isDebugEnabled()) { log.debug("rollback executed on resources " + Decoder.collectResourcesNames(rolledbackResources)); }
 
         // Some resources might have failed the 2nd phase of 2PC.
         // Only resources which successfully rolled back should be registered in the journal, the other
@@ -95,7 +95,7 @@ public class Rollbacker extends AbstractPhaseEngine {
             rolledbackAndNotInterestedResources.addAll(rolledbackResources);
             rolledbackAndNotInterestedResources.addAll(notInterestedResources);
 
-            log.debug("rollback succeeded on resources " + Decoder.collectResourcesNames(rolledbackAndNotInterestedResources));
+            { log.debug("rollback succeeded on resources " + Decoder.collectResourcesNames(rolledbackAndNotInterestedResources)); }
         }
 
         transaction.setStatus(Status.STATUS_ROLLEDBACK, new HashSet(rolledbackAndNotInterestedUniqueNames));
@@ -173,10 +173,10 @@ public class Rollbacker extends AbstractPhaseEngine {
 
         private void rollbackResource(XAResourceHolderState resourceHolder) throws XAException {
             try {
-                if (log.isDebugEnabled()) log.debug("trying to rollback resource " + resourceHolder);
+                if (log.isDebugEnabled()) { log.debug("trying to rollback resource " + resourceHolder); }
                 resourceHolder.getXAResource().rollback(resourceHolder.getXid());
                 rolledbackResources.add(resourceHolder);
-                if (log.isDebugEnabled()) log.debug("rolled back resource " + resourceHolder);
+                if (log.isDebugEnabled()) { log.debug("rolled back resource " + resourceHolder); }
             } catch (XAException ex) {
                 handleXAException(resourceHolder, ex);
             }
@@ -202,9 +202,9 @@ public class Rollbacker extends AbstractPhaseEngine {
 
         private void forgetHeuristicRollback(XAResourceHolderState resourceHolder) {
             try {
-                if (log.isDebugEnabled()) log.debug("handling heuristic rollback on resource " + resourceHolder.getXAResource());
+                if (log.isDebugEnabled()) { log.debug("handling heuristic rollback on resource " + resourceHolder.getXAResource()); }
                 resourceHolder.getXAResource().forget(resourceHolder.getXid());
-                if (log.isDebugEnabled()) log.debug("forgotten heuristically rolled back resource " + resourceHolder.getXAResource());
+                if (log.isDebugEnabled()) { log.debug("forgotten heuristically rolled back resource " + resourceHolder.getXAResource()); }
             } catch (XAException ex) {
                 log.error("cannot forget " + resourceHolder.getXid() + " assigned to " + resourceHolder.getXAResource() + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
             }

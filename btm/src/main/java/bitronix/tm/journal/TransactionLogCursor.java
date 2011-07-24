@@ -76,7 +76,7 @@ public class TransactionLogCursor {
         synchronized (randomAccessFile) {
             long currentPosition = randomAccessFile.getFilePointer();
             if (currentPosition >= endPosition) {
-                if (log.isDebugEnabled()) log.debug("end of transaction log file reached at " + randomAccessFile.getFilePointer());
+                if (log.isDebugEnabled()) { log.debug("end of transaction log file reached at " + randomAccessFile.getFilePointer()); }
                 return null;
             }
 

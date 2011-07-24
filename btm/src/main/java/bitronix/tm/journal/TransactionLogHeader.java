@@ -99,7 +99,7 @@ public class TransactionLogHeader {
         position = randomAccessFile.readLong();
         randomAccessFile.seek(position);
 
-        if (log.isDebugEnabled()) log.debug("read header " + this);
+        if (log.isDebugEnabled()) { log.debug("read header " + this); }
     }
 
     /**

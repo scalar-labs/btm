@@ -109,7 +109,7 @@ public class LruStatementCache {
 	        if (cached != null) {
 	            cached.usageCount++;
 	            key.setDelegate(cached.statement);
-	            if (log.isDebugEnabled()) log.debug("delivered from cache with usage count " + cached.usageCount + " statement <" + key + "> in " + key.getPooledConnection());
+	            if (log.isDebugEnabled()) { log.debug("delivered from cache with usage count " + cached.usageCount + " statement <" + key + "> in " + key.getPooledConnection()); }
 	            return key;
 	        }
 	        
@@ -137,12 +137,12 @@ public class LruStatementCache {
 	        // updated as the 'youngest' (Most Recently Used) entry.
 	        StatementTracker cached = (StatementTracker) cache.get(key);
 	        if (cached == null) {
-	            if (log.isDebugEnabled()) log.debug("adding to cache statement <" + key + "> in " + key.getPooledConnection());
+	            if (log.isDebugEnabled()) { log.debug("adding to cache statement <" + key + "> in " + key.getPooledConnection()); }
 	            cache.put(key, new StatementTracker(key.getDelegateUnchecked()));
 	            size++;
 	        } else {
 	            cached.usageCount--;
-	            if (log.isDebugEnabled()) log.debug("returning to cache statement <" + key + "> with usage count " + cached.usageCount + " in " + key.getPooledConnection());
+	            if (log.isDebugEnabled()) { log.debug("returning to cache statement <" + key + "> with usage count " + cached.usageCount + " in " + key.getPooledConnection()); }
 	        }
 	
 	        // If the size is exceeded, we will _try_ to evict one (or more) 
@@ -191,7 +191,7 @@ public class LruStatementCache {
                 it.remove();
                 size--;
                 JdbcPreparedStatementHandle key = (JdbcPreparedStatementHandle) entry.getKey();
-                if (log.isDebugEnabled()) log.debug("evicting from cache statement <" + key + "> " + key.getDelegateUnchecked() + " in " + key.getPooledConnection());
+                if (log.isDebugEnabled()) { log.debug("evicting from cache statement <" + key + "> " + key.getDelegateUnchecked() + " in " + key.getPooledConnection()); }
                 fireEvictionEvent(tracker.statement);
                 // We can stop evicting if we're at maxSize...
                 if (size <= maxSize) {
