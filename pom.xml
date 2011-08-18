@@ -50,12 +50,10 @@
     </properties>
 
     <modules>
-        <module>btm-core</module>
-        <module>btm-jdbc4</module>
+        <module>btm</module>
         <module>btm-jetty6-lifecycle</module>
         <module>btm-jetty7-lifecycle</module>
         <module>btm-tomcat55-lifecycle</module>
-        <module>btm</module>
     </modules>
 
     <dependencyManagement>
@@ -82,6 +80,11 @@
                 <artifactId>btm</artifactId>
                 <version>2.1.2-SNAPSHOT</version>
                 <classifier>javadoc</classifier>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.btm</groupId>
+                <artifactId>btm-jdbc4</artifactId>
+                <version>2.1.2-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.btm</groupId>
@@ -169,7 +172,6 @@
                     <configuration>
                         <source>1.5</source>
                         <target>1.5</target>
-                        <compilerArgument>-Xbootclasspath/p:${basedir}/src/main/lib/jdbc30_apis.jar</compilerArgument>
                     </configuration>
                 </plugin>
                 <plugin>
