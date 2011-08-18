@@ -41,11 +41,11 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
 
     private final static Logger log = LoggerFactory.getLogger(AbstractXAResourceHolder.class);
 
-    private final Map xaResourceHolderStates = Collections.synchronizedMap(new HashMap());
+    private final Map<Uid, Map<Uid, XAResourceHolderState>> xaResourceHolderStates = Collections.synchronizedMap(new HashMap<Uid, Map<Uid, XAResourceHolderState>>());
 
-    public Map getXAResourceHolderStatesForGtrid(Uid gtrid) {
+    public Map<Uid, XAResourceHolderState> getXAResourceHolderStatesForGtrid(Uid gtrid) {
         synchronized (xaResourceHolderStates) {
-            return (Map) xaResourceHolderStates.get(gtrid);
+            return xaResourceHolderStates.get(gtrid);
         }
     }
 
@@ -58,14 +58,14 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
             if (!xaResourceHolderStates.containsKey(gtrid)) {
                 if (log.isDebugEnabled()) { log.debug("GTRID [" + gtrid + "] previously unknown to " + this + ", adding it to the resource's transactions list"); }
 
-                Map statesForGtrid = new LinkedHashMap(4); // use a LinkedHashMap as iteration order must be guaranteed
+                Map<Uid, XAResourceHolderState> statesForGtrid = new LinkedHashMap<Uid, XAResourceHolderState>(4); // use a LinkedHashMap as iteration order must be guaranteed
                 statesForGtrid.put(bqual, xaResourceHolderState);
                 xaResourceHolderStates.put(gtrid, statesForGtrid);
             }
             else {
                 if (log.isDebugEnabled()) { log.debug("GTRID [" + gtrid + "] previously known to " + this + ", adding it to the resource's transactions list"); }
 
-                Map statesForGtrid = (Map) xaResourceHolderStates.get(gtrid);
+                Map<Uid, XAResourceHolderState> statesForGtrid = xaResourceHolderStates.get(gtrid);
                 statesForGtrid.put(bqual, xaResourceHolderState);
             }
         }
@@ -77,7 +77,7 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
             Uid gtrid = xid.getGlobalTransactionIdUid();
             Uid bqual = xid.getBranchQualifierUid();
 
-            Map statesForGtrid = (Map) xaResourceHolderStates.get(gtrid);
+            Map<Uid, XAResourceHolderState> statesForGtrid = xaResourceHolderStates.get(gtrid);
             if (statesForGtrid == null) {
                 log.warn("tried to remove unknown GTRID [" + gtrid + "] from " + this + " - Bug?");
                 return;
@@ -97,13 +97,13 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
 
     public boolean hasStateForXAResource(XAResourceHolder xaResourceHolder) {
         synchronized (xaResourceHolderStates) {
-            Iterator statesForGtridIt = xaResourceHolderStates.values().iterator();
+            Iterator<Map<Uid, XAResourceHolderState>> statesForGtridIt = xaResourceHolderStates.values().iterator();
             while (statesForGtridIt.hasNext()) {
-                Map statesForGtrid = (Map) statesForGtridIt.next();
+                Map<Uid, XAResourceHolderState> statesForGtrid = statesForGtridIt.next();
 
-                Iterator statesForBqualIt = statesForGtrid.values().iterator();
+                Iterator<XAResourceHolderState> statesForBqualIt = statesForGtrid.values().iterator();
                 while (statesForBqualIt.hasNext()) {
-                    XAResourceHolderState otherXaResourceHolderState = (XAResourceHolderState) statesForBqualIt.next();
+                    XAResourceHolderState otherXaResourceHolderState = statesForBqualIt.next();
 
                     if (otherXaResourceHolderState.getXAResource() == xaResourceHolder.getXAResource()) {
                         if (log.isDebugEnabled()) { log.debug("resource " + xaResourceHolder + " is enlisted in another transaction with " + otherXaResourceHolderState.getXid().toString()); }
@@ -128,13 +128,13 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
             if (gtrid == null)
                 return false;
 
-            Map statesForGtrid = (Map) xaResourceHolderStates.get(gtrid);
+            Map<Uid, XAResourceHolderState> statesForGtrid = xaResourceHolderStates.get(gtrid);
             if (statesForGtrid == null)
                 return false;
 
-            Iterator statesForBqualIt = statesForGtrid.values().iterator();
+            Iterator<XAResourceHolderState> statesForBqualIt = statesForGtrid.values().iterator();
             while (statesForBqualIt.hasNext()) {
-                XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) statesForBqualIt.next();
+                XAResourceHolderState xaResourceHolderState = statesForBqualIt.next();
 
                 if (xaResourceHolderState != null &&
                         xaResourceHolderState.isStarted() &&
@@ -151,13 +151,13 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
      * this resource is enlisted. Useful for monitoring.
      * @return a set of String-encoded GTRIDs of transactions in which this resource is enlisted.
      */
-    public Set getXAResourceHolderStateGtrids() {
+    public Set<String> getXAResourceHolderStateGtrids() {
         synchronized (xaResourceHolderStates) {
-            HashSet gtridsAsStrings = new HashSet();
+            HashSet<String> gtridsAsStrings = new HashSet<String>();
 
-            Iterator gtridsIt = xaResourceHolderStates.keySet().iterator();
+            Iterator<Uid> gtridsIt = xaResourceHolderStates.keySet().iterator();
             while (gtridsIt.hasNext()) {
-                Uid uid = (Uid) gtridsIt.next();
+                Uid uid = gtridsIt.next();
                 gtridsAsStrings.add(uid.toString());
             }
 

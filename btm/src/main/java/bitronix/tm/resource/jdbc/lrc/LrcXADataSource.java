@@ -21,11 +21,13 @@
 package bitronix.tm.resource.jdbc.lrc;
 
 import java.io.PrintWriter;
-import java.lang.reflect.Proxy;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.SQLException;
 import java.util.Properties;
 
-import javax.sql.*;
+import javax.sql.XAConnection;
+import javax.sql.XADataSource;
 
 import bitronix.tm.utils.ClassLoaderUtils;
 
@@ -94,14 +96,14 @@ public class LrcXADataSource implements XADataSource {
 
     public XAConnection getXAConnection() throws SQLException {
         try {
-            Class driverClazz = ClassLoaderUtils.loadClass(driverClassName);
+            Class<?> driverClazz = ClassLoaderUtils.loadClass(driverClassName);
             Driver driver = (Driver) driverClazz.newInstance();
             Properties props = new Properties();
             if (user != null) props.setProperty("user", user);
             if (password != null) props.setProperty("password", password);
             Connection connection = driver.connect(url, props);
             LrcXAConnection lrcXAConnection = new LrcXAConnection(connection);
-            return (XAConnection) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { XAConnection.class }, lrcXAConnection);
+            return lrcXAConnection;
         } catch (Exception ex) {
             throw (SQLException) new SQLException("unable to connect to non-XA resource " + driverClassName).initCause(ex);
         }
@@ -109,14 +111,14 @@ public class LrcXADataSource implements XADataSource {
 
     public XAConnection getXAConnection(String user, String password) throws SQLException {
         try {
-            Class driverClazz = ClassLoaderUtils.loadClass(driverClassName);
+            Class<?> driverClazz = ClassLoaderUtils.loadClass(driverClassName);
             Driver driver = (Driver) driverClazz.newInstance();
             Properties props = new Properties();
             props.setProperty("user", user);
             props.setProperty("password", password);
             Connection connection = driver.connect(url, props);
             LrcXAConnection lrcXAConnection = new LrcXAConnection(connection);
-            return (XAConnection) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { XAConnection.class }, lrcXAConnection);
+            return lrcXAConnection;
         } catch (Exception ex) {
             throw (SQLException) new SQLException("unable to connect to non-XA resource " + driverClassName).initCause(ex);
         }

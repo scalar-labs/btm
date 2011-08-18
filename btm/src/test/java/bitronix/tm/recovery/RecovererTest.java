@@ -73,7 +73,7 @@ public class RecovererTest extends TestCase {
         new File(TransactionManagerServices.getConfiguration().getLogPart2Filename()).delete();
 
         Connection connection1 = pds.getConnection();
-        JdbcConnectionHandle handle = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection1);
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) connection1;
         xaResource = (MockXAResource) handle.getPooledConnection().getXAResource();
         handle.close();
 
@@ -281,7 +281,7 @@ public class RecovererTest extends TestCase {
         pds.init();
 
         Connection connection = pds.getConnection();
-        JdbcConnectionHandle handle = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection);
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) connection;
         XAResource xaResource = handle.getPooledConnection().getXAResource();
         handle.close();
 

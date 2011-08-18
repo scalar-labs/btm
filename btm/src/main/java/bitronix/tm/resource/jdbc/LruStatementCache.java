@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.slf4j.Logger;
@@ -63,13 +62,13 @@ public class LruStatementCache {
      *   completes).
      * </pre>
      */
-    private final LinkedHashMap cache;
+    private final LinkedHashMap<JdbcPreparedStatementHandle, StatementTracker> cache;
 
     /**
      * A list of listeners concerned with prepared statement cache
      * evictions.
      */
-    private final List evictionListners;
+    private final List<LruEvictionListener> evictionListners;
 
     /**
      * See the LinkedHashMap documentation.  We maintain our own size
@@ -82,8 +81,8 @@ public class LruStatementCache {
 
     public LruStatementCache(int maxSize) {
         this.maxSize = maxSize;
-        cache = new LinkedHashMap(maxSize, 0.75f, true /* access order */);
-        evictionListners = new ArrayList();
+        cache = new LinkedHashMap<JdbcPreparedStatementHandle, StatementTracker>(maxSize, 0.75f, true /* access order */);
+        evictionListners = new ArrayList<LruEvictionListener>();
     }
 
     /**
@@ -105,7 +104,7 @@ public class LruStatementCache {
     	{
 	        // See LinkedHashMap documentation.  Getting an entry means it is 
 	        // updated as the 'youngest' (Most Recently Used) entry.
-	        StatementTracker cached = (StatementTracker) cache.get(key);
+	        StatementTracker cached = cache.get(key);
 	        if (cached != null) {
 	            cached.usageCount++;
 	            key.setDelegate(cached.statement);
@@ -135,7 +134,7 @@ public class LruStatementCache {
 	
 	        // See LinkedHashMap documentation.  Getting an entry means it is 
 	        // updated as the 'youngest' (Most Recently Used) entry.
-	        StatementTracker cached = (StatementTracker) cache.get(key);
+	        StatementTracker cached = cache.get(key);
 	        if (cached == null) {
 	            if (log.isDebugEnabled()) { log.debug("adding to cache statement <" + key + "> in " + key.getPooledConnection()); }
 	            cache.put(key, new StatementTracker(key.getDelegateUnchecked()));
@@ -164,10 +163,10 @@ public class LruStatementCache {
     protected void clear() {
     	synchronized (cache)
     	{
-	        Iterator it = cache.entrySet().iterator();
+	        Iterator<Entry<JdbcPreparedStatementHandle, StatementTracker>> it = cache.entrySet().iterator();
 	        while (it.hasNext()) {
-	            Map.Entry entry = (Entry) it.next();
-	            StatementTracker tracker = (StatementTracker) entry.getValue();
+	            Entry<JdbcPreparedStatementHandle, StatementTracker> entry = it.next();
+	            StatementTracker tracker = entry.getValue();
 	            it.remove();
 	            fireEvictionEvent(tracker.statement);
 	        }
@@ -183,14 +182,14 @@ public class LruStatementCache {
      */
     private void tryEviction() {
         // Iteration order of the LinkedHashMap is from LRU to MRU
-        Iterator it = cache.entrySet().iterator();
+    	Iterator<Entry<JdbcPreparedStatementHandle, StatementTracker>> it = cache.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry entry = (Entry) it.next();
-            StatementTracker tracker = (StatementTracker) entry.getValue();
+        	Entry<JdbcPreparedStatementHandle, StatementTracker> entry = it.next();
+            StatementTracker tracker = entry.getValue();
             if (tracker.usageCount == 0) {
                 it.remove();
                 size--;
-                JdbcPreparedStatementHandle key = (JdbcPreparedStatementHandle) entry.getKey();
+                JdbcPreparedStatementHandle key = entry.getKey();
                 if (log.isDebugEnabled()) { log.debug("evicting from cache statement <" + key + "> " + key.getDelegateUnchecked() + " in " + key.getPooledConnection()); }
                 fireEvictionEvent(tracker.statement);
                 // We can stop evicting if we're at maxSize...
@@ -202,8 +201,7 @@ public class LruStatementCache {
     }
 
     private void fireEvictionEvent(Object value) {
-        for (int i = 0; i < evictionListners.size(); i++) {
-            LruEvictionListener listener = (LruEvictionListener) evictionListners.get(i);
+        for (LruEvictionListener listener : evictionListners) {
             listener.onEviction(value);
         }
     }

@@ -36,7 +36,7 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
     private final static Logger log = LoggerFactory.getLogger(AbstractXAStatefulHolder.class);
 
     private volatile int state = STATE_IN_POOL;
-    private final List stateChangeEventListeners = new ArrayList();
+    private final List<StateChangeListener> stateChangeEventListeners = new ArrayList<StateChangeListener>();
 
     public synchronized int getState() {
         return state;
@@ -73,8 +73,7 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
                 " stateChangeEventListener(s) about state changing from " + Decoder.decodeXAStatefulHolderState(currentState) +
                 " to " + Decoder.decodeXAStatefulHolderState(futureState) + " in " + this);
 
-        for (int i = 0; i < stateChangeEventListeners.size(); i++) {
-            StateChangeListener stateChangeListener = (StateChangeListener) stateChangeEventListeners.get(i);
+        for (StateChangeListener stateChangeListener : stateChangeEventListeners) {
             stateChangeListener.stateChanging(this, currentState, futureState);
         }
     }
@@ -84,8 +83,7 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
                 " stateChangeEventListener(s) about state changed from " + Decoder.decodeXAStatefulHolderState(oldState) +
                 " to " + Decoder.decodeXAStatefulHolderState(newState) + " in " + this);
 
-        for (int i = 0; i < stateChangeEventListeners.size(); i++) {
-            StateChangeListener stateChangeListener = (StateChangeListener) stateChangeEventListeners.get(i);
+        for (StateChangeListener stateChangeListener : stateChangeEventListeners) {
             stateChangeListener.stateChanged(this, oldState, newState);
         }
     }

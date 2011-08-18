@@ -24,7 +24,6 @@ import javax.transaction.Synchronization;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import bitronix.tm.BitronixTransaction;
 
 /**
  * {@link Synchronization} used to release a {@link XAStatefulHolder} object after 2PC has executed.

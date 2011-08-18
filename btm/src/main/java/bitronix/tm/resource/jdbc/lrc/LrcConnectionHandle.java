@@ -20,16 +20,22 @@
  */
 package bitronix.tm.resource.jdbc.lrc;
 
-import java.sql.*;
-
-import bitronix.tm.resource.jdbc.BaseProxyHandlerClass;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Savepoint;
+import java.sql.Statement;
+import java.util.Map;
 
 /**
  * Connection handle implementation for a non-XA JDBC resource emulating XA with Last Resource Commit.
  *
  * @author lorban, brettw
  */
-public class LrcConnectionHandle extends BaseProxyHandlerClass { // implements Connection
+public class LrcConnectionHandle implements Connection {
 
     private volatile Connection delegate;
     private final LrcXAResource xaResource;
@@ -43,7 +49,7 @@ public class LrcConnectionHandle extends BaseProxyHandlerClass { // implements C
         return delegate;
     }
 
-    private Connection getDelegate() throws SQLException {
+    protected Connection getDelegate() throws SQLException {
         if (delegate == null)
             throw new SQLException("connection is closed");
         return delegate;
@@ -87,7 +93,129 @@ public class LrcConnectionHandle extends BaseProxyHandlerClass { // implements C
         return "a JDBC LrcConnectionHandle on " + xaResource;
     }
 
-	public Object getProxiedDelegate() throws Exception {
-		return getDelegate();
+    /* Delegated methods */
+
+	public Statement createStatement() throws SQLException {
+		return delegate.createStatement();
+	}
+
+	public PreparedStatement prepareStatement(String sql) throws SQLException {
+		return delegate.prepareStatement(sql);
+	}
+
+	public CallableStatement prepareCall(String sql) throws SQLException {
+		return delegate.prepareCall(sql);
+	}
+
+	public String nativeSQL(String sql) throws SQLException {
+		return delegate.nativeSQL(sql);
+	}
+
+	public boolean getAutoCommit() throws SQLException {
+		return delegate.getAutoCommit();
+	}
+
+	public DatabaseMetaData getMetaData() throws SQLException {
+		return delegate.getMetaData();
+	}
+
+	public void setReadOnly(boolean readOnly) throws SQLException {
+		delegate.setReadOnly(readOnly);
+	}
+
+	public boolean isReadOnly() throws SQLException {
+		return delegate.isReadOnly();
+	}
+
+	public void setCatalog(String catalog) throws SQLException {
+		delegate.setCatalog(catalog);
+	}
+
+	public String getCatalog() throws SQLException {
+		return delegate.getCatalog();
+	}
+
+	public void setTransactionIsolation(int level) throws SQLException {
+		delegate.setTransactionIsolation(level);
+	}
+
+	public int getTransactionIsolation() throws SQLException {
+		return delegate.getTransactionIsolation();
+	}
+
+	public SQLWarning getWarnings() throws SQLException {
+		return delegate.getWarnings();
+	}
+
+	public void clearWarnings() throws SQLException {
+		delegate.clearWarnings();
+	}
+
+	public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
+		return delegate.createStatement(resultSetType, resultSetConcurrency);
+	}
+
+	public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency)
+			throws SQLException {
+		return delegate.prepareStatement(sql, resultSetType, resultSetConcurrency);
+	}
+
+	public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+		return delegate.prepareCall(sql, resultSetType, resultSetConcurrency);
+	}
+
+	public Map<String, Class<?>> getTypeMap() throws SQLException {
+		return delegate.getTypeMap();
+	}
+
+	public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
+		delegate.setTypeMap(map);
+	}
+
+	public void setHoldability(int holdability) throws SQLException {
+		delegate.setHoldability(holdability);
+	}
+
+	public int getHoldability() throws SQLException {
+		return delegate.getHoldability();
+	}
+
+	public Savepoint setSavepoint() throws SQLException {
+		return delegate.setSavepoint();
+	}
+
+	public Savepoint setSavepoint(String name) throws SQLException {
+		return delegate.setSavepoint(name);
+	}
+
+	public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+		delegate.releaseSavepoint(savepoint);
+	}
+
+	public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability)
+			throws SQLException {
+		return delegate.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
+	}
+
+	public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency,
+			int resultSetHoldability) throws SQLException {
+		return delegate.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+	}
+
+	public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency,
+			int resultSetHoldability) throws SQLException {
+		return delegate.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+	}
+
+	public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
+		return delegate.prepareStatement(sql, autoGeneratedKeys);
+	}
+
+	public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
+		return delegate.prepareStatement(sql, columnIndexes);
+	}
+
+	public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
+		return delegate.prepareStatement(sql, columnNames);
 	}
 }

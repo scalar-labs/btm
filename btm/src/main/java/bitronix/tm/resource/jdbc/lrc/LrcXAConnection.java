@@ -20,30 +20,38 @@
  */
 package bitronix.tm.resource.jdbc.lrc;
 
-import java.lang.reflect.*;
-import java.sql.*;
-import java.util.*;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Savepoint;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-import javax.sql.*;
+import javax.sql.ConnectionEvent;
+import javax.sql.ConnectionEventListener;
+import javax.sql.XAConnection;
 import javax.transaction.xa.XAResource;
 
-import bitronix.tm.utils.ClassLoaderUtils;
-import org.slf4j.*;
-
-import bitronix.tm.resource.jdbc.BaseProxyHandlerClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * XAConnection implementation for a non-XA JDBC resource emulating XA with Last Resource Commit.
  *
  * @author lorban, brettw
  */
-public class LrcXAConnection extends BaseProxyHandlerClass { // implements XAConnection
+public class LrcXAConnection implements XAConnection {
 
     private final static Logger log = LoggerFactory.getLogger(LrcXAConnection.class);
 
     private final Connection connection;
     private final LrcXAResource xaResource;
-    private final List connectionEventListeners = new ArrayList();
+    private final List<ConnectionEventListener> connectionEventListeners = new ArrayList<ConnectionEventListener>();
 
     public LrcXAConnection(Connection connection) {
         this.connection = connection;
@@ -61,7 +69,7 @@ public class LrcXAConnection extends BaseProxyHandlerClass { // implements XACon
 
     public Connection getConnection() throws SQLException {
     	LrcConnectionHandle lrcConnectionHandle = new LrcConnectionHandle(xaResource, connection);
-        return (Connection) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { Connection.class }, lrcConnectionHandle);
+        return lrcConnectionHandle;
     }
 
     public void addConnectionEventListener(ConnectionEventListener listener) {
@@ -75,9 +83,8 @@ public class LrcXAConnection extends BaseProxyHandlerClass { // implements XACon
     private void fireCloseEvent() {
         if (log.isDebugEnabled()) { log.debug("notifying " + connectionEventListeners.size() + " connectionEventListeners(s) about closing of " + this); }
         for (int i = 0; i < connectionEventListeners.size(); i++) {
-            ConnectionEventListener connectionEventListener = (ConnectionEventListener) connectionEventListeners.get(i);
-            XAConnection conn = (XAConnection) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { XAConnection.class }, this);
-            connectionEventListener.connectionClosed(new ConnectionEvent(conn));
+            ConnectionEventListener connectionEventListener = connectionEventListeners.get(i);
+            connectionEventListener.connectionClosed(new ConnectionEvent(this));
         }
     }
 
@@ -97,7 +104,149 @@ public class LrcXAConnection extends BaseProxyHandlerClass { // implements XACon
         return "a JDBC LrcXAConnection on " + connection;
     }
 
-	public Object getProxiedDelegate() throws Exception {
-		return connection;
+    /* Delegated methods */
+
+	public Statement createStatement() throws SQLException {
+		return connection.createStatement();
+	}
+
+	public PreparedStatement prepareStatement(String sql) throws SQLException {
+		return connection.prepareStatement(sql);
+	}
+
+	public CallableStatement prepareCall(String sql) throws SQLException {
+		return connection.prepareCall(sql);
+	}
+
+	public String nativeSQL(String sql) throws SQLException {
+		return connection.nativeSQL(sql);
+	}
+
+	public void setAutoCommit(boolean autoCommit) throws SQLException {
+		connection.setAutoCommit(autoCommit);
+	}
+
+	public boolean getAutoCommit() throws SQLException {
+		return connection.getAutoCommit();
+	}
+
+	public void commit() throws SQLException {
+		connection.commit();
+	}
+
+	public void rollback() throws SQLException {
+		connection.rollback();
+	}
+
+	public boolean isClosed() throws SQLException {
+		return connection.isClosed();
+	}
+
+	public DatabaseMetaData getMetaData() throws SQLException {
+		return connection.getMetaData();
+	}
+
+	public void setReadOnly(boolean readOnly) throws SQLException {
+		connection.setReadOnly(readOnly);
+	}
+
+	public boolean isReadOnly() throws SQLException {
+		return connection.isReadOnly();
+	}
+
+	public void setCatalog(String catalog) throws SQLException {
+		connection.setCatalog(catalog);
+	}
+
+	public String getCatalog() throws SQLException {
+		return connection.getCatalog();
+	}
+
+	public void setTransactionIsolation(int level) throws SQLException {
+		connection.setTransactionIsolation(level);
+	}
+
+	public int getTransactionIsolation() throws SQLException {
+		return connection.getTransactionIsolation();
+	}
+
+	public SQLWarning getWarnings() throws SQLException {
+		return connection.getWarnings();
+	}
+
+	public void clearWarnings() throws SQLException {
+		connection.clearWarnings();
+	}
+
+	public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
+		return connection.createStatement(resultSetType, resultSetConcurrency);
+	}
+
+	public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency)
+			throws SQLException {
+		return connection.prepareStatement(sql, resultSetType, resultSetConcurrency);
+	}
+
+	public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+		return connection.prepareCall(sql, resultSetType, resultSetConcurrency);
+	}
+
+	public Map<String, Class<?>> getTypeMap() throws SQLException {
+		return connection.getTypeMap();
+	}
+
+	public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
+		connection.setTypeMap(map);
+	}
+
+	public void setHoldability(int holdability) throws SQLException {
+		connection.setHoldability(holdability);
+	}
+
+	public int getHoldability() throws SQLException {
+		return connection.getHoldability();
+	}
+
+	public Savepoint setSavepoint() throws SQLException {
+		return connection.setSavepoint();
+	}
+
+	public Savepoint setSavepoint(String name) throws SQLException {
+		return connection.setSavepoint(name);
+	}
+
+	public void rollback(Savepoint savepoint) throws SQLException {
+		connection.rollback(savepoint);
+	}
+
+	public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+		connection.releaseSavepoint(savepoint);
+	}
+
+	public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability)
+			throws SQLException {
+		return connection.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
+	}
+
+	public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency,
+			int resultSetHoldability) throws SQLException {
+		return connection.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+	}
+
+	public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency,
+			int resultSetHoldability) throws SQLException {
+		return connection.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+	}
+
+	public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
+		return connection.prepareStatement(sql, autoGeneratedKeys);
+	}
+
+	public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
+		return connection.prepareStatement(sql, columnIndexes);
+	}
+
+	public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
+		return connection.prepareStatement(sql, columnNames);
 	}
 }

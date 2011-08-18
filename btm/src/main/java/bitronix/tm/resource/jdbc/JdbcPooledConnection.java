@@ -34,6 +34,8 @@ import org.slf4j.LoggerFactory;
 import javax.sql.XAConnection;
 import javax.transaction.SystemException;
 import javax.transaction.xa.XAResource;
+
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.sql.*;
 import java.util.*;
@@ -48,14 +50,12 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     private final static Logger log = LoggerFactory.getLogger(JdbcPooledConnection.class);
 
-    private final static int DETECTION_TIMEOUT = 5; // seconds
-
     private final XAConnection xaConnection;
     private final Connection connection;
     private final XAResource xaResource;
     private final PoolingDataSource poolingDataSource;
     private final LruStatementCache statementsCache;
-    private final List uncachedStatements;
+    private final List<Statement> uncachedStatements;
     private volatile int usageCount;
 
     /* management */
@@ -64,15 +64,13 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     private volatile Date lastReleaseDate;
 
     private volatile int jdbcVersionDetected;
-    private volatile Method isValidMethod;
-
 
     public JdbcPooledConnection(PoolingDataSource poolingDataSource, XAConnection xaConnection) throws SQLException {
         this.poolingDataSource = poolingDataSource;
         this.xaConnection = xaConnection;
         this.xaResource = xaConnection.getXAResource();
         this.statementsCache = new LruStatementCache(poolingDataSource.getPreparedStatementCacheSize());
-        this.uncachedStatements = Collections.synchronizedList(new ArrayList());
+        this.uncachedStatements = Collections.synchronizedList(new ArrayList<Statement>());
         this.lastReleaseDate = new Date(MonotonicClock.currentTimeMillis());
         statementsCache.addEvictionListener(new LruEvictionListener() {
             public void onEviction(Object value) {
@@ -86,7 +84,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         });
 
         connection = xaConnection.getConnection();
-        detectJdbcVersion(connection);
+        jdbcVersionDetected = JdbcClassHelper.detectJdbcVersion(connection);
         addStateChangeEventListener(this);
 
         if (poolingDataSource.getClassName().equals(LrcXADataSource.class.getName())) {
@@ -100,26 +98,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
         this.jmxName = "bitronix.tm:type=JDBC,UniqueName=" + ManagementRegistrar.makeValidName(poolingDataSource.getUniqueName()) + ",Id=" + poolingDataSource.incCreatedResourcesCounter();
         ManagementRegistrar.register(jmxName, this);
-    }
-
-    private synchronized void detectJdbcVersion(Connection connection) {
-        if (jdbcVersionDetected > 0)
-            return;
-
-        try {
-            isValidMethod = connection.getClass().getMethod("isValid", new Class[]{Integer.TYPE});
-            isValidMethod.invoke(connection, new Object[] {new Integer(DETECTION_TIMEOUT)}); // test invoke
-            jdbcVersionDetected = 4;
-            if (!poolingDataSource.isEnableJdbc4ConnectionTest()) {
-                if (log.isDebugEnabled()) { log.debug("dataSource is JDBC4 or newer and supports isValid(), but enableJdbc4ConnectionTest is not set or is false"); }
-            }
-        } catch (Exception ex) {
-            jdbcVersionDetected = 3;
-        } catch (AbstractMethodError er) {
-            // this happens if the driver implements JDBC 3 but runs on JDK 1.6+ (which embeds the JDBC 4 interfaces)
-            jdbcVersionDetected = 3;
-        }
-        if (log.isDebugEnabled()) { log.debug("detected JDBC connection class '" + connection.getClass() + "' is version " + jdbcVersionDetected + " type"); }
     }
 
     private void applyIsolationLevel() throws SQLException {
@@ -170,6 +148,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             Boolean isValid = null;
             try {
                 if (log.isDebugEnabled()) { log.debug("testing with JDBC4 isValid() method, connection of " + this); }
+                Method isValidMethod = JdbcClassHelper.getIsValidMethod(connection);
                 isValid = (Boolean) isValidMethod.invoke(connection, new Object[]{new Integer(poolingDataSource.getAcquisitionTimeout())});
             } catch (Exception e) {
                 log.warn("dysfunctional JDBC4 Connection.isValid() method, or negative acquisition timeout, in call to test connection of " + this + ".  Falling back to test query.");
@@ -253,10 +232,15 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         return poolingDataSource;
     }
 
-    public List getXAResourceHolders() {
-        List xaResourceHolders = new ArrayList();
+    public List<XAResourceHolder> getXAResourceHolders() {
+        List<XAResourceHolder> xaResourceHolders = new ArrayList<XAResourceHolder>();
         xaResourceHolders.add(this);
         return xaResourceHolders;
+    }
+
+    public int getJdbcVersion()
+    {
+    	return jdbcVersionDetected;
     }
 
     public Object getConnectionHandle() throws Exception {
@@ -292,8 +276,12 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             if (log.isDebugEnabled()) { log.debug("connection " + xaConnection + " was in state " + Decoder.decodeXAStatefulHolderState(oldState) + ", no need to test it"); }
         }
 
+        if (jdbcVersionDetected == 3)
+        {
+        	
+        }
         if (log.isDebugEnabled()) { log.debug("got connection handle from " + this); }
-        return new JdbcConnectionHandle(this, connection);
+        return getConnectionHandle(connection);
     }
 
     public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
@@ -319,8 +307,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         if (futureState == STATE_IN_POOL || futureState == STATE_NOT_ACCESSIBLE) {
             // close all uncached statements
             if (log.isDebugEnabled()) { log.debug("closing " + uncachedStatements.size() + " dangling uncached statement(s)"); }
-            for (int i = 0; i < uncachedStatements.size(); i++) {
-                Statement statement = (Statement) uncachedStatements.get(i);
+            for (Statement statement : uncachedStatements) {
                 try {
                     statement.close();
                 } catch (SQLException ex) {
@@ -414,6 +401,26 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         }
     }
 
+    private Object getConnectionHandle(Connection connection) throws SQLException
+    {
+    	if (jdbcVersionDetected == 3)
+    	{
+    		return new JdbcConnectionHandle(this, connection);
+    	}
+
+    	// JDBC 4.0
+    	try {
+			Class<?> handle = this.getClass().getClassLoader().loadClass("bitronix.tm.resource.jdbc4.Jdbc4ConnectionHandle");
+			Constructor<?> constructor = handle.getConstructor( new Class[] {JdbcPooledConnection.class, Connection.class} );
+			return constructor.newInstance( new Object[] {this, connection} );
+		} catch (Exception e) {
+			log.error("could not load JDBC4 wrapper class", e);
+			SQLException sqlException = new SQLException("could not load JDBC4 wrapper class");
+			sqlException.initCause(e);
+			throw sqlException;
+		}
+    }
+
     /* management */
 
     public String getStateDescription() {
@@ -428,7 +435,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         return lastReleaseDate;
     }
 
-    public Collection getTransactionGtridsCurrentlyHoldingThis() {
+    public Collection<String> getTransactionGtridsCurrentlyHoldingThis() {
         return getXAResourceHolderStateGtrids();
     }
 

@@ -55,7 +55,7 @@ public class RecoveryXAResourceHolder extends AbstractXAResourceHolder {
         return null;
     }
 
-    public List getXAResourceHolders() {
+    public List<XAResourceHolder> getXAResourceHolders() {
         return null;
     }
 

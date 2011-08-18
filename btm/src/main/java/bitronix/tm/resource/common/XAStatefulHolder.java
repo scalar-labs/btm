@@ -20,8 +20,8 @@
  */
 package bitronix.tm.resource.common;
 
-import java.util.List;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Any pooled connection class must implement the {@link XAStatefulHolder} interface. It defines all the services
@@ -86,7 +86,7 @@ public interface XAStatefulHolder {
      * @return the list of {@link XAResourceHolder}s created by this
      *         {@link bitronix.tm.resource.common.XAStatefulHolder} that are still open.
      */
-    public List getXAResourceHolders();
+    public List<XAResourceHolder> getXAResourceHolders();
 
     /**
      * Create a disposable handler used to drive a pooled instance of

@@ -32,6 +32,6 @@ public interface JdbcPooledConnectionMBean {
 
     String getStateDescription();
     Date getAcquisitionDate();
-    Collection getTransactionGtridsCurrentlyHoldingThis();
+    Collection<String> getTransactionGtridsCurrentlyHoldingThis();
 
 }

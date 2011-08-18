@@ -77,12 +77,12 @@ public class Phase1FailureTest extends TestCase {
         tm.setTransactionTimeout(10); // TX must not timeout
 
         Connection connection1 = poolingDataSource1.getConnection();
-        JdbcConnectionHandle handle = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection1);
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) connection1;
         XAConnection xaConnection1 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle.getPooledConnection());
         connection1.createStatement();
 
         Connection connection2 = poolingDataSource2.getConnection();
-        JdbcConnectionHandle handle2 = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection2);
+        JdbcConnectionHandle handle2 = (JdbcConnectionHandle) connection2;
         XAConnection xaConnection2 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle2.getPooledConnection());
         connection2.createStatement();
 
@@ -148,7 +148,7 @@ public class Phase1FailureTest extends TestCase {
         connection1.createStatement();
 
         Connection connection2 = poolingDataSource2.getConnection();
-        JdbcConnectionHandle handle = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection2);
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) connection2;
         XAConnection xaConnection2 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle.getPooledConnection());
         connection2.createStatement();
 
@@ -221,7 +221,7 @@ public class Phase1FailureTest extends TestCase {
         tm.setTransactionTimeout(10); // TX must not timeout
 
         Connection connection1 = poolingDataSource1.getConnection();
-        JdbcConnectionHandle handle = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection1);
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) connection1;
         XAConnection xaConnection1 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle.getPooledConnection());
         connection1.createStatement();
 

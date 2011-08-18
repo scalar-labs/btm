@@ -9,7 +9,9 @@
     <groupId>org.codehaus.btm</groupId>
     <artifactId>btm-parent</artifactId>
     <version>2.1.2-SNAPSHOT</version>
+
     <packaging>pom</packaging>
+
     <name>Bitronix Transaction Manager</name>
     <inceptionYear>2006</inceptionYear>
     <url>http://docs.codehaus.org/display/BTM/Home</url>
@@ -48,10 +50,12 @@
     </properties>
 
     <modules>
-        <module>btm</module>
+        <module>btm-core</module>
+        <module>btm-jdbc4</module>
         <module>btm-jetty6-lifecycle</module>
         <module>btm-jetty7-lifecycle</module>
         <module>btm-tomcat55-lifecycle</module>
+        <module>btm</module>
     </modules>
 
     <dependencyManagement>
@@ -165,6 +169,7 @@
                     <configuration>
                         <source>1.5</source>
                         <target>1.5</target>
+                        <compilerArgument>-Xbootclasspath/p:${basedir}/src/main/lib/jdbc30_apis.jar</compilerArgument>
                     </configuration>
                 </plugin>
                 <plugin>
