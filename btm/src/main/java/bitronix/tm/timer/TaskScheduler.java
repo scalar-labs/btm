@@ -66,7 +66,7 @@ public class TaskScheduler extends Thread implements Service {
         if (wasActive) {
             try {
                 long gracefulShutdownTime = TransactionManagerServices.getConfiguration().getGracefulShutdownInterval() * 1000;
-                if (log.isDebugEnabled()) log.debug("graceful scheduler shutdown interval: " + gracefulShutdownTime + "ms");
+                if (log.isDebugEnabled()) { log.debug("graceful scheduler shutdown interval: " + gracefulShutdownTime + "ms"); }
                 join(gracefulShutdownTime);
             } catch (InterruptedException ex) {
                 log.error("could not stop the task scheduler within " + TransactionManagerServices.getConfiguration().getGracefulShutdownInterval() + "s");
@@ -81,7 +81,7 @@ public class TaskScheduler extends Thread implements Service {
      * @param executionTime the date at which the transaction must be marked.
      */
     public void scheduleTransactionTimeout(BitronixTransaction transaction, Date executionTime) {
-        if (log.isDebugEnabled()) log.debug("scheduling transaction timeout task on " + transaction + " for " + executionTime);
+        if (log.isDebugEnabled()) { log.debug("scheduling transaction timeout task on " + transaction + " for " + executionTime); }
         if (transaction == null)
             throw new IllegalArgumentException("expected a non-null transaction");
         if (executionTime == null)
@@ -89,7 +89,7 @@ public class TaskScheduler extends Thread implements Service {
 
         TransactionTimeoutTask task = new TransactionTimeoutTask(transaction, executionTime, this);
         addTask(task);
-        if (log.isDebugEnabled()) log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size());
+        if (log.isDebugEnabled()) { log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size()); }
     }
 
     /**
@@ -97,12 +97,12 @@ public class TaskScheduler extends Thread implements Service {
      * @param transaction the transaction to mark as timeout.
      */
     public void cancelTransactionTimeout(BitronixTransaction transaction) {
-        if (log.isDebugEnabled()) log.debug("cancelling transaction timeout task on " + transaction);
+        if (log.isDebugEnabled()) { log.debug("cancelling transaction timeout task on " + transaction); }
         if (transaction == null)
             throw new IllegalArgumentException("expected a non-null transaction");
 
         if (!removeTaskByObject(transaction))
-            if (log.isDebugEnabled()) log.debug("no task found based on object " + transaction);
+            if (log.isDebugEnabled()) { log.debug("no task found based on object " + transaction); }
     }
 
     /**
@@ -111,7 +111,7 @@ public class TaskScheduler extends Thread implements Service {
      * @param executionTime the date at which the transaction must be marked.
      */
     public void scheduleRecovery(Recoverer recoverer, Date executionTime) {
-        if (log.isDebugEnabled()) log.debug("scheduling recovery task for " + executionTime);
+        if (log.isDebugEnabled()) { log.debug("scheduling recovery task for " + executionTime); }
         if (recoverer == null)
             throw new IllegalArgumentException("expected a non-null recoverer");
         if (executionTime == null)
@@ -119,7 +119,7 @@ public class TaskScheduler extends Thread implements Service {
 
         RecoveryTask task = new RecoveryTask(recoverer, executionTime, this);
         addTask(task);
-        if (log.isDebugEnabled()) log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size());
+        if (log.isDebugEnabled()) { log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size()); }
     }
 
     /**
@@ -127,10 +127,10 @@ public class TaskScheduler extends Thread implements Service {
      * @param recoverer the recovery implementation to use.
      */
     public void cancelRecovery(Recoverer recoverer) {
-        if (log.isDebugEnabled()) log.debug("cancelling recovery task");
+        if (log.isDebugEnabled()) { log.debug("cancelling recovery task"); }
 
         if (!removeTaskByObject(recoverer))
-            if (log.isDebugEnabled()) log.debug("no task found based on object " + recoverer);
+            if (log.isDebugEnabled()) { log.debug("no task found based on object " + recoverer); }
     }
 
     /**
@@ -140,13 +140,13 @@ public class TaskScheduler extends Thread implements Service {
      */
     public void schedulePoolShrinking(XAPool xaPool) {
         Date executionTime = xaPool.getNextShrinkDate();
-        if (log.isDebugEnabled()) log.debug("scheduling pool shrinking task on " + xaPool + " for " + executionTime);
+        if (log.isDebugEnabled()) { log.debug("scheduling pool shrinking task on " + xaPool + " for " + executionTime); }
         if (executionTime == null)
             throw new IllegalArgumentException("expected a non-null execution date");
 
         PoolShrinkingTask task = new PoolShrinkingTask(xaPool, executionTime, this);
         addTask(task);
-        if (log.isDebugEnabled()) log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size());
+        if (log.isDebugEnabled()) { log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size()); }
     }
 
     /**
@@ -154,12 +154,12 @@ public class TaskScheduler extends Thread implements Service {
      * @param xaPool the XA pool to notify.
      */
     public void cancelPoolShrinking(XAPool xaPool) {
-        if (log.isDebugEnabled()) log.debug("cancelling pool shrinking task on " + xaPool);
+        if (log.isDebugEnabled()) { log.debug("cancelling pool shrinking task on " + xaPool); }
         if (xaPool == null)
             throw new IllegalArgumentException("expected a non-null XA pool");
 
         if (!removeTaskByObject(xaPool))
-            if (log.isDebugEnabled()) log.debug("no task found based on object " + xaPool);
+            if (log.isDebugEnabled()) { log.debug("no task found based on object " + xaPool); }
     }
 
     private void addTask(Task task) {
@@ -168,7 +168,7 @@ public class TaskScheduler extends Thread implements Service {
     }
 
     private boolean removeTaskByObject(Object obj) {
-        if (log.isDebugEnabled()) log.debug("removing task by " + obj);
+        if (log.isDebugEnabled()) { log.debug("removing task by " + obj); }
 
         Iterator it = tasks.iterator();
         while (it.hasNext()) {
@@ -176,7 +176,7 @@ public class TaskScheduler extends Thread implements Service {
 
             if (task.getObject() == obj) {
                 tasks.remove(task);
-                if (log.isDebugEnabled()) log.debug("cancelled " + task + ", total task(s) still queued: " + tasks.size());
+                if (log.isDebugEnabled()) { log.debug("cancelled " + task + ", total task(s) still queued: " + tasks.size()); }
                 return true;
             }
         }
@@ -210,15 +210,15 @@ public class TaskScheduler extends Thread implements Service {
         while (it.hasNext()) {
             Task task = (Task) it.next();
             if (task.getExecutionTime().compareTo(new Date(MonotonicClock.currentTimeMillis())) <= 0) { // if the execution time is now or in the past
-                if (log.isDebugEnabled()) log.debug("running " + task);
+                if (log.isDebugEnabled()) { log.debug("running " + task); }
                 try {
                     task.execute();
-                    if (log.isDebugEnabled()) log.debug("successfully ran " + task);
+                    if (log.isDebugEnabled()) { log.debug("successfully ran " + task); }
                 } catch (Exception ex) {
                     log.warn("error running " + task, ex);
                 } finally {
                     this.tasks.remove(task);
-                    if (log.isDebugEnabled()) log.debug("total task(s) still queued: " + tasks.size());
+                    if (log.isDebugEnabled()) { log.debug("total task(s) still queued: " + tasks.size()); }
                 }
             } // if
         } // while

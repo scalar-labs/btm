@@ -67,7 +67,7 @@ public class Preparer extends AbstractPhaseEngine {
             if (TransactionManagerServices.getConfiguration().isWarnAboutZeroResourceTransaction())
                 log.warn("executing transaction with 0 enlisted resource");
             else
-                if (log.isDebugEnabled()) log.debug("0 resource enlisted, no prepare needed");
+                if (log.isDebugEnabled()) { log.debug("0 resource enlisted, no prepare needed"); }
 
             transaction.setStatus(Status.STATUS_PREPARED);
             return preparedResources;
@@ -78,7 +78,7 @@ public class Preparer extends AbstractPhaseEngine {
             XAResourceHolderState resourceHolder = (XAResourceHolderState) resourceManager.getAllResources().get(0);
 
             preparedResources.add(resourceHolder);
-            if (log.isDebugEnabled()) log.debug("1 resource enlisted, no prepare needed (1PC)");
+            if (log.isDebugEnabled()) { log.debug("1 resource enlisted, no prepare needed (1PC)"); }
             transaction.setStatus(Status.STATUS_PREPARED);
             return preparedResources;
         }
@@ -91,7 +91,7 @@ public class Preparer extends AbstractPhaseEngine {
         }
 
         transaction.setStatus(Status.STATUS_PREPARED);
-        if (log.isDebugEnabled()) log.debug("successfully prepared " + preparedResources.size() + " resource(s)");
+        if (log.isDebugEnabled()) { log.debug("successfully prepared " + preparedResources.size() + " resource(s)"); }
         return preparedResources;
     }
 
@@ -140,7 +140,7 @@ public class Preparer extends AbstractPhaseEngine {
     }
 
 
-    private class PrepareJob extends Job {
+    private final class PrepareJob extends Job {
         public PrepareJob(XAResourceHolderState resourceHolder) {
             super(resourceHolder);
         }
@@ -148,14 +148,14 @@ public class Preparer extends AbstractPhaseEngine {
         public void execute() {
             try {
                 XAResourceHolderState resourceHolder = getResource();
-                if (log.isDebugEnabled()) log.debug("preparing resource " + resourceHolder);
+                if (log.isDebugEnabled()) { log.debug("preparing resource " + resourceHolder); }
 
                 int vote = resourceHolder.getXAResource().prepare(resourceHolder.getXid());
                 if (vote != XAResource.XA_RDONLY) {
                     preparedResources.add(resourceHolder);
                 }
 
-                if (log.isDebugEnabled()) log.debug("prepared resource " + resourceHolder + " voted " + Decoder.decodePrepareVote(vote));
+                if (log.isDebugEnabled()) { log.debug("prepared resource " + resourceHolder + " voted " + Decoder.decodePrepareVote(vote)); }
             } catch (RuntimeException ex) {
                 runtimeException = ex;
             } catch (XAException ex) {

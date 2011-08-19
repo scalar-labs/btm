@@ -226,9 +226,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             XAResourceProducer producer = (XAResourceProducer) entry.getValue();
 
             try {
-                if (log.isDebugEnabled()) log.debug("performing recovery on " + uniqueName);
+                if (log.isDebugEnabled()) { log.debug("performing recovery on " + uniqueName); }
                 Set xids = recover(producer);
-                if (log.isDebugEnabled()) log.debug("recovered " + xids.size() + " XID(s) from resource " + uniqueName);
+                if (log.isDebugEnabled()) { log.debug("recovered " + xids.size() + " XID(s) from resource " + uniqueName); }
                 recoveredXidSets.put(uniqueName, xids);
                 producer.setFailed(false);
             } catch (XAException ex) {
@@ -256,7 +256,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             throw new IllegalArgumentException("recoverable resource cannot be null");
 
         try {
-            if (log.isDebugEnabled()) log.debug("running recovery on " + producer);
+            if (log.isDebugEnabled()) { log.debug("running recovery on " + producer); }
             XAResourceHolderState xaResourceHolderState = producer.startRecovery();
             return RecoveryHelper.recover(xaResourceHolderState);
         } finally {
@@ -277,7 +277,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     private Set commitDanglingTransactions(long oldestTransactionTimestamp, Map danglingRecords) throws IOException, RecoveryException {
         Set committedGtrids = new HashSet();
 
-        if (log.isDebugEnabled()) log.debug("found " + danglingRecords.size() + " dangling record(s) in journal");
+        if (log.isDebugEnabled()) { log.debug("found " + danglingRecords.size() + " dangling record(s) in journal"); }
         Iterator it = danglingRecords.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry entry = (Map.Entry) it.next();
@@ -288,30 +288,30 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             Set danglingTransactions = getDanglingTransactionsInRecoveredXids(uniqueNames, tlog.getGtrid());
 
             long txTimestamp = gtrid.extractTimestamp();
-            if (log.isDebugEnabled()) log.debug("recovered XID timestamp: " + txTimestamp + " - oldest in-flight TX timestamp: " + oldestTransactionTimestamp);
+            if (log.isDebugEnabled()) { log.debug("recovered XID timestamp: " + txTimestamp + " - oldest in-flight TX timestamp: " + oldestTransactionTimestamp); }
 
             if (txTimestamp < oldestTransactionTimestamp) {
-                if (log.isDebugEnabled()) log.debug("committing dangling transaction with GTRID " + gtrid);
+                if (log.isDebugEnabled()) { log.debug("committing dangling transaction with GTRID " + gtrid); }
                 commit(danglingTransactions);
-                if (log.isDebugEnabled()) log.debug("committed dangling transaction with GTRID " + gtrid);
+                if (log.isDebugEnabled()) { log.debug("committed dangling transaction with GTRID " + gtrid); }
                 committedGtrids.add(gtrid);
 
                 Set participatingUniqueNames = filterParticipatingUniqueNamesInRecoveredXids(uniqueNames);
 
                 if (participatingUniqueNames.size() > 0) {
-                    if (log.isDebugEnabled()) log.debug("updating journal's transaction with GTRID " + gtrid + " status to COMMITTED for names [" + buildUniqueNamesString(participatingUniqueNames) + "]");
+                    if (log.isDebugEnabled()) { log.debug("updating journal's transaction with GTRID " + gtrid + " status to COMMITTED for names [" + buildUniqueNamesString(participatingUniqueNames) + "]"); }
                     TransactionManagerServices.getJournal().log(Status.STATUS_COMMITTED, tlog.getGtrid(), participatingUniqueNames);
                 }
                 else {
-                    if (log.isDebugEnabled()) log.debug("not updating journal's transaction with GTRID " + gtrid + " status to COMMITTED as no resource could be found (incremental recovery will need to clean this)");
+                    if (log.isDebugEnabled()) { log.debug("not updating journal's transaction with GTRID " + gtrid + " status to COMMITTED as no resource could be found (incremental recovery will need to clean this)"); }
                     committedGtrids.remove(gtrid);
                 }
             }
             else {
-                if (log.isDebugEnabled()) log.debug("skipping in-flight transaction with GTRID " + gtrid);
+                if (log.isDebugEnabled()) { log.debug("skipping in-flight transaction with GTRID " + gtrid); }
             }
         }
-        if (log.isDebugEnabled()) log.debug("committed " + committedGtrids.size() + " dangling transaction(s)");
+        if (log.isDebugEnabled()) { log.debug("committed " + committedGtrids.size() + " dangling transaction(s)"); }
         return committedGtrids;
     }
 
@@ -330,10 +330,10 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         Iterator it = uniqueNames.iterator();
         while (it.hasNext()) {
             String uniqueName = (String) it.next();
-            if (log.isDebugEnabled()) log.debug("finding dangling transaction(s) in recovered XID(s) of resource " + uniqueName);
+            if (log.isDebugEnabled()) { log.debug("finding dangling transaction(s) in recovered XID(s) of resource " + uniqueName); }
             Set recoveredXids = (Set) recoveredXidSets.get(uniqueName);
             if (recoveredXids == null) {
-                if (log.isDebugEnabled()) log.debug("resource " + uniqueName + " did not recover, skipping commit");
+                if (log.isDebugEnabled()) { log.debug("resource " + uniqueName + " did not recover, skipping commit"); }
                 continue;
             }
 
@@ -341,7 +341,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             while (it2.hasNext()) {
                 BitronixXid recoveredXid = (BitronixXid) it2.next();
                 if (gtrid.equals(recoveredXid.getGlobalTransactionIdUid())) {
-                    if (log.isDebugEnabled()) log.debug("found a recovered XID matching dangling log's GTRID " + gtrid + " in resource " + uniqueName);
+                    if (log.isDebugEnabled()) { log.debug("found a recovered XID matching dangling log's GTRID " + gtrid + " in resource " + uniqueName); }
                     danglingTransactions.add(new DanglingTransaction(uniqueName, recoveredXid));
                 }
             } // while it2.hasNext()
@@ -356,10 +356,10 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         Iterator it = uniqueNames.iterator();
         while (it.hasNext()) {
             String uniqueName = (String) it.next();
-            if (log.isDebugEnabled()) log.debug("finding dangling transaction(s) in recovered XID(s) of resource " + uniqueName);
+            if (log.isDebugEnabled()) { log.debug("finding dangling transaction(s) in recovered XID(s) of resource " + uniqueName); }
             Set recoveredXids = (Set) recoveredXidSets.get(uniqueName);
             if (recoveredXids == null) {
-                if (log.isDebugEnabled()) log.debug("cannot find resource '" + uniqueName + "' present in the journal, leaving it for incremental recovery");
+                if (log.isDebugEnabled()) { log.debug("cannot find resource '" + uniqueName + "' present in the journal, leaving it for incremental recovery"); }
             }
             else {
                 recoveredUniqueNames.add(uniqueName);
@@ -376,7 +376,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * @throws RecoveryException if an error preventing recovery happened.
      */
     private void commit(Set danglingTransactions) throws RecoveryException {
-        if (log.isDebugEnabled()) log.debug(danglingTransactions.size() + " branch(es) to commit");
+        if (log.isDebugEnabled()) { log.debug(danglingTransactions.size() + " branch(es) to commit"); }
 
         Iterator it = danglingTransactions.iterator();
         while (it.hasNext()) {
@@ -384,7 +384,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             Xid xid = danglingTransaction.getXid();
             String uniqueName = danglingTransaction.getUniqueName();
 
-            if (log.isDebugEnabled()) log.debug("committing branch with XID " + xid + " on " + uniqueName);
+            if (log.isDebugEnabled()) { log.debug("committing branch with XID " + xid + " on " + uniqueName); }
             commit(uniqueName, xid);
         }
     }
@@ -417,7 +417,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * @throws RecoveryException if an error preventing recovery happened.
      */
     private int rollbackAbortedTransactions(long oldestTransactionTimestamp, Set committedGtrids) throws RecoveryException {
-        if (log.isDebugEnabled()) log.debug("rolling back aborted branch(es)");
+        if (log.isDebugEnabled()) { log.debug("rolling back aborted branch(es)"); }
         int rollbackCount = 0;
         Iterator it = recoveredXidSets.entrySet().iterator();
         while (it.hasNext()) {
@@ -425,13 +425,13 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             String uniqueName = (String) entry.getKey();
             Set recoveredXids = (Set) entry.getValue();
 
-            if (log.isDebugEnabled()) log.debug("checking " + recoveredXids.size() + " branch(es) on " + uniqueName + " for rollback");
+            if (log.isDebugEnabled()) { log.debug("checking " + recoveredXids.size() + " branch(es) on " + uniqueName + " for rollback"); }
             int count = rollbackAbortedBranchesOfResource(oldestTransactionTimestamp, uniqueName, recoveredXids, committedGtrids);
-            if (log.isDebugEnabled()) log.debug("checked " + recoveredXids.size() + " branch(es) on " + uniqueName + " for rollback");
+            if (log.isDebugEnabled()) { log.debug("checked " + recoveredXids.size() + " branch(es) on " + uniqueName + " for rollback"); }
             rollbackCount += count;
         }
 
-        if (log.isDebugEnabled()) log.debug("rolled back " + rollbackCount + " aborted branch(es)");
+        if (log.isDebugEnabled()) { log.debug("rolled back " + rollbackCount + " aborted branch(es)"); }
         return rollbackCount;
     }
 
@@ -451,18 +451,18 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         while (it.hasNext()) {
             BitronixXid recoveredXid = (BitronixXid) it.next();
             if (committedGtrids.contains(recoveredXid.getGlobalTransactionIdUid())) {
-                if (log.isDebugEnabled()) log.debug("XID has been committed, skipping rollback: " + recoveredXid + " on " + uniqueName);
+                if (log.isDebugEnabled()) { log.debug("XID has been committed, skipping rollback: " + recoveredXid + " on " + uniqueName); }
                 continue;
             }
 
             long txTimestamp = recoveredXid.getGlobalTransactionIdUid().extractTimestamp();
-            if (log.isDebugEnabled()) log.debug("recovered XID timestamp: " + txTimestamp + " - oldest in-flight TX timestamp: " + oldestTransactionTimestamp);
+            if (log.isDebugEnabled()) { log.debug("recovered XID timestamp: " + txTimestamp + " - oldest in-flight TX timestamp: " + oldestTransactionTimestamp); }
             if (txTimestamp >= oldestTransactionTimestamp) {
-                if (log.isDebugEnabled()) log.debug("skipping XID of in-flight transaction: " + recoveredXid);
+                if (log.isDebugEnabled()) { log.debug("skipping XID of in-flight transaction: " + recoveredXid); }
                 continue;
             }
 
-            if (log.isDebugEnabled()) log.debug("rolling back in-doubt branch with XID " + recoveredXid + " on " + uniqueName);
+            if (log.isDebugEnabled()) { log.debug("rolling back in-doubt branch with XID " + recoveredXid + " on " + uniqueName); }
             boolean success = rollback(uniqueName, recoveredXid);
             if (success)
                 abortedCount++;
@@ -481,7 +481,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     private boolean rollback(String uniqueName, Xid xid) throws RecoveryException {
         XAResourceProducer producer = (XAResourceProducer) registeredResources.get(uniqueName);
         if (producer == null) {
-            if (log.isDebugEnabled()) log.debug("resource " + uniqueName + " has not recovered, skipping rollback");
+            if (log.isDebugEnabled()) { log.debug("resource " + uniqueName + " has not recovered, skipping rollback"); }
             return false;
         }
 

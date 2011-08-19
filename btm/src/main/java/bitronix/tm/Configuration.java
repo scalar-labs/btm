@@ -49,27 +49,27 @@ public class Configuration implements Service {
 
     private final static int MAX_SERVER_ID_LENGTH = 51;
 
-    private String serverId;
-    private byte[] serverIdArray;
-    private String logPart1Filename;
-    private String logPart2Filename;
-    private boolean forcedWriteEnabled;
-    private boolean forceBatchingEnabled;
-    private int maxLogSizeInMb;
-    private boolean filterLogStatus;
-    private boolean skipCorruptedLogs;
-    private boolean asynchronous2Pc;
-    private boolean warnAboutZeroResourceTransaction;
-    private int defaultTransactionTimeout;
-    private int gracefulShutdownInterval;
-    private int backgroundRecoveryIntervalSeconds;
-    private boolean disableJmx;
-    private String jndiUserTransactionName;
-    private String jndiTransactionSynchronizationRegistryName;
-    private String journal;
-    private boolean currentNodeOnlyRecovery;
-    private boolean allowMultipleLrc;
-    private String resourceConfigurationFilename;
+    private volatile String serverId;
+    private volatile byte[] serverIdArray;
+    private volatile String logPart1Filename;
+    private volatile String logPart2Filename;
+    private volatile boolean forcedWriteEnabled;
+    private volatile boolean forceBatchingEnabled;
+    private volatile int maxLogSizeInMb;
+    private volatile boolean filterLogStatus;
+    private volatile boolean skipCorruptedLogs;
+    private volatile boolean asynchronous2Pc;
+    private volatile boolean warnAboutZeroResourceTransaction;
+    private volatile int defaultTransactionTimeout;
+    private volatile int gracefulShutdownInterval;
+    private volatile int backgroundRecoveryIntervalSeconds;
+    private volatile boolean disableJmx;
+    private volatile String jndiUserTransactionName;
+    private volatile String jndiTransactionSynchronizationRegistryName;
+    private volatile String journal;
+    private volatile boolean currentNodeOnlyRecovery;
+    private volatile boolean allowMultipleLrc;
+    private volatile String resourceConfigurationFilename;
 
 
     protected Configuration() {
@@ -79,17 +79,17 @@ public class Configuration implements Service {
             try {
                 String configurationFilename = System.getProperty("bitronix.tm.configuration");
                 if (configurationFilename != null) {
-                    if (log.isDebugEnabled()) log.debug("loading configuration file " + configurationFilename);
+                    if (log.isDebugEnabled()) { log.debug("loading configuration file " + configurationFilename); }
                     in = new FileInputStream(configurationFilename);
                 } else {
-                    if (log.isDebugEnabled()) log.debug("loading default configuration");
+                    if (log.isDebugEnabled()) { log.debug("loading default configuration"); }
                     in = ClassLoaderUtils.getResourceAsStream("bitronix-default-config.properties");
                 }
                 properties = new Properties();
                 if (in != null)
                     properties.load(in);
                 else
-                     if (log.isDebugEnabled()) log.debug("no configuration file found, using default settings");
+                     if (log.isDebugEnabled()) { log.debug("no configuration file found, using default settings"); }
             } finally {
                 if (in != null) in.close();
             }
@@ -591,7 +591,7 @@ public class Configuration implements Service {
      * the duration of the JVM lifespan.
      * @return the server ID.
      */
-    public byte[] buildServerIdArray() {
+    public synchronized byte[] buildServerIdArray() {
         if (serverIdArray == null) {
             try {
                 serverIdArray = serverId.substring(0, Math.min(serverId.length(), MAX_SERVER_ID_LENGTH)).getBytes("US-ASCII");
@@ -622,6 +622,7 @@ public class Configuration implements Service {
     }
 
     public void shutdown() {
+        serverIdArray = null;
     }
 
     public String toString() {
@@ -632,7 +633,7 @@ public class Configuration implements Service {
             sb.append(PropertyUtils.propertiesToString(this));
         } catch (PropertyException ex) {
             sb.append("???");
-            if (log.isDebugEnabled()) log.debug("error accessing properties of Configuration object", ex);
+            if (log.isDebugEnabled()) { log.debug("error accessing properties of Configuration object", ex); }
         }
 
         sb.append("]");

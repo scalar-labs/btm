@@ -29,7 +29,7 @@ import javax.jms.*;
  */
 public class LrcXAConnection implements XAConnection {
 
-    private Connection nonXaConnection;
+    private final Connection nonXaConnection;
 
     public LrcXAConnection(Connection connection) {
         this.nonXaConnection = connection;

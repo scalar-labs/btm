@@ -28,9 +28,12 @@ import java.io.InputStream;
 /**
  * Static utility methods for loading classes and resources.
  */
-public class ClassLoaderUtils {
+public final class ClassLoaderUtils {
 
     private final static Logger log = LoggerFactory.getLogger(ClassLoaderUtils.class);
+
+    private ClassLoaderUtils() {
+    }
 
     /**
      * Get the class loader which can be used to generate proxies without leaking memory.
@@ -56,7 +59,7 @@ public class ClassLoaderUtils {
             try {
                 return cl.loadClass(className);
             } catch (ClassNotFoundException ex) {
-                if (log.isDebugEnabled()) log.debug("context classloader could not find class '" + className + "', trying Class.forName() instead");
+                if (log.isDebugEnabled()) { log.debug("context classloader could not find class '" + className + "', trying Class.forName() instead"); }
             }
         }
         

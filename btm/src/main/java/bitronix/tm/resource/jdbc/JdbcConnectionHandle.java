@@ -44,8 +44,8 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
 
     private final static Logger log = LoggerFactory.getLogger(JdbcConnectionHandle.class);
 
-    private JdbcPooledConnection jdbcPooledConnection;
-    private Connection delegate;
+    private volatile JdbcPooledConnection jdbcPooledConnection;
+    private final Connection delegate;
 
     public JdbcConnectionHandle(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
         this.jdbcPooledConnection = jdbcPooledConnection;
@@ -93,7 +93,7 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
     /* Overridden methods of java.sql.Connection */
 
     public void close() throws SQLException {
-        if (log.isDebugEnabled()) log.debug("closing " + this);
+        if (log.isDebugEnabled()) { log.debug("closing " + this); }
 
         // in case the connection has already been closed
         if (jdbcPooledConnection == null)

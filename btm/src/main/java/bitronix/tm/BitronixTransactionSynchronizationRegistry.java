@@ -45,7 +45,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
 
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionSynchronizationRegistry.class);
 
-    private static BitronixTransactionManager transactionManager;
+    private final BitronixTransactionManager transactionManager;
     
     private final static ThreadLocal resourcesTl = new ThreadLocal() {
         protected Object initialValue() {
@@ -114,7 +114,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
             Object oldValue = getResources().put(key, value);
 
             if (oldValue == null && getResources().size() == 1) {
-                if (log.isDebugEnabled()) log.debug("first resource put in synchronization registry, registering a ClearRegistryResourcesSynchronization");
+                if (log.isDebugEnabled()) { log.debug("first resource put in synchronization registry, registering a ClearRegistryResourcesSynchronization"); }
                 Synchronization synchronization = new ClearRegistryResourcesSynchronization();
                 currentTransaction().getSynchronizationScheduler().add(synchronization, Scheduler.ALWAYS_LAST_POSITION);
             }
@@ -170,12 +170,12 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
         );
     }
 
-    private class ClearRegistryResourcesSynchronization implements Synchronization {
+    private final class ClearRegistryResourcesSynchronization implements Synchronization {
         public void beforeCompletion() {
         }
 
         public void afterCompletion(int status) {
-            if (log.isDebugEnabled()) log.debug("clearing resources");
+            if (log.isDebugEnabled()) { log.debug("clearing resources"); }
             getResources().clear();
         }
     }

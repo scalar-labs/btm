@@ -53,7 +53,7 @@ public class ResourceLoader implements Service {
     private final static String JDBC_RESOURCE_CLASSNAME = "bitronix.tm.resource.jdbc.PoolingDataSource";
     private final static String JMS_RESOURCE_CLASSNAME = "bitronix.tm.resource.jms.PoolingConnectionFactory";
 
-    private Map resourcesByUniqueName = Collections.EMPTY_MAP;
+    private final Map resourcesByUniqueName = new HashMap();
 
     public ResourceLoader() {
     }
@@ -80,18 +80,18 @@ public class ResourceLoader implements Service {
             return init(filename);
         }
         else {
-            if (log.isDebugEnabled()) log.debug("no resource configuration file specified");
+            if (log.isDebugEnabled()) { log.debug("no resource configuration file specified"); }
             return 0;
         }
     }
 
     public synchronized void shutdown() {
-        if (log.isDebugEnabled()) log.debug("resource loader has registered " + resourcesByUniqueName.entrySet().size() + " resource(s), unregistering them now");
+        if (log.isDebugEnabled()) { log.debug("resource loader has registered " + resourcesByUniqueName.entrySet().size() + " resource(s), unregistering them now"); }
         Iterator it = resourcesByUniqueName.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry entry = (Map.Entry) it.next();
             XAResourceProducer producer = (XAResourceProducer) entry.getValue();
-            if (log.isDebugEnabled()) log.debug("closing " + producer);
+            if (log.isDebugEnabled()) { log.debug("closing " + producer); }
             try {
                 producer.close();
             } catch (Exception ex) {
@@ -162,7 +162,6 @@ public class ResourceLoader implements Service {
         Map entries = buildConfigurationEntriesMap(properties);
         int errorCount = 0;
 
-        resourcesByUniqueName = new HashMap();
         for (Iterator it = entries.entrySet().iterator(); it.hasNext();) {
             Map.Entry entry = (Map.Entry) it.next();
             String uniqueName = (String) entry.getKey();
@@ -170,11 +169,11 @@ public class ResourceLoader implements Service {
             XAResourceProducer producer = buildXAResourceProducer(uniqueName, propertyPairs);
 
             if (ResourceRegistrar.get(producer.getUniqueName()) != null) {
-                if (log.isDebugEnabled()) log.debug("resource already registered, skipping it:" + producer.getUniqueName());
+                if (log.isDebugEnabled()) { log.debug("resource already registered, skipping it:" + producer.getUniqueName()); }
                 continue;
             }
 
-            if (log.isDebugEnabled()) log.debug("creating resource " + producer);
+            if (log.isDebugEnabled()) { log.debug("creating resource " + producer); }
             try {
                 producer.init();
             } catch (ResourceConfigurationException ex) {
@@ -284,9 +283,9 @@ public class ResourceLoader implements Service {
     }
 
 
-    private class PropertyPair {
-        private String name;
-        private String value;
+    private final class PropertyPair {
+        private final String name;
+        private final String value;
 
         public PropertyPair(String key, String value) {
             this.name = key;

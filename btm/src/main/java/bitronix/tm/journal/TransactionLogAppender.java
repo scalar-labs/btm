@@ -28,9 +28,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.Iterator;
 import java.nio.channels.FileLock;
+import java.nio.charset.Charset;
 
 /**
  * Used to write {@link TransactionLogRecord} objects to a log file.
@@ -54,7 +53,7 @@ public class TransactionLogAppender {
     private final RandomAccessFile randomAccessFile;
     private final FileLock lock;
     private final TransactionLogHeader header;
-    
+
     private long maxFileLength;
     private ByteBuffer appendBuffer;
 
@@ -63,7 +62,8 @@ public class TransactionLogAppender {
     /**
      * Create an appender that will write to specified file up to the specified maximum length.
      * All disk access are synchronized arround the RandomAccessFile object, including header calls.
-     * @param file the underlying File used to write to disk.
+     *
+     * @param file          the underlying File used to write to disk.
      * @param maxFileLength size of the file on disk that can never be bypassed.
      * @throws IOException if an I/O error occurs.
      */
@@ -81,6 +81,7 @@ public class TransactionLogAppender {
 
     /**
      * Return a {@link TransactionLogHeader} that allows reading and controlling the log file's header.
+     *
      * @return this log file's TransactionLogHeader
      */
     public TransactionLogHeader getHeader() {
@@ -89,6 +90,7 @@ public class TransactionLogAppender {
 
     /**
      * Write a {@link TransactionLogRecord} to disk.
+     *
      * @param tlog the record to write to disk.
      * @return true if there was room in the log file and the log was written, false otherwise.
      * @throws IOException if an I/O error occurs.
@@ -98,11 +100,14 @@ public class TransactionLogAppender {
             int totalRecordSize = tlog.calculateTotalRecordSize();
             long futureFilePosition = getHeader().getPosition() + totalRecordSize;
             if (futureFilePosition >= maxFileLength) { // see TransactionLogHeader.setPosition() as it double-checks this
-                if (log.isDebugEnabled())
+                if (log.isDebugEnabled()) {
                     log.debug("log file is full (size would be: " + futureFilePosition + ", max allowed: " + maxFileLength + ")");
+                }
                 return false;
             }
-            if (log.isDebugEnabled()) log.debug("between " + getHeader().getPosition() + " and " + futureFilePosition + ", writing " + tlog);
+            if (log.isDebugEnabled()) {
+                log.debug("between " + getHeader().getPosition() + " and " + futureFilePosition + ", writing " + tlog);
+            }
 
             ByteBuffer buffer = prepareAppendBuffer(totalRecordSize);
             buffer.putInt(tlog.getStatus());
@@ -114,16 +119,19 @@ public class TransactionLogAppender {
             buffer.put((byte) tlog.getGtrid().getArray().length);
             buffer.put(tlog.getGtrid().getArray());
             buffer.putInt(tlog.getUniqueNames().size());
-            Iterator it = tlog.getUniqueNames().iterator();
-            while (it.hasNext()) {
-                String uniqueName = (String) it.next();
+            for (Object o : tlog.getUniqueNames()) {
+                String uniqueName = (String) o;
                 buffer.putShort((short) uniqueName.length());
                 buffer.put(NAME_CHARSET.encode(uniqueName)); // this writes each character discarding the 8th bit. Isn't that US-ASCII ?
             }
+
             buffer.putInt(tlog.getEndRecord());
             randomAccessFile.getChannel().write((ByteBuffer) buffer.flip());
             getHeader().goAhead(totalRecordSize);
-            if (log.isDebugEnabled()) log.debug("disk journal appender now at position " + getHeader().getPosition());
+
+            if (log.isDebugEnabled()) {
+                log.debug("disk journal appender now at position " + getHeader().getPosition());
+            }
 
             return true;
         }
@@ -139,6 +147,7 @@ public class TransactionLogAppender {
 
     /**
      * Close the appender and the underlying file.
+     *
      * @throws IOException if an I/O error occurs.
      */
     public void close() throws IOException {
@@ -156,6 +165,7 @@ public class TransactionLogAppender {
      * Creates a cursor on this journal file allowing iteration of its records.
      * This opens a new read-only file descriptor independent of the write-only one
      * still used for writing transaction logs.
+     *
      * @return a TransactionLogCursor.
      * @throws IOException if an I/O error occurs.
      */
@@ -165,19 +175,19 @@ public class TransactionLogAppender {
 
     /**
      * Force flushing the logs to disk
+     *
      * @throws IOException if an I/O error occurs.
      */
     public void force() throws IOException {
         if (!TransactionManagerServices.getConfiguration().isForcedWriteEnabled()) {
-            if (log.isDebugEnabled()) log.debug("disk forces have been disabled");
+            if (log.isDebugEnabled()) { log.debug("disk forces have been disabled"); }
             return;
         }
 
         if (!TransactionManagerServices.getConfiguration().isForceBatchingEnabled()) {
-            if (log.isDebugEnabled()) log.debug("not batching disk force");
+            if (log.isDebugEnabled()) { log.debug("not batching disk force"); }
             doForce();
-        }
-        else {
+        } else {
             diskForceBatcherThread.enqueue(this);
         }
     }
@@ -189,9 +199,9 @@ public class TransactionLogAppender {
 
     protected void doForce() throws IOException {
         synchronized (randomAccessFile) {
-            if (log.isDebugEnabled()) log.debug("forcing log writing");
+            if (log.isDebugEnabled()) { log.debug("forcing log writing"); }
             randomAccessFile.getFD().sync();
-            if (log.isDebugEnabled()) log.debug("done forcing log");
+            if (log.isDebugEnabled()) { log.debug("done forcing log"); }
         }
     }
 
@@ -200,7 +210,7 @@ public class TransactionLogAppender {
             if (diskForceBatcherThread != null)
                 return;
 
-            if (log.isDebugEnabled()) log.debug("spawning disk force batcher thread");
+            if (log.isDebugEnabled()) { log.debug("spawning disk force batcher thread"); }
             diskForceBatcherThread = DiskForceBatcherThread.getInstance();
 
             if (!TransactionManagerServices.getConfiguration().isForcedWriteEnabled()) {
@@ -219,19 +229,19 @@ public class TransactionLogAppender {
             if (diskForceBatcherThread == null)
                 return;
 
-            if (log.isDebugEnabled()) log.debug("requesting disk force batcher thread to shutdown");
+            if (log.isDebugEnabled()) { log.debug("requesting disk force batcher thread to shutdown"); }
             diskForceBatcherThread.setAlive(false);
             diskForceBatcherThread.interrupt();
             do {
                 try {
-                    if (log.isDebugEnabled()) log.debug("waiting for disk force batcher thread to die");
+                    if (log.isDebugEnabled()) { log.debug("waiting for disk force batcher thread to die"); }
                     diskForceBatcherThread.join();
                 } catch (InterruptedException ex) {
                     //ignore
                 }
             }
             while (diskForceBatcherThread.isInterrupted());
-            if (log.isDebugEnabled()) log.debug("disk force batcher thread has shutdown");
+            if (log.isDebugEnabled()) { log.debug("disk force batcher thread has shutdown"); }
 
             diskForceBatcherThread = null;
         } // synchronized

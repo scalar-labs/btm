@@ -41,9 +41,9 @@ public class LrcXAConnection extends BaseProxyHandlerClass { // implements XACon
 
     private final static Logger log = LoggerFactory.getLogger(LrcXAConnection.class);
 
-    private Connection connection;
-    private LrcXAResource xaResource;
-    private List connectionEventListeners = new ArrayList();
+    private final Connection connection;
+    private final LrcXAResource xaResource;
+    private final List connectionEventListeners = new ArrayList();
 
     public LrcXAConnection(Connection connection) {
         this.connection = connection;
@@ -73,7 +73,7 @@ public class LrcXAConnection extends BaseProxyHandlerClass { // implements XACon
     }
 
     private void fireCloseEvent() {
-        if (log.isDebugEnabled()) log.debug("notifying " + connectionEventListeners.size() + " connectionEventListeners(s) about closing of " + this);
+        if (log.isDebugEnabled()) { log.debug("notifying " + connectionEventListeners.size() + " connectionEventListeners(s) about closing of " + this); }
         for (int i = 0; i < connectionEventListeners.size(); i++) {
             ConnectionEventListener connectionEventListener = (ConnectionEventListener) connectionEventListeners.get(i);
             XAConnection conn = (XAConnection) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { XAConnection.class }, this);

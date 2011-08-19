@@ -35,8 +35,8 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
 
     private final static Logger log = LoggerFactory.getLogger(AbstractXAStatefulHolder.class);
 
-    private int state = STATE_IN_POOL;
-    private List stateChangeEventListeners = new ArrayList();
+    private volatile int state = STATE_IN_POOL;
+    private final List stateChangeEventListeners = new ArrayList();
 
     public synchronized int getState() {
         return state;

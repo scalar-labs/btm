@@ -56,7 +56,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
     private static final Map PRODUCERS = new HashMap();
 
     private final List xaResourceHolders = new ArrayList();
-    private RecoveryXAResourceHolder recoveryXAResourceHolder;
+    private volatile RecoveryXAResourceHolder recoveryXAResourceHolder;
 
 
     private EhCacheXAResourceProducer() {

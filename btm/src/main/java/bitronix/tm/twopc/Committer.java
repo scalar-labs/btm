@@ -46,8 +46,8 @@ public class Committer extends AbstractPhaseEngine {
 
     private final static Logger log = LoggerFactory.getLogger(Committer.class);
 
-    private boolean onePhase;
-    private List interestedResources;
+    private volatile boolean onePhase;
+    private volatile List interestedResources;
     // this list has to be thread-safe as the CommitJobs can be executed in parallel (when async 2PC is configured)
     private final List committedResources = Collections.synchronizedList(new ArrayList());
 
@@ -69,7 +69,7 @@ public class Committer extends AbstractPhaseEngine {
         if (resourceManager.size() == 0) {
             transaction.setStatus(Status.STATUS_COMMITTING); //TODO: there is a disk force here that could be avoided
             transaction.setStatus(Status.STATUS_COMMITTED);
-            if (log.isDebugEnabled()) log.debug("phase 2 commit succeeded with no interested resource");
+            if (log.isDebugEnabled()) { log.debug("phase 2 commit succeeded with no interested resource"); }
             return;
         }
 
@@ -86,7 +86,7 @@ public class Committer extends AbstractPhaseEngine {
             throwException("transaction failed during commit of " + transaction, ex, interestedResources.size());
         }
 
-        if (log.isDebugEnabled()) log.debug("phase 2 commit executed on resources " + Decoder.collectResourcesNames(committedResources));
+        if (log.isDebugEnabled()) { log.debug("phase 2 commit executed on resources " + Decoder.collectResourcesNames(committedResources)); }
 
         // Some resources might have failed the 2nd phase of 2PC.
         // Only resources which successfully committed should be registered in the journal, the other
@@ -103,7 +103,7 @@ public class Committer extends AbstractPhaseEngine {
             committedAndNotInterestedResources.addAll(committedResources);
             committedAndNotInterestedResources.addAll(notInterestedResources);
 
-            log.debug("phase 2 commit succeeded on resources " + Decoder.collectResourcesNames(committedAndNotInterestedResources));
+            { log.debug("phase 2 commit succeeded on resources " + Decoder.collectResourcesNames(committedAndNotInterestedResources)); }
         }
 
         transaction.setStatus(Status.STATUS_COMMITTED, new HashSet(committedAndNotInterestedUniqueNames));
@@ -164,7 +164,7 @@ public class Committer extends AbstractPhaseEngine {
     }
 
 
-    private class CommitJob extends Job {
+    private final class CommitJob extends Job {
 
         public CommitJob(XAResourceHolderState resourceHolder) {
             super(resourceHolder);
@@ -190,10 +190,10 @@ public class Committer extends AbstractPhaseEngine {
 
         private void commitResource(XAResourceHolderState resourceHolder, boolean onePhase) throws XAException {
             try {
-                if (log.isDebugEnabled()) log.debug("committing resource " + resourceHolder + (onePhase ? " (with one-phase optimization)" : ""));
+                if (log.isDebugEnabled()) { log.debug("committing resource " + resourceHolder + (onePhase ? " (with one-phase optimization)" : "")); }
                 resourceHolder.getXAResource().commit(resourceHolder.getXid(), onePhase);
                 committedResources.add(resourceHolder);
-                if (log.isDebugEnabled()) log.debug("committed resource " + resourceHolder);
+                if (log.isDebugEnabled()) { log.debug("committed resource " + resourceHolder); }
             } catch (XAException ex) {
                handleXAException(resourceHolder, ex);
             }
@@ -230,9 +230,9 @@ public class Committer extends AbstractPhaseEngine {
 
         private void forgetHeuristicCommit(XAResourceHolderState resourceHolder) {
             try {
-                if (log.isDebugEnabled()) log.debug("handling heuristic commit on resource " + resourceHolder.getXAResource());
+                if (log.isDebugEnabled()) { log.debug("handling heuristic commit on resource " + resourceHolder.getXAResource()); }
                 resourceHolder.getXAResource().forget(resourceHolder.getXid());
-                if (log.isDebugEnabled()) log.debug("forgotten heuristically committed resource " + resourceHolder.getXAResource());
+                if (log.isDebugEnabled()) { log.debug("forgotten heuristically committed resource " + resourceHolder.getXAResource()); }
             } catch (XAException ex) {
                 log.error("cannot forget " + resourceHolder.getXid() + " assigned to " + resourceHolder.getXAResource() + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
             }

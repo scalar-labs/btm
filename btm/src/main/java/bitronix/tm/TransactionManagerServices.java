@@ -102,7 +102,7 @@ public class TransactionManagerServices {
                     throw new InitializationException("invalid journal implementation '" + configuredJounal + "'", ex);
                 }
             }
-            if (log.isDebugEnabled()) log.debug("using journal " + configuredJounal);
+            if (log.isDebugEnabled()) { log.debug("using journal " + configuredJounal); }
         }
         return journal;
     }
@@ -149,11 +149,11 @@ public class TransactionManagerServices {
         if (executor == null) {
             boolean async = getConfiguration().isAsynchronous2Pc();
             if (async) {
-                if (log.isDebugEnabled()) log.debug("using AsyncExecutor");
+                if (log.isDebugEnabled()) { log.debug("using AsyncExecutor"); }
                 executor = new AsyncExecutor();
             }
             else {
-                if (log.isDebugEnabled()) log.debug("using SyncExecutor");
+                if (log.isDebugEnabled()) { log.debug("using SyncExecutor"); }
                 executor = new SyncExecutor();
             }
         }
@@ -179,7 +179,7 @@ public class TransactionManagerServices {
     /**
      * Clear services references. Called at the end of the shutdown procedure.
      */
-    protected static synchronized void clear() {
+    protected synchronized static void clear() {
         transactionManager = null;
         transactionSynchronizationRegistry = null;
         configuration = null;

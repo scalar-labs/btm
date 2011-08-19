@@ -35,7 +35,10 @@ import java.util.Iterator;
  *
  * @author lorban
  */
-public class Decoder {
+public final class Decoder {
+
+    private Decoder() {
+    }
 
     public static String decodeXAExceptionErrorCode(XAException ex) {
         switch (ex.errorCode) {

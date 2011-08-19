@@ -48,10 +48,10 @@ public class BitronixContext implements Context {
 
     public BitronixContext() {
         userTransactionName = TransactionManagerServices.getConfiguration().getJndiUserTransactionName();
-        if (log.isDebugEnabled()) log.debug("binding transaction manager at name '" + userTransactionName + "'");
+        if (log.isDebugEnabled()) { log.debug("binding transaction manager at name '" + userTransactionName + "'"); }
 
         synchronizationRegistryName = TransactionManagerServices.getConfiguration().getJndiTransactionSynchronizationRegistryName();
-        if (log.isDebugEnabled()) log.debug("binding synchronization registry at name '" + synchronizationRegistryName + "'");
+        if (log.isDebugEnabled()) { log.debug("binding synchronization registry at name '" + synchronizationRegistryName + "'"); }
     }
 
     private void checkClosed() throws ServiceUnavailableException {
@@ -69,7 +69,7 @@ public class BitronixContext implements Context {
 
     public Object lookup(String s) throws NamingException {
         checkClosed();
-        if (log.isDebugEnabled()) log.debug("looking up '" + s + "'");
+        if (log.isDebugEnabled()) { log.debug("looking up '" + s + "'"); }
 
         Object o;
         if (userTransactionName.equals(s))

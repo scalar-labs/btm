@@ -36,16 +36,18 @@ import java.util.Map;
  * @author brettw
  */
 public abstract class BaseProxyHandlerClass implements InvocationHandler {
-    private static Map classMethodCache = new HashMap();
-    private Map methodCache;
+
+    private final static Map classMethodCache = new HashMap();
+    private final Map methodCache;
 
     public BaseProxyHandlerClass() {
-        synchronized (this.getClass()) {
-            methodCache = (Map) classMethodCache.get(this.getClass());
+        synchronized (classMethodCache) {
+            Map methodCache = (Map) classMethodCache.get(this.getClass());
             if (methodCache == null) {
                 methodCache = new HashMap();
                 classMethodCache.put(this.getClass(), methodCache);
             }
+            this.methodCache = methodCache;
         }
     }
 

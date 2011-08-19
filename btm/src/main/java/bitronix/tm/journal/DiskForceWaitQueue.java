@@ -52,18 +52,18 @@ public class DiskForceWaitQueue {
             return false;
         }
         objects.add(tla);
-        if (log.isDebugEnabled()) log.debug("enqueued " + tla + ", " + objects.size() + " TransactionLogAppender waiting for a disk force in " + this);
+        if (log.isDebugEnabled()) { log.debug("enqueued " + tla + ", " + objects.size() + " TransactionLogAppender waiting for a disk force in " + this); }
         notifyAll();
         return true;
     }
 
     public synchronized TransactionLogAppender head() {
-        if (log.isDebugEnabled()) log.debug("returning head TransactionLogAppender");
+        if (log.isDebugEnabled()) { log.debug("returning head TransactionLogAppender"); }
         return (TransactionLogAppender) objects.get(0);
     }
 
     public synchronized void clear() {
-        if (log.isDebugEnabled()) log.debug("clearing list of " + objects.size() +  " waiting TransactionLogAppender(s) in " + this);
+        if (log.isDebugEnabled()) { log.debug("clearing list of " + objects.size() +  " waiting TransactionLogAppender(s) in " + this); }
         objects.clear();
         isCleared = true;
         notifyAll();
@@ -75,7 +75,7 @@ public class DiskForceWaitQueue {
 
     public synchronized void waitUntilNotEmpty() throws InterruptedException {
         while (objects.isEmpty()) {
-            if (log.isDebugEnabled()) log.debug("waiting for some TransactionLogAppender to get enqueued");
+            if (log.isDebugEnabled()) { log.debug("waiting for some TransactionLogAppender to get enqueued"); }
             wait();
         }
     }
@@ -86,7 +86,7 @@ public class DiskForceWaitQueue {
 
     public synchronized void waitUntilNotContains(TransactionLogAppender tla) throws InterruptedException {
         while (CollectionUtils.containsByIdentity(objects, tla)) {
-            if (log.isDebugEnabled()) log.debug("waiting for " + tla + " to get dequeued");
+            if (log.isDebugEnabled()) { log.debug("waiting for " + tla + " to get dequeued"); }
             wait();
         }
     }

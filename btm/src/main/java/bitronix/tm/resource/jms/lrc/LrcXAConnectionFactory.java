@@ -36,8 +36,8 @@ import java.util.Properties;
  */
 public class LrcXAConnectionFactory implements XAConnectionFactory {
 
-    private String connectionFactoryClassName;
-    private Properties properties = new Properties();
+    private volatile String connectionFactoryClassName;
+    private volatile Properties properties = new Properties();
 
     public LrcXAConnectionFactory() {
     }

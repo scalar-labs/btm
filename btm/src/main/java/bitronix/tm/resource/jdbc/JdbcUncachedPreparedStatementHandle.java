@@ -26,9 +26,9 @@ public class JdbcUncachedPreparedStatementHandle extends BaseProxyHandlerClass {
 
     // The 'parent' connection. Used to remove this statement delegate
     // from the un-closed statements list when close() is called.
-    private JdbcPooledConnection parentConnection;
+    private final JdbcPooledConnection parentConnection;
 
-    private PreparedStatement delegate;
+    private final PreparedStatement delegate;
 
     public JdbcUncachedPreparedStatementHandle(PreparedStatement delegate, JdbcPooledConnection pooledConnection) {
         this.delegate = delegate;
