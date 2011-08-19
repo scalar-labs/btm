@@ -64,6 +64,7 @@ public class Configuration implements Service {
     private volatile int gracefulShutdownInterval;
     private volatile int backgroundRecoveryIntervalSeconds;
     private volatile boolean disableJmx;
+    private volatile boolean synchronousJmxRegistration;
     private volatile String jndiUserTransactionName;
     private volatile String jndiTransactionSynchronizationRegistryName;
     private volatile String journal;
@@ -108,6 +109,7 @@ public class Configuration implements Service {
             gracefulShutdownInterval = getInt(properties, "bitronix.tm.timer.gracefulShutdownInterval", 60);
             backgroundRecoveryIntervalSeconds = getInt(properties, "bitronix.tm.timer.backgroundRecoveryIntervalSeconds", 60);
             disableJmx = getBoolean(properties, "bitronix.tm.disableJmx", false);
+            synchronousJmxRegistration = getBoolean(properties, "bitronix.tm.jmx.sync", false);
             jndiUserTransactionName = getString(properties, "bitronix.tm.jndi.userTransactionName", "java:comp/UserTransaction");
             jndiTransactionSynchronizationRegistryName = getString(properties, "bitronix.tm.jndi.transactionSynchronizationRegistryName", "java:comp/TransactionSynchronizationRegistry");
             journal = getString(properties, "bitronix.tm.journal", "disk");
@@ -450,6 +452,30 @@ public class Configuration implements Service {
     public Configuration setDisableJmx(boolean disableJmx) {
         checkNotStarted();
         this.disableJmx = disableJmx;
+        return this;
+    }
+
+    /**
+     * Should JMX registrations and un-registrations be done in a synchronous / blocking way.
+     * <p/>
+     * By default all JMX registrations are done asynchronously. Registrations and un-registrations
+     * are combined to avoid the registration of short lived instances and increase the overall throughput.
+     *
+     * @return true if the caller should be blocked when MBeans are registered (defaults to false).
+     */
+    public boolean isSynchronousJmxRegistration() {
+        return synchronousJmxRegistration;
+    }
+
+    /**
+     * Toggles synchronous and asynchronous JMX registration mode.
+     * @param synchronousJmxRegistration true if the caller should be blocked when MBeans are registered
+     *                                   (defaults to false).
+     * @return this.
+     */
+    public Configuration setSynchronousJmxRegistration(boolean synchronousJmxRegistration) {
+        checkNotStarted();
+        this.synchronousJmxRegistration = synchronousJmxRegistration;
         return this;
     }
 
