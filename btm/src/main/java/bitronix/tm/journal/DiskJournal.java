@@ -230,8 +230,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * {@inheritDoc}
      */
     @Override
-    public synchronized void unsafeReadRecordsInto(boolean includeInvalid,
-                                                   Collection<JournalRecord> target) throws IOException {
+    public synchronized void unsafeReadRecordsInto(Collection<JournalRecord> target, boolean includeInvalid) throws IOException {
         if (activeTla == null)
             throw new IOException("cannot read records, disk logger is not open");
 
