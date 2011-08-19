@@ -73,9 +73,4 @@ public interface NioJournalConstants {
      * (should be as large as the majority of transactions may become)
      */
     int PRE_ALLOCATED_BUFFER_SIZE = Integer.getInteger("bitronix.nio.journal.buffer.size", 386);
-
-    /**
-     * If enabled 'fsyncs' are neither applied nor threads block on the 'force();' method.
-     */
-    boolean SKIP_FSYNC = Boolean.getBoolean("bitronix.journal.skip.fsync");
 }

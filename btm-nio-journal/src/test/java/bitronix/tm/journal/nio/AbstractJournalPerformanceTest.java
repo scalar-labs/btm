@@ -21,10 +21,13 @@
 
 package bitronix.tm.journal.nio;
 
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.journal.NullJournal;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.transaction.Status;
@@ -46,6 +49,16 @@ public abstract class AbstractJournalPerformanceTest extends AbstractJournalTest
 
     protected int getLogCallsPerEmitter() {
         return 500;
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        TransactionManagerServices.getConfiguration().setForcedWriteEnabled(true);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        TransactionManagerServices.getConfiguration().setForcedWriteEnabled(true);
     }
 
     @Test
@@ -74,13 +87,19 @@ public abstract class AbstractJournalPerformanceTest extends AbstractJournalTest
             journal.force();
 
             double seconds = ((double) System.currentTimeMillis() - time) / 1000;
-            System.out.printf("%d transactions, took %.2f seconds (%.2f tx/s)%n",
-                    logCalls, seconds, logCalls / seconds);
+            System.out.printf("%s: %d transactions, took %.2f seconds (%.2f tx/s)%n",
+                    getClass().getSimpleName(), logCalls, seconds, logCalls / seconds);
 
             handleDanglingRecords(danglingUids);
         } finally {
             executorService.shutdown();
         }
+    }
+
+    @Test
+    public void testLogPerformanceWithoutFsync() throws Exception {
+        TransactionManagerServices.getConfiguration().setForcedWriteEnabled(false);
+        testLogPerformance();
     }
 
     private void handleDanglingRecords(List<Uid> danglingUids) throws IOException {

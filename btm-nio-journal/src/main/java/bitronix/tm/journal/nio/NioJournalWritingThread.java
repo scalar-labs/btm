@@ -181,8 +181,8 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
                 int iterationsBeforeForce = WRITE_ITERATIONS_BEFORE_FORCE;
                 elementsToWorkOn.clear();
                 do {
-                    boolean block = iterationsBeforeForce == WRITE_ITERATIONS_BEFORE_FORCE;
-                    collectWork(recordsToWorkOn, block);
+                    boolean isFirstIteration = iterationsBeforeForce == WRITE_ITERATIONS_BEFORE_FORCE;
+                    collectWork(recordsToWorkOn, isFirstIteration);
                     if (recordsToWorkOn.isEmpty())
                         break;
 

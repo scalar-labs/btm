@@ -43,6 +43,7 @@ public class NioJournalPerformanceTest extends AbstractJournalPerformanceTest {
     }
 
     @Test
+    @Override
     public void testLogPerformanceWithoutFsync() throws Exception {
         ((NioJournal) journal).setSkipForce(true);
         super.testLogPerformance();

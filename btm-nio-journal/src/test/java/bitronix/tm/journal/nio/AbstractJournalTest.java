@@ -23,6 +23,7 @@ package bitronix.tm.journal.nio;
 
 import bitronix.tm.journal.Journal;
 import org.junit.After;
+import org.junit.Before;
 
 /**
  * Base class for journal tests.
@@ -31,9 +32,14 @@ import org.junit.After;
  */
 public abstract class AbstractJournalTest {
 
-    protected Journal journal = getJournal();
+    protected Journal journal;
 
     protected abstract Journal getJournal();
+
+    @Before
+    public void initJournal() throws Exception {
+        journal = getJournal();
+    }
 
     @After
     public void shutdownJournal() throws Exception {

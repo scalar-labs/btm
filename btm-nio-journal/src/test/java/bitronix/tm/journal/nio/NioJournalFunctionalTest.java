@@ -21,9 +21,9 @@
 
 package bitronix.tm.journal.nio;
 
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.journal.Journal;
 import bitronix.tm.journal.JournalRecord;
-import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;
 import org.junit.Before;
@@ -35,8 +35,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 
 /**
  * Nio journal specific functional tests.
@@ -46,8 +45,8 @@ import static org.junit.Assert.assertFalse;
 public class NioJournalFunctionalTest extends AbstractJournalFunctionalTest {
     @Override
     protected JournalRecord getLogRecord(int status, int recordLength, int headerLength,
-                                                long time, int sequenceNumber, int crc32, Uid gtrid,
-                                                Set uniqueNames, int endRecord) {
+                                         long time, int sequenceNumber, int crc32, Uid gtrid,
+                                         Set uniqueNames, int endRecord) {
         return new NioJournalRecord(status, recordLength, time, sequenceNumber, gtrid, uniqueNames, true);
     }
 
@@ -59,6 +58,14 @@ public class NioJournalFunctionalTest extends AbstractJournalFunctionalTest {
     @Before
     public void setUp() throws Exception {
         NioJournal.getJournalFilePath().delete();
+    }
+
+    @Test
+    public void testFSYNCCanBeSetFromCentralConfiguration() throws Exception {
+        TransactionManagerServices.getConfiguration().setForcedWriteEnabled(true);
+        assertFalse(new NioJournal().isSkipForce());
+        TransactionManagerServices.getConfiguration().setForcedWriteEnabled(false);
+        assertTrue(new NioJournal().isSkipForce());
     }
 
     @Test

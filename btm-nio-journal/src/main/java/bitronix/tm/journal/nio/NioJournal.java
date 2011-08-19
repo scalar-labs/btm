@@ -73,7 +73,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
     volatile File journalFilePath;
     volatile NioJournalFile journalFile;
 
-    boolean skipForce = SKIP_FSYNC;
+    boolean skipForce = !TransactionManagerServices.getConfiguration().isForcedWriteEnabled();
 
     /**
      * {@inheritDoc}
@@ -172,7 +172,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
         trackedTransactions.purgeTransactionsExceedingLifetime();
 
         journalWritingThread = new NioJournalWritingThread(trackedTransactions, journalFile,
-                skipForce ? null : forceSynchronizer);
+                isSkipForce() ? null : forceSynchronizer);
         log.info("Successfully started a new log appender on the journal file {}.", journalFilePath);
     }
 
