@@ -107,7 +107,7 @@ public class XAPool implements StateChangeListener {
         return failed;
     }
 
-    public synchronized Object getConnectionHandle() throws Exception {
+    public Object getConnectionHandle() throws Exception {
         return getConnectionHandle(true);
     }
     
@@ -127,7 +127,6 @@ public class XAPool implements StateChangeListener {
             }
         }
 
-        long remainingTime = bean.getAcquisitionTimeout() * 1000L;
         long before = MonotonicClock.currentTimeMillis();
         while (true) {
             XAStatefulHolder xaStatefulHolder = null;
@@ -171,6 +170,7 @@ public class XAPool implements StateChangeListener {
 
                 // check for timeout
                 long now = MonotonicClock.currentTimeMillis();
+                long remainingTime = bean.getAcquisitionTimeout() * 1000L;
                 remainingTime -= (now - before);
                 if (remainingTime <= 0) {
                     throw new BitronixRuntimeException("cannot get valid connection from " + this + " after trying for " + bean.getAcquisitionTimeout() + "s", ex);
@@ -427,9 +427,11 @@ public class XAPool implements StateChangeListener {
             long now = MonotonicClock.currentTimeMillis();
             remainingTime -= (now - before);
             if (remainingTime <= 0 && inPoolSize() == 0) {
-                if (log.isDebugEnabled()) { log.debug("connection pool dequeue timed out"); }
-                if (TransactionManagerServices.isTransactionManagerRunning())
-                    TransactionManagerServices.getTransactionManager().dumpTransactionContexts();
+                if (log.isDebugEnabled()) {
+                	log.debug("connection pool dequeue timed out");
+                	if (TransactionManagerServices.isTransactionManagerRunning())
+                		TransactionManagerServices.getTransactionManager().dumpTransactionContexts();
+                }
                 throw new BitronixRuntimeException("XA pool of resource " + bean.getUniqueName() + " still empty after " + bean.getAcquisitionTimeout() + "s wait time");
             }
         } // while

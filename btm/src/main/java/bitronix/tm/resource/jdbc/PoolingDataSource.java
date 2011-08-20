@@ -23,6 +23,7 @@ package bitronix.tm.resource.jdbc;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.naming.NamingException;
 import javax.naming.Reference;
@@ -75,10 +76,10 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
      * Initializes the pool by creating the initial amount of connections.
      */
     public synchronized void init() {
+    	if (this.pool != null)
+    		return;
+    	
         try {
-            if (this.pool != null)
-                return;
-
             buildXAPool();
             this.jmxName = "bitronix.tm:type=JDBC,UniqueName=" + ManagementRegistrar.makeValidName(getUniqueName());
             ManagementRegistrar.register(jmxName, this);

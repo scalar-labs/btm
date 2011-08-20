@@ -276,10 +276,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             if (log.isDebugEnabled()) { log.debug("connection " + xaConnection + " was in state " + Decoder.decodeXAStatefulHolderState(oldState) + ", no need to test it"); }
         }
 
-        if (jdbcVersionDetected == 3)
-        {
-        	
-        }
         if (log.isDebugEnabled()) { log.debug("got connection handle from " + this); }
         return getConnectionHandle(connection);
     }
@@ -410,7 +406,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     	// JDBC 4.0
     	try {
-			Class<?> handle = this.getClass().getClassLoader().loadClass("bitronix.tm.resource.jdbc4.Jdbc4ConnectionHandle");
+			Class<?> handle = JdbcPooledConnection.class.forName("bitronix.tm.resource.jdbc4.Jdbc4ConnectionHandle");
 			Constructor<?> constructor = handle.getConstructor( new Class[] {JdbcPooledConnection.class, Connection.class} );
 			return constructor.newInstance( new Object[] {this, connection} );
 		} catch (Exception e) {

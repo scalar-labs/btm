@@ -22,6 +22,7 @@ package bitronix.tm;
 
 import bitronix.tm.internal.*;
 import bitronix.tm.utils.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -32,6 +33,7 @@ import javax.transaction.xa.XAException;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Implementation of {@link TransactionManager} and {@link UserTransaction}.
@@ -43,8 +45,11 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionManager.class);
     private final static String MDC_GTRID_KEY = "btm-gtrid";
 
-    private final Map contexts = new ConcurrentHashMap();
-    private final Map inFlightTransactions = new ConcurrentHashMap();
+    private final Map<Thread, ThreadContext> threadContexts = new ConcurrentHashMap<Thread, ThreadContext>();
+    private final ReentrantReadWriteLock contextsReadWriteLock = new ReentrantReadWriteLock();
+    
+    private final Map<Uid, BitronixTransaction> inFlightTransactions = new HashMap<Uid, BitronixTransaction>();
+    private final ReentrantReadWriteLock inFlightReadWriteLock = new ReentrantReadWriteLock();
 
     private volatile boolean shuttingDown;
 
@@ -91,7 +96,9 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         if (isShuttingDown())
             throw new BitronixSystemException("cannot start a new transaction, transaction manager is shutting down");
 
-        dumpTransactionContexts();
+        if (log.isDebugEnabled()) {
+        	dumpTransactionContexts();
+        }
 
         BitronixTransaction currentTx = getCurrentTransaction();
         if (currentTx != null)
@@ -101,7 +108,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         ClearContextSynchronization clearContextSynchronization = new ClearContextSynchronization(currentTx);
         try {
             currentTx.getSynchronizationScheduler().add(clearContextSynchronization, Scheduler.ALWAYS_LAST_POSITION -1);
-            currentTx.setActive(getOrCreateCurrentContext().getTimeout());
+            currentTx.setActive(getOrCreateCurrentThreadContext().getTimeout());
             if (log.isDebugEnabled()) { log.debug("begun new transaction at " + new Date(currentTx.getResourceManager().getGtrid().extractTimestamp())); }
         } catch (RuntimeException ex) {
             clearContextSynchronization.afterCompletion(Status.STATUS_NO_TRANSACTION);
@@ -154,7 +161,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     public void setTransactionTimeout(int seconds) throws SystemException {
         if (seconds < 0)
             throw new BitronixSystemException("cannot set a timeout to less than 0 second (was: " + seconds + "s)");
-        getOrCreateCurrentContext().setTimeout(seconds);
+        getOrCreateCurrentThreadContext().setTimeout(seconds);
     }
 
     public Transaction suspend() throws SystemException {
@@ -216,8 +223,14 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * Return all in-flight transactions.
      * @return a map of {@link BitronixTransaction} objects using {@link Uid} as key and {@link BitronixTransaction} as value.
      */
-    public Map getInFlightTransactions() {
-        return Collections.unmodifiableMap(inFlightTransactions);
+    public Map<Uid, BitronixTransaction> getInFlightTransactions() {
+    	inFlightReadWriteLock.readLock().lock();
+    	try {
+    		return Collections.unmodifiableMap(inFlightTransactions);
+    	}
+    	finally {
+    		inFlightReadWriteLock.readLock().unlock();
+    	}
     }
 
     /**
@@ -225,25 +238,28 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @return the timestamp or Long.MIN_VALUE if there is no in-flight transaction.
      */
     public long getOldestInFlightTransactionTimestamp() {
-        if (inFlightTransactions.isEmpty()) {
-            if (log.isDebugEnabled()) { log.debug("oldest in-flight transaction's timestamp: " + Long.MIN_VALUE); }
-            return Long.MIN_VALUE;
-        }
-
-        long oldestTimestamp = Long.MAX_VALUE;
-
-        Iterator it = inFlightTransactions.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            Uid gtrid = (Uid) entry.getKey();
-            long currentTimestamp = gtrid.extractTimestamp();
-
-            if (currentTimestamp < oldestTimestamp)
-                oldestTimestamp = currentTimestamp;
-        }
-
-        if (log.isDebugEnabled()) { log.debug("oldest in-flight transaction's timestamp: " + oldestTimestamp); }
-        return oldestTimestamp;
+    	inFlightReadWriteLock.readLock().lock();
+    	try {
+	        if (inFlightTransactions.isEmpty()) {
+	            if (log.isDebugEnabled()) { log.debug("oldest in-flight transaction's timestamp: " + Long.MIN_VALUE); }
+	            return Long.MIN_VALUE;
+	        }
+	
+	        long oldestTimestamp = Long.MAX_VALUE;
+	
+	        for (Uid gtrid : inFlightTransactions.keySet()) {
+	            long currentTimestamp = gtrid.extractTimestamp();
+	
+	            if (currentTimestamp < oldestTimestamp)
+	                oldestTimestamp = currentTimestamp;
+	        }
+	
+	        if (log.isDebugEnabled()) { log.debug("oldest in-flight transaction's timestamp: " + oldestTimestamp); }
+	        return oldestTimestamp;
+    	}
+    	finally {
+    		inFlightReadWriteLock.readLock().unlock();
+    	}
     }
 
     /**
@@ -251,9 +267,15 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @return the current transaction or null if no transaction has been started on the current thread.
      */
     public BitronixTransaction getCurrentTransaction() {
-        if (contexts.get(Thread.currentThread()) == null)
-            return null;
-        return getOrCreateCurrentContext().getTransaction();
+    	contextsReadWriteLock.readLock().lock();
+    	try {
+	        if (threadContexts.get(Thread.currentThread()) == null)
+	            return null;
+	        return getOrCreateCurrentThreadContext().getTransaction();
+    	}
+    	finally {
+    		contextsReadWriteLock.readLock().unlock();
+    	}
     }
 
     /**
@@ -268,15 +290,16 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * Dump an overview of all running transactions as debug logs.
      */
     public void dumpTransactionContexts() {
-        if (log.isDebugEnabled()) {
-            log.debug("dumping " + inFlightTransactions.size() + " transaction context(s)");
-            Iterator it = inFlightTransactions.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry entry = (Map.Entry) it.next();
-                BitronixTransaction tx = (BitronixTransaction) entry.getValue();
-                log.debug(tx.toString());
-            }
-        }
+    	inFlightReadWriteLock.readLock().lock();
+    	try {
+	        log.debug("dumping " + inFlightTransactions.size() + " transaction context(s)");
+	        for (BitronixTransaction tx : inFlightTransactions.values()) {
+	            log.debug(tx.toString());
+	        }
+    	}
+    	finally {
+    		inFlightReadWriteLock.readLock().unlock();
+    	}
     }
 
     /**
@@ -322,6 +345,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         if (log.isDebugEnabled()) { log.debug("shutdown ran successfully"); }
     }
 
+    // READONLY
     private void internalShutdown() {
         shuttingDown = true;
         dumpTransactionContexts();
@@ -345,8 +369,10 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         }
 
         if (txCount > 0) {
-            if (log.isDebugEnabled()) { log.debug("still " + txCount + " in-flight transactions, shutting down anyway"); }
-            dumpTransactionContexts();
+            if (log.isDebugEnabled()) {
+            	log.debug("still " + txCount + " in-flight transactions, shutting down anyway");
+            	dumpTransactionContexts();
+            }
         }
         else {
             if (log.isDebugEnabled()) { log.debug("all transactions finished, resuming shutdown"); }
@@ -375,8 +401,16 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      */
     private BitronixTransaction createTransaction() {
         BitronixTransaction transaction = new BitronixTransaction();
-        getOrCreateCurrentContext().setTransaction(transaction);
-        inFlightTransactions.put(transaction.getResourceManager().getGtrid(), transaction);
+        getOrCreateCurrentThreadContext().setTransaction(transaction);
+
+        inFlightReadWriteLock.writeLock().lock();
+        try {
+        	inFlightTransactions.put(transaction.getResourceManager().getGtrid(), transaction);
+        }
+        finally {
+        	inFlightReadWriteLock.writeLock().unlock();
+        }
+
         MDC.put(MDC_GTRID_KEY, transaction.getGtrid());
         return transaction;
     }
@@ -385,9 +419,15 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * Unlink the transaction from the current thread's context.
      */
     private void clearCurrentContextForSuspension() {
-        if (log.isDebugEnabled()) { log.debug("clearing current thread context: " + getOrCreateCurrentContext()); }
-        contexts.remove(Thread.currentThread());
-        if (log.isDebugEnabled()) { log.debug("cleared current thread context: " + getOrCreateCurrentContext()); }
+        if (log.isDebugEnabled()) { log.debug("clearing current thread context: " + getOrCreateCurrentThreadContext()); }
+        contextsReadWriteLock.writeLock().lock();
+        try {
+        	threadContexts.remove(Thread.currentThread());
+        }
+        finally {
+        	contextsReadWriteLock.writeLock().unlock();
+        }
+        if (log.isDebugEnabled()) { log.debug("cleared current thread context: " + getOrCreateCurrentThreadContext()); }
         MDC.remove(MDC_GTRID_KEY);
     }
 
@@ -397,9 +437,15 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      */
     private void setCurrentContext(ThreadContext context) {
         if (log.isDebugEnabled()) { log.debug("changing current thread context to " + context); }
-        if (context == null)
-            throw new IllegalArgumentException("setCurrentContext() should not be called with a null context, clearCurrentContextForSuspension() should be used instead");
-        contexts.put(Thread.currentThread(), context);
+        contextsReadWriteLock.writeLock().lock();
+        try {
+	        if (context == null)
+	            throw new IllegalArgumentException("setCurrentContext() should not be called with a null context, clearCurrentContextForSuspension() should be used instead");
+	        threadContexts.put(Thread.currentThread(), context);
+        }
+        finally {
+        	contextsReadWriteLock.writeLock().unlock();
+        }
         if (context.getTransaction() != null) {
             MDC.put(MDC_GTRID_KEY, context.getTransaction().getGtrid());
         }
@@ -409,40 +455,69 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * Get the context attached to the current thread. If there is no current context, a new one is created.
      * @return the context.
      */
-    private ThreadContext getOrCreateCurrentContext() {
-        ThreadContext threadContext = (ThreadContext) contexts.get(Thread.currentThread());
-        if (threadContext == null) {
-            if (log.isDebugEnabled()) { log.debug("creating new thread context"); }
-            threadContext = new ThreadContext();
-            setCurrentContext(threadContext);
-        }
-        return threadContext;
+    private ThreadContext getOrCreateCurrentThreadContext() {
+    	contextsReadWriteLock.readLock().lock();
+    	try {
+    		ThreadContext threadContext = threadContexts.get(Thread.currentThread());
+    		if (threadContext == null) {
+    			if (log.isDebugEnabled()) { log.debug("creating new thread context"); }
+    			threadContext = new ThreadContext();
+
+    			// There is no read->write lock escalation, so release all read locks by this thread and re-acquire after
+    			int holdCount = 0;
+    			while (contextsReadWriteLock.getReadHoldCount() > 0) {
+    				contextsReadWriteLock.readLock().unlock();
+    				holdCount++;
+    			}
+
+    			// This method acquires a write lock, then releases it
+    			setCurrentContext(threadContext);
+
+    			// Now, re-acquire however many read locks we held before
+    			while (holdCount > 0) {
+    				contextsReadWriteLock.readLock().lock();
+    				holdCount--;
+    			}
+    		}
+    		return threadContext;
+    	}
+    	finally {
+    		contextsReadWriteLock.readLock().unlock();
+    	}
     }
 
     private final class ClearContextSynchronization implements Synchronization {
         private final BitronixTransaction currentTx;
+		private final Thread thread;
 
         public ClearContextSynchronization(BitronixTransaction currentTx) {
             this.currentTx = currentTx;
+            this.thread = Thread.currentThread();
         }
 
         public void beforeCompletion() {
         }
 
         public void afterCompletion(int status) {
-            Iterator it = contexts.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry entry = (Map.Entry) it.next();
-                ThreadContext context = (ThreadContext) entry.getValue();
-                if (context.getTransaction() == currentTx) {
-                    if (log.isDebugEnabled()) { log.debug("clearing thread context: " + context); }
-                    it.remove();
-                    break;
-                }
-            }
+        	contextsReadWriteLock.writeLock().lock();
+        	try {
+        		ThreadContext context = threadContexts.remove(thread);
+        		if (context != null) {
+        			if (log.isDebugEnabled()) { log.debug("clearing thread context: " + context); }
+        		}
+        	}
+        	finally {
+        		contextsReadWriteLock.writeLock().unlock();
+        	}
 
-            inFlightTransactions.remove(currentTx.getResourceManager().getGtrid());
-            MDC.remove(MDC_GTRID_KEY);
+            inFlightReadWriteLock.writeLock().lock();
+            try {
+	            inFlightTransactions.remove(currentTx.getResourceManager().getGtrid());
+	            MDC.remove(MDC_GTRID_KEY);
+            }
+            finally {
+                inFlightReadWriteLock.writeLock().unlock();            	
+            }
         }
 
         public String toString() {
