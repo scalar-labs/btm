@@ -879,7 +879,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     public void testNonXaPool() throws Exception {
         for (int i=0; i<LOOPS ;i++) {
             TransactionManagerServices.getTransactionManager().begin();
-            assertEquals(1, TransactionManagerServices.getTransactionManager().getInFlightTransactions().size());
+            assertEquals(1, TransactionManagerServices.getTransactionManager().getInFlightTransactionCount());
 
             assertEquals(0, ((BitronixTransaction)TransactionManagerServices.getTransactionManager().getTransaction()).getResourceManager().size());
             Connection c = poolingDataSource1.getConnection();
@@ -889,7 +889,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
 
             // rollback is necessary if deferConnectionRelease=true and to avoid nested TX
             TransactionManagerServices.getTransactionManager().rollback();
-            assertEquals(0, TransactionManagerServices.getTransactionManager().getInFlightTransactions().size());
+            assertEquals(0, TransactionManagerServices.getTransactionManager().getInFlightTransactionCount());
         }
 
         log.info(EventRecorder.dumpToString());

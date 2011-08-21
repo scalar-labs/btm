@@ -22,8 +22,7 @@ package bitronix.tm.internal;
 
 import bitronix.tm.BitronixTransaction;
 import bitronix.tm.TransactionManagerServices;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 
 /**
  * Transactional context of a thread. It contains both the active transaction (if any) and all default parameters
@@ -36,18 +35,40 @@ public class ThreadContext {
     private final static Logger log = LoggerFactory.getLogger(ThreadContext.class);
 
     private volatile BitronixTransaction transaction;
-    private volatile int timeout = TransactionManagerServices.getConfiguration().getDefaultTransactionTimeout();
+    private volatile int timeout;
+
+    private static ThreadLocal<ThreadContext> threadContext = new ThreadLocal<ThreadContext>() {
+        protected ThreadContext initialValue() {
+            return new ThreadContext();
+        }
+    };
+
+    // private constructor
+    private ThreadContext() {
+        timeout = TransactionManagerServices.getConfiguration().getDefaultTransactionTimeout();
+    }
 
     /**
-     * Return the transaction linked with this thread context.
-     * @return the transaction linked to this thread context or null if there is none.
+     * Get the ThreadContext thread local value for the calling thread.  This is the only
+     * way to access the ThreadContext.  The get() call will automatically construct a
+     * ThreadContext if this thread doesn't have one (see initialValue() above).
+     *
+     * @return the calling thread's ThreadContext
+     */
+    public static ThreadContext getThreadContext() {
+        return threadContext.get();
+    }
+
+    /**
+     * Return the transaction linked with this ThreadContext.
+     * @return the transaction linked to this ThreadContext or null if there is none.
      */
     public BitronixTransaction getTransaction() {
         return transaction;
     }
 
     /**
-     * Link a transaction with this thead context.
+     * Link a transaction with this ThreadContext.
      * @param transaction the transaction to link.
      */
     public void setTransaction(BitronixTransaction transaction) {
@@ -55,6 +76,13 @@ public class ThreadContext {
             throw new IllegalArgumentException("transaction parameter cannot be null");
         if (log.isDebugEnabled()) { log.debug("assigning <" + transaction + "> to <" + this + ">"); }
         this.transaction = transaction;
+    }
+
+    /**
+     * Clean the transaction from this ThreadContext
+     */
+    public void clearTransaction() {
+        transaction = null;
     }
 
     /**
