@@ -72,7 +72,12 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
                     Long timestamp1 = t1.getResourceManager().getGtrid().extractTimestamp();
                     Long timestamp2 = t2.getResourceManager().getGtrid().extractTimestamp();
 
-                    return timestamp1.compareTo(timestamp2);
+                    int compareTo = timestamp1.compareTo(timestamp2);
+                    if (compareTo == 0) {
+                        // if timestamps are equal, use the Uid as the tie-breaker
+                        return t1.getGtrid().compareTo(t2.getGtrid());
+                    }
+                    return compareTo;
                 }
             }));
 
