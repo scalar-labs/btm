@@ -72,8 +72,8 @@ class NioTrackedTransactions implements NioJournalConstants {
         if (isFinalStatus(status)) {
             final NioJournalRecord existing = tracked.get(gtrid);
             if (existing != null) {
-                existing.removeUniqueNames(record.getUniqueNames());
-                if (existing.getUniqueNames().isEmpty()) {
+                existing.removeUniqueNamesFromRecord(record);
+                if (existing.getUniqueNamesCount() == 0) {
                     tracked.remove(gtrid);
                     if (log.isTraceEnabled())
                         log.trace("No longer tracking transaction '{}', was '{}' before", record, existing);
@@ -90,12 +90,11 @@ class NioTrackedTransactions implements NioJournalConstants {
             // Note: Merging names between removed and record is not required as the external implementation
             // should not change the unique names unless isFinalStatus returns true. Logging an error if the
             // case still happens.
-            if (removed != null && !removed.getUniqueNames().equals(record.getUniqueNames())) {
+            if (removed != null && !removed.isUniqueNamesEqualInRecord(record)) {
                 log.error("The unique names describing the TX members changed at an invalid TX status of {}, " +
                         "when tracking updates to the transaction {} inside the journal. (names had been " +
                         "{} and were now set to {})", new Object[]{status, gtrid,
                         removed.getUniqueNames(), record.getUniqueNames()});
-
             }
 
             if (log.isTraceEnabled())

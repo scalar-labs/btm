@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharsetEncoder;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -157,7 +158,12 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
                      Uid gtrid, Set<String> uniqueNames, boolean valid) {
         this.status = status;
         this.gtrid = gtrid;
-        this.uniqueNames = new HashSet<String>(uniqueNames);
+
+        // Records on the same TX may be written by different threads when
+        // the TX was suspended and resumed in a different thread.
+        // Therefore we must use a thread-safe Set here.
+        this.uniqueNames = new CopyOnWriteArraySet<String>(uniqueNames);
+
         this.time = time;
         this.sequenceNumber = sequenceNumber;
         this.recordLength = recordLength;
@@ -244,6 +250,35 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
     @Override
     public Set<String> getUniqueNames() {
         return Collections.unmodifiableSet(uniqueNames);
+    }
+
+    /**
+     * Returns the number of unique names.
+     *
+     * @return the number of unique names.
+     */
+    protected int getUniqueNamesCount() {
+        return uniqueNames.size();
+    }
+
+    /**
+     * Returns true if the unique names in this and the other record are the same.
+     *
+     * @param other the other record to check.
+     * @return true if the unique names in this and the other record are the same.
+     */
+    protected boolean isUniqueNamesEqualInRecord(NioJournalRecord other) {
+        return uniqueNames.equals(other.uniqueNames);
+    }
+
+    /**
+     * Removes the given unique names from the set of unique names.
+     *
+     * @param other the other record containing the names to remove.
+     * @return true if the set of unique names was modified.
+     */
+    protected boolean removeUniqueNamesFromRecord(NioJournalRecord other) {
+        return removeUniqueNames(other.uniqueNames);
     }
 
     /**
