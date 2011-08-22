@@ -20,6 +20,7 @@
  */
 package bitronix.tm.resource.jdbc.lrc;
 
+import java.lang.reflect.Constructor;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -40,6 +41,8 @@ import javax.transaction.xa.XAResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import bitronix.tm.resource.jdbc.*;
+
 /**
  * XAConnection implementation for a non-XA JDBC resource emulating XA with Last Resource Commit.
  *
@@ -53,9 +56,12 @@ public class LrcXAConnection implements XAConnection {
     private final LrcXAResource xaResource;
     private final List<ConnectionEventListener> connectionEventListeners = new ArrayList<ConnectionEventListener>();
 
+    private volatile int jdbcVersionDetected;
+
     public LrcXAConnection(Connection connection) {
         this.connection = connection;
         this.xaResource = new LrcXAResource(connection);
+        jdbcVersionDetected = JdbcClassHelper.detectJdbcVersion(connection);        
     }
 
     public XAResource getXAResource() throws SQLException {
@@ -68,8 +74,22 @@ public class LrcXAConnection implements XAConnection {
     }
 
     public Connection getConnection() throws SQLException {
-    	LrcConnectionHandle lrcConnectionHandle = new LrcConnectionHandle(xaResource, connection);
-        return lrcConnectionHandle;
+        if (jdbcVersionDetected == 3)
+        {
+            return new LrcConnectionHandle(xaResource, connection);
+        }
+
+        // JDBC 4.0
+        try {
+            Class<?> handle = LrcXAConnection.class.forName("bitronix.tm.resource.jdbc4.lrc.LrcJdbc4ConnectionHandle");
+            Constructor<?> constructor = handle.getConstructor( new Class[] {LrcXAResource.class, Connection.class} );
+            return (Connection) constructor.newInstance( new Object[] {xaResource, connection} );
+        } catch (Exception e) {
+            log.error("could not load JDBC4 wrapper class", e);
+            SQLException sqlException = new SQLException("could not load JDBC4 wrapper class");
+            sqlException.initCause(e);
+            throw sqlException;
+        }
     }
 
     public void addConnectionEventListener(ConnectionEventListener listener) {
