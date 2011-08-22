@@ -20,6 +20,7 @@
  */
 package bitronix.tm;
 
+import java.io.File;
 import java.util.Iterator;
 
 import junit.framework.TestCase;
@@ -90,7 +91,8 @@ public class RestartTest extends TestCase {
 
     public void testRestartWithLoader() throws Exception {
         for (int i=0; i<3 ;i++) {
-            TransactionManagerServices.getConfiguration().setResourceConfigurationFilename(getClass().getResource("RestartTest.properties").getFile());
+            String configFile = new File(getClass().getResource("RestartTest.properties").toURI()).getPath();
+            TransactionManagerServices.getConfiguration().setResourceConfigurationFilename(configFile);
             BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
             assertEquals("at loop iteration #" + (i+1), 1, ResourceRegistrar.getResourcesUniqueNames().size());
             tm.shutdown();

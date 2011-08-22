@@ -20,6 +20,7 @@
  */
 package bitronix.tm.gui;
 
+import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.journal.TransactionLogCursor;
 import bitronix.tm.journal.TransactionLogRecord;
 import org.slf4j.LoggerFactory;
@@ -48,7 +49,7 @@ public abstract class TransactionTableModel implements TableModel {
         int count=0;
         try {
             while (true) {
-                TransactionLogRecord tlog = tlis.readLog(true);
+                JournalRecord tlog = tlis.readLog(true);
                 if (tlog == null)
                     break;
                 if (!acceptLog(tlog))
@@ -63,7 +64,7 @@ public abstract class TransactionTableModel implements TableModel {
         }
     }
 
-    public abstract boolean acceptLog(TransactionLogRecord tlog);
+    public abstract boolean acceptLog(JournalRecord tlog);
 
     public abstract TransactionLogRecord getRow(int row);
 

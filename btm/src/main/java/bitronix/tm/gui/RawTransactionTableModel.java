@@ -20,6 +20,7 @@
  */
 package bitronix.tm.gui;
 
+import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.journal.TransactionLogRecord;
 import org.slf4j.Logger;
@@ -124,7 +125,7 @@ public class RawTransactionTableModel extends TransactionTableModel {
     public void removeTableModelListener(TableModelListener l) {
     }
 
-    public boolean acceptLog(TransactionLogRecord tlog) {
+    public boolean acceptLog(JournalRecord tlog) {
         return true;
     }
 
@@ -139,7 +140,7 @@ public class RawTransactionTableModel extends TransactionTableModel {
         else {
             List newDis = new ArrayList();
             for (int i = 0; i < displayedRows.size(); i++) {
-                TransactionLogRecord transactionLogRecord = (TransactionLogRecord) displayedRows.get(i);
+                JournalRecord transactionLogRecord = (JournalRecord) displayedRows.get(i);
                 if (transactionLogRecord.getGtrid().toString().equals(gtrid))
                     newDis.add(transactionLogRecord);
             }

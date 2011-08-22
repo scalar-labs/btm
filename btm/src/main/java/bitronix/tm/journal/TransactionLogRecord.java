@@ -22,8 +22,8 @@ package bitronix.tm.journal;
 
 import bitronix.tm.utils.Encoder;
 import bitronix.tm.utils.*;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.util.*;
@@ -33,7 +33,7 @@ import java.util.zip.CRC32;
 /**
  * Representation of a transaction log record on disk.
  * <p>On-disk format has been implemented following Mike Spille's recommendations. Quoting him:</p>
- *
+ * <p/>
  * <i><p><code>[RECORD_TYPE :4] [RECORD_LEN :4] [HEADER_LEN :4] [System.currentTimeMillis :8] [Sequence number :4]
  * [Checksum :4] [Payload :X] [END_RECORD_INDICATOR :4]</code></p>
  * <p>Where [RECORD_TYPE] is a passed-in record type from the TM. [RECORD_LEN] is the overall record length
@@ -47,7 +47,7 @@ import java.util.zip.CRC32;
  * single log file pair. Finally, I like having an [END_RECORD_INDICATOR] as an extra corruption detector device - I'm
  * a suspenders and belt kind of guy. Actually, the END_RECORD_INDICATOR and [RECORD_LEN] in conjunction are very
  * useful in development, as well, to catch programming mistakes in the log system early.</p></i>
- *
+ * <p/>
  * <p>Payload contains <code>[GTRID LENGTH :1] [GTRID :A] [UNIQUE NAMES COUNT :4] ([UNIQUE NAME LENGTH :2] [UNIQUE NAME :Y] ...)</code>
  * which makes a major difference with Mike's proposed format because here a record can vary in length: the GTRID size
  * is A bytes long (A being the GTRID length) and there can be X unique names that are Y characters long, Y being eventually
@@ -56,7 +56,7 @@ import java.util.zip.CRC32;
  * @see <a href="http://jroller.com/page/pyrasun?entry=xa_exposed_part_iii_the">XA Exposed, Part III: The Implementor's Notebook</a>
  * @author lorban
  */
-public class TransactionLogRecord {
+public class TransactionLogRecord implements JournalRecord {
 
     private final static Logger log = LoggerFactory.getLogger(TransactionLogRecord.class);
 
@@ -74,17 +74,19 @@ public class TransactionLogRecord {
 
     /**
      * Use this constructor when restoring a log from the disk.
-     * @param status record type
-     * @param recordLength record length excluding status and recordLength
-     * @param headerLength length of all fields except gtrid, uniqueNames and endRecord
-     * @param time current time in milliseconds
+     *
+     * @param status         record type
+     * @param recordLength   record length excluding status and recordLength
+     * @param headerLength   length of all fields except gtrid, uniqueNames and endRecord
+     * @param time           current time in milliseconds
      * @param sequenceNumber atomically generated sequence number during a JVM's lifespan
-     * @param crc32 checksum of the full record
-     * @param gtrid global transaction id
-     * @param uniqueNames unique names of XA data sources used in this transaction
-     * @param endRecord end of record marker
+     * @param crc32          checksum of the full record
+     * @param gtrid          global transaction id
+     * @param uniqueNames    unique names of XA data sources used in this transaction
+     * @param endRecord      end of record marker
      */
-    public TransactionLogRecord(int status, int recordLength, int headerLength, long time, int sequenceNumber, int crc32, Uid gtrid, Set uniqueNames, int endRecord) {
+    public TransactionLogRecord(int status, int recordLength, int headerLength, long time, int sequenceNumber,
+                                int crc32, Uid gtrid, Set uniqueNames, int endRecord) {
         this.status = status;
         this.recordLength = recordLength;
         this.headerLength = headerLength;
@@ -98,8 +100,9 @@ public class TransactionLogRecord {
 
     /**
      * Create a new transaction log ready to be stored.
-     * @param status record type
-     * @param gtrid global transaction id
+     *
+     * @param status      record type
+     * @param gtrid       global transaction id
      * @param uniqueNames unique names of XA data sources used in this transaction
      */
     public TransactionLogRecord(int status, Uid gtrid, Set uniqueNames) {
@@ -113,6 +116,7 @@ public class TransactionLogRecord {
         refresh();
     }
 
+    @Override
     public int getStatus() {
         return status;
     }
@@ -125,6 +129,7 @@ public class TransactionLogRecord {
         return headerLength;
     }
 
+    @Override
     public long getTime() {
         return time;
     }
@@ -137,10 +142,12 @@ public class TransactionLogRecord {
         return crc32;
     }
 
+    @Override
     public Uid getGtrid() {
         return gtrid;
     }
 
+    @Override
     public Set getUniqueNames() {
         return Collections.unmodifiableSortedSet(uniqueNames);
     }
@@ -167,6 +174,7 @@ public class TransactionLogRecord {
 
     /**
      * Recalculate the CRC32 value of this record (using {@link #calculateCrc32()}) and compare it with the stored value.
+     *
      * @return true if the recalculated value equals the stored one, false otherwise.
      */
     public boolean isCrc32Correct() {
@@ -174,7 +182,29 @@ public class TransactionLogRecord {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isValid() {
+        return isCrc32Correct();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Map<String, ?> getRecordProperties() {
+        Map<String, Object> props = new LinkedHashMap<String, Object>(4);
+        props.put("recordLength", recordLength);
+        props.put("headerLength", headerLength);
+        props.put("sequenceNumber", sequenceNumber);
+        props.put("crc32", crc32);
+        return props;
+    }
+
+    /**
      * Calculate the CRC32 value of this record.
+     *
      * @return the CRC32 value of this record.
      */
     public int calculateCrc32() {
@@ -228,6 +258,7 @@ public class TransactionLogRecord {
 
     /**
      * this is the total size on disk of a TransactionLog.
+     *
      * @return recordLength
      */
     int calculateTotalRecordSize() {
@@ -236,6 +267,7 @@ public class TransactionLogRecord {
 
     /**
      * this is the value needed by field recordLength in the TransactionLog.
+     *
      * @param uniqueNames the unique names ofthe record.
      * @return recordLength
      */
@@ -255,6 +287,7 @@ public class TransactionLogRecord {
 
     /**
      * Length of all the fixed size fields part of the record length header except status and record length.
+     *
      * @return fixedRecordLength
      */
     private int getFixedRecordLength() {
@@ -263,11 +296,10 @@ public class TransactionLogRecord {
 
     /**
      * Value needed by field headerLength in the TransactionLog.
+     *
      * @return headerLength
      */
     private int getRecordHeaderLength() {
         return 4 + 4 + 4 + 8 + 4 + 4; // status + record length + record header length + current time + sequence number + checksum
     }
-
-
 }

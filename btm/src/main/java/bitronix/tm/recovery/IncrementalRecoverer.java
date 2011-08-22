@@ -20,11 +20,11 @@
  */
 package bitronix.tm.recovery;
 
+import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.resource.common.XAResourceProducer;
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.Decoder;
 
@@ -73,7 +73,7 @@ public class IncrementalRecoverer {
                 BitronixXid xid = (BitronixXid) it.next();
                 Uid gtrid = xid.getGlobalTransactionIdUid();
 
-                TransactionLogRecord tlog = (TransactionLogRecord) danglingRecords.get(gtrid);
+                JournalRecord tlog = (JournalRecord) danglingRecords.get(gtrid);
                 if (tlog != null) {
                     if (log.isDebugEnabled()) { log.debug("committing " + xid); }
                     success &= RecoveryHelper.commit(xaResourceHolderState, xid);

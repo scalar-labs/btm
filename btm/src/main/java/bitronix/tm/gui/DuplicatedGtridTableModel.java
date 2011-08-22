@@ -20,7 +20,7 @@
  */
 package bitronix.tm.gui;
 
-import bitronix.tm.journal.TransactionLogRecord;
+import bitronix.tm.journal.JournalRecord;
 
 import javax.swing.table.DefaultTableModel;
 import java.util.Iterator;
@@ -72,8 +72,8 @@ public class DuplicatedGtridTableModel extends DefaultTableModel {
     private String buildTlogsSequenceNumber(List tlogs) {
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < tlogs.size(); i++) {
-            TransactionLogRecord tlog = (TransactionLogRecord) tlogs.get(i);
-            sb.append(tlog.getSequenceNumber());
+            JournalRecord tlog = (JournalRecord) tlogs.get(i);
+            sb.append(tlog.getRecordProperties().get("sequenceNumber"));
             if (i < tlogs.size() -1)
                 sb.append(", ");
         }
@@ -81,7 +81,7 @@ public class DuplicatedGtridTableModel extends DefaultTableModel {
     }
 
     private String buildTlogsGtrid(List tlogs) {
-        TransactionLogRecord tlog = (TransactionLogRecord) tlogs.get(0);
+        JournalRecord tlog = (JournalRecord) tlogs.get(0);
         return tlog.getGtrid().toString();
     }
 
