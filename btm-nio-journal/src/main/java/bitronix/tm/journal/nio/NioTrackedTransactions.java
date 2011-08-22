@@ -61,6 +61,7 @@ class NioTrackedTransactions implements NioJournalConstants {
         track(record.getStatus(), record.getGtrid(), record);
     }
 
+
     /**
      * Track the given transaction information.
      *

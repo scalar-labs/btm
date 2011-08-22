@@ -244,6 +244,7 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
         return gtrid;
     }
 
+
     /**
      * {@inheritDoc}
      */
