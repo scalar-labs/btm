@@ -20,8 +20,7 @@
  */
 package bitronix.tm.mock;
 
-import bitronix.tm.BitronixTransactionManager;
-import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.*;
 import bitronix.tm.mock.events.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -597,4 +596,42 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         log.info(EventRecorder.dumpToString());
     }
 
+    public void testSuspendResumeSeparateThreads() throws Exception {
+        if (log.isDebugEnabled()) log.debug("*** getting TM");
+        BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) log.debug("*** before begin");
+        tm.begin();
+        if (log.isDebugEnabled()) log.debug("*** after begin");
+
+        if (log.isDebugEnabled()) log.debug("*** suspending transaction");
+        final Transaction suspended = tm.suspend();
+
+        assertNull(tm.getCurrentTransaction());
+
+        if (log.isDebugEnabled()) log.debug("*** before 2nd begin");
+        tm.begin();
+        assertNotNull(tm.getCurrentTransaction());
+        
+        Thread thread = new Thread() {
+            public void run() {
+                if (log.isDebugEnabled()) log.debug("*** getting TM");
+                BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+                
+                try {
+                    if (log.isDebugEnabled()) log.debug("*** resuming transaction in new thread");
+                    tm.resume(suspended);
+                    tm.commit();
+                    assertNull(tm.getCurrentTransaction());
+                } catch (Exception e) {
+                    fail(e.getMessage());
+                }
+            }
+        };
+        thread.start();
+        thread.join();
+
+        assertNotNull(tm.getCurrentTransaction());
+        tm.commit();
+        assertNull(tm.getCurrentTransaction());
+    }
 }

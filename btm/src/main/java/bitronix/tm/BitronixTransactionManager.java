@@ -42,7 +42,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionManager.class);
     private final static String MDC_GTRID_KEY = "btm-gtrid";
 
-    private final SortedSet<BitronixTransaction> inFlightTransactions;
+    private final SortedMap<BitronixTransaction, ClearContextSynchronization> inFlightTransactions;
 
     private volatile boolean shuttingDown;
 
@@ -67,7 +67,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
                 throw new InitializationException("invalid configuration value for backgroundRecoveryIntervalSeconds, found '" + backgroundRecoveryInterval + "' but it must be greater than 0");
             }
 
-            inFlightTransactions = Collections.synchronizedSortedSet(new TreeSet<BitronixTransaction>(new Comparator<BitronixTransaction>() {
+            inFlightTransactions = Collections.synchronizedSortedMap(new TreeMap<BitronixTransaction, ClearContextSynchronization>(new Comparator<BitronixTransaction>() {
                 public int compare(BitronixTransaction t1, BitronixTransaction t2) {
                     Long timestamp1 = t1.getResourceManager().getGtrid().extractTimestamp();
                     Long timestamp2 = t2.getResourceManager().getGtrid().extractTimestamp();
@@ -112,6 +112,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         try {
             currentTx.getSynchronizationScheduler().add(clearContextSynchronization, Scheduler.ALWAYS_LAST_POSITION -1);
             currentTx.setActive(threadContext.getTimeout());
+            inFlightTransactions.put(currentTx, clearContextSynchronization);
             if (log.isDebugEnabled()) { log.debug("begun new transaction at " + new Date(currentTx.getResourceManager().getGtrid().extractTimestamp())); }
         } catch (RuntimeException ex) {
             clearContextSynchronization.afterCompletion(Status.STATUS_NO_TRANSACTION);
@@ -176,6 +177,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         try {
             currentTx.getResourceManager().suspend();
             clearCurrentContextForSuspension();
+            inFlightTransactions.get(currentTx).threadContext = null;
             MDC.remove(MDC_GTRID_KEY);
             return currentTx;
         } catch (XAException ex) {
@@ -191,15 +193,15 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             throw new InvalidTransactionException("resumed transaction must be an instance of BitronixTransaction");
 
         BitronixTransaction tx = (BitronixTransaction) transaction;
-        BitronixTransaction currentTx = getCurrentTransaction();
-        if (currentTx != null)
+        if (getCurrentTransaction() != null)
             throw new IllegalStateException("a transaction is already running on this thread");
 
         try {
             XAResourceManager resourceManager = tx.getResourceManager();
             resourceManager.resume();
-            ThreadContext ctx = ThreadContext.getThreadContext();
-            ctx.setTransaction(tx);
+            ThreadContext threadContext = ThreadContext.getThreadContext();
+            threadContext.setTransaction(tx);
+            inFlightTransactions.get(tx).threadContext = threadContext;
             MDC.put(MDC_GTRID_KEY, tx.getGtrid());
         } catch (XAException ex) {
             throw new BitronixSystemException("cannot resume " + tx + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
@@ -247,8 +249,8 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
                 return Long.MIN_VALUE;
             }
 
-            // The inFlightTransactions set is sorted by timestamp, so the first transaction is always the oldest
-            oldestTransaction = inFlightTransactions.first();
+            // The inFlightTransactions map is sorted by timestamp, so the first transaction is always the oldest
+            oldestTransaction = inFlightTransactions.firstKey();
         }
         oldestTimestamp = oldestTransaction.getResourceManager().getGtrid().extractTimestamp();
 
@@ -276,10 +278,13 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * Dump an overview of all running transactions as debug logs.
      */
     public void dumpTransactionContexts() {
+        if (!log.isDebugEnabled())
+            return;
+
         // We're using an iterator, so we must synchronize on the collection
     	synchronized (inFlightTransactions) {
 	        log.debug("dumping " + inFlightTransactions.size() + " transaction context(s)");
-	        for (BitronixTransaction tx : inFlightTransactions) {
+	        for (BitronixTransaction tx : inFlightTransactions.keySet()) {
 	            log.debug(tx.toString());
 	        }
     	}
@@ -385,7 +390,6 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         BitronixTransaction transaction = new BitronixTransaction();
         ThreadContext.getThreadContext().setTransaction(transaction);
         MDC.put(MDC_GTRID_KEY, transaction.getGtrid());
-        inFlightTransactions.add(transaction);
 
         return transaction;
     }
