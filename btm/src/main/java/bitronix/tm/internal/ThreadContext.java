@@ -35,7 +35,7 @@ public class ThreadContext {
     private final static Logger log = LoggerFactory.getLogger(ThreadContext.class);
 
     private volatile BitronixTransaction transaction;
-    private volatile int timeout;
+    private volatile int timeout = TransactionManagerServices.getConfiguration().getDefaultTransactionTimeout();;
 
     private static ThreadLocal<ThreadContext> threadContext = new ThreadLocal<ThreadContext>() {
         protected ThreadContext initialValue() {
@@ -43,9 +43,11 @@ public class ThreadContext {
         }
     };
 
-    // private constructor
+    /**
+     * Private constructor.
+     */
     private ThreadContext() {
-        timeout = TransactionManagerServices.getConfiguration().getDefaultTransactionTimeout();
+        // Can only be constructed from initialValue() above.
     }
 
     /**
