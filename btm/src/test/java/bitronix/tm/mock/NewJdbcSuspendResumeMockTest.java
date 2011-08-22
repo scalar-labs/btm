@@ -619,7 +619,9 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
                 try {
                     if (log.isDebugEnabled()) log.debug("*** resuming transaction in new thread");
                     tm.resume(suspended);
+                    if (log.isDebugEnabled()) log.debug("*** committing transaction in new thread");
                     tm.commit();
+                    if (log.isDebugEnabled()) log.debug("*** new thread commit complete, exiting");
                     assertNull(tm.getCurrentTransaction());
                 } catch (Exception e) {
                     fail(e.getMessage());
@@ -630,7 +632,9 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         thread.join();
 
         assertNotNull(tm.getCurrentTransaction());
+        if (log.isDebugEnabled()) log.debug("*** committing transaction in main thread");
         tm.commit();
+        if (log.isDebugEnabled()) log.debug("*** main thread complete");
         assertNull(tm.getCurrentTransaction());
     }
 }
