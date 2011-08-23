@@ -66,7 +66,7 @@ public interface NioJournalConstants {
      * Specifies the amount of slots (buffers, lock-free queue entries) to prepare for threads
      * trying to log a transaction.
      */
-    int CONCURRENCY = Integer.getInteger("bitronix.nio.journal.concurrency", 1024);
+    int CONCURRENCY = Integer.getInteger("bitronix.nio.journal.concurrency", 4 * 1024);
 
     /**
      * Specifies the size of byte buffers to allocate for transaction serialization.

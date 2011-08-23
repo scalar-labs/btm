@@ -27,6 +27,8 @@ import bitronix.tm.journal.Journal;
 import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.journal.MigratableJournal;
 import bitronix.tm.journal.ReadableJournal;
+import bitronix.tm.journal.nio.util.SequencedBlockingQueue;
+import bitronix.tm.journal.nio.util.SequencedQueueEntry;
 import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,9 +65,10 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
     // Session tracking
     final NioTrackedTransactions trackedTransactions = new NioTrackedTransactions();
 
-    // Force related stuff
-    final NioForceSynchronizer<NioJournalFileRecord> forceSynchronizer =
-            new NioForceSynchronizer<NioJournalFileRecord>();
+    // Queueing & force related stuff
+    final SequencedBlockingQueue<NioJournalFileRecord> pendingRecordsQueue =
+            new SequencedBlockingQueue<NioJournalFileRecord>();
+    final NioForceSynchronizer forceSynchronizer = new NioForceSynchronizer(pendingRecordsQueue);
 
     // Worker
     volatile NioJournalWritingThread journalWritingThread;
@@ -95,7 +98,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
         try {
             final NioJournalFileRecord fileRecord = journalFile.createEmptyRecord();
             record.encodeTo(fileRecord.createEmptyPayload(record.getRecordLength()));
-            forceSynchronizer.enlistElement(fileRecord, journalWritingThread.getIncomingQueue());
+            pendingRecordsQueue.putElement(fileRecord);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IOException(e);
@@ -170,7 +173,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
         trackedTransactions.purgeTransactionsExceedingLifetime();
 
         journalWritingThread = new NioJournalWritingThread(trackedTransactions, journalFile,
-                isSkipForce() ? null : forceSynchronizer);
+                isSkipForce() ? null : forceSynchronizer, pendingRecordsQueue);
         log.info("Successfully started a new log appender on the journal file {}.", journalFilePath);
     }
 

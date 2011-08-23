@@ -21,18 +21,17 @@
 
 package bitronix.tm.journal.nio;
 
+import bitronix.tm.journal.nio.util.SequencedBlockingQueue;
+import bitronix.tm.journal.nio.util.SequencedQueueEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static bitronix.tm.journal.nio.NioForceSynchronizer.unwrap;
 import static bitronix.tm.journal.nio.NioJournalFileRecord.calculateRequiredBytes;
 import static bitronix.tm.journal.nio.NioJournalFileRecord.disposeAll;
 
@@ -44,17 +43,15 @@ import static bitronix.tm.journal.nio.NioJournalFileRecord.disposeAll;
 class NioJournalWritingThread extends Thread implements NioJournalConstants {
 
     private static final Logger log = LoggerFactory.getLogger(NioJournalWritingThread.class);
+    private static final boolean trace = log.isTraceEnabled();
 
-    // Incoming Work-Queue
-    private final BlockingQueue<NioForceSynchronizer<NioJournalFileRecord>.ForceableElement> incomingQueue =
-            new ArrayBlockingQueue<NioForceSynchronizer<NioJournalFileRecord>.ForceableElement>(CONCURRENCY);
-
-
-    private final List<NioForceSynchronizer<NioJournalFileRecord>.ForceableElement> elementsToWorkOn =
-            new ArrayList<NioForceSynchronizer<NioJournalFileRecord>.ForceableElement>(CONCURRENCY);
+    private final List<SequencedQueueEntry<NioJournalFileRecord>> pendingEntriesToWorkOn =
+            new ArrayList<SequencedQueueEntry<NioJournalFileRecord>>(CONCURRENCY);
 
     private final AtomicBoolean closeRequested = new AtomicBoolean();
-    private final NioForceSynchronizer<NioJournalFileRecord> forceSynchronizer;
+
+    private final NioForceSynchronizer forceSynchronizer;
+    private final SequencedBlockingQueue<NioJournalFileRecord> incomingQueue;
 
     private final NioJournalFile journalFile;
     private final NioTrackedTransactions trackedTransactions;
@@ -80,28 +77,22 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
      * @param trackedTransactions the shared map of dangling transactions.
      * @param journalFile         the journal to operate on.
      * @param forceSynchronizer   the synchronizer used allowing logging threads to wait on the force command.
-     *                            Set to 'null' if force shall be skipped.
+     * @param incomingQueue       the queue instance to operate on.
      */
-    public NioJournalWritingThread(NioTrackedTransactions trackedTransactions, NioJournalFile journalFile,
-                                   NioForceSynchronizer<NioJournalFileRecord> forceSynchronizer) {
+    public NioJournalWritingThread(NioTrackedTransactions trackedTransactions,
+                                   NioJournalFile journalFile,
+                                   NioForceSynchronizer forceSynchronizer,
+                                   SequencedBlockingQueue<NioJournalFileRecord> incomingQueue) {
         super("Bitronix - Nio Transaction Journal - JournalWriter");
         this.trackedTransactions = trackedTransactions;
         this.journalFile = journalFile;
         this.forceSynchronizer = forceSynchronizer;
+        this.incomingQueue = incomingQueue;
         start();
     }
 
     /**
-     * The incoming queue used to schedule work.
-     *
-     * @return the incoming queue used to schedule work.
-     */
-    public BlockingQueue<NioForceSynchronizer<NioJournalFileRecord>.ForceableElement> getIncomingQueue() {
-        return incomingQueue;
-    }
-
-    /**
-     * Attempts to closes the thread gracefully.
+     * Attempts to close the thread gracefully.
      */
     public synchronized void close() {
         closeRequested.set(true);
@@ -112,18 +103,18 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
                         forceInterrupt = i >= 59;
 
                 if (forceInterrupt || isWaiting) {
-                    boolean doInterrupt = forceInterrupt || (incomingQueue.isEmpty() && elementsToWorkOn.isEmpty());
+                    boolean doInterrupt = forceInterrupt || (incomingQueue.isEmpty() && pendingEntriesToWorkOn.isEmpty());
                     if (isWaiting) {
                         if (log.isDebugEnabled())
                             log.debug("Interrupting journal writer that is currently in waiting state.");
                     } else {
                         if (doInterrupt) {
                             log.warn("Interrupting on journal writer that is still processing {} " +
-                                    "entries after requesting its shutdown.", elementsToWorkOn.size());
+                                    "entries after requesting its shutdown.", pendingEntriesToWorkOn.size());
                         } else {
                             log.error("Waiting on journal writer that has {} unwritten transactions in " +
                                     "the queue. This may compromise transactions during the next recovery run.",
-                                    elementsToWorkOn.size());
+                                    pendingEntriesToWorkOn.size());
                         }
                     }
 
@@ -154,17 +145,15 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
         }
     }
 
-    private void collectWork(final List<NioJournalFileRecord> recordsToWorkOn,
-                             final boolean block) throws InterruptedException {
-        final int startIndex = elementsToWorkOn.size();
+    private int collectWork(final List<NioJournalFileRecord> recordsToWorkOn,
+                            final boolean block) throws InterruptedException {
 
         recordsToWorkOn.clear();
 
         if (block)
-            elementsToWorkOn.add(incomingQueue.take());
-
-        incomingQueue.drainTo(elementsToWorkOn);
-        unwrap(elementsToWorkOn.subList(startIndex, elementsToWorkOn.size()), recordsToWorkOn);
+            return incomingQueue.takeAndDrainElementsTo(pendingEntriesToWorkOn, recordsToWorkOn);
+        else
+            return incomingQueue.drainElementsTo(pendingEntriesToWorkOn, recordsToWorkOn);
     }
 
     /**
@@ -176,16 +165,20 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
 
         while (!isInterrupted() && !closeRequested.get()) {
             try {
-                int iterationsBeforeForce = WRITE_ITERATIONS_BEFORE_FORCE;
-                elementsToWorkOn.clear();
-                do {
-                    boolean isFirstIteration = iterationsBeforeForce == WRITE_ITERATIONS_BEFORE_FORCE;
-                    collectWork(recordsToWorkOn, isFirstIteration);
-                    if (recordsToWorkOn.isEmpty())
-                        break;
+                pendingEntriesToWorkOn.clear();
+
+                // Note: Be careful with ordering the loop condition statements below.
+                //       collectWork() must not be called if the loop is aborted by any other
+                //       condition than collect work returning '0'.
+
+                for (int iterationsBeforeForce = WRITE_ITERATIONS_BEFORE_FORCE;
+                     iterationsBeforeForce > 0; iterationsBeforeForce--) {
 
                     try {
-                        if (log.isTraceEnabled()) {
+                        if (collectWork(recordsToWorkOn, iterationsBeforeForce == WRITE_ITERATIONS_BEFORE_FORCE) == 0)
+                            break;
+
+                        if (trace) {
                             log.trace("Attempting to write {} log entries into the journal file.",
                                     recordsToWorkOn.size());
                         }
@@ -195,6 +188,7 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
                         // TODO: the same without causing a deadlock.
 
                         handleJournalRollover(recordsToWorkOn);
+
                         journalFile.write(recordsToWorkOn);
                         processedCount += recordsToWorkOn.size();
                     } catch (Exception e) {
@@ -206,10 +200,10 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
                     } finally {
                         disposeAll(recordsToWorkOn);
                     }
-                } while (incomingQueue.peek() != null && --iterationsBeforeForce > 0);
+                }
 
                 if (forceSynchronizer != null)
-                    forceSynchronizer.processEnlisted(forceJournalFile, elementsToWorkOn);
+                    forceSynchronizer.processEnlisted(forceJournalFile, pendingEntriesToWorkOn);
 
             } catch (InterruptedException t) {
                 if (recordsToWorkOn.isEmpty()) {
@@ -241,11 +235,11 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     private void reportAllRemainingElementsAsFailed() {
         try {
             if (forceSynchronizer != null)
-                forceSynchronizer.processEnlisted(throwException, elementsToWorkOn);
+                forceSynchronizer.processEnlisted(throwException, pendingEntriesToWorkOn);
         } catch (Exception e) {
             // ignore.
         } finally {
-            elementsToWorkOn.clear();
+            pendingEntriesToWorkOn.clear();
         }
     }
 
@@ -333,7 +327,7 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     @Override
     public String toString() {
         return "NioJournalWritingThread{" +
-                ", elementsToWorkOn.size=" + elementsToWorkOn.size() +
+                ", pendingEntriesToWorkOn.size=" + pendingEntriesToWorkOn.size() +
                 ", processedCount=" + processedCount +
                 ", forceSynchronizer=" + forceSynchronizer +
                 ", state=" + getState() +

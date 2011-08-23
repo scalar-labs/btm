@@ -166,7 +166,12 @@ public class XAPool implements StateChangeListener {
                 } catch (Exception ex2) {
                     if (log.isDebugEnabled()) { log.debug("exception while trying to close invalid connection, ignoring it", ex2); }
                 }
-                if (log.isDebugEnabled()) { log.debug("removed invalid connection " + xaStatefulHolder + " from " + this); }
+                finally {
+                    if (xaStatefulHolder.getState() != XAStatefulHolder.STATE_CLOSED) {
+                        stateChanged(xaStatefulHolder, xaStatefulHolder.getState(), XAStatefulHolder.STATE_CLOSED);
+                    }
+                    if (log.isDebugEnabled()) { log.debug("removed invalid connection " + xaStatefulHolder + " from " + this); }
+                }
 
                 if (log.isDebugEnabled()) { log.debug("waiting " + bean.getAcquisitionInterval() + "s before trying to acquire a connection again from " + this); }
                 try {
@@ -316,6 +321,7 @@ public class XAPool implements StateChangeListener {
     		inaccessiblePool.remove(source);
     		break;
     	case XAStatefulHolder.STATE_CLOSED:
+    	    closedPool.remove(source);
     		break;
     	}
     }
