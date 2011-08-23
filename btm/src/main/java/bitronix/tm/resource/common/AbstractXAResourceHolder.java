@@ -50,11 +50,11 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
     }
 
     public void putXAResourceHolderState(BitronixXid xid, XAResourceHolderState xaResourceHolderState) {
+    	Uid gtrid = xid.getGlobalTransactionIdUid();
+    	Uid bqual = xid.getBranchQualifierUid();
+    	
         synchronized (xaResourceHolderStates) {
-            if (log.isDebugEnabled()) { log.debug("putting XAResourceHolderState [" + xaResourceHolderState + "] on " + this); }
-            Uid gtrid = xid.getGlobalTransactionIdUid();
-            Uid bqual = xid.getBranchQualifierUid();
-
+        	if (log.isDebugEnabled()) { log.debug("putting XAResourceHolderState [" + xaResourceHolderState + "] on " + this); }
             if (!xaResourceHolderStates.containsKey(gtrid)) {
                 if (log.isDebugEnabled()) { log.debug("GTRID [" + gtrid + "] previously unknown to " + this + ", adding it to the resource's transactions list"); }
 
@@ -72,10 +72,11 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
     }
 
     public void removeXAResourceHolderState(BitronixXid xid) {
+    	Uid gtrid = xid.getGlobalTransactionIdUid();
+    	Uid bqual = xid.getBranchQualifierUid();
+
         synchronized (xaResourceHolderStates) {
-            if (log.isDebugEnabled()) { log.debug("removing XAResourceHolderState of xid " + xid + " from " + this); }
-            Uid gtrid = xid.getGlobalTransactionIdUid();
-            Uid bqual = xid.getBranchQualifierUid();
+        	if (log.isDebugEnabled()) { log.debug("removing XAResourceHolderState of xid " + xid + " from " + this); }
 
             Map<Uid, XAResourceHolderState> statesForGtrid = xaResourceHolderStates.get(gtrid);
             if (statesForGtrid == null) {
