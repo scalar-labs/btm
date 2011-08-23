@@ -62,14 +62,12 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     private long processedCount;
 
     private final Callable throwException = new Callable() {
-        @Override
         public Object call() throws Exception {
             throw new Exception();
         }
     };
 
     private final Callable forceJournalFile = new Callable() {
-        @Override
         public Object call() throws Exception {
             journalFile.force();
             return null;

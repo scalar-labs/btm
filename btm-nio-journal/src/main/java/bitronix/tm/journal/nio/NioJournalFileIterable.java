@@ -65,7 +65,6 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
         return recordIterator.getPositionAfterLastRecord();
     }
 
-    @Override
     public Iterator<NioJournalFileRecord> iterator() {
         return new RecordIterator();
     }
@@ -100,7 +99,6 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
             return positionAfterLastRecord;
         }
 
-        @Override
         public boolean hasNext() {
             while (nextEntry == null && readNextEntry()) {
                 nextEntry = new NioJournalFileRecord(delimiter, buffer);
@@ -121,7 +119,6 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
             return nextEntry != null;
         }
 
-        @Override
         public NioJournalFileRecord next() {
             if (!hasNext())
                 throw new NoSuchElementException("Has no more entries.");
@@ -132,7 +129,6 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
             }
         }
 
-        @Override
         public void remove() {
             throw new UnsupportedOperationException();
         }

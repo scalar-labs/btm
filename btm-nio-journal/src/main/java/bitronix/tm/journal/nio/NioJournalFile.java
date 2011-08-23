@@ -141,7 +141,6 @@ class NioJournalFile implements NioJournalConstants {
         final Iterable<NioJournalFileRecord> second = readRecords(delimiter, fileChannel, includeInvalid);
 
         return new Iterable<NioJournalFileRecord>() {
-            @Override
             public Iterator<NioJournalFileRecord> iterator() {
                 return new NioCompositeIterator(Arrays.asList(first, second));
             }

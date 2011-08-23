@@ -145,7 +145,6 @@ public abstract class AbstractJournalPerformanceTest extends AbstractJournalTest
             return generatedUids;
         }
 
-        @Override
         public Integer call() throws Exception {
             final int logCalls = getLogCallsPerEmitter();
             generatedUids = new ArrayList<Uid>(logCalls);

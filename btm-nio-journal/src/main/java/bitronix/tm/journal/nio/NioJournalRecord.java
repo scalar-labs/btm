@@ -231,7 +231,6 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
     /**
      * {@inheritDoc}
      */
-    @Override
     public int getStatus() {
         return status;
     }
@@ -239,7 +238,6 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
     /**
      * {@inheritDoc}
      */
-    @Override
     public Uid getGtrid() {
         return gtrid;
     }
@@ -248,7 +246,6 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
     /**
      * {@inheritDoc}
      */
-    @Override
     public Set<String> getUniqueNames() {
         return Collections.unmodifiableSet(uniqueNames);
     }
@@ -295,7 +292,6 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
     /**
      * {@inheritDoc}
      */
-    @Override
     public long getTime() {
         return time;
     }
@@ -311,7 +307,6 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
     /**
      * {@inheritDoc}
      */
-    @Override
     public Map<String, ?> getRecordProperties() {
         Map<String, Object> props = new LinkedHashMap<String, Object>(4);
         props.put("recordLength", recordLength);
@@ -322,7 +317,6 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
     /**
      * {@inheritDoc}
      */
-    @Override
     public boolean isValid() {
         return valid;
     }

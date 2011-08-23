@@ -78,7 +78,6 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
     /**
      * {@inheritDoc}
      */
-    @Override
     public void log(final int status, final Uid gtrid, Set<String> uniqueNames) throws IOException {
         assertJournalIsOpen();
 
@@ -131,7 +130,6 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
     /**
      * {@inheritDoc}
      */
-    @Override
     public synchronized void open() throws IOException {
         journalFilePath = getJournalFilePath();
 
@@ -193,7 +191,6 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
     /**
      * {@inheritDoc}
      */
-    @Override
     public synchronized void close() throws IOException {
         closeLogAppender();
 
@@ -221,7 +218,6 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
     /**
      * {@inheritDoc}
      */
-    @Override
     public void shutdown() {
         try {
             log.info("Shutting down the nio transaction journal on {}.", journalFilePath);
@@ -234,7 +230,6 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
     /**
      * {@inheritDoc}
      */
-    @Override
     public void force() throws IOException {
         if (skipForce)
             return;
@@ -250,7 +245,6 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
     /**
      * {@inheritDoc}
      */
-    @Override
     public Map<Uid, ? extends JournalRecord> collectDanglingRecords() throws IOException {
         assertJournalIsOpen();
         final Map<Uid, NioJournalRecord> tracked = trackedTransactions.getTracked();
@@ -266,7 +260,6 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
         return dangling;
     }
 
-    @Override
     public void migrateTo(Journal other) throws IOException, IllegalArgumentException {
         if (other == this)
             throw new IllegalArgumentException("Cannot migrate a journal to itself (this == otherJournal).");
@@ -280,7 +273,6 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
     /**
      * {@inheritDoc}
      */
-    @Override
     public synchronized void unsafeReadRecordsInto(Collection<JournalRecord> target, boolean includeInvalid) throws IOException {
         assertJournalIsOpen();
         for (NioJournalFileRecord record : journalFile.readAll(includeInvalid)) {

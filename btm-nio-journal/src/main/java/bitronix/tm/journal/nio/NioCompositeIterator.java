@@ -46,7 +46,6 @@ class NioCompositeIterator implements Iterator<NioJournalFileRecord> {
     /**
      * {@inheritDoc}
      */
-    @Override
     public boolean hasNext() {
         if (current == null)
             return false;
@@ -64,7 +63,6 @@ class NioCompositeIterator implements Iterator<NioJournalFileRecord> {
     /**
      * {@inheritDoc}
      */
-    @Override
     public NioJournalFileRecord next() {
         return current.next();
     }
@@ -72,7 +70,6 @@ class NioCompositeIterator implements Iterator<NioJournalFileRecord> {
     /**
      * {@inheritDoc}
      */
-    @Override
     public void remove() {
         current.remove();
     }
