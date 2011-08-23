@@ -215,8 +215,9 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         }
 
         try {
+            Connection conn = (Connection) pool.getConnectionHandle();
             if (log.isDebugEnabled()) { log.debug("acquired connection from " + this); }
-            return (Connection) pool.getConnectionHandle();
+            return conn;
         } catch (Exception ex) {
             throw (SQLException) new SQLException("unable to get a connection from pool of " + this).initCause(ex);
         }
