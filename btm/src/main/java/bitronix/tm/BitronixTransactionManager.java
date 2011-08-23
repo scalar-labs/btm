@@ -86,25 +86,24 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     private SortedMap<BitronixTransaction, ClearContextSynchronization> createInFlightTransactionsMap()
             throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         final Comparator<BitronixTransaction> timestampSortComparator = new Comparator<BitronixTransaction>() {
-            public int compare(BitronixTransaction t1, BitronixTransaction t2) {
-                Long timestamp1 = t1.getResourceManager().getGtrid().extractTimestamp();
-                Long timestamp2 = t2.getResourceManager().getGtrid().extractTimestamp();
+                public int compare(BitronixTransaction t1, BitronixTransaction t2) {
+                    Long timestamp1 = t1.getResourceManager().getGtrid().extractTimestamp();
+                    Long timestamp2 = t2.getResourceManager().getGtrid().extractTimestamp();
 
-                int compareTo = timestamp1.compareTo(timestamp2);
-                if (compareTo == 0 && !t1.getResourceManager().getGtrid().equals(t2.getResourceManager().getGtrid())) {
-                    // if timestamps are equal, use the Uid as the tie-breaker.  the !equals() check above avoids an
-                    // expensive string compare() here.
-                    return t1.getGtrid().compareTo(t2.getGtrid());
+                    int compareTo = timestamp1.compareTo(timestamp2);
+                    if (compareTo == 0 && !t1.getResourceManager().getGtrid().equals(t2.getResourceManager().getGtrid())) {
+                        // if timestamps are equal, use the Uid as the tie-breaker.  the !equals() check above avoids an expensive string compare() here.
+                        return t1.getGtrid().compareTo(t2.getGtrid());
+                    }
+                    return compareTo;
                 }
-                return compareTo;
-            }
-        };
+            };
 
         if (log.isTraceEnabled()) { log.trace("Attempting to use a concurrent sorted map of type 'ConcurrentSkipListMap' (from jre6 or custom supplied backport)"); }
         try {
             @SuppressWarnings("unchecked")
             SortedMap<BitronixTransaction, ClearContextSynchronization> mapInstance = (SortedMap)
-                    Class.forName("java.util.concurrent.ConcurrentSkipListMap").
+                    ClassLoaderUtils.loadClass("java.util.concurrent.ConcurrentSkipListMap").
                             getConstructor(Comparator.class).newInstance(timestampSortComparator);
             return mapInstance;
         } catch (ClassNotFoundException e) {
