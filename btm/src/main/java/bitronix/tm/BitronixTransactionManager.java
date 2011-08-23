@@ -85,7 +85,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             try {
                 // we attempt to use the concurrent sorted map from java 6
                 inFlightTransactions = (SortedMap<BitronixTransaction, ClearContextSynchronization>)
-                    Class.forName("java.util.concurrent.ConcurrentSkipListMap").
+                    ClassLoaderUtils.loadClass("java.util.concurrent.ConcurrentSkipListMap").
                           getConstructor(Comparator.class).newInstance(timestampSortComparator);
             } catch(ClassNotFoundException e) {
                 // we're in Java5 and fallback to a synced map.
