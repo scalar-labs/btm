@@ -124,6 +124,6 @@ public class ThreadContext {
      * @return a human-readable representation.
      */
     public String toString() {
-        return "a ThreadContext with transaction " + transaction + ", default timeout " + timeout + "s";
+        return "a ThreadContext (" + System.identityHashCode(this) + ") with transaction " + transaction + ", default timeout " + timeout + "s";
     }
 }

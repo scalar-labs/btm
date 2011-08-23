@@ -22,6 +22,7 @@ package bitronix.tm;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.naming.*;
 import javax.transaction.*;
@@ -42,7 +43,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionManager.class);
     private final static String MDC_GTRID_KEY = "btm-gtrid";
 
-    private final SortedMap<BitronixTransaction, ClearContextSynchronization> inFlightTransactions;
+    private SortedMap<BitronixTransaction, ClearContextSynchronization> inFlightTransactions;
 
     private volatile boolean shuttingDown;
 
@@ -67,19 +68,30 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
                 throw new InitializationException("invalid configuration value for backgroundRecoveryIntervalSeconds, found '" + backgroundRecoveryInterval + "' but it must be greater than 0");
             }
 
-            inFlightTransactions = Collections.synchronizedSortedMap(new TreeMap<BitronixTransaction, ClearContextSynchronization>(new Comparator<BitronixTransaction>() {
+            Comparator<BitronixTransaction> timestampSortComparator = new Comparator<BitronixTransaction>() {
                 public int compare(BitronixTransaction t1, BitronixTransaction t2) {
                     Long timestamp1 = t1.getResourceManager().getGtrid().extractTimestamp();
                     Long timestamp2 = t2.getResourceManager().getGtrid().extractTimestamp();
 
                     int compareTo = timestamp1.compareTo(timestamp2);
-                    if (compareTo == 0) {
-                        // if timestamps are equal, use the Uid as the tie-breaker
+                    if (compareTo == 0 && !t1.getResourceManager().getGtrid().equals(t2.getResourceManager().getGtrid())) {
+                        // if timestamps are equal, use the Uid as the tie-breaker.  the !equals() check above avoids an expensive string compare() here.
                         return t1.getGtrid().compareTo(t2.getGtrid());
                     }
                     return compareTo;
                 }
-            }));
+            };
+
+            try {
+                // we attempt to use the concurrent sorted map from java 6
+                inFlightTransactions = (SortedMap<BitronixTransaction, ClearContextSynchronization>)
+                    Class.forName("java.util.concurrent.ConcurrentSkipListMap").
+                          getConstructor(Comparator.class).newInstance(timestampSortComparator);
+            } catch(ClassNotFoundException e) {
+                // we're in Java5 and fallback to a synced map.
+                inFlightTransactions = Collections.synchronizedSortedMap(
+                    new TreeMap<BitronixTransaction, ClearContextSynchronization>(timestampSortComparator));
+            }
 
             if (log.isDebugEnabled()) { log.debug("recovery will run in the background every " + backgroundRecoveryInterval + " second(s)"); }
             Date nextExecutionDate = new Date(MonotonicClock.currentTimeMillis() + (backgroundRecoveryInterval * 1000L));
@@ -182,7 +194,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         try {
             currentTx.getResourceManager().suspend();
             clearCurrentContextForSuspension();
-            inFlightTransactions.get(currentTx).threadContext = null;
+            inFlightTransactions.get(currentTx).setThreadContext(null);
             MDC.remove(MDC_GTRID_KEY);
             return currentTx;
         } catch (XAException ex) {
@@ -206,7 +218,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             resourceManager.resume();
             ThreadContext threadContext = ThreadContext.getThreadContext();
             threadContext.setTransaction(tx);
-            inFlightTransactions.get(tx).threadContext = threadContext;
+            inFlightTransactions.get(tx).setThreadContext(threadContext);
             MDC.put(MDC_GTRID_KEY, tx.getGtrid());
         } catch (XAException ex) {
             throw new BitronixSystemException("cannot resume " + tx + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
@@ -243,24 +255,17 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @return the timestamp or Long.MIN_VALUE if there is no in-flight transaction.
      */
     public long getOldestInFlightTransactionTimestamp() {
-
-        BitronixTransaction oldestTransaction = null;
-        long oldestTimestamp = Long.MAX_VALUE;
-
-        // We're testing (isEmpty()) and accessing (first()), so we must synchronize (briefly) on the collection
-        synchronized (inFlightTransactions) {
-            if (inFlightTransactions.isEmpty()) {
-                if (log.isDebugEnabled()) { log.debug("oldest in-flight transaction's timestamp: " + Long.MIN_VALUE); }
-                return Long.MIN_VALUE;
-            }
-
-            // The inFlightTransactions map is sorted by timestamp, so the first transaction is always the oldest
-            oldestTransaction = inFlightTransactions.firstKey();
+        try {
+        	// The inFlightTransactions map is sorted by timestamp, so the first transaction is always the oldest
+        	BitronixTransaction oldestTransaction = inFlightTransactions.firstKey();
+        	long oldestTimestamp = oldestTransaction.getResourceManager().getGtrid().extractTimestamp();
+        	if (log.isDebugEnabled()) { log.debug("oldest in-flight transaction's timestamp: " + oldestTimestamp); }
+        	return oldestTimestamp;
+        	
+        } catch (NoSuchElementException e) {
+        	if (log.isDebugEnabled()) { log.debug("oldest in-flight transaction's timestamp: " + Long.MIN_VALUE); }
+        	return Long.MIN_VALUE;
         }
-        oldestTimestamp = oldestTransaction.getResourceManager().getGtrid().extractTimestamp();
-
-        if (log.isDebugEnabled()) { log.debug("oldest in-flight transaction's timestamp: " + oldestTimestamp); }
-        return oldestTimestamp;
     }
 
     /**
@@ -409,22 +414,32 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
     private final class ClearContextSynchronization implements Synchronization {
         private final BitronixTransaction currentTx;
-        private ThreadContext threadContext;
+        private AtomicReference<ThreadContext> threadContext;
 
         public ClearContextSynchronization(BitronixTransaction currentTx, ThreadContext threadContext) {
             this.currentTx = currentTx;
-            this.threadContext = threadContext;
+            this.threadContext = new AtomicReference<ThreadContext>(threadContext);
         }
 
         public void beforeCompletion() {
         }
 
         public void afterCompletion(int status) {
-            if (log.isDebugEnabled()) { log.debug("clearing transaction from thread context: " + threadContext); }
-            threadContext.clearTransaction();
+        	ThreadContext context = threadContext.get();
+        	if (context != null) {
+	            if (log.isDebugEnabled()) { log.debug("clearing transaction from thread context: " + context); }
+	            context.clearTransaction();
+        	}
+        	else {
+        		if (log.isDebugEnabled()) { log.debug("thread context was null when clear context synchronization executed"); }
+        	}
             if (log.isDebugEnabled()) { log.debug("removing transaction from in-flight transactions: " + currentTx); }
             inFlightTransactions.remove(currentTx);
             MDC.remove(MDC_GTRID_KEY);
+        }
+
+        public void setThreadContext(ThreadContext threadContext) {
+        	this.threadContext.set(threadContext);
         }
 
         public String toString() {
