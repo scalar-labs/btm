@@ -116,7 +116,6 @@ public class TransactionLogRecord implements JournalRecord {
         refresh();
     }
 
-    @Override
     public int getStatus() {
         return status;
     }
@@ -129,7 +128,6 @@ public class TransactionLogRecord implements JournalRecord {
         return headerLength;
     }
 
-    @Override
     public long getTime() {
         return time;
     }
@@ -142,12 +140,10 @@ public class TransactionLogRecord implements JournalRecord {
         return crc32;
     }
 
-    @Override
     public Uid getGtrid() {
         return gtrid;
     }
 
-    @Override
     public Set getUniqueNames() {
         return Collections.unmodifiableSortedSet(uniqueNames);
     }
@@ -184,7 +180,6 @@ public class TransactionLogRecord implements JournalRecord {
     /**
      * {@inheritDoc}
      */
-    @Override
     public boolean isValid() {
         return isCrc32Correct();
     }
@@ -192,7 +187,6 @@ public class TransactionLogRecord implements JournalRecord {
     /**
      * {@inheritDoc}
      */
-    @Override
     public Map<String, ?> getRecordProperties() {
         Map<String, Object> props = new LinkedHashMap<String, Object>(4);
         props.put("recordLength", recordLength);

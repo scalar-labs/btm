@@ -153,7 +153,6 @@ public final class ManagementRegistrar {
      * Collects scheduled commands, removes
      */
     static class ManagementCommandCallerTask implements Runnable {
-        @Override
         public void run() {
             final int initialCapacity = commandQueue.size() + 16;
             final Map<String, ManagementCommand> mappedCommands =
@@ -238,7 +237,6 @@ public final class ManagementRegistrar {
             return name;
         }
 
-        @Override
         public final void run() {
             try {
                 if (log.isTraceEnabled()) {

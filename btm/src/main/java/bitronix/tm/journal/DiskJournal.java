@@ -213,7 +213,6 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
     /**
      * {@inheritDoc}
      */
-    @Override
     public void migrateTo(Journal other) throws IOException, IllegalArgumentException {
         if (other == this)
             throw new IllegalArgumentException("Cannot migrate a journal to itself (this == otherJournal).");
@@ -229,7 +228,6 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
     /**
      * {@inheritDoc}
      */
-    @Override
     public synchronized void unsafeReadRecordsInto(Collection<JournalRecord> target, boolean includeInvalid) throws IOException {
         if (activeTla == null)
             throw new IOException("cannot read records, disk logger is not open");
@@ -446,7 +444,6 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
 
             TransactionLogRecord tlog;
 
-            @Override
             public boolean hasNext() {
                 while (tlog == null) {
                     try {
@@ -469,7 +466,6 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
                 return tlog != null;
             }
 
-            @Override
             public TransactionLogRecord next() {
                 if (!hasNext())
                     throw new NoSuchElementException();
@@ -480,7 +476,6 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
                 }
             }
 
-            @Override
             public void remove() {
                 throw new UnsupportedOperationException();
             }
