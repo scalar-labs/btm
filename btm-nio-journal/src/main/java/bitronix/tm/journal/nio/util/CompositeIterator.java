@@ -19,7 +19,7 @@
  * Boston, MA 02110-1301 USA
  */
 
-package bitronix.tm.journal.nio;
+package bitronix.tm.journal.nio.util;
 
 import java.util.Iterator;
 
@@ -28,17 +28,17 @@ import java.util.Iterator;
  *
  * @author juergen kellerer, 2011-04-30
  */
-class NioCompositeIterator implements Iterator<NioJournalFileRecord> {
+public class CompositeIterator<E> implements Iterator<E> {
 
-    final Iterator<Iterable<NioJournalFileRecord>> iterators;
-    Iterator<NioJournalFileRecord> current;
+    final Iterator<Iterable<E>> iterators;
+    Iterator<E> current;
 
     /**
      * Creates an instance out of the given list of iterables.
      *
      * @param sources the source iterables to use for creating the iterator.
      */
-    public NioCompositeIterator(Iterable<Iterable<NioJournalFileRecord>> sources) {
+    public CompositeIterator(Iterable<Iterable<E>> sources) {
         iterators = sources.iterator();
         current = iterators.hasNext() ? iterators.next().iterator() : null;
     }
@@ -63,7 +63,7 @@ class NioCompositeIterator implements Iterator<NioJournalFileRecord> {
     /**
      * {@inheritDoc}
      */
-    public NioJournalFileRecord next() {
+    public E next() {
         return current.next();
     }
 
@@ -79,7 +79,7 @@ class NioCompositeIterator implements Iterator<NioJournalFileRecord> {
      */
     @Override
     public String toString() {
-        return "NioCompositeIterator{" +
+        return "CompositeIterator{" +
                 "current=" + current +
                 '}';
     }

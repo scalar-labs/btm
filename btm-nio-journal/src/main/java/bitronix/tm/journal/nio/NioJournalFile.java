@@ -21,6 +21,7 @@
 
 package bitronix.tm.journal.nio;
 
+import bitronix.tm.journal.nio.util.CompositeIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,7 +143,9 @@ class NioJournalFile implements NioJournalConstants {
 
         return new Iterable<NioJournalFileRecord>() {
             public Iterator<NioJournalFileRecord> iterator() {
-                return new NioCompositeIterator(Arrays.asList(first, second));
+                @SuppressWarnings("unchecked")
+                List<Iterable<NioJournalFileRecord>> iterables = Arrays.asList(first, second);
+                return new CompositeIterator<NioJournalFileRecord>(iterables);
             }
         };
     }
