@@ -55,7 +55,6 @@ public class TransactionLogAppender {
     private final TransactionLogHeader header;
 
     private long maxFileLength;
-    private ByteBuffer appendBuffer;
 
     private static DiskForceBatcherThread diskForceBatcherThread;
 
@@ -109,12 +108,12 @@ public class TransactionLogAppender {
                 log.debug("between " + getHeader().getPosition() + " and " + futureFilePosition + ", writing " + tlog);
             }
 
-            ByteBuffer buffer = prepareAppendBuffer(totalRecordSize);
+            ByteBuffer buffer = ByteBuffer.allocate(totalRecordSize);
             buffer.putInt(tlog.getStatus());
             buffer.putInt(tlog.getRecordLength());
             buffer.putInt(tlog.getHeaderLength());
             buffer.putLong(tlog.getTime());
-            buffer.putInt((int) tlog.getSequenceNumber());
+            buffer.putInt(tlog.getSequenceNumber());
             buffer.putInt(tlog.getCrc32());
             buffer.put((byte) tlog.getGtrid().getArray().length);
             buffer.put(tlog.getGtrid().getArray());
@@ -122,7 +121,7 @@ public class TransactionLogAppender {
             for (Object o : tlog.getUniqueNames()) {
                 String uniqueName = (String) o;
                 buffer.putShort((short) uniqueName.length());
-                buffer.put(NAME_CHARSET.encode(uniqueName)); // this writes each character discarding the 8th bit. Isn't that US-ASCII ?
+                buffer.put(NAME_CHARSET.encode(uniqueName));
             }
 
             buffer.putInt(tlog.getEndRecord());
@@ -135,14 +134,6 @@ public class TransactionLogAppender {
 
             return true;
         }
-    }
-
-    private ByteBuffer prepareAppendBuffer(int requiredBytes) {
-        if (appendBuffer == null || appendBuffer.capacity() < requiredBytes)
-            appendBuffer = ByteBuffer.allocateDirect(requiredBytes);
-        else
-            appendBuffer.clear();
-        return appendBuffer;
     }
 
     /**
