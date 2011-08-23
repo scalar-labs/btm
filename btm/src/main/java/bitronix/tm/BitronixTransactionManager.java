@@ -43,7 +43,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionManager.class);
     private final static String MDC_GTRID_KEY = "btm-gtrid";
 
-    private SortedMap<BitronixTransaction, ClearContextSynchronization> inFlightTransactions;
+    private final SortedMap<BitronixTransaction, ClearContextSynchronization> inFlightTransactions;
 
     private volatile boolean shuttingDown;
 
@@ -82,16 +82,18 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
                 }
             };
 
+            SortedMap<BitronixTransaction, ClearContextSynchronization> sortedMap;
             try {
                 // we attempt to use the concurrent sorted map from java 6
-                inFlightTransactions = (SortedMap<BitronixTransaction, ClearContextSynchronization>)
+                sortedMap = (SortedMap<BitronixTransaction, ClearContextSynchronization>)
                     ClassLoaderUtils.loadClass("java.util.concurrent.ConcurrentSkipListMap").
                           getConstructor(Comparator.class).newInstance(timestampSortComparator);
-            } catch(ClassNotFoundException e) {
+            } catch (ClassNotFoundException e) {
                 // we're in Java5 and fallback to a synced map.
-                inFlightTransactions = Collections.synchronizedSortedMap(
+                sortedMap = Collections.synchronizedSortedMap(
                     new TreeMap<BitronixTransaction, ClearContextSynchronization>(timestampSortComparator));
             }
+            inFlightTransactions = sortedMap;
 
             if (log.isDebugEnabled()) { log.debug("recovery will run in the background every " + backgroundRecoveryInterval + " second(s)"); }
             Date nextExecutionDate = new Date(MonotonicClock.currentTimeMillis() + (backgroundRecoveryInterval * 1000L));
