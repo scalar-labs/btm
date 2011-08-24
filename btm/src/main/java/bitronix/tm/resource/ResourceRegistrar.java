@@ -44,7 +44,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  *
  * @author lorban, jkellerer
  */
-public class ResourceRegistrar {
+public final class ResourceRegistrar {
 
     private final static Logger log = LoggerFactory.getLogger(ResourceRegistrar.class);
 
@@ -53,7 +53,7 @@ public class ResourceRegistrar {
      */
     public final static Charset UNIQUE_NAME_CHARSET = Charset.forName("US-ASCII");
 
-    private final static CopyOnWriteArraySet<ProducerHolder> resources = new CopyOnWriteArraySet<ProducerHolder>();
+    private final static Set<ProducerHolder> resources = new CopyOnWriteArraySet<ProducerHolder>();
 
     /**
      * Get a registered {@link XAResourceProducer}.
@@ -158,6 +158,9 @@ public class ResourceRegistrar {
         }
 
         return null;
+    }
+
+    private ResourceRegistrar() {
     }
 
     /**
