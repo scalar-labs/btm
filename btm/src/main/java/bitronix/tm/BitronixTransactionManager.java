@@ -85,6 +85,9 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
     private SortedMap<BitronixTransaction, ClearContextSynchronization> createInFlightTransactionsMap()
             throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        final boolean debug = log.isDebugEnabled();
+        if (debug) { log.debug("Creating sorted memory storage for inflight transactions."); }
+
         final Comparator<BitronixTransaction> timestampSortComparator = new Comparator<BitronixTransaction>() {
                 public int compare(BitronixTransaction t1, BitronixTransaction t2) {
                     Long timestamp1 = t1.getResourceManager().getGtrid().extractTimestamp();
@@ -99,7 +102,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
                 }
             };
 
-        if (log.isTraceEnabled()) { log.trace("Attempting to use a concurrent sorted map of type 'ConcurrentSkipListMap' (from jre6 or custom supplied backport)"); }
+        if (debug) { log.debug("Attempting to use a concurrent sorted map of type 'ConcurrentSkipListMap' (from jre6 or custom supplied backport)"); }
         try {
             @SuppressWarnings("unchecked")
             SortedMap<BitronixTransaction, ClearContextSynchronization> mapInstance = (SortedMap)
@@ -107,7 +110,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
                             getConstructor(Comparator.class).newInstance(timestampSortComparator);
             return mapInstance;
         } catch (ClassNotFoundException e) {
-            if (log.isTraceEnabled()) { log.trace("Concurrent sorted map 'ConcurrentSkipListMap' is not available. Falling back to a synchronized TreeMap."); }
+            if (debug) { log.debug("Concurrent sorted map 'ConcurrentSkipListMap' is not available. Falling back to a synchronized TreeMap."); }
             return Collections.synchronizedSortedMap(
                     new TreeMap<BitronixTransaction, ClearContextSynchronization>(timestampSortComparator));
         }
