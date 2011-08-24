@@ -21,23 +21,36 @@
 
 package bitronix.tm.journal.nio;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.Mockito;
-import org.mockito.internal.util.MockUtil;
-
-import java.util.*;
-import java.util.concurrent.*;
-
-import static org.junit.Assert.*;
 
 /**
  * Tests the functionality of NioForceSynchronizer.
  *
  * @author juergen kellerer, 2011-05-29
  */
+@Ignore
 public class NioForceSynchronizerTest {
 
     static ExecutorService service;
@@ -109,7 +122,6 @@ public class NioForceSynchronizerTest {
 
     private List<Future<Boolean>> doTestWaitOnEnlistedWithSuccess() throws Exception {
         return doTestWaitOnEnlisted(new Callable<Object>() {
-            @Override
             public Object call() throws Exception {
                 return null;
             }
@@ -118,7 +130,6 @@ public class NioForceSynchronizerTest {
 
     private List<Future<Boolean>> doTestWaitOnEnlistedWithFailure() throws Exception {
         return doTestWaitOnEnlisted(new Callable<Object>() {
-            @Override
             public Object call() throws Exception {
                 throw new Exception();
             }
@@ -131,7 +142,6 @@ public class NioForceSynchronizerTest {
         List<Future<Boolean>> futures = new ArrayList<Future<Boolean>>();
         for (final Object element : elements) {
             futures.add(service.submit(new Callable<Boolean>() {
-                @Override
                 public Boolean call() throws Exception {
                     forceSynchronizer.enlistElement(element, queue);
                     enlistCountDown.countDown();
