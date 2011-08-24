@@ -617,32 +617,36 @@ public class Configuration implements Service {
      * the duration of the JVM lifespan.
      * @return the server ID.
      */
-    public synchronized byte[] buildServerIdArray() {
+    public byte[] buildServerIdArray() {
         if (serverIdArray == null) {
-            try {
-                serverIdArray = serverId.substring(0, Math.min(serverId.length(), MAX_SERVER_ID_LENGTH)).getBytes("US-ASCII");
-            } catch (Exception ex) {
-                log.warn("cannot get this JVM unique ID. Make sure it is configured and you only use ASCII characters. Will use IP address instead (unsafe for production usage!).");
+            // DCL is not a problem here, we just want to avoid multiple concurrent creations of the same array. More important
+            // is to avoid contended synchronizations when accessing this array as it is part of Uid creation.
+            synchronized (this) {
                 try {
-                    serverIdArray = InetAddress.getLocalHost().getHostAddress().getBytes("US-ASCII");
-                } catch (Exception ex2) {
-                    final String unknownServerId = "unknown-server-id";
-                    log.warn("cannot get the local IP address. Will replace it with '" + unknownServerId + "' constant (highly unsafe!).");
-                    serverIdArray = unknownServerId.getBytes();
+                    serverIdArray = serverId.substring(0, Math.min(serverId.length(), MAX_SERVER_ID_LENGTH)).getBytes("US-ASCII");
+                } catch (Exception ex) {
+                    log.warn("cannot get this JVM unique ID. Make sure it is configured and you only use ASCII characters. Will use IP address instead (unsafe for production usage!).");
+                    try {
+                        serverIdArray = InetAddress.getLocalHost().getHostAddress().getBytes("US-ASCII");
+                    } catch (Exception ex2) {
+                        final String unknownServerId = "unknown-server-id";
+                        log.warn("cannot get the local IP address. Will replace it with '" + unknownServerId + "' constant (highly unsafe!).");
+                        serverIdArray = unknownServerId.getBytes();
+                    }
                 }
+
+                if (serverIdArray.length > MAX_SERVER_ID_LENGTH) {
+                    byte[] truncatedServerId = new byte[MAX_SERVER_ID_LENGTH];
+                    System.arraycopy(serverIdArray, 0, truncatedServerId, 0, MAX_SERVER_ID_LENGTH);
+                    serverIdArray = truncatedServerId;
+                }
+
+                String serverIdArrayAsString = new String(serverIdArray);
+                if (serverId == null)
+                    serverId = serverIdArrayAsString;
+
+                log.info("JVM unique ID: <" + serverIdArrayAsString + ">");
             }
-
-            if (serverIdArray.length > MAX_SERVER_ID_LENGTH) {
-                byte[] truncatedServerId = new byte[MAX_SERVER_ID_LENGTH];
-                System.arraycopy(serverIdArray, 0, truncatedServerId, 0, MAX_SERVER_ID_LENGTH);
-                serverIdArray = truncatedServerId;
-            }
-
-            String serverIdArrayAsString = new String(serverIdArray);
-            if (serverId == null)
-                serverId = serverIdArrayAsString;
-
-            log.info("JVM unique ID: <" + serverIdArrayAsString + ">");
         }
         return serverIdArray;
     }
