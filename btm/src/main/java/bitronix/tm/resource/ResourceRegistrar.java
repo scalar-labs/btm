@@ -182,7 +182,7 @@ public final class ResourceRegistrar {
             if (!transcodedUniqueName.equals(uniqueName)) {
                 throw new IllegalArgumentException("The given XAResourceProducer's uniqueName '" + uniqueName + "' is not compatible with the charset " +
                         "'US-ASCII' (transcoding results in '" + transcodedUniqueName + "').\n" +
-                        "BTM requires unique names to be compatible US-ASCII when used with a transaction journal.");
+                        "BTM requires unique names to be compatible with US-ASCII when used with a transaction journal.");
             }
 
             this.producer = producer;
