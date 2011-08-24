@@ -181,7 +181,7 @@ public final class ResourceRegistrar {
             final String transcodedUniqueName = new String(uniqueName.getBytes(UNIQUE_NAME_CHARSET), UNIQUE_NAME_CHARSET);
             if (!transcodedUniqueName.equals(uniqueName)) {
                 throw new IllegalArgumentException("The given XAResourceProducer's uniqueName '" + uniqueName + "' is not compatible with the charset " +
-                        "'US-ASCII' (transcoding results in '" + transcodedUniqueName + "').\n" +
+                        "'US-ASCII' (transcoding results in '" + transcodedUniqueName + "'). " + System.getProperty("line.separator") +
                         "BTM requires unique names to be compatible with US-ASCII when used with a transaction journal.");
             }
 
