@@ -25,17 +25,17 @@ import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.transaction.Status;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static javax.transaction.Status.*;
 
 /**
- * A tracker for dangling transactions (= transactions that need to be considered in rollovers
- * and during Recoverer runs).
+ * A tracker for dangling transactions (= transactions that need to be considered in rollovers and during Recoverer runs).
  *
  * @author juergen kellerer, 2011-04-30
  */
@@ -44,10 +44,25 @@ class NioTrackedTransactions implements NioJournalConstants {
     private static final Logger log = LoggerFactory.getLogger(NioTrackedTransactions.class);
 
     private static boolean isFinalStatus(int status) {
-        return status == Status.STATUS_COMMITTED ||
-                status == Status.STATUS_ROLLEDBACK ||
-                status == Status.STATUS_NO_TRANSACTION ||
-                status == Status.STATUS_UNKNOWN;
+        return status == STATUS_COMMITTED || status == STATUS_ROLLEDBACK;
+    }
+
+    private static boolean isTrackedRecordInValidStatus(int trackedStatus, int status) {
+        switch (status) {
+            case STATUS_COMMITTED:
+                return trackedStatus == STATUS_COMMITTING;
+            case STATUS_ROLLEDBACK:
+                return trackedStatus == STATUS_ROLLING_BACK;
+            case STATUS_PREPARED:
+                return trackedStatus == STATUS_PREPARING;
+        }
+        return true;
+    }
+
+    private static boolean isTrackableStatus(int status) {
+        return status != STATUS_NO_TRANSACTION &&
+                status != STATUS_MARKED_ROLLBACK &&
+                status != STATUS_UNKNOWN;
     }
 
     private final ConcurrentMap<Uid, NioJournalRecord> tracked = new ConcurrentHashMap<Uid, NioJournalRecord>();
@@ -70,37 +85,42 @@ class NioTrackedTransactions implements NioJournalConstants {
      * @param record the record to track.
      */
     public void track(final int status, final Uid gtrid, final NioJournalRecord record) {
+        if (status == STATUS_UNKNOWN)
+            return;
+
         if (isFinalStatus(status)) {
             final NioJournalRecord existing = tracked.get(gtrid);
             if (existing != null) {
+                if (!isTrackedRecordInValidStatus(existing.getStatus(), status)) {
+                    log.warn("Found a violation in the logged tx journal record " + record + ". The transaction " + gtrid + " was set to status " +
+                            TRANSACTION_LONG_STATUS_STRINGS.get(status) + " on resources " + record.getUniqueNames() + " though the tracked status is " +
+                            TRANSACTION_LONG_STATUS_STRINGS.get(existing.getStatus()) + " on resources " + existing.getUniqueNames());
+                }
+
                 existing.removeUniqueNamesFromRecord(record);
                 if (existing.getUniqueNamesCount() == 0) {
                     tracked.remove(gtrid);
-                    if (log.isTraceEnabled())
-                        log.trace("No longer tracking transaction '{}', was '{}' before", record, existing);
+                    if (log.isDebugEnabled()) { log.debug("No longer tracking transaction '" + record + "', was '" + existing + "' before"); }
                 } else {
-                    if (log.isTraceEnabled()) {
-                        log.trace("Changed status on transaction bits '{}' in '{}', from '{}'",
-                                new Object[]{record.getUniqueNames(), existing, record});
+                    if (log.isDebugEnabled()) {
+                        log.debug("Changed status on transaction bits '" + record.getUniqueNames() + "' in '" + existing + "', from '" + record + "'");
                     }
                 }
             }
-        } else {
+        } else if (isTrackableStatus(status)) {
             final NioJournalRecord removed = tracked.put(gtrid, record);
 
             // Note: Merging names between removed and record is not required as the external implementation
-            // should not change the unique names unless isFinalStatus returns true. Logging an error if the
-            // case still happens.
-            if (removed != null && !removed.isUniqueNamesEqualInRecord(record)) {
-                log.error("The unique names describing the TX members changed at an invalid TX status of {}, " +
-                        "when tracking updates to the transaction {} inside the journal. (names had been " +
-                        "{} and were now set to {})", new Object[]{status, gtrid,
-                        removed.getUniqueNames(), record.getUniqueNames()});
+            // should not provide a subset of names unless isFinalStatus returns true. Logging an error if the case still happens.
+            if (removed != null && !removed.isUniqueNamesContainedInRecord(record)) {
+                log.error("The unique names describing the TX members changed at an invalid TX status of " + TRANSACTION_LONG_STATUS_STRINGS.get(status) +
+                        ", when tracking updates to the transaction " + gtrid + " inside the journal. (names had been " + removed.getUniqueNames() +
+                        "at status " + TRANSACTION_LONG_STATUS_STRINGS.get(removed.getStatus()) + " and were now set to " + record.getUniqueNames() + ")");
             }
 
-            if (log.isTraceEnabled())
-                log.trace("Tracking pending transaction '{}', was '{}' before", record, removed);
-        }
+            if (log.isDebugEnabled()) { log.debug("Tracking pending transaction '" + record + "', was '" + removed + "' before"); }
+        } else
+            tracked.remove(gtrid);
     }
 
     /**
@@ -108,13 +128,13 @@ class NioTrackedTransactions implements NioJournalConstants {
      */
     public void purgeTransactionsExceedingLifetime() {
         final long now = System.currentTimeMillis();
-        for (Iterator<NioJournalRecord> i = tracked.values().iterator(); i.hasNext();) {
+        for (Iterator<NioJournalRecord> i = tracked.values().iterator(); i.hasNext(); ) {
             NioJournalRecord journalRecord = i.next();
+
             final long age = now - journalRecord.getTime();
             if (age > TRANSACTION_MAX_LIFETIME) {
-                log.warn("Max life time of {}m exeeded (age was {}m). Discarding dangling transaction {}",
-                        new Object[]{TimeUnit.MILLISECONDS.toMinutes(TRANSACTION_MAX_LIFETIME),
-                                TimeUnit.MILLISECONDS.toMinutes(age), journalRecord});
+                log.warn("The maximum lifetime of " + MILLISECONDS.toHours(TRANSACTION_MAX_LIFETIME) + " hours was exceeded " +
+                        "(TX age is " + MILLISECONDS.toHours(age) + " hours). Discarding dangling transaction " + journalRecord);
                 i.remove();
             }
         }

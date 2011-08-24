@@ -147,9 +147,6 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
 
     private int collectWork(final List<NioJournalFileRecord> recordsToWorkOn,
                             final boolean block) throws InterruptedException {
-
-        recordsToWorkOn.clear();
-
         if (block)
             return incomingQueue.takeAndDrainElementsTo(pendingEntriesToWorkOn, recordsToWorkOn);
         else
@@ -167,14 +164,12 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
             try {
                 pendingEntriesToWorkOn.clear();
 
-                // Note: Be careful with ordering the loop condition statements below.
-                //       collectWork() must not be called if the loop is aborted by any other
-                //       condition than collect work returning '0'.
+                // Note: Be careful with ordering the loop condition statements below. collectWork() must not be called if the loop is
+                //       aborted by any other condition than collect work returning '0'.
 
-                for (int iterationsBeforeForce = WRITE_ITERATIONS_BEFORE_FORCE;
-                     iterationsBeforeForce > 0; iterationsBeforeForce--) {
-
+                for (int iterationsBeforeForce = WRITE_ITERATIONS_BEFORE_FORCE; iterationsBeforeForce > 0; iterationsBeforeForce--) {
                     try {
+                        recordsToWorkOn.clear();
                         if (collectWork(recordsToWorkOn, iterationsBeforeForce == WRITE_ITERATIONS_BEFORE_FORCE) == 0)
                             break;
 
@@ -191,32 +186,29 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
 
                         journalFile.write(recordsToWorkOn);
                         processedCount += recordsToWorkOn.size();
+                    } catch (InterruptedException e) {
+                        throw e; // handled in upper block.
                     } catch (Exception e) {
                         log.error("Failed storing " + recordsToWorkOn.size() + " transaction log records.", e);
-                        for (NioJournalFileRecord record : recordsToWorkOn) {
-                            log.error("Failed storing transaction {}.",
-                                    new NioJournalRecord(record.getPayload(), record.isValid()));
-                        }
+                        for (NioJournalFileRecord record : recordsToWorkOn)
+                            log.error("Failed storing transaction " + new NioJournalRecord(record.getPayload(), record.isValid()) + ".");
                     } finally {
                         disposeAll(recordsToWorkOn);
                     }
                 }
 
-                if (forceSynchronizer != null)
-                    forceSynchronizer.processEnlisted(forceJournalFile, pendingEntriesToWorkOn);
+                tryForceAndReportAllRemainingElementsAsSuccess();
 
             } catch (InterruptedException t) {
                 if (recordsToWorkOn.isEmpty()) {
-                    if (log.isDebugEnabled())
-                        log.debug("Cleanly interrupted log appender.");
+                    if (log.isDebugEnabled()) { log.debug("Cleanly interrupted log appender."); }
                 } else {
-                    log.warn("Interrupted log appender with {} entries still in queue.", recordsToWorkOn.size());
+                    log.warn("Interrupted log appender with " + recordsToWorkOn.size() + " entries still in queue.");
                     reportAllRemainingElementsAsFailed();
                 }
                 interrupt();
             } catch (Throwable t) { //NOSONAR: The log writer must not stop execution even when a fatal error occurred.
-                reportAllRemainingElementsAsFailed();
-                log.error("Fatal error when storing logs. Reporting all remaining elements as failures.", t);
+                log.error("Fatal error when storing logs. Reporting " + pendingEntriesToWorkOn.size() + " remaining elements as failures.", t);
 
                 // Waiting for 1 second to avoid running in endless loops when every invocation causes a fatal error.
                 try {
@@ -224,12 +216,20 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
                 } catch (InterruptedException e) {
                     break;
                 }
+            } finally {
+                reportAllRemainingElementsAsFailed();
             }
         }
 
         synchronized (this) {
             notifyAll();
         }
+    }
+
+    private void tryForceAndReportAllRemainingElementsAsSuccess() throws Exception {
+        if (forceSynchronizer != null)
+            forceSynchronizer.processEnlisted(forceJournalFile, pendingEntriesToWorkOn);
+        pendingEntriesToWorkOn.clear();
     }
 
     private void reportAllRemainingElementsAsFailed() {
@@ -327,7 +327,7 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     @Override
     public String toString() {
         return "NioJournalWritingThread{" +
-                ", pendingEntriesToWorkOn.size=" + pendingEntriesToWorkOn.size() +
+                "pendingEntriesToWorkOn.size=" + pendingEntriesToWorkOn.size() +
                 ", processedCount=" + processedCount +
                 ", forceSynchronizer=" + forceSynchronizer +
                 ", state=" + getState() +

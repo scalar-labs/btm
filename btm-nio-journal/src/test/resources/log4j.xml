@@ -26,7 +26,7 @@
 
 	<appender name="console" class="org.apache.log4j.ConsoleAppender">
 		<param name="Target" value="System.out"/>
-		<param name="Threshold" value="OFF"/>
+		<param name="Threshold" value="ERROR"/>
 
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d{ABSOLUTE} {%8.8t} (%X{btm-gtrid}) [%-5p,%-10c{1}] %m%n"/>
@@ -36,7 +36,6 @@
 	<appender name="file" class="org.apache.log4j.FileAppender">
 		<param name="File" value="target/tests.log"/>
 		<param name="Append" value="false"/>
-		<!--param name="BufferedIO" value="true"/-->
 		<param name="Threshold" value="DEBUG"/>
 
 		<layout class="org.apache.log4j.PatternLayout">
@@ -45,7 +44,7 @@
 	</appender>
 
 	<category name="bitronix">
-		<level value="DEBUG"/>
+		<level value="INFO"/>
 		<appender-ref ref="file"/>
 	</category>
 
