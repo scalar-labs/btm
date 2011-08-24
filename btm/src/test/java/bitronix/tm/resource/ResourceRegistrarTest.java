@@ -141,6 +141,11 @@ public class ResourceRegistrarTest {
         ResourceRegistrar.register(createMockProducer("xa-rp"));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testCannotRegisterNonASCIIUniqueName() throws Exception {
+        ResourceRegistrar.register(createMockProducer("äöü"));
+    }
+
     @Test
     public void testNonRecoverableProducersAreNotRegistered() throws Exception {
         final XAResourceProducer producer = createMockProducer("non-recoverable");

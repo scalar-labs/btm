@@ -172,7 +172,7 @@ public final class ResourceRegistrar {
 
         private ProducerHolder(XAResourceProducer producer) {
             if (producer == null)
-                throw new IllegalArgumentException("XAResourceProducer may not be 'null'. Verify your call to ResourceRegistrar.register(...).");
+                throw new IllegalArgumentException("XAResourceProducer may not be 'null'. Verify your call to ResourceRegistrar.[un]register(...).");
 
             final String uniqueName = producer.getUniqueName();
             if (uniqueName == null || uniqueName.isEmpty())
