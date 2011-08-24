@@ -27,8 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * Simple pool of pre-allocated byte buffers used for concurrent serialization.
@@ -40,20 +39,16 @@ final class NioBufferPool implements NioJournalConstants {
     private static final Logger log = LoggerFactory.getLogger(NioForceSynchronizer.class);
     private static final boolean trace = log.isTraceEnabled();
 
-    private static final int MAX_BUFFERS = (int) (CONCURRENCY * 1.5);
-    private static final int MAX_RECYCLES_WITHOUT_SHRINK = 250;
-
     private static final NioBufferPool instance = new NioBufferPool();
 
     public static NioBufferPool getInstance() {
         return instance;
     }
 
-    final AtomicInteger recycleCountBeforeShrink = new AtomicInteger();
-    final Queue<ByteBuffer> availableBuffers = new ConcurrentLinkedQueue<ByteBuffer>();
+    final Queue<ByteBuffer> availableBuffers = new ArrayBlockingQueue<ByteBuffer>(CONCURRENCY);
 
     {
-        for (int i = 0; i < MAX_BUFFERS; i++)
+        for (int i = 0; i < CONCURRENCY; i++)
             availableBuffers.add(ByteBuffer.allocate(PRE_ALLOCATED_BUFFER_SIZE));
     }
 
@@ -76,9 +71,6 @@ final class NioBufferPool implements NioJournalConstants {
      */
     public void recycleBuffer(ByteBuffer buffer) {
         doRecycleBuffer(buffer);
-
-        if (recycleCountBeforeShrink.incrementAndGet() > MAX_RECYCLES_WITHOUT_SHRINK)
-            shrinkToSize();
     }
 
     /**
@@ -89,25 +81,11 @@ final class NioBufferPool implements NioJournalConstants {
     public void recycleBuffers(Collection<ByteBuffer> buffers) {
         for (ByteBuffer buffer : buffers)
             doRecycleBuffer(buffer);
-
-        if (recycleCountBeforeShrink.addAndGet(buffers.size()) > MAX_RECYCLES_WITHOUT_SHRINK)
-            shrinkToSize();
     }
 
     private void doRecycleBuffer(ByteBuffer buffer) {
         if (buffer != null && buffer.capacity() == PRE_ALLOCATED_BUFFER_SIZE)
             availableBuffers.offer((ByteBuffer) buffer.clear());
-    }
-
-    private void shrinkToSize() {
-        if (availableBuffers.size() > MAX_BUFFERS) {
-            if (trace) log.trace("Shrinking buffer pool from {} to {} buffers.", availableBuffers.size(), CONCURRENCY);
-            while (availableBuffers.size() > CONCURRENCY) {
-                for (int i = 0; i < 100; i++)
-                    availableBuffers.poll();
-            }
-            recycleCountBeforeShrink.set(0);
-        }
     }
 
     /**
