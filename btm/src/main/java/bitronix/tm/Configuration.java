@@ -28,7 +28,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.nio.charset.Charset;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Configuration repository of the transaction manager. You can set configurable values either via the properties file
@@ -50,7 +52,7 @@ public class Configuration implements Service {
     private final static int MAX_SERVER_ID_LENGTH = 51;
 
     private volatile String serverId;
-    private volatile byte[] serverIdArray;
+    private final AtomicReference<byte[]> serverIdArray = new AtomicReference<byte[]>();
     private volatile String logPart1Filename;
     private volatile String logPart2Filename;
     private volatile boolean forcedWriteEnabled;
@@ -613,46 +615,60 @@ public class Configuration implements Service {
     }
 
     /**
-     * Build the server ID byte array that will be prepended in generated UIDs. Once built, the value is cached for
-     * the duration of the JVM lifespan.
+     * Build the server ID byte array that will be prepended in generated UIDs. Once built, the value is cached for the duration of the JVM lifespan.
      * @return the server ID.
      */
     public byte[] buildServerIdArray() {
-        if (serverIdArray == null) {
-            // DCL is not a problem here, we just want to avoid multiple concurrent creations of the same array. More important
-            // is to avoid contended synchronizations when accessing this array as it is part of Uid creation.
+        byte[] id = serverIdArray.get();
+        if (id == null) {
+            // DCL is not a problem here, we just want to avoid multiple concurrent creations of the same array as it would look ugly in the logs.
+            // More important is to avoid contended synchronizations when accessing this array as it is part of Uid creation happening when a TX is opened.
             synchronized (this) {
-                try {
-                    serverIdArray = serverId.substring(0, Math.min(serverId.length(), MAX_SERVER_ID_LENGTH)).getBytes("US-ASCII");
-                } catch (Exception ex) {
-                    log.warn("cannot get this JVM unique ID. Make sure it is configured and you only use ASCII characters. Will use IP address instead (unsafe for production usage!).");
+                while ((id = serverIdArray.get()) == null) {
+                    final Charset idCharset = Charset.forName("US-ASCII");
                     try {
-                        serverIdArray = InetAddress.getLocalHost().getHostAddress().getBytes("US-ASCII");
-                    } catch (Exception ex2) {
-                        final String unknownServerId = "unknown-server-id";
-                        log.warn("cannot get the local IP address. Will replace it with '" + unknownServerId + "' constant (highly unsafe!).");
-                        serverIdArray = unknownServerId.getBytes();
+                        id = serverId.getBytes(idCharset);
+
+                        String transcodedId = new String(id, idCharset);
+                        if (!transcodedId.equals(serverId)) {
+                            log.warn("The given server ID '" + serverId + "' is not compatible with the ID charset '" + idCharset + "' as it transcodes to '" + transcodedId + "'. " +
+                                    "It is highly recommended that you specify a compatible server ID using only characters that are allowed in the ID charset.");
+                        }
+                    } catch (Exception ex) {
+                        log.warn("Cannot get the unique server ID for this JVM ('bitronix.tm.serverId'). Make sure it is configured and you only use " + idCharset + " characters. " +
+                                "Will use IP address instead (unsafe for production usage!).");
+                        try {
+                            id = InetAddress.getLocalHost().getHostAddress().getBytes(idCharset);
+                        } catch (Exception ex2) {
+                            final String unknownServerId = "unknown-server-id";
+                            log.warn("Cannot get the local IP address. Please verify your network configuration. Will use the constant '" + unknownServerId + "' as server ID (highly unsafe!).", ex2);
+                            id = unknownServerId.getBytes(idCharset);
+                        }
+                    }
+
+                    if (id.length > MAX_SERVER_ID_LENGTH) {
+                        byte[] truncatedServerId = new byte[MAX_SERVER_ID_LENGTH];
+                        System.arraycopy(id, 0, truncatedServerId, 0, MAX_SERVER_ID_LENGTH);
+                        log.warn("The applied server ID '" + new String(id, idCharset) + "' has to be truncated to " + MAX_SERVER_ID_LENGTH +
+                                " chars (builtin hard limit) resulting in " + new String(truncatedServerId, idCharset) + ". This may be highly unsafe if IDs differ with suffixes only!");
+                        id = truncatedServerId;
+                    }
+
+                    if (serverIdArray.compareAndSet(null, id)) {
+                        String idAsString = new String(id, idCharset);
+                        if (serverId == null)
+                            serverId = idAsString;
+
+                        log.info("JVM unique ID: <" + idAsString + "> - Using this server ID to ensure uniqueness of transaction IDs across the network.");
                     }
                 }
-
-                if (serverIdArray.length > MAX_SERVER_ID_LENGTH) {
-                    byte[] truncatedServerId = new byte[MAX_SERVER_ID_LENGTH];
-                    System.arraycopy(serverIdArray, 0, truncatedServerId, 0, MAX_SERVER_ID_LENGTH);
-                    serverIdArray = truncatedServerId;
-                }
-
-                String serverIdArrayAsString = new String(serverIdArray);
-                if (serverId == null)
-                    serverId = serverIdArrayAsString;
-
-                log.info("JVM unique ID: <" + serverIdArrayAsString + ">");
             }
         }
-        return serverIdArray;
+        return id;
     }
 
     public void shutdown() {
-        serverIdArray = null;
+        serverIdArray.set(null);
     }
 
     public String toString() {
