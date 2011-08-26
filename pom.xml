@@ -51,6 +51,8 @@
     </properties>
 
     <modules>
+        <module>btm-jdbc3-stubs</module>
+        <module>btm-jdbc4-stubs</module>
         <module>btm</module>
         <module>btm-nio-journal</module>
         <module>btm-jetty6-lifecycle</module>
@@ -60,6 +62,18 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.codehaus.btm</groupId>
+                <artifactId>btm-jdbc3-stubs</artifactId>
+                <version>2.2.0-SNAPSHOT</version>
+                <classifier>sources</classifier>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.btm</groupId>
+                <artifactId>btm-jdbc4-stubs</artifactId>
+                <version>2.2.0-SNAPSHOT</version>
+                <classifier>sources</classifier>
+            </dependency>
             <dependency>
                 <groupId>org.codehaus.btm</groupId>
                 <artifactId>btm</artifactId>
