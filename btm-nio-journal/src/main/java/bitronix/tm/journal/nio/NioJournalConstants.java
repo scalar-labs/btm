@@ -22,6 +22,8 @@
 package bitronix.tm.journal.nio;
 
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Collection of 'runtime' constants used by the nio journal implementation.
@@ -73,4 +75,38 @@ public interface NioJournalConstants {
      * (should be as large as the majority of transactions may become)
      */
     int PRE_ALLOCATED_BUFFER_SIZE = Integer.getInteger("bitronix.nio.journal.buffer.size", 386);
+
+    /**
+     * Is a list of short human readable strings that map TX status IDs.
+     */
+    List<String> TRANSACTION_STATUS_STRINGS = Arrays.asList(
+            "0-ACT:", // Status.STATUS_ACTIVE
+            "1-MRB:", // Status.STATUS_MARKED_ROLLBACK
+            "2-PRE:", // Status.STATUS_PREPARED
+            "3-CTD:", // Status.STATUS_COMMITTED
+            "4-RBA:", // Status.STATUS_ROLLEDBACK
+            "5-UKN:", // Status.STATUS_UNKNOWN
+            "6-NTX:", // Status.STATUS_NO_TRANSACTION
+            "7-PRI:", // Status.STATUS_PREPARING
+            "8-COM:", // Status.STATUS_COMMITTING
+            "9-ROL:", // Status.STATUS_ROLLINGBACK
+            "<unkn>"  // out of bounds
+    );
+
+    /**
+     * Is a list of human readable strings that map TX status IDs.
+     */
+    List<String> TRANSACTION_LONG_STATUS_STRINGS = Arrays.asList(
+            "0-ACTIVE",            // Status.STATUS_ACTIVE
+            "1-MARKED_ROLLBACK",   // Status.STATUS_MARKED_ROLLBACK
+            "2-PREPARED",          // Status.STATUS_PREPARED
+            "3-COMMITTED",         // Status.STATUS_COMMITTED
+            "4-ROLLEDBACK",        // Status.STATUS_ROLLEDBACK
+            "5-UNKNOWN",           // Status.STATUS_UNKNOWN
+            "6-NO_TRANSACTION",    // Status.STATUS_NO_TRANSACTION
+            "7-PREPARING",         // Status.STATUS_PREPARING
+            "8-COMMITTING",        // Status.STATUS_COMMITTING
+            "9-ROLLINGBACK",       // Status.STATUS_ROLLINGBACK
+            "<unknown-status>"      // out of bounds
+    );
 }

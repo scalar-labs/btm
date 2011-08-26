@@ -49,7 +49,6 @@ import java.util.concurrent.locks.ReentrantLock;
 class NioForceSynchronizer {
 
     private static final Logger log = LoggerFactory.getLogger(NioForceSynchronizer.class);
-    private static final boolean trace = log.isTraceEnabled();
 
     private final ReentrantLock forceLock = new ReentrantLock();
     private final Condition performedForce = forceLock.newCondition();
@@ -77,17 +76,17 @@ class NioForceSynchronizer {
 
         try {
             // Wait until we have our entry forced (may not require a wait at all if it already happened).
-            while (enlistedElementNumber > latestForcedElement.get()) {
-                if (verifyIsInFailedRange(enlistedElementNumber))
-                    return false;
+            forceLock.lockInterruptibly();
+            try {
+                while (enlistedElementNumber > latestForcedElement.get()) {
+                    if (verifyIsInFailedRange(enlistedElementNumber))
+                        return false;
 
-                forceLock.lockInterruptibly();
-                try {
-                    if (trace) log.trace("Waiting until entry with sequence {} was forced.", enlistedElementNumber);
+                    if (log.isDebugEnabled()) { log.debug("Waiting until entry with sequence " + enlistedElementNumber + " was forced."); }
                     performedForce.await();
-                } finally {
-                    forceLock.unlock();
                 }
+            } finally {
+                forceLock.unlock();
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -98,9 +97,8 @@ class NioForceSynchronizer {
         if (verifyIsInFailedRange(enlistedElementNumber)) {
             return false;
         } else {
-            if (trace) {
-                log.trace("Entry with sequence {} was successfully forced (force ranges up to {}).",
-                        enlistedElementNumber, latestForcedElement.get());
+            if (log.isDebugEnabled()) {
+                log.debug("Entry with sequence " + enlistedElementNumber + " was successfully forced (force ranges up to " + latestForcedElement.get() + ").");
             }
             return true;
         }
@@ -122,9 +120,8 @@ class NioForceSynchronizer {
         try {
             final int waitingThreads = forceLock.getWaitQueueLength(performedForce);
             if (waitingThreads > 0) {
-                if (trace) {
-                    log.trace("Found {} threads waiting on force to happen. Forcing {} " +
-                            "log entries to disk now.", waitingThreads, elements);
+                if (log.isDebugEnabled()) {
+                    log.debug("Found " + waitingThreads + " threads waiting on force to happen. Forcing " + elements + "log entries to disk now.");
                 }
 
                 processEnlisted(forceCommand, elements);
@@ -164,26 +161,29 @@ class NioForceSynchronizer {
 
     private void recordSuccess(Collection<? extends SequencedQueueEntry> elements) {
         long largestInList = 0, n;
-        for (SequencedQueueEntry fe : elements) {
-            n = fe.getSequenceNumber();
+        for (SequencedQueueEntry entry : elements) {
+            n = entry.getSequenceNumber();
             if (n > largestInList)
                 largestInList = n;
         }
 
-        if (incrementTo(latestForcedElement, largestInList))
-            if (trace) log.trace("Set the latest forced element sequence to {}.", largestInList);
+        if (incrementTo(latestForcedElement, largestInList)) {
+            if (log.isDebugEnabled()) { log.debug("Set the latest forced element sequence to " + largestInList + "."); }
+        }
     }
 
     private void recordFailures(Collection<? extends SequencedQueueEntry> elements) {
-        for (SequencedQueueEntry element : elements) {
-            final long elementNumber = element.getSequenceNumber();
-            if (incrementTo(latestFailedElement, elementNumber))
-                if (trace) log.trace("Set the latest failed element sequence to {}.", elementNumber);
+        final boolean debug = log.isDebugEnabled();
+
+        for (SequencedQueueEntry entry : elements) {
+            final long elementSequenceNumber = entry.getSequenceNumber();
+            if (incrementTo(latestFailedElement, elementSequenceNumber))
+                if (debug) { log.debug("Set the latest failed element sequence number to " + elementSequenceNumber + ".");}
 
             FailedRange latestRange = failures.isEmpty() ? null : failures.get(failures.size() - 1);
-            if (latestRange == null || !latestRange.addToRange(elementNumber)) {
-                if (trace) log.trace("Creating new failed range for failed element {}.", element);
-                failures.add(new FailedRange(elementNumber));
+            if (latestRange == null || !latestRange.addToRange(elementSequenceNumber)) {
+                if (debug) { log.debug("Creating new failed range for failed element " + entry + "."); }
+                failures.add(new FailedRange(elementSequenceNumber));
             }
         }
     }
@@ -194,10 +194,7 @@ class NioForceSynchronizer {
             for (ListIterator<FailedRange> i = failures.listIterator(failures.size()); i.hasPrevious(); ) {
                 FailedRange failedRange = i.previous();
                 if (failedRange.isInRange(elementSequenceNumber)) {
-                    if (debug) {
-                        log.debug("Reporting that force failed on entry with sequence number {} ({}).",
-                                elementSequenceNumber, failedRange);
-                    }
+                    if (debug) { log.debug("Reporting that force failed on entry with sequence number " + elementSequenceNumber + " (" + failedRange + ")."); }
                     return true;
                 }
             }

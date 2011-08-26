@@ -41,6 +41,10 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
     // Starts from 0 for every new runtime session.
     private static final AtomicLong JOURNAL_RECORD_SEQUENCE = new AtomicLong();
 
+    /**
+     * Provides thread safe access to name encoders.
+     * (Similar to the way it is done inside the JRE as constructing the encoder is relatively expensive)
+     */
     public static final ThreadLocal<CharsetEncoder> NAME_ENCODERS = new ThreadLocal<CharsetEncoder>() {
         @Override
         protected CharsetEncoder initialValue() {
@@ -48,19 +52,18 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
         }
     };
 
-    private static byte[][] txStatusStrings = {
-            "0-ACT:".getBytes(NAME_CHARSET), // Status.STATUS_ACTIVE
-            "1-MRB:".getBytes(NAME_CHARSET), // Status.STATUS_MARKED_ROLLBACK
-            "2-PRE:".getBytes(NAME_CHARSET), // Status.STATUS_PREPARED
-            "3-CTD:".getBytes(NAME_CHARSET), // Status.STATUS_COMMITTED
-            "4-RBA:".getBytes(NAME_CHARSET), // Status.STATUS_ROLLEDBACK
-            "5-UKN:".getBytes(NAME_CHARSET), // Status.STATUS_UNKNOWN
-            "6-NTX:".getBytes(NAME_CHARSET), // Status.STATUS_NO_TRANSACTION
-            "7-PRI:".getBytes(NAME_CHARSET), // Status.STATUS_PREPARING
-            "8-COM:".getBytes(NAME_CHARSET), // Status.STATUS_COMMITTING
-            "9-ROL:".getBytes(NAME_CHARSET), // Status.STATUS_ROLLINGBACK
-            "<unkn>".getBytes(NAME_CHARSET), // out of bounds
-    };
+    private static final byte[][] txStatusStrings;
+
+    static {
+        txStatusStrings = new byte[TRANSACTION_STATUS_STRINGS.size()][];
+        for (int i = 0; i < txStatusStrings.length; i++) {
+            String statusString = TRANSACTION_STATUS_STRINGS.get(i);
+            txStatusStrings[i] = statusString.getBytes(NAME_CHARSET);
+
+            if (txStatusStrings[i].length != 6)
+                throw new IllegalStateException("The TX status string '" + statusString + "' encodes to a length != 6. Please fix this.");
+        }
+    }
 
     public static final int STATIC_RECORD_LENGTH =
             /* status-string        */ txStatusStrings[0].length +
@@ -260,13 +263,13 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
     }
 
     /**
-     * Returns true if the unique names in this and the other record are the same.
+     * Returns true if the unique names of this record are all contained in 'other'.
      *
      * @param other the other record to check.
-     * @return true if the unique names in this and the other record are the same.
+     * @return true if the unique names of this record are all contained in 'other'.
      */
-    protected boolean isUniqueNamesEqualInRecord(NioJournalRecord other) {
-        return uniqueNames.equals(other.uniqueNames);
+    protected boolean isUniqueNamesContainedInRecord(NioJournalRecord other) {
+        return uniqueNames.isEmpty() || other.uniqueNames.containsAll(uniqueNames);
     }
 
     /**

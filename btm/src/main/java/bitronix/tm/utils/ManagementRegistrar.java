@@ -33,14 +33,15 @@ import java.lang.ref.WeakReference;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 /**
- * JMX facade.
+ * JMX facade used to (un)register any JMX enabled instances.
  * <p/>
  * In case there is no JMX implementation available, calling methods of this class have no effect.
  * JMX registrations may be synchronous or asynchronous using a work-queue and worker thread.
- * The later enables higher throughput by avoiding the registration of very short lived instances.
+ * The latter enables higher throughput by avoiding the registration of very short lived instances and
+ * by that fact the JMX registrations can work on uncontended thread synchronization.
  *
  * @author lorban, jkellerer
  */
@@ -65,10 +66,11 @@ public final class ManagementRegistrar {
     static {
         Configuration configuration = TransactionManagerServices.getConfiguration();
         commandQueue = mbeanServer == null || configuration.isSynchronousJmxRegistration() ? null :
-                new ConcurrentLinkedQueue<ManagementCommand>();
+                new ArrayBlockingQueue<ManagementCommand>(1024);
 
 
         // TODO: BEGIN - This part should use a system wide shared ScheduledExecutorService instead.
+        // TODO:         To be changed when the Executors system was refactored.
         if (commandQueue != null) {
             new Thread() {
                 {
@@ -80,7 +82,7 @@ public final class ManagementRegistrar {
                 public void run() {
                     while (!isInterrupted()) {
                         try {
-                            new ManagementCommandCallerTask().run();
+                            normalizeAndRunQueuedCommands();
                             sleep(250); // sampling interval
                         } catch (InterruptedException t) {
                             return;
@@ -97,10 +99,11 @@ public final class ManagementRegistrar {
     static {
         if (mbeanServer != null) {
             if (log.isDebugEnabled()) {
-                log.debug("Enabled JMX with MBeanServer {}, registration is {}.",
-                        mbeanServer, commandQueue == null ? "synchronous" : "asynchronous");
+                log.debug("Enabled JMX with MBeanServer " + mbeanServer + "; MBean registration is '" + (commandQueue == null ? "synchronous" : "asynchronous") + "'.");
             }
-        } else if (log.isDebugEnabled()) log.debug("JMX support is disabled.");
+        } else {
+            if (log.isDebugEnabled()) { log.debug("JMX support is disabled."); }
+        }
     }
 
     private ManagementRegistrar() {
@@ -126,7 +129,7 @@ public final class ManagementRegistrar {
         if (mbeanServer == null)
             return;
 
-        executeCommand(new ManagementRegisterCommand(name, obj));
+        runOrEnqueueCommand(new ManagementRegisterCommand(name, obj));
     }
 
     /**
@@ -138,25 +141,32 @@ public final class ManagementRegistrar {
         if (mbeanServer == null)
             return;
 
-        executeCommand(new ManagementUnregisterCommand(name));
+        runOrEnqueueCommand(new ManagementUnregisterCommand(name));
     }
 
-    private static void executeCommand(ManagementCommand command) {
+
+    private static void runOrEnqueueCommand(ManagementCommand command) {
         if (commandQueue == null)
             command.run();
-        else
-            commandQueue.add(command);
+        else {
+            // Try to enqueue the command unless the queue is full.
+            // Recover from a full queue by running already queued commands first to protect the async. implementation
+            // from being vulnerable to DOS attacks.
+            while (!commandQueue.offer(command))
+                normalizeAndRunQueuedCommands();
+        }
     }
 
+    static void normalizeAndRunQueuedCommands() {
+        if (commandQueue == null)
+            return;
 
-    /**
-     * Collects scheduled commands, removes
-     */
-    static class ManagementCommandCallerTask implements Runnable {
-        public void run() {
-            final int initialCapacity = commandQueue.size() + 16;
-            final Map<String, ManagementCommand> mappedCommands =
-                    new LinkedHashMap<String, ManagementCommand>(initialCapacity);
+        // Synchronizing on commandQueue to ensure that even if 2 threads try to poll, only one can process the commands
+        // that were scheduled at a time (happens if queue is full or during unit tests).
+        // The latter is important to ensure that the command calling order is kept intact as parallel polling would destroy it.
+
+        synchronized (commandQueue) {
+            final Map<String, ManagementCommand> mappedCommands = new LinkedHashMap<String, ManagementCommand>(commandQueue.size());
 
             ManagementCommand command;
             while ((command = commandQueue.poll()) != null) {
@@ -165,25 +175,27 @@ public final class ManagementRegistrar {
 
                 if (previousCommand instanceof ManagementRegisterCommand) {
                     // Avoid that we have unbound un-register commands in the work queue.
-                    if (command instanceof ManagementUnregisterCommand)
+                    if (command instanceof ManagementUnregisterCommand && !((ManagementRegisterCommand) previousCommand).isReplace())
                         mappedCommands.remove(name);
+                } else if (previousCommand instanceof ManagementUnregisterCommand) {
+                    // We already have this MBean, flagging it for replacement.
+                    if (command instanceof ManagementRegisterCommand)
+                        ((ManagementRegisterCommand) command).setReplace(true);
                 }
             }
 
-            if (!mappedCommands.isEmpty()) {
-                for (ManagementCommand c : mappedCommands.values())
-                    c.run();
-            }
+            for (ManagementCommand c : mappedCommands.values())
+                c.run();
         }
     }
-
 
     /**
      * Registers the given instance within the JMX environment.
      */
-    static class ManagementRegisterCommand extends ManagementCommand {
+    private static class ManagementRegisterCommand extends ManagementCommand {
 
-        final WeakReference<Object> instance;
+        private final WeakReference<Object> instance;
+        private boolean replace;
 
         ManagementRegisterCommand(String name, Object instance) {
             super(name);
@@ -191,11 +203,23 @@ public final class ManagementRegistrar {
             this.instance = new WeakReference<Object>(instance);
         }
 
+        boolean isReplace() {
+            return replace;
+        }
+
+        void setReplace(boolean replace) {
+            this.replace = replace;
+        }
+
         @Override
         protected void runCommand() throws Exception {
-            Object object = instance.get();
-            if (object != null)
-                mbeanServer.registerMBean(object, new ObjectName(name));
+            final Object object = instance.get();
+            if (object != null) {
+                ObjectName objectName = new ObjectName(name);
+                if (replace && mbeanServer.isRegistered(objectName))
+                    mbeanServer.unregisterMBean(objectName);
+                mbeanServer.registerMBean(object, objectName);
+            }
         }
     }
 
@@ -203,7 +227,7 @@ public final class ManagementRegistrar {
     /**
      * Unregisters the given instance within the JMX environment.
      */
-    static class ManagementUnregisterCommand extends ManagementCommand {
+    private static class ManagementUnregisterCommand extends ManagementCommand {
         ManagementUnregisterCommand(String name) {
             super(name);
         }
@@ -213,10 +237,7 @@ public final class ManagementRegistrar {
             try {
                 mbeanServer.unregisterMBean(new ObjectName(name));
             } catch (InstanceNotFoundException e) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Failed to unregister the JMX instance of name '" +
-                            name + "' as it doesn't exist.");
-                }
+                if (log.isDebugEnabled()) { log.debug("Failed to unregister the JMX instance of name '" + name + "' as it doesn't exist."); }
             }
         }
     }
@@ -225,7 +246,7 @@ public final class ManagementRegistrar {
     /**
      * Base class for management related commands.
      */
-    static abstract class ManagementCommand implements Runnable {
+    private static abstract class ManagementCommand implements Runnable {
 
         final String name;
 
@@ -239,9 +260,7 @@ public final class ManagementRegistrar {
 
         public final void run() {
             try {
-                if (log.isTraceEnabled()) {
-                    log.trace("Calling {} on object with name {}", getClass().getSimpleName(), name);
-                }
+                if (log.isDebugEnabled()) { log.debug("Calling " + getClass().getSimpleName() + " on object with name " + name); }
                 runCommand();
             } catch (Exception ex) {
                 log.warn("Cannot execute " + getClass().getSimpleName() + " on object with name " + name, ex);

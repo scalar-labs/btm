@@ -47,8 +47,20 @@ import static org.junit.Assert.assertEquals;
  */
 public abstract class AbstractJournalPerformanceTest extends AbstractJournalTest {
 
+    private static Set<String> resources = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+            "pooled-datasource",
+            "jms-connection-pool",
+            "xa-aware-cache"
+    )));
+
+    private static List<Set<String>> resourceNameSets = new ArrayList<Set<String>>();
+    static {
+        for (String resource : resources)
+            resourceNameSets.add(Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(resource))));
+    }
+
     protected int getLogCallsPerEmitter() {
-        return 500;
+        return 1000;
     }
 
     @Before
@@ -70,21 +82,24 @@ public abstract class AbstractJournalPerformanceTest extends AbstractJournalTest
         ExecutorService executorService = Executors.newFixedThreadPool(concurrency);
         try {
             List<Callable<Integer>> tests = new ArrayList<Callable<Integer>>();
-            for (int i = 0; i < concurrency; i++)
+            TransactionEmitter concurrentDanglingEmitter = new TransactionEmitter(true);
+            tests.add(concurrentDanglingEmitter);
+            for (int i = 1; i < concurrency; i++)
                 tests.add(new TransactionEmitter(false));
 
             long time = System.currentTimeMillis(), logCalls = 0;
 
             // Create dangling ids in the main emitter (at the beginning to see whether entries may get lost).
-            TransactionEmitter emitter = new TransactionEmitter(true);
-            logCalls += emitter.call();
-            List<Uid> danglingUids = emitter.getGeneratedUids();
+            TransactionEmitter firstDanglingEmitter = new TransactionEmitter(true);
+            logCalls += firstDanglingEmitter.call();
+            List<Uid> danglingUids = firstDanglingEmitter.getGeneratedUids();
 
             // Wait on the the emitters.
             for (Future<Integer> future : executorService.invokeAll(tests))
                 logCalls += future.get();
 
             journal.force();
+            danglingUids.addAll(concurrentDanglingEmitter.getGeneratedUids());
 
             double seconds = ((double) System.currentTimeMillis() - time) / 1000;
             System.out.printf("%s: %d transactions, took %.2f seconds (%.2f tx/s)%n",
@@ -151,18 +166,18 @@ public abstract class AbstractJournalPerformanceTest extends AbstractJournalTest
 
             for (int i = 0; i < logCalls; i++) {
                 Uid uid = UidGenerator.generateUid();
-                Set<String> uniqueNames = new HashSet<String>(Arrays.asList(
-                        "näme-" + i, i + "-name", "a-third-name"));
 
-                journal.log(Status.STATUS_NO_TRANSACTION, uid, uniqueNames);
-                journal.log(Status.STATUS_ACTIVE, uid, uniqueNames);
-                journal.log(Status.STATUS_PREPARING, uid, uniqueNames);
-                journal.log(Status.STATUS_PREPARED, uid, uniqueNames);
-                journal.log(Status.STATUS_COMMITTING, uid, uniqueNames);
+                journal.log(Status.STATUS_ACTIVE, uid, resources);
+
+                journal.log(Status.STATUS_PREPARING, uid, resources);
+                journal.log(Status.STATUS_PREPARED, uid, resources);
+
+                journal.log(Status.STATUS_COMMITTING, uid, resources);
+                journal.force();
+
                 if (!createDangling) {
-                    journal.log(Status.STATUS_COMMITTED, uid, uniqueNames);
-
-                    journal.force();
+                    for (Set<String> nameSet : resourceNameSets)
+                        journal.log(Status.STATUS_COMMITTED, uid, nameSet);
                 }
 
                 generatedUids.add(uid);

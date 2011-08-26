@@ -53,9 +53,10 @@ public class RestartTest extends TestCase {
 
             try {
                 ResourceRegistrar.register(pds);
-                fail("expected IllegalArgumentException");
-            } catch (IllegalArgumentException ex) {
-                assertEquals("resource with uniqueName 'ds' has already been registered", ex.getMessage());
+                fail("expected IllegalStateException");
+            } catch (IllegalStateException ex) {
+                String expected = "A resource with uniqueName 'ds' has already been registered";
+                assertEquals(expected, ex.getMessage().substring(0, expected.length()));
             }
 
             BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
@@ -76,9 +77,10 @@ public class RestartTest extends TestCase {
         for (int i=0; i<3 ;i++) {
             try {
                 ResourceRegistrar.register(pds);
-                fail("expected IllegalArgumentException");
-            } catch (IllegalArgumentException ex) {
-                assertEquals("resource with uniqueName 'ds' has already been registered", ex.getMessage());
+                fail("expected IllegalStateException");
+            } catch (IllegalStateException ex) {
+                String expected = "A resource with uniqueName 'ds' has already been registered";
+                assertEquals(expected, ex.getMessage().substring(0, expected.length()));
             }
 
             BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
