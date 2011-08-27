@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -179,7 +180,7 @@ public final class SequencedBlockingQueue<E>
      */
     public int drainElementsTo(List<SequencedQueueEntry<E>> entries, Collection<? super E> target) {
         try {
-            return transferElements(entries, target, false);
+            return transferElements(entries, target, false, null, null);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
@@ -209,20 +210,46 @@ public final class SequencedBlockingQueue<E>
      * @return the number of elements added to target.
      * @throws InterruptedException In case of the calling thread was interrupted.
      */
-    public int takeAndDrainElementsTo(List<SequencedQueueEntry<E>> entries,
-                                      Collection<? super E> target) throws InterruptedException {
-        return transferElements(entries, target, true);
+    public int takeAndDrainElementsTo(List<SequencedQueueEntry<E>> entries, Collection<? super E> target) throws InterruptedException {
+        return transferElements(entries, target, true, null, null);
     }
 
-    private int transferElements(final List<SequencedQueueEntry<E>> entries,
-                                 final Collection<? super E> elements,
-                                 final boolean block) throws InterruptedException {
+    /**
+     * Waits up to maxBlockTime for an entry to get available in the queue and drains any further queued elements to the target collection.
+     * <p/>
+     * This method blocks up to maxBlockTime until at least one element was added. If no element was added during maxBlockTime, the
+     * method returns without adding elements.
+     *
+     * @param entries      a collection that takes the entries containing the elements.
+     * @param target       the target collection to add the queued elements to.
+     * @param maxBlockTime the max time to wait for elements to become available.
+     * @param timeUnit     the time unit of maxBlockTime.
+     * @return the number of elements added to target. 0 if a timeout occurred.
+     * @throws InterruptedException In case of the calling thread was interrupted.
+     */
+    public int pollAndDrainElementsTo(List<SequencedQueueEntry<E>> entries, Collection<? super E> target,
+                                      long maxBlockTime, TimeUnit timeUnit) throws InterruptedException {
+        return transferElements(entries, target, true, maxBlockTime, timeUnit);
+    }
+
+    private int transferElements(final List<SequencedQueueEntry<E>> entries, final Collection<? super E> elements,
+                                 final boolean block, final Long maxBlockTime, final TimeUnit timeUnit) throws InterruptedException {
         int transferCount = 0;
         final int startIndex = entries.size();
 
         if (block) {
-            entries.add(take());
-            transferCount++;
+            final SequencedQueueEntry<E> headEntry;
+            if (maxBlockTime == null)
+                headEntry = take();
+            else
+                headEntry = poll(maxBlockTime, timeUnit);
+
+            if (headEntry == null)
+                return 0;
+            else {
+                entries.add(headEntry);
+                transferCount++;
+            }
         }
 
         transferCount += drainTo(entries);

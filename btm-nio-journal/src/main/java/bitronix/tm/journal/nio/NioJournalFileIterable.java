@@ -43,6 +43,7 @@ import static bitronix.tm.journal.nio.NioJournalFileRecord.*;
 class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
 
     private static final Logger log = LoggerFactory.getLogger(NioJournalFileIterable.class);
+    private static final boolean trace = log.isTraceEnabled();
 
     private UUID delimiter;
     private long journalSize;
@@ -86,7 +87,7 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
         private long position, bufferPosition, positionAfterLastRecord, readEntries, brokenEntries;
         private ByteBuffer buffer = ByteBuffer.allocate(64 * 1024);
 
-        NioJournalFileRecord nextEntry;
+        private NioJournalFileRecord nextEntry, disposableEntry;
 
         /**
          * Returns the exact byte position of the last returned record.
@@ -98,6 +99,12 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
         }
 
         public boolean hasNext() {
+            if (nextEntry == null && disposableEntry != null) {
+                if (trace) { log.trace("Disposing previously returned journal file record " + disposableEntry + " to protect access in invalid state."); }
+                disposableEntry.dispose(false);
+                disposableEntry = null;
+            }
+
             while (nextEntry == null && readNextEntry()) {
                 nextEntry = new NioJournalFileRecord(delimiter, buffer);
                 readEntries++;
@@ -114,15 +121,17 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
                     positionAfterLastRecord = bufferPosition + buffer.limit() + RECORD_TRAILER_SIZE;
                 }
             }
+
             return nextEntry != null;
         }
 
         public NioJournalFileRecord next() {
             if (!hasNext())
-                throw new NoSuchElementException("Has no more entries.");
+                throw new NoSuchElementException("There are no more entries inside the journal.");
             try {
                 return nextEntry;
             } finally {
+                disposableEntry = nextEntry;
                 nextEntry = null;
             }
         }

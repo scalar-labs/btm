@@ -48,15 +48,15 @@ class NioJournalFile implements NioJournalConstants {
 
     private static final Logger log = LoggerFactory.getLogger(NioJournalFile.class);
 
-    private static final byte[] JOURNAL_HEADER_PREFIX = ("BTMNJR-[Version 1.0]\r\n" +
+    private static final byte[] JOURNAL_HEADER_PREFIX = ("BTM-NTJ-[Version 1.0]\r\n" +
             "\r\n" +
-            "--- Bitronix Transaction Manager - Nio Transaction Journal File ---\r\n" +
+            "--------- Bitronix Transaction Manager :: Nio Transaction Journal File ---------\r\n" +
             "\r\n" +
-            "This is a delimiter based rolling binary file format belonging to \r\n" +
-            "BTM that is used to persist JTA transaction states for providing \r\n" +
-            "crash recovery on broken commits and rollbacks.\r\n" +
+            "    This is a delimiter based rolling binary file format belonging to BTM.\r\n" +
+            "    The purpose of this file is to persist JTA transaction states for \r\n" +
+            "    providing crash recovery on broken commits and rollbacks.\r\n" +
             "\r\n" +
-            "-------------------------------------------------------------------\r\n" +
+            "--------------------------------------------------------------------------------\r\n" +
             "\r\n").getBytes(NAME_CHARSET);
     private static final byte[] JOURNAL_HEADER_SUFFIX = "\r\n\r\n".getBytes(NAME_CHARSET);
 

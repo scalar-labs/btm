@@ -102,8 +102,7 @@ class NioJournalFileRecord implements NioJournalConstants {
      * @return a new iterable that returns a repeatable iteration over records.
      * @throws IOException in case of the IO operation fails initially.
      */
-    public static Iterable<NioJournalFileRecord> readRecords(UUID delimiter, FileChannel channel,
-                                                             boolean includeInvalid) throws IOException {
+    public static Iterable<NioJournalFileRecord> readRecords(UUID delimiter, FileChannel channel, boolean includeInvalid) throws IOException {
         return new NioJournalFileIterable(delimiter, channel, includeInvalid);
     }
 
@@ -146,7 +145,7 @@ class NioJournalFileRecord implements NioJournalConstants {
 
     NioJournalFileRecord(UUID delimiter, ByteBuffer payload) {
         this(delimiter);
-        this.payload = payload;
+        this.payload = payload == null ? null : payload.duplicate();
     }
 
     /**
@@ -203,7 +202,7 @@ class NioJournalFileRecord implements NioJournalConstants {
         if (recordBuffer == null || payload == null) {
             if (payload != null) {
                 // Must be assigned to a local var as "createEmptyPayload(..)" re-initialized the field as a sub-region of the record buffer.
-                final ByteBuffer pl = payload;
+                final ByteBuffer pl = payload.duplicate();
                 // Creating the record buffer and write the payload into the reserved region.
                 createEmptyPayload(pl.remaining()).put(pl);
             } else
@@ -398,13 +397,12 @@ class NioJournalFileRecord implements NioJournalConstants {
      */
     private static int bufferContainsSequence(final ByteBuffer source, final byte[] sequence) {
         final int maxCount = source.remaining();
-        int count = 0, position;
+        int count = 0;
 
         for (byte b : sequence) {
-            position = source.position();
             if (maxCount == count || source.get() != b) {
                 if (maxCount != count)
-                    source.position(position);
+                    source.position(source.position() - 1); // revert the last consumed byte.
                 return -count;
             }
             count++;
