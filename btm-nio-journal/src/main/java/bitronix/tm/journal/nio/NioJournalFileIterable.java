@@ -31,9 +31,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
-import static bitronix.tm.journal.nio.NioJournalFileRecord.RECORD_CRC32_OFFSET;
-import static bitronix.tm.journal.nio.NioJournalFileRecord.RECORD_HEADER_SIZE;
-import static bitronix.tm.journal.nio.NioJournalFileRecord.RECORD_TRAILER_SIZE;
+import static bitronix.tm.journal.nio.NioJournalFileRecord.*;
 
 /**
  * Low level file iterator.
@@ -105,10 +103,10 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
                 readEntries++;
                 if (buffer.getInt(buffer.position() + reverseCrc32Offset) != nextEntry.calculateCrc32()) {
                     if (readInvalid) {
-                        log.warn("CRC32 differs in payload of record for {}, marking the entry as invalid.", nextEntry);
+                        log.warn("CRC32 differs in payload of record for " + nextEntry + ", marking the entry as invalid.");
                         nextEntry.markInvalid();
                     } else {
-                        log.warn("CRC32 differs in payload of record {}, skipping the entry.", nextEntry);
+                        log.warn("CRC32 differs in payload of record " + nextEntry + ", skipping the entry.");
                         nextEntry = null;
                     }
                     brokenEntries++;
@@ -148,17 +146,16 @@ class NioJournalFileIterable implements Iterable<NioJournalFileRecord> {
 
                             int newSize = buffer.capacity() + 4 * 1024;
                             if (log.isDebugEnabled()) {
-                                log.debug("Detected a buffer underflow. Creating a new buffer of size {}",
-                                        newSize);
+                                log.debug("Detected a buffer underflow on the attempt to read the journal file. " +
+                                        "Creating a new buffer of size " + newSize + " to fit in the current journal record.");
                             }
 
                             buffer = ByteBuffer.allocate(newSize).put(buffer);
 
                         } else if (buffer.hasRemaining()) {
                             if (log.isTraceEnabled()) {
-                                log.trace("Found partial record at the end of the buffer, moving " +
-                                        "partial content ({} bytes) to the beginning of the buffer.",
-                                        buffer.remaining());
+                                log.trace("Found partial record at the end of the buffer, moving partial content " +
+                                        "(" + buffer.remaining() + " bytes) to the beginning of the buffer.");
                             }
                             buffer.compact();
                         }
