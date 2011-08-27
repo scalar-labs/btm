@@ -21,8 +21,6 @@
 
 package bitronix.tm.journal.nio.util;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * Wraps an element that is put into the SequencedBlockingQueue.
  * <p/>
@@ -45,11 +43,11 @@ public final class SequencedQueueEntry<E> {
         this.element = element;
     }
 
-    public final long getSequenceNumber() {
+    public long getSequenceNumber() {
         return sequenceNumber;
     }
 
-    final void setSequenceNumber(long sequenceNumber) {
+    void setSequenceNumber(long sequenceNumber) {
         this.sequenceNumber = sequenceNumber;
     }
 

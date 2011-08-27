@@ -21,9 +21,6 @@
 
 package bitronix.tm.journal.nio;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Queue;
@@ -82,7 +79,7 @@ final class NioBufferPool implements NioJournalConstants {
 
     private void doRecycleBuffer(ByteBuffer buffer) {
         if (buffer != null && buffer.capacity() == PRE_ALLOCATED_BUFFER_SIZE)
-            availableBuffers.offer((ByteBuffer) buffer.clear());
+            availableBuffers.offer((ByteBuffer) buffer.clear()); //NOSONAR - return value can be ignored here.
     }
 
     /**

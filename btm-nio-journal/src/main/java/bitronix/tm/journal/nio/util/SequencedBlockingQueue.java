@@ -26,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -77,17 +79,28 @@ public final class SequencedBlockingQueue<E> extends ArrayBlockingQueue<Sequence
     public SequencedBlockingQueue() {
         super(CONCURRENCY);
 
-        ReentrantLock lock;
+        ReentrantLock lock = null;
         try {
-            Field lockField = getClass().getSuperclass().getDeclaredField("lock");
-            lockField.setAccessible(true);
-            lock = (ReentrantLock) lockField.get(this);
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            log.info("Failed to access shared ReentrantLock instance. " +
-                    "Will need to acquire a separate lock when putting elements into this queue.", e);
-            lock = new ReentrantLock(false);
+            lock = AccessController.doPrivileged(new PrivilegedAction<ReentrantLock>() {
+                public ReentrantLock run() {
+                    try {
+                        Field lockField = ArrayBlockingQueue.class.getDeclaredField("lock");
+                        lockField.setAccessible(true);
+                        return (ReentrantLock) lockField.get(SequencedBlockingQueue.this);
+                    } catch (NoSuchFieldException e) {
+                        throw new RuntimeException(e);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+        } catch (SecurityException e) {
+            log.info("Access to shared ReentrantLock instance is not granted in the current security context.");
+        } finally {
+            if (lock == null) {
+                log.info("Failed to access shared ReentrantLock instance, will need to acquire a separate lock when putting entries into this queue.");
+                lock = new ReentrantLock(false);
+            }
         }
 
         this.lock = lock;
