@@ -48,9 +48,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Juergen_Kellerer, 2011-08-23
  * @version 1.0
  */
-public final class SequencedBlockingQueue<E>
-        extends ArrayBlockingQueue<SequencedQueueEntry<E>>
-        implements NioJournalConstants {
+public final class SequencedBlockingQueue<E> extends ArrayBlockingQueue<SequencedQueueEntry<E>> implements NioJournalConstants {
+
+    private static final long serialVersionUID = -6301155749228585459L;
 
     private static final Logger log = LoggerFactory.getLogger(SequencedBlockingQueue.class);
     private static final boolean trace = log.isTraceEnabled();
