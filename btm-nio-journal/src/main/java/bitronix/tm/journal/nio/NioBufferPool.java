@@ -36,9 +36,6 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 final class NioBufferPool implements NioJournalConstants {
 
-    private static final Logger log = LoggerFactory.getLogger(NioForceSynchronizer.class);
-    private static final boolean trace = log.isTraceEnabled();
-
     private static final NioBufferPool instance = new NioBufferPool();
 
     public static NioBufferPool getInstance() {
