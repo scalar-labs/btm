@@ -48,7 +48,8 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     private final List<SequencedQueueEntry<NioJournalFileRecord>> pendingEntriesToWorkOn =
             new ArrayList<SequencedQueueEntry<NioJournalFileRecord>>(CONCURRENCY);
 
-    private volatile boolean running, closeRequested;
+    private boolean running;
+    private volatile boolean closeRequested;
 
     private final NioForceSynchronizer forceSynchronizer;
     private final SequencedBlockingQueue<NioJournalFileRecord> incomingQueue;
@@ -147,10 +148,12 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
      */
     @Override
     public void run() {
-        running = true;
         try {
-            final List<NioJournalFileRecord> recordsToWorkOn = new ArrayList<NioJournalFileRecord>(CONCURRENCY);
+            synchronized (this) {
+                running = true;
+            }
 
+            final List<NioJournalFileRecord> recordsToWorkOn = new ArrayList<NioJournalFileRecord>(CONCURRENCY);
             while (!isInterrupted() && !closeRequested) {
                 try {
                     pendingEntriesToWorkOn.clear();
@@ -207,8 +210,8 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
                 }
             }
         } finally {
-            running = false;
             synchronized (this) {
+                running = false;
                 notifyAll();
             }
         }
