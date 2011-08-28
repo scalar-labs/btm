@@ -106,7 +106,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
 
     private void assertJournalIsOpen() throws IOException {
         if (!isOpen())
-            throw new IOException("The journal is not yet open or closed.");
+            throw new IOException("The journal is not yet opened or was already closed.");
     }
 
     public boolean isSkipForce() {
@@ -225,10 +225,10 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
      * {@inheritDoc}
      */
     public void force() throws IOException {
+        assertJournalIsOpen();
+
         if (skipForce)
             return;
-
-        assertJournalIsOpen();
 
         if (!forceSynchronizer.waitOnEnlisted())
             throw new IOException("Forced failed on the latest entry logged within this thread, see log output for more details.");
@@ -239,6 +239,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
      */
     public Map<Uid, ? extends JournalRecord> collectDanglingRecords() throws IOException {
         assertJournalIsOpen();
+
         final Map<Uid, NioJournalRecord> tracked = trackedTransactions.getTracked();
         final Map<Uid, NioJournalRecord> dangling = new HashMap<Uid, NioJournalRecord>(tracked.size());
 

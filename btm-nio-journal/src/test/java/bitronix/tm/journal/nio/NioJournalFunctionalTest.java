@@ -30,10 +30,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.transaction.Status;
+import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -44,9 +43,8 @@ import static org.junit.Assert.*;
  */
 public class NioJournalFunctionalTest extends AbstractJournalFunctionalTest {
     @Override
-    protected JournalRecord getLogRecord(int status, int recordLength, int headerLength,
-                                         long time, int sequenceNumber, int crc32, Uid gtrid,
-                                         Set uniqueNames, int endRecord) {
+    protected JournalRecord getLogRecord(int status, int recordLength, int headerLength, long time, int sequenceNumber, int crc32,
+                                         Uid gtrid, Set uniqueNames, int endRecord) {
         return new NioJournalRecord(status, recordLength, time, sequenceNumber, false, gtrid, new HashSet<String>(uniqueNames), true);
     }
 
@@ -57,7 +55,30 @@ public class NioJournalFunctionalTest extends AbstractJournalFunctionalTest {
 
     @Before
     public void setUp() throws Exception {
-        NioJournal.getJournalFilePath().delete();
+        File file = NioJournal.getJournalFilePath();
+        assertTrue(!file.isFile() || file.delete());
+    }
+
+    @Test
+    public void testExceptions() throws Exception {
+        try {
+            journal.force();
+            fail("expected IOException");
+        } catch (IOException ex) {
+            assertEquals("The journal is not yet opened or was already closed.", ex.getMessage());
+        }
+        try {
+            journal.log(0, null, null);
+            fail("expected IOException");
+        } catch (IOException ex) {
+            assertEquals("The journal is not yet opened or was already closed.", ex.getMessage());
+        }
+        try {
+            journal.collectDanglingRecords();
+            fail("expected IOException");
+        } catch (IOException ex) {
+            assertEquals("The journal is not yet opened or was already closed.", ex.getMessage());
+        }
     }
 
     @Test
@@ -69,11 +90,36 @@ public class NioJournalFunctionalTest extends AbstractJournalFunctionalTest {
     }
 
     @Test
+    public void testJournalGrowsIfOpenTransactionsExceedCapacity() throws Exception {
+        HashSet<String> uniqueNames = new HashSet<String>(Arrays.asList("1"));
+        int rawRecordSize = calculateRawRecordSize(UidGenerator.generateUid(), uniqueNames);
+
+        journal.open();
+        File journalFilePath = NioJournal.getJournalFilePath();
+        long fileSize = journalFilePath.length();
+        int iterations = (int) ((fileSize - NioJournalFile.FIXED_HEADER_SIZE) / rawRecordSize) + 1;
+
+        HashSet<Uid> ids = new HashSet<Uid>(iterations);
+        for (int i = 0; i < iterations; i++) {
+            Uid id = UidGenerator.generateUid();
+            journal.log(Status.STATUS_COMMITTING, id, uniqueNames);
+            ids.add(id);
+        }
+
+        journal.close();
+
+        assertTrue("journal was not grown after opening " + iterations + " transactions.", fileSize < journalFilePath.length());
+
+        journal.open();
+        assertEquals("not all transactions were stored.", ids, journal.collectDanglingRecords().keySet());
+    }
+
+    @Test
     public void testJournalIsPositionedCorrectlyAfterOpen() throws Exception {
-        int[] tests = {1, 2, 233, 4493};
-        for (int test : tests) {
+        int[] recordCounts = {1, 2, 233, 4493};
+        for (int records : recordCounts) {
             setUp();
-            doTestPositionIsCorrect(test);
+            doTestPositionIsCorrect(records);
             shutdownJournal();
         }
     }
@@ -81,8 +127,7 @@ public class NioJournalFunctionalTest extends AbstractJournalFunctionalTest {
     private void doTestPositionIsCorrect(int iterations) throws IOException {
         Uid gtrid = UidGenerator.generateUid();
         HashSet<String> uniqueNames = new HashSet<String>(Arrays.asList("1"));
-        int rawRecordSize = NioJournalFileRecord.RECORD_HEADER_SIZE + NioJournalFileRecord.RECORD_TRAILER_SIZE +
-                new NioJournalRecord(Status.STATUS_ACTIVE, gtrid, uniqueNames).getRecordLength();
+        int rawRecordSize = calculateRawRecordSize(gtrid, uniqueNames);
 
         journal.open();
         for (int i = 0; i < iterations; i++)
@@ -93,7 +138,11 @@ public class NioJournalFunctionalTest extends AbstractJournalFunctionalTest {
 
         journal.open();
         assertEquals("Iterations:" + iterations,
-                NioJournalFile.FIXED_HEADER_SIZE + (iterations * rawRecordSize),
-                ((NioJournal) journal).journalFile.getPosition());
+                NioJournalFile.FIXED_HEADER_SIZE + (iterations * rawRecordSize), ((NioJournal) journal).journalFile.getPosition());
+    }
+
+    private int calculateRawRecordSize(Uid gtrid, HashSet<String> uniqueNames) {
+        return NioJournalFileRecord.RECORD_HEADER_SIZE + NioJournalFileRecord.RECORD_TRAILER_SIZE +
+                new NioJournalRecord(Status.STATUS_ACTIVE, gtrid, uniqueNames).getRecordLength();
     }
 }
