@@ -51,25 +51,28 @@ class NioJournalFileRecord implements NioJournalConstants {
      * Defines the offset of the 4 byte int value from the beginning of the record that stores the total length of the record itself.
      */
     public static final int RECORD_LENGTH_OFFSET = RECORD_DELIMITER_PREFIX.length + 16;
+
     /**
      * Defines the offset of the 4 byte int value from the beginning of the record that stores the CRC32 checksum of the record's payload.
      */
     public static final int RECORD_CRC32_OFFSET = RECORD_LENGTH_OFFSET + 4;
+
     /**
      * Defines the number of bytes consumed by the raw-header of the file-record (this does not include any additional header inside the payload).
      */
     public static final int RECORD_HEADER_SIZE =
-            RECORD_DELIMITER_PREFIX.length +
-                    16 + /* opening delimiter (uuid) */
-                    4 + /* length */
-                    4 + /* crc32 */
-                    RECORD_DELIMITER_SUFFIX.length;
+            /*                   prefix */ RECORD_DELIMITER_PREFIX.length +
+            /* opening delimiter (uuid) */ 16 +
+            /*                   length */ 4 +
+            /*                    crc32 */ 4 +
+            /*                   suffix */ RECORD_DELIMITER_SUFFIX.length;
+
     /**
      * Defines the number of bytes consumed by the raw-trailer of the file-record.
      */
     public static final int RECORD_TRAILER_SIZE =
-            16 + /* closing delimiter (uuid) */
-                    RECORD_DELIMITER_TRAILER.length;
+            /* closing delimiter (uuid) */ 16 +
+            /*           record trailer */ RECORD_DELIMITER_TRAILER.length;
 
     private static final boolean trace = log.isTraceEnabled();
 
@@ -296,6 +299,17 @@ class NioJournalFileRecord implements NioJournalConstants {
         writeUUID(delimiter, target);
     }
 
+    /**
+     * Reads and verifies the record header, positions the buffer at the payload position and returns the length
+     * of the records payload if the header is valid.
+     * <p/>
+     * Does not advance the buffers position if no record is found at the current position.
+     * Steps over the header of a broken record if the header itself is intact (= does advance if a broken record is found).
+     *
+     * @param source    the buffer whose current position is at the beginning of the header.
+     * @param delimiter the expected delimiter that should be contained in the header.
+     * @return the length of the record or a negative integer which may be decoded to a {@link ReadStatus} other than ReadOK.
+     */
     private static int readRecordHeader(ByteBuffer source, UUID delimiter) {
         source.mark();
         final boolean willBePartial = source.remaining() < RECORD_HEADER_SIZE;
@@ -311,12 +325,7 @@ class NioJournalFileRecord implements NioJournalConstants {
                 return ReadStatus.NoHeaderAtCurrentPosition.encode();
 
             final UUID uuid = readUUID(source);
-            if (!delimiter.equals(uuid)) {
-                if (trace) { log.trace("Found a record header of delimiter " + uuid + ", while expecting " + delimiter + ", skipping it."); }
-                return ReadStatus.FoundHeaderWithDifferentDelimiter.encode();
-            }
-
-            int recordLength = source.getInt();
+            final int recordLength = source.getInt();
 
             // jump over crc32
             source.getInt(); // checksum is not needed here, we'll come back and evaluate it later.
@@ -332,30 +341,48 @@ class NioJournalFileRecord implements NioJournalConstants {
             // Marking the beginning of the payload.
             source.mark();
 
+            // Advancing the buffer to the position of the record trailer.
             source.position(source.position() + recordLength);
-            if (bufferContainsSequence(source, RECORD_DELIMITER_TRAILER) <= 0 || !delimiter.equals(readUUID(source))) {
+
+            final boolean recordTrailerIsInvalid = bufferContainsSequence(source, RECORD_DELIMITER_TRAILER) <= 0 || !uuid.equals(readUUID(source));
+            if (recordTrailerIsInvalid) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Found an invalid record trailer for delimiter " + delimiter + ". Will skip the entry " + bufferToString(source) + ".");
+                    log.debug("Found an invalid record trailer for delimiter " + uuid + ". Will skip the entry " + bufferToString(source) + ".");
                 }
                 return ReadStatus.NoHeaderAtCurrentPosition.encode();
             }
 
-            return recordLength;
+            if (!delimiter.equals(uuid)) {
+                if (trace) { log.trace("Found a record header of delimiter " + uuid + ", while expecting " + delimiter + ", skipping it."); }
+                source.mark(); // marking the end of the record.
+                return ReadStatus.FoundHeaderWithDifferentDelimiter.encode();
+            } else {
+                return recordLength;
+            }
         } finally {
             source.reset();
         }
     }
+
+    /**
+     * Finds the next record inside the given buffer and returns the length of the record if one was found.
+     * <p/>
+     * This method consumes any leading bytes inside the given buffer. If no record is found the buffer is consumed completely.
+     *
+     * @param source    the source buffer to find a record in.
+     * @param delimiter the delimiter used to identify a record.
+     * @return the length of the record or a negative integer which may be decoded to a {@link ReadStatus} other than ReadOK.
+     */
 
     static int findNextRecord(ByteBuffer source, UUID delimiter) {
         final byte hook = RECORD_DELIMITER_PREFIX[0];
 
         if (source.hasRemaining()) {
             do {
-                source.mark();
                 if (source.get() == hook) {
-                    source.reset();
+                    source.position(source.position() - 1); // reverting the consumption of the hook byte.
 
-                    final int recordLength = readRecordHeader((ByteBuffer) source.reset(), delimiter);
+                    final int recordLength = readRecordHeader(source, delimiter);
                     final ReadStatus readStatus = ReadStatus.decode(recordLength);
 
                     switch (readStatus) {
@@ -364,20 +391,8 @@ class NioJournalFileRecord implements NioJournalConstants {
                         case FoundPartialRecord:
                             return ReadStatus.FoundPartialRecord.encode();
                         case FoundHeaderWithDifferentDelimiter:
-                            if (source.remaining() > RECORD_HEADER_SIZE) {
-                                if (trace) { log.trace("Found other header entry, try to use its length as hint to iterate it quickly."); }
-
-                                int entryLength = source.getInt(source.position() + RECORD_LENGTH_OFFSET);
-                                source.position(source.position() + RECORD_HEADER_SIZE);
-
-                                if (entryLength + RECORD_TRAILER_SIZE <= source.remaining() &&
-                                        source.get(source.position() + entryLength) == RECORD_DELIMITER_TRAILER[0]) {
-                                    if (trace) { log.trace("Quickly iterating other log entry."); }
-                                    source.position(source.position() + entryLength + RECORD_TRAILER_SIZE);
-                                }
-
-                                break;
-                            }
+                            if (trace) { log.trace("Quickly iterating other log entry."); }
+                            break;
                         default:
                             source.get(); // consuming the byte (that was reset before).
                     }
@@ -436,16 +451,35 @@ class NioJournalFileRecord implements NioJournalConstants {
          */
         FoundPartialRecord,;
 
+        /**
+         * Decodes the read status from a integer return value.
+         *
+         * @param recordLength the return value of methods that provide the recordLength.
+         * @return the read status assigned with the integer return value.
+         */
         static ReadStatus decode(int recordLength) {
             if (recordLength >= 0)
                 return ReadOk;
             return values()[-recordLength];
         }
 
+        /**
+         * Encodes the given read status to be returned as integer.
+         *
+         * @param status the status to encode.
+         * @return the given read status to be returned as integer.
+         */
         static int encode(ReadStatus status) {
+            if (status == ReadOk)
+                throw new IllegalArgumentException("Cannot encode ReadOK, the calling method should return the record length instead.");
             return -status.ordinal();
         }
 
+        /**
+         * Encodes this read status to be returned as integer.
+         *
+         * @return this read status to be returned as integer.
+         */
         int encode() {
             return encode(this);
         }

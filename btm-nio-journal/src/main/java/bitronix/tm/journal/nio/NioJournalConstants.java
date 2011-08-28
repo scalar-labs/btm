@@ -22,7 +22,9 @@
 package bitronix.tm.journal.nio;
 
 import java.nio.charset.Charset;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static java.lang.Double.parseDouble;
 import static java.lang.Integer.getInteger;
@@ -32,8 +34,11 @@ import static java.lang.Math.min;
 import static java.lang.System.getProperty;
 import static java.nio.charset.Charset.forName;
 import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.unmodifiableSet;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static javax.transaction.Status.*;
 
 /**
  * Collection of 'runtime' constants and low level tuning options used by the nio journal implementation.
@@ -77,7 +82,7 @@ public interface NioJournalConstants {
      * Specifies the amount of slots (buffers, lock-free queue entries) to prepare for threads
      * trying to log a transaction.
      */
-    int CONCURRENCY = getInteger("bitronix.nio.journal.concurrency", 4 * 1024);
+    int CONCURRENCY = getInteger("bitronix.nio.journal.concurrency", 1024);
 
     /**
      * Specifies the size of byte buffers to allocate for transaction serialization.
@@ -122,7 +127,7 @@ public interface NioJournalConstants {
     /**
      * Is a list of short human readable strings that map TX status IDs.
      */
-    List<String> TRANSACTION_STATUS_STRINGS = asList(
+    List<String> TRANSACTION_STATUS_STRINGS = unmodifiableList(asList(
             "0-ACT:", // Status.STATUS_ACTIVE
             "1-MRB:", // Status.STATUS_MARKED_ROLLBACK
             "2-PRE:", // Status.STATUS_PREPARED
@@ -134,12 +139,12 @@ public interface NioJournalConstants {
             "8-COM:", // Status.STATUS_COMMITTING
             "9-ROL:", // Status.STATUS_ROLLINGBACK
             "<unkn>"  // out of bounds
-    );
+    ));
 
     /**
      * Is a list of human readable strings that map TX status IDs.
      */
-    List<String> TRANSACTION_LONG_STATUS_STRINGS = asList(
+    List<String> TRANSACTION_LONG_STATUS_STRINGS = unmodifiableList(asList(
             "0-ACTIVE",            // Status.STATUS_ACTIVE
             "1-MARKED_ROLLBACK",   // Status.STATUS_MARKED_ROLLBACK
             "2-PREPARED",          // Status.STATUS_PREPARED
@@ -149,7 +154,27 @@ public interface NioJournalConstants {
             "6-NO_TRANSACTION",    // Status.STATUS_NO_TRANSACTION
             "7-PREPARING",         // Status.STATUS_PREPARING
             "8-COMMITTING",        // Status.STATUS_COMMITTING
-            "9-ROLLINGBACK",       // Status.STATUS_ROLLINGBACK
+            "9-ROLLINGBACK",       // Status.STATUS_ROLLING_BACK
             "<unknown-status>"      // out of bounds
-    );
+    ));
+
+    /**
+     * Collects the TX states that are used to finalize a transaction.
+     */
+    Set<Integer> FINAL_STATUS = unmodifiableSet(new HashSet<Integer>(asList(
+            STATUS_COMMITTED,
+            STATUS_ROLLEDBACK)));
+
+    /**
+     * Collects the TX states that are tracked in memory.
+     */
+    Set<Integer> TRACKED_STATUS = unmodifiableSet(new HashSet<Integer>(asList(
+            STATUS_ACTIVE,
+            STATUS_PREPARED,
+            STATUS_COMMITTED,
+            STATUS_ROLLEDBACK,
+            STATUS_PREPARING,
+            STATUS_COMMITTING,
+            STATUS_ROLLING_BACK
+    )));
 }

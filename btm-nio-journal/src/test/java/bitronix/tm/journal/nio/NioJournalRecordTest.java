@@ -47,7 +47,7 @@ public class NioJournalRecordTest {
             Set<String> names = new TreeSet<String>(Arrays.asList("a", "", "another-name", "äöü"));
             NioJournalRecord lr = new NioJournalRecord(1, gtrid, names);
 
-            lr.encodeTo((ByteBuffer) bb.clear());
+            lr.encodeTo((ByteBuffer) bb.clear(), false);
             NioJournalRecord decodedLr = new NioJournalRecord((ByteBuffer) bb.flip(), true);
 
             assertEquals(gtrid, decodedLr.getGtrid());

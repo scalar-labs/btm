@@ -54,6 +54,7 @@ public abstract class AbstractJournalPerformanceTest extends AbstractJournalTest
     )));
 
     private static List<Set<String>> resourceNameSets = new ArrayList<Set<String>>();
+
     static {
         for (String resource : resources)
             resourceNameSets.add(Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(resource))));
@@ -80,6 +81,16 @@ public abstract class AbstractJournalPerformanceTest extends AbstractJournalTest
         int concurrency = 256;
         UidGenerator.generateUid();
         ExecutorService executorService = Executors.newFixedThreadPool(concurrency);
+
+        // Warming threads.
+        List<Future<Object>> futures = executorService.invokeAll(Collections.nCopies(concurrency * 64, new Callable<Object>() {
+            public Object call() throws Exception {
+                return UidGenerator.generateUid();
+            }
+        }));
+        for (Future<Object> future : futures) { future.get(); }
+
+        // Testing now
         try {
             List<Callable<Integer>> tests = new ArrayList<Callable<Integer>>();
             TransactionEmitter concurrentDanglingEmitter = new TransactionEmitter(true);

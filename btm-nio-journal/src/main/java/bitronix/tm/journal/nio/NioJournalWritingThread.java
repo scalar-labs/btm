@@ -34,6 +34,7 @@ import java.util.concurrent.Callable;
 import static bitronix.tm.journal.nio.NioJournalFileRecord.calculateRequiredBytes;
 import static bitronix.tm.journal.nio.NioJournalFileRecord.disposeAll;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * Is the single thread that writes to the journal.
@@ -221,8 +222,7 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
         int collectCount = 0;
 
         if (blockForRecords) {
-            final NioForceSynchronizer synchronizer = forceSynchronizer;
-            final long time = System.currentTimeMillis();
+            final long time = System.nanoTime();
 
             long remainingWriteDelay = Long.MAX_VALUE;
             do {
@@ -231,9 +231,11 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
                 else
                     collectCount += incomingQueue.pollAndDrainElementsTo(pendingEntriesToWorkOn, recordsToWorkOn, 5, MILLISECONDS);
 
-                remainingWriteDelay = Math.max(0, WRITE_DELAY - (System.currentTimeMillis() - time));
+                remainingWriteDelay = Math.max(0, WRITE_DELAY - NANOSECONDS.toMillis(System.nanoTime() - time));
 
-            } while (remainingWriteDelay > 0 && collectCount < CONCURRENCY && (synchronizer == null || synchronizer.getNumberOfWaitingThreads() == 0));
+            } while (remainingWriteDelay > 0 && collectCount < CONCURRENCY &&
+                    !isInterrupted() && !closeRequested &&
+                    (forceSynchronizer == null || forceSynchronizer.getNumberOfWaitingThreads() == 0));
         } else {
             // try to collect more entries that queued up during the time that the last write occurred.
             collectCount = incomingQueue.drainElementsTo(pendingEntriesToWorkOn, recordsToWorkOn);
@@ -272,7 +274,7 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
             journalFile.rollover();
 
             dumpUnfinishedTransactionsToJournal();
-            attemptToGrowJournalIfRequired();
+            attemptToGrowJournalIfRequired(requiredBytes);
         }
     }
 
@@ -289,43 +291,65 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
             final List<NioJournalFileRecord> chunks = new ArrayList<NioJournalFileRecord>(CONCURRENCY);
             for (NioJournalRecord record : records) {
                 final NioJournalFileRecord fileRecord = journalFile.createEmptyRecord();
-                record.encodeTo(fileRecord.createEmptyPayload(record.getRecordLength()));
+                record.encodeTo(fileRecord.createEmptyPayload(record.getRecordLength()), true);
                 chunks.add(fileRecord);
 
-                if (chunks.size() == CONCURRENCY) {
-                    journalFile.write(chunks);
-                    processedCount += chunks.size();
-                    disposeAll(chunks);
-                    chunks.clear();
-                }
+                if (chunks.size() == CONCURRENCY)
+                    writeUnfinishedTransactionsChunks(chunks);
             }
 
-            if (!chunks.isEmpty()) {
-                journalFile.write(chunks);
-                processedCount += chunks.size();
-                disposeAll(chunks);
-            }
+            if (!chunks.isEmpty())
+                writeUnfinishedTransactionsChunks(chunks);
 
             if (debug) { log.debug("Successfully wrote " + records.size() + " unfinished transactions to the journal after the rollover."); }
         }
     }
 
-    private void attemptToGrowJournalIfRequired() throws IOException {
+    private void writeUnfinishedTransactionsChunks(List<NioJournalFileRecord> chunks) throws IOException {
+        attemptToGrowJournalIfRequired(calculateRequiredBytes(chunks));
+
+        journalFile.write(chunks);
+        processedCount += chunks.size();
+        disposeAll(chunks);
+        chunks.clear();
+    }
+
+    private void attemptToGrowJournalIfRequired(final long minRequiredCapacity) throws IOException {
         final long journalFileSize = journalFile.getSize();
-        final long growOffsetSize = (long) (journalFileSize * JOURNAL_GROW_OFFSET);
+        final long remainingCapacityGrowOffset = Math.max(minRequiredCapacity, journalFileSize * (long) JOURNAL_GROW_OFFSET);
+        final long initialRemainingCapacity = journalFile.remainingCapacity();
+        final boolean growRequired = initialRemainingCapacity < remainingCapacityGrowOffset;
 
-        if (journalFile.remainingCapacity() < growOffsetSize && JOURNAL_GROW_RATIO > 1D) {
-            long newSize = (long) (journalFileSize * JOURNAL_GROW_RATIO), newSizeInMb = newSize / 1024 / 1024;
-            log.warn("The configured journal size of " + (journalFileSize / 1024 / 1024) + "mb is too small to keep all unfinished " +
-                    "transactions. Increasing the size of " + journalFile.getFile() + " to " + newSizeInMb + "mb");
+        if (growRequired) {
+            boolean success = false;
 
-            try {
-                journalFile.growJournal(newSize);
-                log.info("Successfully increased the journal size to " + newSizeInMb + "mb (remaining capacity is " +
-                        (journalFile.remainingCapacity() / 1024 / 1024) + "mb)");
-            } catch (IOException e) {
-                log.warn("Failed increased the journal size to " + newSizeInMb + "mb. " +
-                        (journalFile.remainingCapacity() / 1024 / 1024) + "mb capacity is remaining in the pre-allocated block)", e);
+            if (JOURNAL_GROW_RATIO > 1D) {
+                long newSize = journalFileSize, usedSize = journalFileSize - initialRemainingCapacity;
+                do {
+                    newSize *= JOURNAL_GROW_RATIO;
+                } while ((newSize - usedSize) < remainingCapacityGrowOffset);
+
+                final long newSizeInMb = newSize / 1024 / 1024;
+
+                log.warn("The configured journal size of " + (journalFileSize / 1024 / 1024) + "mb is too small to keep all unfinished " +
+                        "transactions. Increasing the size of " + journalFile.getFile() + " to " + newSizeInMb + "mb");
+
+                try {
+                    journalFile.growJournal(newSize);
+                    log.info("Successfully increased the journal size to " + newSizeInMb + "mb (remaining capacity is " +
+                            (journalFile.remainingCapacity() / 1024 / 1024) + "mb)");
+                    success = true;
+                } catch (IOException e) {
+                    log.warn("Failed increased the journal size to " + newSizeInMb + "mb. " +
+                            (journalFile.remainingCapacity() / 1024 / 1024) + "mb capacity is remaining in the pre-allocated block)", e);
+                }
+            }
+
+            if (!success && journalFile.remainingCapacity() < minRequiredCapacity) {
+                log.error("Growing the journal " + journalFile.getFile() + " is required to service the next write request of " +
+                        minRequiredCapacity + " bytes, however the remaining journal capacity is " + journalFile.remainingCapacity() + ". " +
+                        "Increase the initial journal size if the ability to grow the journal was disabled or check the remaining capacity " +
+                        "of the storage device.");
             }
         }
     }

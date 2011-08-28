@@ -266,7 +266,7 @@ final class NioJournalFile implements NioJournalConstants {
             final int requiredBytes = NioJournalFileRecord.calculateRequiredBytes(records);
             final long remainingBytes = remainingCapacity();
             if (requiredBytes > remainingBytes) {
-                throw new IOException("Journal faces a rollover (remaining capacity: " + remainingBytes +
+                throw new IOException("Journal requires a rollover (remaining capacity: " + remainingBytes +
                         ", required: " + requiredBytes + "). Manually trigger this before writing new content.");
             }
 

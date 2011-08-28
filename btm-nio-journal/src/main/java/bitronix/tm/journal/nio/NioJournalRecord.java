@@ -28,8 +28,9 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharsetEncoder;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static java.util.Collections.unmodifiableSet;
 
 /**
  * Implements {@code TransactionLogRecord} for the NioJournal.
@@ -71,6 +72,7 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
             /* recordLength         */ 4 +
             /* time                 */ 8 +
             /* sequenceNumber       */ 8 +
+            /* rolled over flag     */ 1 +
             /* gtrid (static)       */ 1 +
             /* uniqueNames (static) */ 2;
 
@@ -155,22 +157,19 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
     private final Set<String> uniqueNames;
     private final long time, sequenceNumber;
     private final int recordLength;
-    private final boolean valid;
+    private final boolean valid, rolledOverFlag;
 
-    NioJournalRecord(int status, int recordLength, long time, long sequenceNumber,
+    NioJournalRecord(int status, int recordLength, long time, long sequenceNumber, boolean rolledOverFlag,
                      Uid gtrid, Set<String> uniqueNames, boolean valid) {
+        // Note: This constructor should not be used outside of unit tests or this class.
         this.status = status;
         this.gtrid = gtrid;
-
-        // Records on the same TX may be written by different threads when
-        // the TX was suspended and resumed in a different thread.
-        // Therefore we must use a thread-safe Set here.
-        this.uniqueNames = new CopyOnWriteArraySet<String>(uniqueNames);
-
+        this.uniqueNames = uniqueNames;
         this.time = time;
         this.sequenceNumber = sequenceNumber;
         this.recordLength = recordLength;
         this.valid = valid;
+        this.rolledOverFlag = rolledOverFlag;
     }
 
     /**
@@ -182,7 +181,7 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
      */
     public NioJournalRecord(int status, Uid gtrid, Set<String> uniqueNames) {
         this(status, calculateRecordLength(gtrid, uniqueNames), System.currentTimeMillis(),
-                JOURNAL_RECORD_SEQUENCE.incrementAndGet(), gtrid, uniqueNames, true);
+                JOURNAL_RECORD_SEQUENCE.incrementAndGet(), false, gtrid, unmodifiableSet(new HashSet<String>(uniqueNames)), true);
     }
 
     /**
@@ -200,8 +199,9 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
                 buffer.getInt(), // recordLength
                 buffer.getLong(), // time
                 buffer.getLong(), // sequenceNumber
+                buffer.get() == 1, // rolledOver flag
                 uidFromBuffer(buffer), // gtrid
-                namesFromBuffer(buffer), // uniqueNames
+                unmodifiableSet(namesFromBuffer(buffer)), // uniqueNames
                 valid
         );
     }
@@ -211,14 +211,34 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
      *
      * @param buffer the buffer to use for writing.
      */
-    protected void encodeTo(ByteBuffer buffer) {
+    protected void encodeTo(ByteBuffer buffer, boolean rolledOver) {
         buffer.put(statusToBytes(getStatus()));
         buffer.putInt(getStatus());
         buffer.putInt(getRecordLength());
         buffer.putLong(getTime());
         buffer.putLong(getSequenceNumber());
+        buffer.put((byte) (rolledOver ? 1 : 0));
         uidToBuffer(getGtrid(), buffer);
         namesToBuffer(getUniqueNames(), buffer);
+    }
+
+    /**
+     * Returns a copy of this record with unique names being reduced by the given record.
+     *
+     * @param comittedOrRolledbackRecord a record in committed or rolledback state used to reduce the unique names of this record.
+     * @return a copy of this record with a reduced set of names. If no reduction happened 'this' is returned.
+     */
+    protected NioJournalRecord createNameReducedCopy(NioJournalRecord comittedOrRolledbackRecord) {
+        if (!FINAL_STATUS.contains(comittedOrRolledbackRecord.status)) {
+            throw new IllegalArgumentException("The given record " + comittedOrRolledbackRecord + " is not in a state that allows " +
+                    "its usage as resource name reduction record.");
+        }
+
+        final HashSet<String> reducedNames = new HashSet<String>(uniqueNames);
+        if (reducedNames.removeAll(comittedOrRolledbackRecord.getUniqueNames()))
+            return new NioJournalRecord(status, recordLength, time, sequenceNumber, rolledOverFlag, gtrid, unmodifiableSet(reducedNames), valid);
+        else
+            return this;
     }
 
     /**
@@ -250,7 +270,7 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
      * {@inheritDoc}
      */
     public Set<String> getUniqueNames() {
-        return Collections.unmodifiableSet(uniqueNames);
+        return uniqueNames;
     }
 
     /**
@@ -273,26 +293,6 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
     }
 
     /**
-     * Removes the given unique names from the set of unique names.
-     *
-     * @param other the other record containing the names to remove.
-     * @return true if the set of unique names was modified.
-     */
-    protected boolean removeUniqueNamesFromRecord(NioJournalRecord other) {
-        return removeUniqueNames(other.uniqueNames);
-    }
-
-    /**
-     * Removes the given unique names from the set of unique names.
-     *
-     * @param names the names to remove.
-     * @return true if the set of unique names was modified.
-     */
-    protected boolean removeUniqueNames(Collection<String> names) {
-        return uniqueNames.removeAll(names);
-    }
-
-    /**
      * {@inheritDoc}
      */
     public long getTime() {
@@ -305,6 +305,10 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
 
     public int getRecordLength() {
         return recordLength;
+    }
+
+    public boolean isRolledOverFlag() {
+        return rolledOverFlag;
     }
 
     /**
@@ -330,12 +334,13 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
     @Override
     public String toString() {
         return "NioJournalRecord{" +
-                "status=" + status + " (" + new String(statusToBytes(status), NAME_CHARSET) + ")" +
+                "status=" + TRANSACTION_LONG_STATUS_STRINGS.get(Math.min(TRANSACTION_LONG_STATUS_STRINGS.size() - 1, status)) +
                 ", gtrid=" + gtrid +
                 ", uniqueNames=" + uniqueNames +
                 ", time=" + new Date(time) +
                 ", sequenceNumber=" + sequenceNumber +
                 ", recordLength=" + recordLength +
+                ", rolledOverFlag=" + rolledOverFlag +
                 ", valid=" + valid +
                 '}';
     }

@@ -47,7 +47,7 @@ public class NioJournalFunctionalTest extends AbstractJournalFunctionalTest {
     protected JournalRecord getLogRecord(int status, int recordLength, int headerLength,
                                          long time, int sequenceNumber, int crc32, Uid gtrid,
                                          Set uniqueNames, int endRecord) {
-        return new NioJournalRecord(status, recordLength, time, sequenceNumber, gtrid, uniqueNames, true);
+        return new NioJournalRecord(status, recordLength, time, sequenceNumber, false, gtrid, new HashSet<String>(uniqueNames), true);
     }
 
     @Override

@@ -43,10 +43,6 @@ class NioTrackedTransactions implements NioJournalConstants {
 
     private static final Logger log = LoggerFactory.getLogger(NioTrackedTransactions.class);
 
-    private static boolean isFinalStatus(int status) {
-        return status == STATUS_COMMITTED || status == STATUS_ROLLEDBACK;
-    }
-
     private static boolean isTrackedRecordInValidStatus(int trackedStatus, int status) {
         switch (status) {
             case STATUS_COMMITTED:
@@ -57,12 +53,6 @@ class NioTrackedTransactions implements NioJournalConstants {
                 return trackedStatus == STATUS_PREPARING;
         }
         return true;
-    }
-
-    private static boolean isTrackableStatus(int status) {
-        return status != STATUS_NO_TRANSACTION &&
-                status != STATUS_MARKED_ROLLBACK &&
-                status != STATUS_UNKNOWN;
     }
 
     private final ConcurrentMap<Uid, NioJournalRecord> tracked = new ConcurrentHashMap<Uid, NioJournalRecord>();
@@ -88,8 +78,8 @@ class NioTrackedTransactions implements NioJournalConstants {
         if (status == STATUS_UNKNOWN)
             return;
 
-        if (isFinalStatus(status)) {
-            final NioJournalRecord existing = tracked.get(gtrid);
+        if (FINAL_STATUS.contains(status)) {
+            NioJournalRecord existing = tracked.get(gtrid);
             if (existing != null) {
                 if (!isTrackedRecordInValidStatus(existing.getStatus(), status)) {
                     log.warn("Found a violation in the logged tx journal record " + record + ". The transaction " + gtrid + " was set to status " +
@@ -97,30 +87,45 @@ class NioTrackedTransactions implements NioJournalConstants {
                             TRANSACTION_LONG_STATUS_STRINGS.get(existing.getStatus()) + " on resources " + existing.getUniqueNames());
                 }
 
-                existing.removeUniqueNamesFromRecord(record);
-                if (existing.getUniqueNamesCount() == 0) {
-                    tracked.remove(gtrid);
-                    if (log.isDebugEnabled()) { log.debug("No longer tracking transaction '" + record + "', was '" + existing + "' before"); }
-                } else {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Changed status on transaction bits '" + record.getUniqueNames() + "' in '" + existing + "', from '" + record + "'");
+                NioJournalRecord replacement;
+                while ((existing = tracked.get(gtrid)) != null && (replacement = existing.createNameReducedCopy(record)) != existing) {
+                    if (replacement.getUniqueNamesCount() == 0) {
+                        if (tracked.remove(gtrid, existing)) {
+                            if (log.isDebugEnabled()) { log.debug("No longer tracking transaction '" + record + "', was '" + existing + "' before"); }
+                        }
+                    } else {
+                        if (tracked.replace(gtrid, existing, replacement)) {
+                            if (log.isDebugEnabled()) {
+                                log.debug("Changed status on transaction bits '" + record.getUniqueNames() + "' in '" + existing + "', from '" + record + "'");
+                            }
+                        }
                     }
                 }
             }
-        } else if (isTrackableStatus(status)) {
+        } else if (TRACKED_STATUS.contains(status)) {
             final NioJournalRecord removed = tracked.put(gtrid, record);
 
             // Note: Merging names between removed and record is not required as the external implementation
             // should not provide a subset of names unless isFinalStatus returns true. Logging an error if the case still happens.
             if (removed != null && !removed.isUniqueNamesContainedInRecord(record)) {
-                log.error("The unique names describing the TX members changed at an invalid TX status of " + TRANSACTION_LONG_STATUS_STRINGS.get(status) +
-                        ", when tracking updates to the transaction " + gtrid + " inside the journal. (names had been " + removed.getUniqueNames() +
-                        "at status " + TRANSACTION_LONG_STATUS_STRINGS.get(removed.getStatus()) + " and were now set to " + record.getUniqueNames() + ")");
+                if (removed.getStatus() <= record.getStatus() && record.isRolledOverFlag()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Found a rolled over reduced transaction in state " + TRANSACTION_LONG_STATUS_STRINGS.get(status) + " with " +
+                                "unique names " + record.getUniqueNames() + " used to be " + removed.getUniqueNames());
+                    }
+                } else {
+                    log.error("The unique names describing the TX members changed at an invalid TX status of " + TRANSACTION_LONG_STATUS_STRINGS.get(status) +
+                            ", when tracking updates to the transaction " + gtrid + " inside the journal. (names had been " + removed.getUniqueNames() +
+                            " at status " + TRANSACTION_LONG_STATUS_STRINGS.get(removed.getStatus()) + " and were now set to " + record.getUniqueNames() + ")");
+                }
             }
 
             if (log.isDebugEnabled()) { log.debug("Tracking pending transaction '" + record + "', was '" + removed + "' before"); }
-        } else
-            tracked.remove(gtrid);
+        } else {
+            NioJournalRecord removed = tracked.remove(gtrid);
+            if (removed != null)
+                if (log.isDebugEnabled()) { log.debug("No longer tracking transaction " + removed + " when receiving a log record of " + record); }
+        }
     }
 
     /**

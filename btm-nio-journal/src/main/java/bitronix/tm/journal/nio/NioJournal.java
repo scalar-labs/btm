@@ -95,7 +95,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
 
         try {
             final NioJournalFileRecord fileRecord = journalFile.createEmptyRecord();
-            record.encodeTo(fileRecord.createEmptyPayload(record.getRecordLength()));
+            record.encodeTo(fileRecord.createEmptyPayload(record.getRecordLength()), false);
             pendingRecordsQueue.putElement(fileRecord);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
