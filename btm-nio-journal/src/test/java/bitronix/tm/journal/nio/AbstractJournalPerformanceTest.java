@@ -78,7 +78,7 @@ public abstract class AbstractJournalPerformanceTest extends AbstractJournalTest
     public void testLogPerformance() throws Exception {
         journal.open();
 
-        int concurrency = 256;
+        int concurrency = 128;
         UidGenerator.generateUid();
         ExecutorService executorService = Executors.newFixedThreadPool(concurrency);
 
@@ -113,8 +113,9 @@ public abstract class AbstractJournalPerformanceTest extends AbstractJournalTest
             danglingUids.addAll(concurrentDanglingEmitter.getGeneratedUids());
 
             double seconds = ((double) System.currentTimeMillis() - time) / 1000;
-            System.out.printf("%s: %d transactions, took %.2f seconds (%.2f tx/s)%n",
-                    getClass().getSimpleName(), logCalls, seconds, logCalls / seconds);
+            System.out.printf("%s (threads=%d, fsync=%s): %d transactions, took %.2f seconds (%.2f tx/s)%n",
+                    getClass().getSimpleName(), concurrency, TransactionManagerServices.getConfiguration().isForcedWriteEnabled(),
+                    logCalls, seconds, logCalls / seconds);
 
             handleDanglingRecords(danglingUids);
         } finally {
