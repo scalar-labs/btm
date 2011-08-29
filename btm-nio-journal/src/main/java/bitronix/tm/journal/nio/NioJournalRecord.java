@@ -66,6 +66,9 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
         }
     }
 
+    /**
+     * Specifies the static length of a serialized record from this class.
+     */
     public static final int STATIC_RECORD_LENGTH =
             /* status-string        */ txStatusStrings[0].length +
             /* status               */ 4 +
@@ -77,7 +80,7 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
             /* uniqueNames (static) */ 2;
 
     private static byte[] statusToBytes(int status) {
-        if (status > 0 && status < txStatusStrings.length)
+        if (status >= 0 && status < txStatusStrings.length)
             return txStatusStrings[status];
         return txStatusStrings[txStatusStrings.length - 1];
     }
@@ -209,7 +212,8 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
     /**
      * Encodes this instance to the given buffer.
      *
-     * @param buffer the buffer to use for writing.
+     * @param buffer     the buffer to use for writing.
+     * @param rolledOver specifies whether the rollover flag should be set, indicating that the record was rewritten during a journal rollover.
      */
     protected void encodeTo(ByteBuffer buffer, boolean rolledOver) {
         buffer.put(statusToBytes(getStatus()));
@@ -318,6 +322,7 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
         Map<String, Object> props = new LinkedHashMap<String, Object>(4);
         props.put("recordLength", recordLength);
         props.put("sequenceNumber", sequenceNumber);
+        props.put("rolledOverFlag", rolledOverFlag);
         return props;
     }
 

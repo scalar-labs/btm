@@ -49,7 +49,8 @@ final class NioJournalFile implements NioJournalConstants {
     private static final Logger log = LoggerFactory.getLogger(NioJournalFile.class);
 
     private static final String NL = "\r\n";
-    private static final byte[] JOURNAL_HEADER_PREFIX = ("BTM-NTJ-[Version 1.0]" + NL +
+    private static final String JOURNAL_HEADER_MAGIC_VALUE = "BTM-NTJ-[Version 1.0]";
+    private static final byte[] JOURNAL_HEADER_PREFIX = (JOURNAL_HEADER_MAGIC_VALUE + NL +
             NL +
             "--------- Bitronix Transaction Manager :: Nio Transaction Journal File ---------" + NL +
             NL +
@@ -78,6 +79,17 @@ final class NioJournalFile implements NioJournalConstants {
     private final AtomicLong journalSize = new AtomicLong();
     private final AtomicLong lastModified = new AtomicLong(), lastForced = new AtomicLong();
 
+    /**
+     * Constructs a new journal file instance using the given storage path and initial file size.
+     * <p/>
+     * If the given file does not exist or is empty, a new journal is created with the given initial size.
+     * When the file does exist, new record are appended at the end of the journal and the size is increased
+     * if initial size is greater than the current journal size.
+     *
+     * @param file               the journal file to write to.
+     * @param initialJournalSize the initial size to pre-allocated for the journal.
+     * @throws IOException if opening the file fails.
+     */
     public NioJournalFile(File file, long initialJournalSize) throws IOException {
         this.file = file;
         randomAccessFile = new RandomAccessFile(file, "rw");
@@ -150,6 +162,12 @@ final class NioJournalFile implements NioJournalConstants {
         }
     }
 
+    /**
+     * Grows the journal to the specified size, does nothing if newSize is smaller than the current journal size.
+     *
+     * @param newSize the new size to grow the journal to.
+     * @throws IOException in case of there's no space available or the underlying device is broken.
+     */
     public synchronized void growJournal(long newSize) throws IOException {
         if (newSize >= journalSize.get()) {
             randomAccessFile.setLength(newSize);
@@ -157,6 +175,13 @@ final class NioJournalFile implements NioJournalConstants {
         }
     }
 
+    /**
+     * Returns an iterable over all records that are contained in the record.
+     *
+     * @param includeInvalid specifies whether records that fail the CRC32 checks should be returned as well.
+     * @return an iterable over all records that are contained in the record.
+     * @throws IOException in case of the file cannot be accessed.
+     */
     public synchronized Iterable<NioJournalFileRecord> readAll(boolean includeInvalid) throws IOException {
         final Iterable<NioJournalFileRecord> first = readRecords(previousDelimiter, fileChannel, includeInvalid);
         final Iterable<NioJournalFileRecord> second = readRecords(delimiter, fileChannel, includeInvalid);
@@ -248,7 +273,7 @@ final class NioJournalFile implements NioJournalConstants {
     /**
      * Creates an empty record that may be used to write it to the journal.
      *
-     * @return an empty record that may be used to write if to the journal.
+     * @return an empty record that can be written to the journal.
      */
     public final NioJournalFileRecord createEmptyRecord() {
         return new NioJournalFileRecord(delimiter);

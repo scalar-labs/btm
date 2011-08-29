@@ -165,9 +165,20 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
         log.info("Found " + trackedTransactions.size() + " unfinished transactions within the journal.");
         trackedTransactions.purgeTransactionsExceedingLifetime();
 
-        journalWritingThread = new NioJournalWritingThread(trackedTransactions, journalFile,
-                isSkipForce() ? null : forceSynchronizer, pendingRecordsQueue);
-        log.info("Successfully started a new log appender on the journal file " + journalFilePath + ".");
+        journalWritingThread = new NioJournalWritingThread(trackedTransactions, journalFile, isSkipForce() ? null : forceSynchronizer, pendingRecordsQueue);
+        try {
+            journalWritingThread.waitUntilRunning();
+            log.info("Successfully started a new log appender on the journal file " + journalFilePath + ".");
+        } catch (InterruptedException e) {
+            log.info("Interrupted executing thread while opening the journal file " + journalFilePath + ". " +
+                    "Will close the file now and delegate the interrupt to the caller for letting it shutdown gracefully.");
+            try {
+                close();
+                throw new IOException("Failed to open journal file " + journalFilePath + " as the calling thread was interrupted.");
+            } finally {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     private NioJournalRecord decodeFileRecord(NioJournalFileRecord fileRecord) {

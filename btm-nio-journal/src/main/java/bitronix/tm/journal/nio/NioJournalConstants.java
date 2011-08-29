@@ -100,6 +100,15 @@ public interface NioJournalConstants {
     long TRANSACTION_MAX_LIFETIME = max(DAYS.toMillis(1), getLong("bitronix.nio.journal.max.transaction.lifetime", DAYS.toMillis(14)));
 
     /**
+     * Defines hard limit for journal record sizes to protect from OOM-Errors through DOS attacks
+     * or failures with bit-flips inside the stored record size value (defaults to 64k).
+     * <p/>
+     * Note: Up to {@link #CONCURRENCY} * 2 * {@code JOURNAL_MAX_RECORD_SIZE} bytes of heap and direct buffer memory (half/half)
+     * may be required at a time in the worst case scenario.
+     */
+    int JOURNAL_MAX_RECORD_SIZE = max(1024, getInteger("bitronix.nio.journal.max.record.size", 64 * 1024));
+
+    /**
      * Is the offset of the min required free space in the journal before it is grown after a rollover.
      * <p/>
      * With the default value of 0.75, a grow happens if 3m are free after a rollover of a 4m file.

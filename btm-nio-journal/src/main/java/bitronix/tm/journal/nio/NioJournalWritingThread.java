@@ -94,6 +94,16 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     }
 
     /**
+     * Waits until the thread runs.
+     *
+     * @throws InterruptedException in case of the waiting thread was interrupted.
+     */
+    public synchronized void waitUntilRunning() throws InterruptedException {
+        while (!running)
+            wait();
+    }
+
+    /**
      * Attempts to close the thread gracefully.
      */
     public synchronized void close() {
@@ -152,6 +162,7 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
         try {
             synchronized (this) {
                 running = true;
+                notifyAll();
             }
 
             final List<NioJournalFileRecord> recordsToWorkOn = new ArrayList<NioJournalFileRecord>(CONCURRENCY);

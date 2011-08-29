@@ -31,8 +31,15 @@ import org.junit.Test;
 
 import javax.transaction.Status;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.io.RandomAccessFile;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 
@@ -57,6 +64,37 @@ public class NioJournalFunctionalTest extends AbstractJournalFunctionalTest {
     public void setUp() throws Exception {
         File file = NioJournal.getJournalFilePath();
         assertTrue(!file.isFile() || file.delete());
+    }
+
+    @Test
+    public void testCannotOpenTheSameFileTwice() throws Exception {
+        final File file = NioJournal.getJournalFilePath();
+        journal.open();
+        journal.open(); // is allowed as 2nd call to open(), re-opens the journal.
+
+        // test accessing a opened journal in write mode.
+        try {
+            new FileOutputStream(file).write(' ');
+            fail("write should fail on opened journal.");
+        } catch (IOException expected) {
+        }
+
+        journal.close();
+
+        // test open fails if another process has the journal locked.
+        RandomAccessFile rw = new RandomAccessFile(file, "rw");
+        try {
+            FileLock lock = rw.getChannel().lock();
+            try {
+                journal.open();
+                fail("open should fail on locked file.");
+            } catch (OverlappingFileLockException expected) {
+            } finally {
+                lock.release();
+            }
+        } finally {
+            rw.close();
+        }
     }
 
     @Test
@@ -116,20 +154,34 @@ public class NioJournalFunctionalTest extends AbstractJournalFunctionalTest {
 
     @Test
     public void testJournalIsPositionedCorrectlyAfterOpen() throws Exception {
-        int[] recordCounts = {1, 2, 233, 4493};
+        final Uid gtrid = UidGenerator.generateUid();
+        final Set<String> uniqueNames = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("1")));
+        final float rawRecordSize = calculateRawRecordSize(gtrid, uniqueNames), readBufferSize = NioJournalFileIterable.INITIAL_READ_BUFFER_SIZE;
+        int[] recordCounts = {
+                1,
+                2,
+                (int) Math.floor(readBufferSize / rawRecordSize) / 2,
+                (int) Math.floor(readBufferSize / rawRecordSize) / 2 * 25,
+                (int) Math.floor(readBufferSize / rawRecordSize),
+                (int) Math.ceil(readBufferSize / rawRecordSize),
+                (int) Math.floor(readBufferSize * 3 / rawRecordSize),
+                (int) Math.ceil(readBufferSize * 3 / rawRecordSize),
+                (int) Math.floor(readBufferSize * 25 / rawRecordSize),
+                (int) Math.ceil(readBufferSize * 25 / rawRecordSize)};
+
         for (int records : recordCounts) {
             setUp();
-            doTestPositionIsCorrect(records);
+            doTestPositionIsCorrect(records, gtrid, uniqueNames);
             shutdownJournal();
         }
     }
 
-    private void doTestPositionIsCorrect(int iterations) throws IOException {
-        Uid gtrid = UidGenerator.generateUid();
-        HashSet<String> uniqueNames = new HashSet<String>(Arrays.asList("1"));
+    private void doTestPositionIsCorrect(int iterations, Uid gtrid, Set<String> uniqueNames) throws IOException {
         int rawRecordSize = calculateRawRecordSize(gtrid, uniqueNames);
 
         journal.open();
+        assertEquals(NioJournalFile.FIXED_HEADER_SIZE, ((NioJournal) journal).journalFile.getPosition());
+
         for (int i = 0; i < iterations; i++)
             journal.log(Status.STATUS_ACTIVE, gtrid, uniqueNames);
 
@@ -141,7 +193,7 @@ public class NioJournalFunctionalTest extends AbstractJournalFunctionalTest {
                 NioJournalFile.FIXED_HEADER_SIZE + (iterations * rawRecordSize), ((NioJournal) journal).journalFile.getPosition());
     }
 
-    private int calculateRawRecordSize(Uid gtrid, HashSet<String> uniqueNames) {
+    private int calculateRawRecordSize(Uid gtrid, Set<String> uniqueNames) {
         return NioJournalFileRecord.RECORD_HEADER_SIZE + NioJournalFileRecord.RECORD_TRAILER_SIZE +
                 new NioJournalRecord(Status.STATUS_ACTIVE, gtrid, uniqueNames).getRecordLength();
     }
