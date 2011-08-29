@@ -99,7 +99,7 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
      * @throws InterruptedException in case of the waiting thread was interrupted.
      */
     public synchronized void waitUntilRunning() throws InterruptedException {
-        while (!running)
+        while (!running && !closeRequested)
             wait();
     }
 
@@ -160,20 +160,23 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     @Override
     public void run() {
         try {
-            synchronized (this) {
-                running = true;
-                notifyAll();
-            }
-
             final List<NioJournalFileRecord> recordsToWorkOn = new ArrayList<NioJournalFileRecord>(CONCURRENCY);
             while (!isInterrupted() && !closeRequested) {
+
+                // We are in running mode if we process at least those records that were already queued.
+                synchronized (this) {
+                    running = true;
+                    notifyAll();
+                }
+
                 try {
                     pendingEntriesToWorkOn.clear();
 
                     for (int iterationsBeforeForce = WRITE_ITERATIONS_BEFORE_FORCE; iterationsBeforeForce > 0; iterationsBeforeForce--) {
+                        boolean wasInterrupted = interrupted();
                         try {
                             recordsToWorkOn.clear();
-                            final boolean blockForRecords = iterationsBeforeForce == WRITE_ITERATIONS_BEFORE_FORCE;
+                            final boolean blockForRecords = !wasInterrupted && !closeRequested && iterationsBeforeForce == WRITE_ITERATIONS_BEFORE_FORCE;
                             if (collectWork(recordsToWorkOn, blockForRecords) == 0)
                                 break;
 
@@ -182,6 +185,9 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
                             // TODO: Handle the case that growing is not working and not enough remaining space
                             // TODO: is available. ClassicJournal blocks until TX are committed. This should do
                             // TODO: the same without causing a deadlock.
+
+                            // Attempt to clear interrupt before starting to write.
+                            if (!wasInterrupted) { wasInterrupted = interrupted(); }
 
                             handleJournalRollover(recordsToWorkOn);
 
@@ -194,8 +200,15 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
                             for (NioJournalFileRecord record : recordsToWorkOn)
                                 log.error("Failed storing transaction " + new NioJournalRecord(record.getPayload(), record.isValid()) + ".");
                         } finally {
-                            disposeAll(recordsToWorkOn);
+                            try {
+                                disposeAll(recordsToWorkOn);
+                            } finally {
+                                if (wasInterrupted) { interrupt(); }
+                            }
                         }
+
+                        if (wasInterrupted)
+                            throw new InterruptedException();
                     }
 
                     tryForceAndReportAllRemainingElementsAsSuccess();
