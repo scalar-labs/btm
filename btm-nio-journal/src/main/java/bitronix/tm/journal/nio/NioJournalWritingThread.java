@@ -46,6 +46,38 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     private static final Logger log = LoggerFactory.getLogger(NioJournalWritingThread.class);
     private static final boolean trace = log.isTraceEnabled();
 
+    /**
+     * Constructs and starts a thread on the given journal that handles writes.
+     * <p/>
+     * This method does not return until the thread was started and is ready to listed on the given queue.
+     * Threads that were created with this method are guaranteed to process all elements that were contained in the given
+     * queue just before {@link #shutdown()} is called.
+     *
+     * @param transactions  the shared map of dangling transactions.
+     * @param journal       the journal to operate on.
+     * @param synchronizer  the synchronizer used allowing logging threads to wait on the force command.
+     * @param incomingQueue the queue instance to operate on.
+     * @return returns a started journal writing thread in running or waiting state.
+     * @throws InterruptedException In case of the calling thread was interrupted before the journal writer switched to running mode.
+     */
+    public static NioJournalWritingThread newRunningInstance(NioTrackedTransactions transactions, NioJournalFile journal, NioForceSynchronizer synchronizer,
+                                                             SequencedBlockingQueue<NioJournalFileRecord> incomingQueue) throws InterruptedException {
+        final NioJournalWritingThread thread = new NioJournalWritingThread(transactions, journal, synchronizer, incomingQueue);
+        synchronized (thread) {
+            try {
+                while (!thread.running)
+                    thread.wait();
+            } catch (InterruptedException e) {
+                log.info("The attempt to open a journal writer on file " + journal.getFile() + " was interrupted before the writer was ready. " +
+                        "Closing the uninitialized writer now.");
+                // we need to shutdown the thread as we only the caller was interrupted so far.
+                thread.shutdown();
+                throw e;
+            }
+        }
+        return thread;
+    }
+
     private final List<SequencedQueueEntry<NioJournalFileRecord>> pendingEntriesToWorkOn =
             new ArrayList<SequencedQueueEntry<NioJournalFileRecord>>(CONCURRENCY);
 
@@ -73,18 +105,8 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
         }
     };
 
-    /**
-     * Constructs and starts a thread on the given journal that handles writes.
-     *
-     * @param trackedTransactions the shared map of dangling transactions.
-     * @param journalFile         the journal to operate on.
-     * @param forceSynchronizer   the synchronizer used allowing logging threads to wait on the force command.
-     * @param incomingQueue       the queue instance to operate on.
-     */
-    public NioJournalWritingThread(NioTrackedTransactions trackedTransactions,
-                                   NioJournalFile journalFile,
-                                   NioForceSynchronizer forceSynchronizer,
-                                   SequencedBlockingQueue<NioJournalFileRecord> incomingQueue) {
+    private NioJournalWritingThread(NioTrackedTransactions trackedTransactions, NioJournalFile journalFile,
+                                    NioForceSynchronizer forceSynchronizer, SequencedBlockingQueue<NioJournalFileRecord> incomingQueue) {
         super("Bitronix - Nio Transaction Journal - JournalWriter");
         this.trackedTransactions = trackedTransactions;
         this.journalFile = journalFile;
@@ -94,20 +116,13 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     }
 
     /**
-     * Waits until the thread runs.
-     *
-     * @throws InterruptedException in case of the waiting thread was interrupted.
+     * Attempts to shutdown the thread gracefully.
      */
-    public synchronized void waitUntilRunning() throws InterruptedException {
-        while (!running && !closeRequested)
-            wait();
-    }
-
-    /**
-     * Attempts to close the thread gracefully.
-     */
-    public synchronized void close() {
+    public synchronized void shutdown() {
         closeRequested = true;
+
+        if (!running)
+            return;
 
         try {
             for (int i = 0; i < 60 && running; i++) {
@@ -146,7 +161,7 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
         }
 
         if (running) {
-            final String msg = "Failed to close the nio log appender on journal " + journalFile.getFile() + ". The thread is still alive.";
+            final String msg = "Failed to shutdown the nio log appender on journal " + journalFile.getFile() + ". The thread is still alive.";
             log.error(msg);
             throw new IllegalStateException(msg);
         } else {
@@ -167,6 +182,9 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
                 synchronized (this) {
                     running = true;
                     notifyAll();
+
+                    // TODO: This is not yet bullet proof.. and requires another rework as race conditions are still possible.
+
                 }
 
                 try {

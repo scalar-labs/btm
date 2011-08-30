@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import static bitronix.tm.journal.nio.NioJournalWritingThread.newRunningInstance;
 import static javax.transaction.Status.STATUS_COMMITTING;
 import static javax.transaction.Status.STATUS_ROLLING_BACK;
 
@@ -165,13 +166,12 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
         log.info("Found " + trackedTransactions.size() + " unfinished transactions within the journal.");
         trackedTransactions.purgeTransactionsExceedingLifetime();
 
-        journalWritingThread = new NioJournalWritingThread(trackedTransactions, journalFile, isSkipForce() ? null : forceSynchronizer, pendingRecordsQueue);
         try {
-            journalWritingThread.waitUntilRunning();
+            journalWritingThread = newRunningInstance(trackedTransactions, journalFile, isSkipForce() ? null : forceSynchronizer, pendingRecordsQueue);
             log.info("Successfully started a new log appender on the journal file " + journalFilePath + ".");
         } catch (InterruptedException e) {
-            log.info("Interrupted executing thread while opening the journal file " + journalFilePath + ". " +
-                    "Will close the file now and delegate the interrupt to the caller for letting it shutdown gracefully.");
+            log.info("Interrupted the attempt to open the journal file " + journalFilePath + ". Will close the file now and " +
+                    "delegate the interrupt to the caller, letting it shutdown gracefully.");
             try {
                 close();
                 throw new IOException("Failed to open journal file " + journalFilePath + " as the calling thread was interrupted.");
@@ -215,7 +215,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
         if (journalWritingThread != null) {
             if (log.isDebugEnabled()) { log.debug("Attempting to close the nio log appender."); }
 
-            journalWritingThread.close();
+            journalWritingThread.shutdown();
             journalWritingThread = null;
         }
     }
