@@ -66,25 +66,25 @@ public class NioForceSynchronizerTest {
     }
 
     volatile List<Object> elements;
-    volatile BlockingQueue<NioForceSynchronizer<Object>.ForceableElement> queue;
+// volatile BlockingQueue<NioForceSynchronizer<Object>.ForceableElement> queue;
 
-    final NioForceSynchronizer<Object> forceSynchronizer = new NioForceSynchronizer<Object>();
+// final NioForceSynchronizer<Object> forceSynchronizer = new NioForceSynchronizer<Object>();
 
     @Before
     public void setUp() throws Exception {
         elements = new ArrayList<Object>();
-        queue = new ArrayBlockingQueue<NioForceSynchronizer<Object>.ForceableElement>(10);
+//        queue = new ArrayBlockingQueue<NioForceSynchronizer<Object>.ForceableElement>(10);
         for (int i = 0; i < 6; i++)
             elements.add(new Object());
     }
 
     @Test
     public void testCanEnlistAndUnWrapElements() throws Exception {
-        for (Object element : elements)
-            forceSynchronizer.enlistElement(element, queue);
+//        for (Object element : elements)
+//            forceSynchronizer.enlistElement(element, queue);
 
         List<Object> enlistedElements = new ArrayList<Object>();
-        NioForceSynchronizer.unwrap(queue, enlistedElements);
+//        NioForceSynchronizer.unwrap(queue, enlistedElements);
 
         assertArrayEquals(elements.toArray(), enlistedElements.toArray());
     }
@@ -141,21 +141,21 @@ public class NioForceSynchronizerTest {
 
         List<Future<Boolean>> futures = new ArrayList<Future<Boolean>>();
         for (final Object element : elements) {
-            futures.add(service.submit(new Callable<Boolean>() {
-                public Boolean call() throws Exception {
-                    forceSynchronizer.enlistElement(element, queue);
-                    enlistCountDown.countDown();
-                    return forceSynchronizer.waitOnEnlisted();
-                }
-            }));
+//            futures.add(service.submit(new Callable<Boolean>() {
+//                public Boolean call() throws Exception {
+//                    forceSynchronizer.enlistElement(element, queue);
+//                    enlistCountDown.countDown();
+//                    return forceSynchronizer.waitOnEnlisted();
+//                }
+//            }));
         }
 
         enlistCountDown.await();
         for (Future<?> future : futures) assertFalse(future.isDone());
 
         try {
-            if (!forceSynchronizer.processEnlistedIfRequired(callable, queue))
-                forceSynchronizer.processEnlisted(callable, queue);
+//            if (!forceSynchronizer.processEnlistedIfRequired(callable, queue))
+//                forceSynchronizer.processEnlisted(callable, queue);
         } catch (Exception e) {
             // ignore.
         }
