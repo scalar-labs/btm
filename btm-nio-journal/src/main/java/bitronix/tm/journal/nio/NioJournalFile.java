@@ -44,14 +44,26 @@ import static bitronix.tm.journal.nio.NioJournalFileRecord.readRecords;
  *
  * @author juergen kellerer, 2011-04-30
  */
-class NioJournalFile implements NioJournalConstants {
+final class NioJournalFile implements NioJournalConstants {
 
     private static final Logger log = LoggerFactory.getLogger(NioJournalFile.class);
 
-    private static final byte[] JOURNAL_HEADER_PREFIX = "\r\nNio TX Journal [Version 1.0] - ".getBytes(NAME_CHARSET);
-    private static final byte[] JOURNAL_HEADER_SUFFIX = "\r\n".getBytes(NAME_CHARSET);
+    private static final String NL = "\r\n";
+    private static final String JOURNAL_HEADER_MAGIC_VALUE = "BTM-NTJ-[Version 1.0]";
+    private static final byte[] JOURNAL_HEADER_PREFIX = (JOURNAL_HEADER_MAGIC_VALUE + NL +
+            NL +
+            "--------- Bitronix Transaction Manager :: Nio Transaction Journal File ---------" + NL +
+            NL +
+            "    This is a delimiter based rolling binary file format belonging to BTM." + NL +
+            "    The purpose of this file is to persist JTA transaction states for " + NL +
+            "    providing crash recovery on broken commits and rollbacks." + NL +
+            NL +
+            "--------------------------------------------------------------------------------" + NL +
+            NL).getBytes(NAME_CHARSET);
 
-    static final int FIXED_HEADER_SIZE = 512;
+    private static final byte[] JOURNAL_HEADER_SUFFIX = (NL + NL).getBytes(NAME_CHARSET);
+
+    static final int FIXED_HEADER_SIZE = 1024;
 
     private volatile UUID previousDelimiter = UUID.randomUUID();
     private volatile UUID delimiter = UUID.randomUUID();
@@ -59,41 +71,61 @@ class NioJournalFile implements NioJournalConstants {
     ByteBuffer writeBuffer;
 
     private final File file;
-    private final RandomAccessFile raf;
+    private final RandomAccessFile randomAccessFile;
 
     private FileLock lock;
     private FileChannel fileChannel;
-    private long startPosition;
 
     private final AtomicLong journalSize = new AtomicLong();
     private final AtomicLong lastModified = new AtomicLong(), lastForced = new AtomicLong();
 
+    /**
+     * Constructs a new journal file instance using the given storage path and initial file size.
+     * <p/>
+     * If the given file does not exist or is empty, a new journal is created with the given initial size.
+     * When the file does exist, new record are appended at the end of the journal and the size is increased
+     * if initial size is greater than the current journal size.
+     *
+     * @param file               the journal file to write to.
+     * @param initialJournalSize the initial size to pre-allocated for the journal.
+     * @throws IOException if opening the file fails.
+     */
     public NioJournalFile(File file, long initialJournalSize) throws IOException {
         this.file = file;
-        raf = new RandomAccessFile(file, "rw");
+        randomAccessFile = new RandomAccessFile(file, "rw");
 
-        fileChannel = raf.getChannel();
+        fileChannel = randomAccessFile.getChannel();
         lock = fileChannel.lock();
-        final boolean createHeader = raf.length() == 0;
+        final boolean createHeader = randomAccessFile.length() == 0;
 
-        try {
-            readJournalHeader();
-        } catch (IOException e) {
-            log.error("Failed reading journal header, refusing to open the file " + file + ".", e);
-            close();
-            throw e;
+        if (!createHeader) {
+            try {
+                readJournalHeader();
+            } catch (IOException e) {
+                log.error("Failed reading journal header, refusing to open the file " + file + ".", e);
+                close();
+                throw e;
+            }
         }
 
         // We can increase but not shrink the journal.
-        this.journalSize.set(Math.max(initialJournalSize, raf.length()));
+        this.journalSize.set(Math.max(initialJournalSize, randomAccessFile.length()));
         growJournal(this.journalSize.get());
 
-        if (createHeader)
+        if (createHeader) {
             writeJournalHeader();
-        else {
+            log.info("Created a new transaction journal in file " + file + ", insert position is at offset " + fileChannel.position());
+        } else {
+            if (log.isDebugEnabled()) { log.debug("Found existing transaction journal in file " + file + " looking after the insert position."); }
             NioJournalFileIterable it = (NioJournalFileIterable) readRecords(delimiter, fileChannel, false);
             long position = it.findPositionAfterLastRecord();
             fileChannel.position(Math.max(FIXED_HEADER_SIZE, position));
+            long insertPosition = fileChannel.position();
+
+            log.info("Opened existing transaction journal in file " + file + ", insert position is at offset " + insertPosition + ".");
+
+            if (insertPosition == FIXED_HEADER_SIZE)
+                log.warn("The journal file " + file + " appears to be empty.");
         }
     }
 
@@ -130,13 +162,26 @@ class NioJournalFile implements NioJournalConstants {
         }
     }
 
+    /**
+     * Grows the journal to the specified size, does nothing if newSize is smaller than the current journal size.
+     *
+     * @param newSize the new size to grow the journal to.
+     * @throws IOException in case of there's no space available or the underlying device is broken.
+     */
     public synchronized void growJournal(long newSize) throws IOException {
         if (newSize >= journalSize.get()) {
-            raf.setLength(newSize);
+            randomAccessFile.setLength(newSize);
             journalSize.set(newSize);
         }
     }
 
+    /**
+     * Returns an iterable over all records that are contained in the record.
+     *
+     * @param includeInvalid specifies whether records that fail the CRC32 checks should be returned as well.
+     * @return an iterable over all records that are contained in the record.
+     * @throws IOException in case of the file cannot be accessed.
+     */
     public synchronized Iterable<NioJournalFileRecord> readAll(boolean includeInvalid) throws IOException {
         final Iterable<NioJournalFileRecord> first = readRecords(previousDelimiter, fileChannel, includeInvalid);
         final Iterable<NioJournalFileRecord> second = readRecords(delimiter, fileChannel, includeInvalid);
@@ -157,7 +202,7 @@ class NioJournalFile implements NioJournalConstants {
 
             // If we'd had multiple version, legacy handling would go in here.
 
-            throw new IOException("Failed opening journal file " + raf + ", expected a file header of <" +
+            throw new IOException("Failed opening journal file '" + file + "', expected a file header of <" +
                     NioJournalFileRecord.bufferToString(ByteBuffer.wrap(value)) + "> but was <" +
                     NioJournalFileRecord.bufferToString(ByteBuffer.wrap(prefix)) + ">");
         }
@@ -167,7 +212,7 @@ class NioJournalFile implements NioJournalConstants {
         if (fileChannel.size() == 0)
             return; // new file.
 
-        ByteBuffer buffer = getWriteBuffer(PRE_ALLOCATED_BUFFER_SIZE);
+        ByteBuffer buffer = getWriteBuffer(FIXED_HEADER_SIZE);
         fileChannel.read(buffer, 0);
         buffer.flip();
 
@@ -176,7 +221,8 @@ class NioJournalFile implements NioJournalConstants {
             previousDelimiter = NioJournalFileRecord.readUUID(buffer);
             delimiter = NioJournalFileRecord.readUUID(buffer);
             assertHeaderPartEquals(buffer, JOURNAL_HEADER_SUFFIX);
-            startPosition = buffer.position();
+
+            fileChannel.position(FIXED_HEADER_SIZE);
         } catch (IOException e) {
             previousDelimiter = UUID.randomUUID();
             delimiter = UUID.randomUUID();
@@ -188,7 +234,7 @@ class NioJournalFile implements NioJournalConstants {
         if (fileChannel.position() != 0)
             throw new IllegalStateException("File channel is not positioned at the header location.");
 
-        ByteBuffer buffer = getWriteBuffer(PRE_ALLOCATED_BUFFER_SIZE);
+        ByteBuffer buffer = getWriteBuffer(FIXED_HEADER_SIZE);
         buffer.put(JOURNAL_HEADER_PREFIX);
         NioJournalFileRecord.writeUUID(previousDelimiter, buffer);
         NioJournalFileRecord.writeUUID(delimiter, buffer);
@@ -227,7 +273,7 @@ class NioJournalFile implements NioJournalConstants {
     /**
      * Creates an empty record that may be used to write it to the journal.
      *
-     * @return an empty record that may be used to write if to the journal.
+     * @return an empty record that can be written to the journal.
      */
     public final NioJournalFileRecord createEmptyRecord() {
         return new NioJournalFileRecord(delimiter);
@@ -245,7 +291,7 @@ class NioJournalFile implements NioJournalConstants {
             final int requiredBytes = NioJournalFileRecord.calculateRequiredBytes(records);
             final long remainingBytes = remainingCapacity();
             if (requiredBytes > remainingBytes) {
-                throw new IOException("Journal faces a rollover (remaining capacity: " + remainingBytes +
+                throw new IOException("Journal requires a rollover (remaining capacity: " + remainingBytes +
                         ", required: " + requiredBytes + "). Manually trigger this before writing new content.");
             }
 
@@ -290,15 +336,14 @@ class NioJournalFile implements NioJournalConstants {
      * @throws IOException in case of the operation failed.
      */
     public void force() throws IOException {
+        final boolean debug = log.isDebugEnabled();
         if (lastForced.get() != lastModified.get()) {
-            if (log.isTraceEnabled())
-                log.trace("Forcing the file channel {}", fileChannel);
+            if (debug) { log.debug("Forcing (fsync) the file " + file + " now. Insert position is at " + fileChannel.position()); }
 
             fileChannel.force(false);
             lastForced.set(lastModified.get());
         } else {
-            if (log.isTraceEnabled())
-                log.trace("Force not required on file channel {}", fileChannel);
+            if (debug) { log.debug("Force not required on file " + file + " as no modifications were written since last call."); }
         }
     }
 
@@ -314,7 +359,6 @@ class NioJournalFile implements NioJournalConstants {
                 ", lastForced=" + lastForced +
                 ", file=" + file +
                 ", journalSize=" + journalSize +
-                ", startPosition=" + startPosition +
                 '}';
     }
 }

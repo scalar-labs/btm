@@ -33,7 +33,7 @@ public class DiskJournalPerformanceTest extends AbstractJournalPerformanceTest {
 
     @Override
     protected int getLogCallsPerEmitter() {
-        return 50; // needs to be reduced
+        return 25; // needs to be reduced
     }
 
     @Override

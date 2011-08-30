@@ -21,6 +21,7 @@
 
 package bitronix.tm.journal.nio;
 
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.journal.Journal;
 import org.junit.Test;
 
@@ -45,6 +46,7 @@ public class NioJournalPerformanceTest extends AbstractJournalPerformanceTest {
     @Test
     @Override
     public void testLogPerformanceWithoutFsync() throws Exception {
+        TransactionManagerServices.getConfiguration().setForcedWriteEnabled(false);
         ((NioJournal) journal).setSkipForce(true);
         super.testLogPerformance();
     }

@@ -21,21 +21,18 @@
 
 package bitronix.tm.journal.nio;
 
-import bitronix.tm.journal.DiskJournal;
 import bitronix.tm.journal.JournalRecord;
-import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;
 import org.junit.Test;
 
 import javax.transaction.Status;
-import java.io.IOException;
+import java.util.Collections;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * Common functional test to be used with all journal implementations.
@@ -45,35 +42,8 @@ import static org.junit.Assert.fail;
  */
 public abstract class AbstractJournalFunctionalTest extends AbstractJournalTest {
 
-    protected abstract JournalRecord getLogRecord(int status, int recordLength, int headerLength, long time,
-                                                         int sequenceNumber, int crc32, Uid gtrid, Set uniqueNames,
-                                                         int endRecord);
-
-    @Test
-    public void testExceptions() throws Exception {
-        DiskJournal journal = new DiskJournal();
-
-        try {
-            journal.force();
-            fail("expected IOException");
-        } catch (IOException ex) {
-            assertEquals("cannot force log writing, disk logger is not open", ex.getMessage());
-        }
-        try {
-            journal.log(0, null, null);
-            fail("expected IOException");
-        } catch (IOException ex) {
-            assertEquals("cannot write log, disk logger is not open", ex.getMessage());
-        }
-        try {
-            journal.collectDanglingRecords();
-            fail("expected IOException");
-        } catch (IOException ex) {
-            assertEquals("cannot collect dangling records, disk logger is not open", ex.getMessage());
-        }
-
-        journal.close();
-    }
+    protected abstract JournalRecord getLogRecord(int status, int recordLength, int headerLength, long time, int sequenceNumber, int crc32,
+                                                  Uid gtrid, Set uniqueNames, int endRecord);
 
     @Test
     public void testSimpleCollectDanglingRecords() throws Exception {
@@ -146,13 +116,10 @@ public abstract class AbstractJournalFunctionalTest extends AbstractJournalTest 
         assertEquals(0, journal.collectDanglingRecords().size());
     }
 
-    private SortedSet csvToSet(String s) {
-        SortedSet result = new TreeSet();
+    private SortedSet<String> csvToSet(String s) {
+        SortedSet<String> result = new TreeSet<String>();
         String[] names = s.split("\\,");
-        for (int i = 0; i < names.length; i++) {
-            String name = names[i];
-            result.add(name);
-        }
+        Collections.addAll(result, names);
         return result;
     }
 }

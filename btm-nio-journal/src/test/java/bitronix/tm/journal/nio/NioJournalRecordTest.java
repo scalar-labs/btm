@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -44,17 +45,29 @@ public class NioJournalRecordTest {
 
         for (int i = 0; i < 10; i++) {
             Uid gtrid = UidGenerator.generateUid();
-            Set<String> names = new TreeSet<String>(Arrays.asList("a", "", "another-name", "äöü"));
+            Set<String> names = new HashSet<String>(Arrays.asList("a", "", "another-name", "äöü"));
             NioJournalRecord lr = new NioJournalRecord(1, gtrid, names);
 
-            lr.encodeTo((ByteBuffer) bb.clear());
+            lr.encodeTo((ByteBuffer) bb.clear(), false);
             NioJournalRecord decodedLr = new NioJournalRecord((ByteBuffer) bb.flip(), true);
 
-            assertEquals(gtrid, decodedLr.getGtrid());
-            assertEquals(names, decodedLr.getUniqueNames());
+            assertEquals(lr.toString(), gtrid, decodedLr.getGtrid());
+            assertEquals(lr.toString(), names, decodedLr.getUniqueNames());
             assertEquals(lr, decodedLr);
+            assertEquals(lr.toString(), lr.hashCode(), decodedLr.hashCode());
 
-            assertEquals(lr.getRecordLength(), bb.position());
+            assertEquals(lr.toString(), lr.getRecordLength(), bb.position());
         }
+    }
+
+    @Test
+    public void testCanGetProperties() throws Exception {
+        Uid gtrid = UidGenerator.generateUid();
+        Set<String> names = new TreeSet<String>(Arrays.asList("a", "", "another-name", "äöü"));
+        NioJournalRecord lr = new NioJournalRecord(1, gtrid, names);
+
+        assertEquals(lr.getRecordLength(), lr.getRecordProperties().get("recordLength"));
+        assertEquals(lr.getSequenceNumber(), lr.getRecordProperties().get("sequenceNumber"));
+        assertEquals(lr.isRolledOverFlag(), lr.getRecordProperties().get("rolledOverFlag"));
     }
 }

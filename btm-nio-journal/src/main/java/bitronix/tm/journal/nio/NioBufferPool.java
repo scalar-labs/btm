@@ -21,13 +21,8 @@
 
 package bitronix.tm.journal.nio;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.ByteBuffer;
 import java.util.Collection;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * Simple pool of pre-allocated byte buffers used for concurrent serialization.
@@ -36,20 +31,10 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 final class NioBufferPool implements NioJournalConstants {
 
-    private static final Logger log = LoggerFactory.getLogger(NioForceSynchronizer.class);
-    private static final boolean trace = log.isTraceEnabled();
-
     private static final NioBufferPool instance = new NioBufferPool();
 
     public static NioBufferPool getInstance() {
         return instance;
-    }
-
-    final Queue<ByteBuffer> availableBuffers = new ArrayBlockingQueue<ByteBuffer>(CONCURRENCY);
-
-    {
-        for (int i = 0; i < CONCURRENCY; i++)
-            availableBuffers.add(ByteBuffer.allocate(PRE_ALLOCATED_BUFFER_SIZE));
     }
 
     /**
@@ -59,9 +44,12 @@ final class NioBufferPool implements NioJournalConstants {
      * @return a shared buffer instance.
      */
     public ByteBuffer poll(int requiredCapacity) {
-        ByteBuffer buffer = availableBuffers.poll();
-        return buffer != null && buffer.capacity() >= requiredCapacity ? buffer :
-                ByteBuffer.allocate(Math.max(PRE_ALLOCATED_BUFFER_SIZE, requiredCapacity));
+        // Pooling is disabled for now as it seems to be cheaper to create a
+        // fresh buffer instead of using any sort of concurrent queue (for capacities of ~200 bytes per average).
+        return ByteBuffer.allocate(requiredCapacity);
+    }
+
+    private void put(ByteBuffer buffer) {
     }
 
     /**
@@ -70,7 +58,7 @@ final class NioBufferPool implements NioJournalConstants {
      * @param buffer the buffer to put back into the pool.
      */
     public void recycleBuffer(ByteBuffer buffer) {
-        doRecycleBuffer(buffer);
+        put(buffer);
     }
 
     /**
@@ -80,23 +68,7 @@ final class NioBufferPool implements NioJournalConstants {
      */
     public void recycleBuffers(Collection<ByteBuffer> buffers) {
         for (ByteBuffer buffer : buffers)
-            doRecycleBuffer(buffer);
-    }
-
-    private void doRecycleBuffer(ByteBuffer buffer) {
-        if (buffer != null && buffer.capacity() == PRE_ALLOCATED_BUFFER_SIZE)
-            availableBuffers.offer((ByteBuffer) buffer.clear());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String toString() {
-        return "NioBufferPool{" +
-                "availableBuffers=" + availableBuffers.size() +
-                ", CONCURRENCY=" + CONCURRENCY +
-                '}';
+            put(buffer);
     }
 
     private NioBufferPool() {

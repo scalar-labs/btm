@@ -54,6 +54,7 @@ public abstract class AbstractJournalPerformanceTest extends AbstractJournalTest
     )));
 
     private static List<Set<String>> resourceNameSets = new ArrayList<Set<String>>();
+
     static {
         for (String resource : resources)
             resourceNameSets.add(Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(resource))));
@@ -77,9 +78,19 @@ public abstract class AbstractJournalPerformanceTest extends AbstractJournalTest
     public void testLogPerformance() throws Exception {
         journal.open();
 
-        int concurrency = 256;
+        int concurrency = 128;
         UidGenerator.generateUid();
         ExecutorService executorService = Executors.newFixedThreadPool(concurrency);
+
+        // Warming threads.
+        List<Future<Object>> futures = executorService.invokeAll(Collections.nCopies(concurrency * 64, new Callable<Object>() {
+            public Object call() throws Exception {
+                return UidGenerator.generateUid();
+            }
+        }));
+        for (Future<Object> future : futures) { future.get(); }
+
+        // Testing now
         try {
             List<Callable<Integer>> tests = new ArrayList<Callable<Integer>>();
             TransactionEmitter concurrentDanglingEmitter = new TransactionEmitter(true);
@@ -102,8 +113,9 @@ public abstract class AbstractJournalPerformanceTest extends AbstractJournalTest
             danglingUids.addAll(concurrentDanglingEmitter.getGeneratedUids());
 
             double seconds = ((double) System.currentTimeMillis() - time) / 1000;
-            System.out.printf("%s: %d transactions, took %.2f seconds (%.2f tx/s)%n",
-                    getClass().getSimpleName(), logCalls, seconds, logCalls / seconds);
+            System.out.printf("%s (threads=%d, fsync=%s): %d transactions, took %.2f seconds (%.2f tx/s)%n",
+                    getClass().getSimpleName(), concurrency, TransactionManagerServices.getConfiguration().isForcedWriteEnabled(),
+                    logCalls, seconds, logCalls / seconds);
 
             handleDanglingRecords(danglingUids);
         } finally {

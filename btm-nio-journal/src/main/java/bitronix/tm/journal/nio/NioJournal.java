@@ -28,7 +28,6 @@ import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.journal.MigratableJournal;
 import bitronix.tm.journal.ReadableJournal;
 import bitronix.tm.journal.nio.util.SequencedBlockingQueue;
-import bitronix.tm.journal.nio.util.SequencedQueueEntry;
 import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +48,8 @@ import static javax.transaction.Status.STATUS_ROLLING_BACK;
  */
 public class NioJournal implements Journal, MigratableJournal, ReadableJournal, NioJournalConstants {
 
-    private final static Logger log = LoggerFactory.getLogger(NioJournal.class);
+    private static final Logger log = LoggerFactory.getLogger(NioJournal.class);
+    private static final boolean trace = log.isTraceEnabled();
 
     /**
      * Returns the journal file used by this implementation.
@@ -66,8 +66,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
     final NioTrackedTransactions trackedTransactions = new NioTrackedTransactions();
 
     // Queueing & force related stuff
-    final SequencedBlockingQueue<NioJournalFileRecord> pendingRecordsQueue =
-            new SequencedBlockingQueue<NioJournalFileRecord>();
+    final SequencedBlockingQueue<NioJournalFileRecord> pendingRecordsQueue = new SequencedBlockingQueue<NioJournalFileRecord>();
     final NioForceSynchronizer forceSynchronizer = new NioForceSynchronizer(pendingRecordsQueue);
 
     // Worker
@@ -92,12 +91,11 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
         final NioJournalRecord record = new NioJournalRecord(status, gtrid, uniqueNames);
         trackedTransactions.track(status, gtrid, record);
 
-        if (log.isTraceEnabled())
-            log.trace("Attempting to log a new transaction log record {}.", record);
+        if (trace) { log.trace("Attempting to log a new transaction log record " + record + "."); }
 
         try {
             final NioJournalFileRecord fileRecord = journalFile.createEmptyRecord();
-            record.encodeTo(fileRecord.createEmptyPayload(record.getRecordLength()));
+            record.encodeTo(fileRecord.createEmptyPayload(record.getRecordLength()), false);
             pendingRecordsQueue.putElement(fileRecord);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -108,7 +106,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
 
     private void assertJournalIsOpen() throws IOException {
         if (!isOpen())
-            throw new IOException("The journal is not yet open or closed.");
+            throw new IOException("The journal is not yet opened or was already closed.");
     }
 
     public boolean isSkipForce() {
@@ -134,47 +132,53 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
      * {@inheritDoc}
      */
     public synchronized void open() throws IOException {
+        final boolean debug = log.isDebugEnabled();
+
         journalFilePath = getJournalFilePath();
 
-        // HACK: Start
-        long journalSize = TransactionManagerServices.getConfiguration().getMaxLogSizeInMb() *
-                1024L * 1024L * 3L;
+        // HACK: Start - TODO: Resolve this!
+        long journalSize = TransactionManagerServices.getConfiguration().getMaxLogSizeInMb() * 1024L * 1024L * 3L;
         // Default is 2, however 6mb seems to be the best trade-off between size and performance for this impl.
         // Configuration must be adjusted later to cover this correctly.
         // HACK: End
 
-        if (log.isDebugEnabled()) {
-            log.debug("Attempting to open the journal file {} with a min fixed size of {}mb",
-                    journalFilePath, journalSize / 1024 / 1024);
-        }
+        if (debug) { log.debug("Attempting to open the journal file " + journalFilePath + " with a min fixed size of " + journalSize / 1024 / 1024 + "mb"); }
 
-        if (log.isTraceEnabled())
-            log.trace("Calling close in prior to open to ensure the journal wasn't opened before.");
+        if (trace) { log.trace("Calling close prior to open to ensure the journal wasn't opened before."); }
         close();
 
         this.journalFile = new NioJournalFile(journalFilePath, journalSize);
-        log.info("Successfully opened the journal file {}.", journalFilePath);
+        log.info("Successfully opened the journal file " + journalFilePath + ".");
 
-        if (log.isDebugEnabled())
-            log.debug("Scanning for unfinished transactions within {}.", journalFilePath);
+        if (debug) { log.debug("Scanning for unfinished transactions within " + journalFilePath + "."); }
 
         for (NioJournalFileRecord fileRecord : journalFile.readAll(false)) {
             NioJournalRecord record = decodeFileRecord(fileRecord);
             if (record != null) {
-                if (!record.isValid()) {
-                    log.error("Transaction log entry {} loaded from journal {} fails CRC32 check. " +
-                            "Discarding the entry.", record, journalFilePath);
-                } else
+                if (!record.isValid())
+                    log.error("Transaction log entry " + record + " loaded from journal " + journalFilePath + " fails CRC32 check. Discarding the entry.");
+                else
                     trackedTransactions.track(record);
             }
         }
 
-        log.info("Found {} unfinished transactions within the journal.", trackedTransactions.size());
+        log.info("Found " + trackedTransactions.size() + " unfinished transactions within the journal.");
         trackedTransactions.purgeTransactionsExceedingLifetime();
 
-        journalWritingThread = new NioJournalWritingThread(trackedTransactions, journalFile,
-                isSkipForce() ? null : forceSynchronizer, pendingRecordsQueue);
-        log.info("Successfully started a new log appender on the journal file {}.", journalFilePath);
+        journalWritingThread = new NioJournalWritingThread(trackedTransactions, journalFile, isSkipForce() ? null : forceSynchronizer, pendingRecordsQueue);
+        try {
+            journalWritingThread.waitUntilRunning();
+            log.info("Successfully started a new log appender on the journal file " + journalFilePath + ".");
+        } catch (InterruptedException e) {
+            log.info("Interrupted executing thread while opening the journal file " + journalFilePath + ". " +
+                    "Will close the file now and delegate the interrupt to the caller for letting it shutdown gracefully.");
+            try {
+                close();
+                throw new IOException("Failed to open journal file " + journalFilePath + " as the calling thread was interrupted.");
+            } finally {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     private NioJournalRecord decodeFileRecord(NioJournalFileRecord fileRecord) {
@@ -185,8 +189,8 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
         } catch (Exception e) {
             buffer.reset();
             String contentString = NioJournalFileRecord.bufferToString(buffer);
-            log.error("Transaction log entry buffer with content <{}> loaded from journal {} cannot be " +
-                    "decoded. Discarding the entry.", contentString, journalFilePath);
+            log.error("Transaction log entry buffer with content <" + contentString + "> loaded from journal " + journalFilePath + " cannot be decoded. " +
+                    "Discarding the entry.");
         }
         return null;
     }
@@ -198,8 +202,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
         closeLogAppender();
 
         if (journalFile != null) {
-            if (log.isDebugEnabled())
-                log.debug("Attempting to close the nio transaction journal.");
+            if (log.isDebugEnabled()) { log.debug("Attempting to close the nio transaction journal."); }
             journalFile.close();
             journalFile = null;
             log.info("Closed the nio transaction journal.");
@@ -210,8 +213,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
 
     private synchronized void closeLogAppender() throws IOException {
         if (journalWritingThread != null) {
-            if (log.isDebugEnabled())
-                log.debug("Attempting to close the nio log appender.");
+            if (log.isDebugEnabled()) { log.debug("Attempting to close the nio log appender."); }
 
             journalWritingThread.close();
             journalWritingThread = null;
@@ -223,7 +225,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
      */
     public void shutdown() {
         try {
-            log.info("Shutting down the nio transaction journal on {}.", journalFilePath);
+            log.info("Shutting down the nio transaction journal on " + journalFilePath + ".");
             close();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -234,15 +236,13 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
      * {@inheritDoc}
      */
     public void force() throws IOException {
+        assertJournalIsOpen();
+
         if (skipForce)
             return;
 
-        assertJournalIsOpen();
-
-        if (!forceSynchronizer.waitOnEnlisted()) {
-            throw new IOException("Forced failed on the latest entry logged within this thread, " +
-                    "see log output for more details.");
-        }
+        if (!forceSynchronizer.waitOnEnlisted())
+            throw new IOException("Forced failed on the latest entry logged within this thread, see log output for more details.");
     }
 
     /**
@@ -250,14 +250,13 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
      */
     public Map<Uid, ? extends JournalRecord> collectDanglingRecords() throws IOException {
         assertJournalIsOpen();
+
         final Map<Uid, NioJournalRecord> tracked = trackedTransactions.getTracked();
         final Map<Uid, NioJournalRecord> dangling = new HashMap<Uid, NioJournalRecord>(tracked.size());
 
         for (Map.Entry<Uid, NioJournalRecord> entry : tracked.entrySet()) {
-            if (entry.getValue().getStatus() == STATUS_COMMITTING ||
-                    entry.getValue().getStatus() == STATUS_ROLLING_BACK) {
+            if (entry.getValue().getStatus() == STATUS_COMMITTING || entry.getValue().getStatus() == STATUS_ROLLING_BACK)
                 dangling.put(entry.getKey(), entry.getValue());
-            }
         }
 
         return dangling;

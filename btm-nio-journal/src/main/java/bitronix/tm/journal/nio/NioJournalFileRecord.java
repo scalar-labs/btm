@@ -47,15 +47,37 @@ class NioJournalFileRecord implements NioJournalConstants {
     private static final byte[] RECORD_DELIMITER_SUFFIX = "][".getBytes(NioJournalRecord.NAME_CHARSET);
     private static final byte[] RECORD_DELIMITER_TRAILER = "]-".getBytes(NioJournalRecord.NAME_CHARSET);
 
+    /**
+     * Defines the offset of the 4 byte int value from the beginning of the record that stores the total length of the record itself.
+     */
     public static final int RECORD_LENGTH_OFFSET = RECORD_DELIMITER_PREFIX.length + 16;
+
+    /**
+     * Defines the offset of the 4 byte int value from the beginning of the record that stores the CRC32 checksum of the record's payload.
+     */
     public static final int RECORD_CRC32_OFFSET = RECORD_LENGTH_OFFSET + 4;
 
+    /**
+     * Defines the number of bytes consumed by the raw-header of the file-record (this does not include any additional header inside the payload).
+     */
     public static final int RECORD_HEADER_SIZE =
-            RECORD_DELIMITER_PREFIX.length +
-                    16 + 4 + 4 +
-                    RECORD_DELIMITER_SUFFIX.length;
+            /*                   prefix */ RECORD_DELIMITER_PREFIX.length +
+            /* opening delimiter (uuid) */ 16 +
+            /*                   length */ 4 +
+            /*                    crc32 */ 4 +
+            /*                   suffix */ RECORD_DELIMITER_SUFFIX.length;
 
-    public static final int RECORD_TRAILER_SIZE = RECORD_DELIMITER_TRAILER.length + 16;
+    /**
+     * Defines the number of bytes consumed by the raw-trailer of the file-record.
+     */
+    public static final int RECORD_TRAILER_SIZE =
+            /* closing delimiter (uuid) */ 16 +
+            /*           record trailer */ RECORD_DELIMITER_TRAILER.length;
+
+    /**
+     * Defines the offset of the 4 byte CRC32 value counted in reverse from the payload position inside a record.
+     */
+    public static final int REVERSE_RECORD_CRC32_OFFSET = RECORD_CRC32_OFFSET - RECORD_HEADER_SIZE;
 
     private static final boolean trace = log.isTraceEnabled();
 
@@ -74,9 +96,76 @@ class NioJournalFileRecord implements NioJournalConstants {
             return "<no-buffer (null)>";
 
         buffer = buffer.duplicate();
-        byte[] content = new byte[buffer.remaining()];
+        byte[] content = new byte[Math.min(buffer.remaining(), 256)];
         buffer.get(content);
         return new String(content, NAME_CHARSET);
+    }
+
+    /**
+     * Finds the next record inside the given buffer and advances the buffer's position beyond the end of the returned record.
+     * <p/>
+     * This method consumes any leading and record bytes inside the given buffer. If no record is found the buffer is consumed completely.
+     * <p/>
+     * Note: If the returned status is {@link ReadStatus#FoundPartialRecord}, the caller must compact the buffer (copy the remaining
+     * bytes to the beginning) and read more data into the buffer before retrying the call.
+     *
+     * @param delimiter the delimiter used to identify a record.
+     * @param source    the source buffer to find a record in.
+     * @return the result of the search with may contain the decoded record if one was found.
+     */
+    public static FindResult findNextRecord(UUID delimiter, ByteBuffer source) {
+        final byte hook = RECORD_DELIMITER_PREFIX[0];
+
+        if (source.hasRemaining()) {
+            do {
+                if (source.get() == hook) {
+                    int originalSourcePosition = source.position();
+                    source.position(originalSourcePosition - 1); // reverting the consumption of the hook byte.
+
+                    final int recordLength = readRecordHeader(source, delimiter);
+                    final ReadStatus readStatus = ReadStatus.decode(recordLength);
+
+                    switch (readStatus) {
+                        case ReadOk:
+                            final int crc32 = extractCrc32FromRecord(source);
+                            final int position = source.position();
+                            final FindResult findResult = new FindResult(readStatus,
+                                    new NioJournalFileRecord(delimiter, (ByteBuffer) source.duplicate().limit(position + recordLength), crc32));
+
+                            // Advance the position to the next record.
+                            source.position(position + recordLength + RECORD_TRAILER_SIZE);
+
+                            return findResult;
+                        case FoundPartialRecord:
+                            return new FindResult(readStatus, null);
+                        case FoundHeaderWithDifferentDelimiter:
+                            if (trace) { log.trace("Quickly iterating other log entry."); }
+                            break;
+                        default:
+                            // consuming the byte (that was reset before).
+                            source.position(Math.max(source.position(), originalSourcePosition));
+                    }
+                }
+            } while (source.hasRemaining());
+        }
+
+        return new FindResult(ReadStatus.NoHeaderInBuffer, null);
+    }
+
+    /**
+     * Reads the record contained a the current position of the given source.
+     *
+     * @param delimiter the expected record delimiter.
+     * @param source    the source to read from.
+     * @return the record, never 'null'. (throw IllegalArgumentException if the source is invalid.)
+     */
+    public static NioJournalFileRecord readRecord(UUID delimiter, ByteBuffer source) {
+        int payloadLength = readRecordHeader(source, delimiter);
+        if (ReadStatus.decode(payloadLength) == ReadStatus.ReadOk) {
+            int crc32 = extractCrc32FromRecord(source);
+            return new NioJournalFileRecord(delimiter, (ByteBuffer) source.duplicate().limit(source.position() + payloadLength), crc32);
+        } else
+            throw new IllegalArgumentException("The provided source buffer " + bufferToString(source) + " did not contain a valid record.");
     }
 
     /**
@@ -88,8 +177,7 @@ class NioJournalFileRecord implements NioJournalConstants {
      * @return a new iterable that returns a repeatable iteration over records.
      * @throws IOException in case of the IO operation fails initially.
      */
-    public static Iterable<NioJournalFileRecord> readRecords(UUID delimiter, FileChannel channel,
-                                                             boolean includeInvalid) throws IOException {
+    public static Iterable<NioJournalFileRecord> readRecords(UUID delimiter, FileChannel channel, boolean includeInvalid) throws IOException {
         return new NioJournalFileIterable(delimiter, channel, includeInvalid);
     }
 
@@ -127,12 +215,25 @@ class NioJournalFileRecord implements NioJournalConstants {
      * @param delimiter the delimiter to create the record for.
      */
     public NioJournalFileRecord(UUID delimiter) {
+        if (delimiter == null)
+            throw new IllegalArgumentException("The parameter 'delimiter' cannot be left empty when creating a NioJournalFileRecord.");
         this.delimiter = delimiter;
     }
 
-    NioJournalFileRecord(UUID delimiter, ByteBuffer payload) {
+    /**
+     * warning: Constructor for internal use only.
+     *
+     * @param delimiter    the delimiter to create the record for.
+     * @param payload      the payload of this record.
+     * @param payloadCrc32 the payload's CRC32 value.
+     */
+    NioJournalFileRecord(UUID delimiter, ByteBuffer payload, int payloadCrc32) {
         this(delimiter);
-        this.payload = payload;
+        if (payload == null)
+            throw new IllegalArgumentException("The parameter 'payload' cannot be left empty when creating a filled NioJournalFileRecord.");
+
+        this.payload = payload.duplicate();
+        valid = calculateCrc32() == payloadCrc32;
     }
 
     /**
@@ -155,13 +256,23 @@ class NioJournalFileRecord implements NioJournalConstants {
     }
 
     /**
-     * Creates an empty payload buffer of the given size and transaction status.
+     * Creates an empty payload buffer of the given size and returns it for writing.
      *
      * @param payloadSize the size of the payload to create.
-     * @return the created buffer.
+     * @return the created buffer which may be used to store the payload into.
      */
     public ByteBuffer createEmptyPayload(int payloadSize) {
-        recordBuffer = NioBufferPool.getInstance().poll(payloadSize + RECORD_HEADER_SIZE + RECORD_TRAILER_SIZE);
+        if (payloadSize < 0)
+            throw new IllegalArgumentException("Cannot specify a negative capacity when creating the payload.");
+
+        final int requiredCapacity = payloadSize + RECORD_HEADER_SIZE + RECORD_TRAILER_SIZE;
+
+        if (requiredCapacity > JOURNAL_MAX_RECORD_SIZE) {
+            throw new IllegalArgumentException("Exceeding the maximum allowed record size of " +
+                    JOURNAL_MAX_RECORD_SIZE + " bytes. Requested a size of " + requiredCapacity);
+        }
+
+        recordBuffer = NioBufferPool.getInstance().poll(requiredCapacity);
 
         writeRecordHeaderFor(payloadSize, delimiter, recordBuffer);
         payload = (ByteBuffer) recordBuffer.slice().limit(payloadSize);
@@ -169,7 +280,7 @@ class NioJournalFileRecord implements NioJournalConstants {
 
         recordBuffer.flip();
 
-        return getPayload();
+        return payload.duplicate();
     }
 
     /**
@@ -180,17 +291,17 @@ class NioJournalFileRecord implements NioJournalConstants {
      */
     public void writeRecord(UUID targetDelimiter, ByteBuffer target) {
         if (!targetDelimiter.equals(delimiter)) {
-            if (trace) {
-                log.trace("Correcting delimiter from {} to {}, the target changed in the meantime.",
-                        delimiter, targetDelimiter);
-            }
+            if (log.isDebugEnabled())
+                log.debug("Correcting delimiter from " + delimiter + " to " + targetDelimiter + ", the target changed in the meantime.");
             delimiter = targetDelimiter;
             recordBuffer = null;
         }
 
         if (recordBuffer == null || payload == null) {
             if (payload != null) {
-                final ByteBuffer pl = payload; // must be assigned to a local var.
+                // Must be assigned to a local var as "createEmptyPayload(..)" re-initialized the field as a sub-region of the record buffer.
+                final ByteBuffer pl = payload.duplicate();
+                // Creating the record buffer and write the payload into the reserved region.
                 createEmptyPayload(pl.remaining()).put(pl);
             } else
                 throw new IllegalStateException("The payload was not yet written. Cannot write this record.");
@@ -208,6 +319,8 @@ class NioJournalFileRecord implements NioJournalConstants {
     }
 
     int calculateCrc32() {
+        if (!payload.hasArray())
+            throw new IllegalArgumentException("The payload contained in this record uses an invalid ByteBuffer format not backed with a heap array.");
         final CRC32 crc = new CRC32();
         crc.update(payload.array(), payload.arrayOffset() + payload.position(), payload.remaining());
         return (int) crc.getValue();
@@ -219,17 +332,16 @@ class NioJournalFileRecord implements NioJournalConstants {
      * @return the total size of the serialized record in bytes (including header, trailer and payload).
      */
     public int getRecordSize() {
-        return recordBuffer != null ? recordBuffer.limit() :
-                payload.limit() + RECORD_HEADER_SIZE + RECORD_TRAILER_SIZE;
+        return recordBuffer != null ? recordBuffer.remaining() : (payload == null ? 0 : payload.remaining()) + RECORD_HEADER_SIZE + RECORD_TRAILER_SIZE;
     }
 
     /**
-     * Returns a writable, fixed size buffer containing the payload.
+     * Returns a readonly, fixed size buffer containing the payload.
      *
-     * @return a writable, fixed size buffer containing the payload.
+     * @return a readonly, fixed size buffer containing the payload.
      */
     public ByteBuffer getPayload() {
-        return payload.duplicate();
+        return payload.asReadOnlyBuffer();
     }
 
     /**
@@ -250,14 +362,11 @@ class NioJournalFileRecord implements NioJournalConstants {
         return valid;
     }
 
-    void markInvalid() {
-        valid = false;
-    }
-
     @Override
     public String toString() {
         return "NioJournalFileRecord{" +
-                ", delimiter=" + delimiter +
+                "delimiter=" + delimiter +
+                ", valid=" + valid +
                 ", payload=" + bufferToString(payload) +
                 '}';
     }
@@ -284,121 +393,158 @@ class NioJournalFileRecord implements NioJournalConstants {
         writeUUID(delimiter, target);
     }
 
+    /**
+     * Reads and verifies the record header, positions the buffer at the payload position and returns the length
+     * of the records payload if the header is valid.
+     * <p/>
+     * Does not advance the buffers position if no record is found at the current position.
+     * Steps over the header of a broken record if the header itself is intact (= does advance if a broken record is found).
+     *
+     * @param source    the buffer whose current position is at the beginning of the header.
+     * @param delimiter the expected delimiter that should be contained in the header.
+     * @return the length of the record or a negative integer which may be decoded to a {@link ReadStatus} other than ReadOK.
+     */
     private static int readRecordHeader(ByteBuffer source, UUID delimiter) {
         source.mark();
-        boolean willBePartial = source.remaining() < RECORD_HEADER_SIZE;
+        final boolean willBePartial = source.remaining() < RECORD_HEADER_SIZE;
         try {
             int similarBytes = bufferContainsSequence(source, RECORD_DELIMITER_PREFIX);
 
-            if (willBePartial || (similarBytes < 0 && !source.hasRemaining())) {
-                if (trace) log.trace("Read a partial header, reporting -5.");
-                return ReadStatus.FoundPartialRecord.encode();
-            }
-
-            if (similarBytes < 1)
+            if (willBePartial) {
+                if (similarBytes == RECORD_DELIMITER_PREFIX.length || (similarBytes < 0 && !source.hasRemaining())) {
+                    if (trace) { log.trace("Read the first bytes of a potential partial header, reporting ReadStatus.FoundPartialRecord."); }
+                    return ReadStatus.FoundPartialRecord.encode();
+                } else
+                    return ReadStatus.NoHeaderAtCurrentPosition.encode();
+            } else if (similarBytes != RECORD_DELIMITER_PREFIX.length)
                 return ReadStatus.NoHeaderAtCurrentPosition.encode();
 
             final UUID uuid = readUUID(source);
-            if (!delimiter.equals(uuid)) {
-                if (trace) {
-                    log.trace("Found an record header of delimiter {}, while expecting {}, skipping it.",
-                            uuid, delimiter);
-                }
-                return ReadStatus.FoundHeaderWithDifferentDelimiter.encode();
+            final int recordLength = source.getInt();
+
+            if (recordLength > JOURNAL_MAX_RECORD_SIZE || recordLength < 0) {
+                log.warn("Found a record with an invalid record length of " + recordLength + " bytes where only " + JOURNAL_MAX_RECORD_SIZE +
+                        " is allowed. Will skip this entry " + bufferToString(source) + ".");
+                return ReadStatus.NoHeaderAtCurrentPosition.encode();
             }
 
-            int recordLength = source.getInt();
-
             // jump over crc32
-            source.getInt(); // checksum is not needed here
+            source.getInt(); // checksum is not needed here, we'll come back and evaluate it later.
 
             if (bufferContainsSequence(source, RECORD_DELIMITER_SUFFIX) <= 0)
                 return ReadStatus.NoHeaderAtCurrentPosition.encode();
 
             if (recordLength + RECORD_TRAILER_SIZE > source.remaining()) {
-                if (trace) {
-                    log.trace("Found partial record, the length {} exceeds the remaining bytes {}.",
-                            recordLength, source.remaining());
-                }
+                if (trace) { log.trace("Found partial record, the length " + recordLength + " exceeds the remaining bytes " + source.remaining() + "."); }
                 return ReadStatus.FoundPartialRecord.encode();
             }
 
             // Marking the beginning of the payload.
             source.mark();
 
+            // Advancing the buffer to the position of the record trailer.
             source.position(source.position() + recordLength);
-            if (bufferContainsSequence(source, RECORD_DELIMITER_TRAILER) <= 0 ||
-                    !delimiter.equals(readUUID(source))) {
-                if (log.isDebugEnabled())
-                    log.debug("Found an invalid record trailer for delimiter {}. Will skip this entry.", delimiter);
+
+            final boolean recordTrailerIsInvalid = bufferContainsSequence(source, RECORD_DELIMITER_TRAILER) <= 0 || !uuid.equals(readUUID(source));
+            if (recordTrailerIsInvalid) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Found an invalid record trailer for delimiter " + uuid + ". Will skip the entry " + bufferToString(source) + ".");
+                }
                 return ReadStatus.NoHeaderAtCurrentPosition.encode();
             }
 
-            return recordLength;
+            if (!delimiter.equals(uuid)) {
+                final ByteBuffer copyOfSource = (ByteBuffer) source.duplicate().reset();
+                copyOfSource.limit(copyOfSource.position() + recordLength);
+
+                if (new NioJournalFileRecord(uuid, copyOfSource, extractCrc32FromRecord(copyOfSource)).isValid()) {
+                    if (trace) { log.trace("Found a record header of delimiter " + uuid + ", while expecting " + delimiter + ", skipping it."); }
+                    source.mark(); // marking the end of the record.
+                    return ReadStatus.FoundHeaderWithDifferentDelimiter.encode();
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Found a record header of delimiter " + uuid + ", while expecting " + delimiter + ", that cannot be skipped as it " +
+                                "did not pass the CRC32 check. Will retry reading from this record's payload position: " + bufferToString(source));
+                    }
+                    return ReadStatus.NoHeaderAtCurrentPosition.encode();
+                }
+            } else {
+                return recordLength;
+            }
         } finally {
             source.reset();
         }
     }
 
-    static int findNextRecord(ByteBuffer source, UUID delimiter) {
-        final byte hook = RECORD_DELIMITER_PREFIX[0];
-
-        if (source.hasRemaining()) {
-            do {
-                source.mark();
-                if (source.get() == hook) {
-                    source.reset();
-
-                    final int recordLength = readRecordHeader((ByteBuffer) source.reset(), delimiter);
-                    final ReadStatus readStatus = ReadStatus.decode(recordLength);
-
-                    switch (readStatus) {
-                        case ReadOk:
-                            return recordLength;
-                        case FoundPartialRecord:
-                            return ReadStatus.FoundPartialRecord.encode();
-                        case FoundHeaderWithDifferentDelimiter:
-                            if (source.remaining() > RECORD_HEADER_SIZE) {
-                                if (trace) {
-                                    log.trace("Found other header entry, try to use length as hint to " +
-                                            "iterate it quickly.");
-                                }
-
-                                int entryLength = source.getInt(source.position() + RECORD_LENGTH_OFFSET);
-                                source.position(source.position() + RECORD_HEADER_SIZE);
-
-                                if (entryLength + RECORD_TRAILER_SIZE <= source.remaining() &&
-                                        source.get(source.position() + entryLength) == RECORD_DELIMITER_TRAILER[0]) {
-                                    if (trace) log.trace("Quickly iterating other log entry.");
-                                    source.position(source.position() + entryLength + RECORD_TRAILER_SIZE);
-                                }
-
-                                break;
-                            }
-                        default:
-                            source.get(); // consuming the byte (that was reset before).
-                    }
-                }
-            } while (source.hasRemaining());
-        }
-
-        return ReadStatus.NoHeaderInBuffer.encode();
+    /**
+     * Extracts the CRC32 value from a source buffer that was previously position at the payload using the method {@link #findNextRecord(UUID, ByteBuffer)}.
+     * <p/>
+     * Note: This is a low level method that does not verify any state. The returned value will be incorrect if the method is used on un-positioned buffers.
+     *
+     * @param sourceAtPayloadPosition the positioned buffer.
+     * @return the CRC32 value contained in the record header.
+     */
+    private static int extractCrc32FromRecord(ByteBuffer sourceAtPayloadPosition) {
+        return sourceAtPayloadPosition.getInt(sourceAtPayloadPosition.position() + REVERSE_RECORD_CRC32_OFFSET);
     }
 
+    /**
+     * Verifies whether the given sequence is contained inside the buffer and advances the buffer's position by the matched characters.
+     *
+     * @param source   the buffer to search in.
+     * @param sequence the sequence of bytes to compare.
+     * @return a positive number of matched bytes if the whole sequence was matched. A negative number of matched bytes if only a subset matched.
+     */
     private static int bufferContainsSequence(final ByteBuffer source, final byte[] sequence) {
         final int maxCount = source.remaining();
         int count = 0;
 
         for (byte b : sequence) {
-            if (maxCount == count || source.get() != b)
+            if (maxCount == count || source.get() != b) {
+                if (maxCount != count)
+                    source.position(source.position() - 1); // revert the last consumed byte.
                 return -count;
+            }
             count++;
         }
 
         return count;
     }
 
-    static enum ReadStatus {
+    /**
+     * Carries the result of an attempt to find the next record inside a ByteBuffer.
+     */
+    public static final class FindResult {
+
+        private final ReadStatus status;
+        private final NioJournalFileRecord record;
+
+        private FindResult(ReadStatus status, NioJournalFileRecord record) {
+            this.status = status;
+            this.record = record;
+        }
+
+        public ReadStatus getStatus() {
+            return status;
+        }
+
+        public NioJournalFileRecord getRecord() {
+            return record;
+        }
+
+        @Override
+        public String toString() {
+            return "FindResult{" +
+                    "status=" + status +
+                    ", record=" + record +
+                    '}';
+        }
+    }
+
+    /**
+     * Enumerates the possible states when reading a record starting from an arbitrary position inside the file.
+     */
+    public static enum ReadStatus {
         /**
          * Header was successfully read, the record is fully contained in the buffer and it is valid.
          */
@@ -420,16 +566,35 @@ class NioJournalFileRecord implements NioJournalConstants {
          */
         FoundPartialRecord,;
 
+        /**
+         * Decodes the read status from a integer return value.
+         *
+         * @param recordLength the return value of methods that provide the recordLength.
+         * @return the read status assigned with the integer return value.
+         */
         static ReadStatus decode(int recordLength) {
             if (recordLength >= 0)
                 return ReadOk;
             return values()[-recordLength];
         }
 
+        /**
+         * Encodes the given read status to be returned as integer.
+         *
+         * @param status the status to encode.
+         * @return the given read status to be returned as integer.
+         */
         static int encode(ReadStatus status) {
+            if (status == ReadOk)
+                throw new IllegalArgumentException("Cannot encode ReadOK, the calling method should return the record length instead.");
             return -status.ordinal();
         }
 
+        /**
+         * Encodes this read status to be returned as integer.
+         *
+         * @return this read status to be returned as integer.
+         */
         int encode() {
             return encode(this);
         }

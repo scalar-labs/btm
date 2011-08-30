@@ -105,6 +105,20 @@ class NioForceSynchronizer {
     }
 
     /**
+     * Returns the number of threads waiting on a force to happen.
+     *
+     * @return the number of threads waiting on a force to happen.
+     */
+    public int getNumberOfWaitingThreads() {
+        forceLock.lock();
+        try {
+            return forceLock.getWaitQueueLength(performedForce);
+        } finally {
+            forceLock.unlock();
+        }
+    }
+
+    /**
      * Processes the enlisted elements with the given force command and notifies the waiting
      * threads on success or failure. The operation does nothing if no thread is waiting.
      *

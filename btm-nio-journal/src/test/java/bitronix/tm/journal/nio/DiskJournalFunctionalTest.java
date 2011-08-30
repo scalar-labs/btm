@@ -32,11 +32,12 @@ import org.junit.Test;
 
 import javax.transaction.Status;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Classic journal specific functional tests.
@@ -45,11 +46,9 @@ import static org.junit.Assert.assertTrue;
  */
 public class DiskJournalFunctionalTest extends AbstractJournalFunctionalTest {
     @Override
-    protected TransactionLogRecord getLogRecord(int status, int recordLength, int headerLength,
-                                                long time, int sequenceNumber, int crc32, Uid gtrid,
-                                                Set uniqueNames, int endRecord) {
-        return new TransactionLogRecord(status, recordLength, headerLength, time, sequenceNumber,
-                crc32, gtrid, uniqueNames, endRecord);
+    protected TransactionLogRecord getLogRecord(int status, int recordLength, int headerLength, long time, int sequenceNumber, int crc32,
+                                                Uid gtrid, Set uniqueNames, int endRecord) {
+        return new TransactionLogRecord(status, recordLength, headerLength, time, sequenceNumber, crc32, gtrid, uniqueNames, endRecord);
     }
 
     @Override
@@ -61,6 +60,28 @@ public class DiskJournalFunctionalTest extends AbstractJournalFunctionalTest {
     public void setUp() throws Exception {
         new File(TransactionManagerServices.getConfiguration().getLogPart1Filename()).delete();
         new File(TransactionManagerServices.getConfiguration().getLogPart2Filename()).delete();
+    }
+
+    @Test
+    public void testExceptions() throws Exception {
+        try {
+            journal.force();
+            fail("expected IOException");
+        } catch (IOException ex) {
+            assertEquals("cannot force log writing, disk logger is not open", ex.getMessage());
+        }
+        try {
+            journal.log(0, null, null);
+            fail("expected IOException");
+        } catch (IOException ex) {
+            assertEquals("cannot write log, disk logger is not open", ex.getMessage());
+        }
+        try {
+            journal.collectDanglingRecords();
+            fail("expected IOException");
+        } catch (IOException ex) {
+            assertEquals("cannot collect dangling records, disk logger is not open", ex.getMessage());
+        }
     }
 
     @Test
