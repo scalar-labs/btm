@@ -245,22 +245,28 @@ public class XAPool implements StateChangeListener {
 
     public synchronized void shrink() throws Exception {
         if (log.isDebugEnabled()) { log.debug("shrinking " + this); }
-        List<XAStatefulHolder> toRemoveXaStatefulHolders = new ArrayList<XAStatefulHolder>();
-        long now = MonotonicClock.currentTimeMillis();
-        for (XAStatefulHolder xaStatefulHolder : availablePool) {
+        int closed = 0;
+        final long now = MonotonicClock.currentTimeMillis();
+        final int availableSize = availablePool.size();
+        for (int i = 0; i < availableSize; i++) {
+            XAStatefulHolder xaStatefulHolder = availablePool.poll();
+            if (xaStatefulHolder == null) {
+                break;
+            }
             long expirationTime = (xaStatefulHolder.getLastReleaseDate().getTime() + (bean.getMaxIdleTime() * 1000));
             if (log.isDebugEnabled()) { log.debug("checking if connection can be closed: " + xaStatefulHolder + " - closing time: " + expirationTime + ", now time: " + now); }
             if (expirationTime <= now) {
+                closed++;
                 try {
                     xaStatefulHolder.close();
                 } catch (Exception ex) {
                     log.warn("error closing " + xaStatefulHolder, ex);
                 }
-                toRemoveXaStatefulHolders.add(xaStatefulHolder);
+            } else {
+                availablePool.add(xaStatefulHolder);
             }
         } // for
-        if (log.isDebugEnabled()) { log.debug("closed " + toRemoveXaStatefulHolders.size() + " idle connection(s)"); }
-        availablePool.removeAll(toRemoveXaStatefulHolders);
+        if (log.isDebugEnabled()) { log.debug("closed " + closed + " idle connection(s)"); }
         growUntilMinPoolSize();
         if (log.isDebugEnabled()) { log.debug("shrunk " + this); }
     }
