@@ -38,6 +38,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import static java.util.Collections.nCopies;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -82,8 +83,8 @@ public abstract class AbstractJournalPerformanceTest extends AbstractJournalTest
         UidGenerator.generateUid();
         ExecutorService executorService = Executors.newFixedThreadPool(concurrency);
 
-        // Warming threads.
-        List<Future<Object>> futures = executorService.invokeAll(Collections.nCopies(concurrency * 64, new Callable<Object>() {
+        // Warming threads. (Note: The case is required to avoid build errors in Java5)
+        List<Future<Object>> futures = executorService.invokeAll((Collection) nCopies(concurrency * 64, new Callable<Object>() {
             public Object call() throws Exception {
                 return UidGenerator.generateUid();
             }
