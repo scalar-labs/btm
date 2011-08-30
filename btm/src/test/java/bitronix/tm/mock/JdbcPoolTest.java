@@ -175,7 +175,7 @@ public class JdbcPoolTest extends TestCase {
 
         Thread.sleep(1100); // leave enough time for the idle connections to expire
         TransactionManagerServices.getTaskScheduler().interrupt(); // wake up the task scheduler
-        Thread.sleep(500); // leave enough time for the scheduled shrinking task to do its work
+        Thread.sleep(1200); // leave enough time for the scheduled shrinking task to do its work
 
         if (log.isDebugEnabled()) { log.debug("*** checking pool sizes"); }        
         assertEquals(1, pool.inPoolSize());
