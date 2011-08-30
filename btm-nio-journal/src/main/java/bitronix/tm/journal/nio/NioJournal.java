@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -100,7 +101,9 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
             pendingRecordsQueue.putElement(fileRecord);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IOException(e);
+            IOException ioException = new InterruptedIOException(e.getMessage());
+            ioException.initCause(e);
+            throw ioException;
         }
 
     }

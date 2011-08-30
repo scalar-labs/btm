@@ -24,6 +24,7 @@ package bitronix.tm.journal.nio;
 import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.utils.Uid;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharsetEncoder;
@@ -59,7 +60,11 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
         txStatusStrings = new byte[TRANSACTION_STATUS_STRINGS.size()][];
         for (int i = 0; i < txStatusStrings.length; i++) {
             String statusString = TRANSACTION_STATUS_STRINGS.get(i);
-            txStatusStrings[i] = statusString.getBytes(NAME_CHARSET);
+            try {
+                txStatusStrings[i] = statusString.getBytes(NAME_CHARSET.name());
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
 
             if (txStatusStrings[i].length != 6)
                 throw new IllegalStateException("The TX status string '" + statusString + "' encodes to a length != 6. Please fix this.");
@@ -148,10 +153,8 @@ class NioJournalRecord implements JournalRecord, NioJournalConstants {
     }
 
     private static void assertIsInRange(Object element, int length, int limit) {
-        if (length > limit) {
-            throw new IllegalArgumentException("Cannot encode " + element +
-                    " as its size exceeds the limit of " + limit);
-        }
+        if (length > limit)
+            throw new IllegalArgumentException("Cannot encode " + element + " as its size exceeds the limit of " + limit);
     }
 
 

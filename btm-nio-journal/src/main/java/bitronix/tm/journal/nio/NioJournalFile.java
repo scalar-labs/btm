@@ -48,9 +48,20 @@ final class NioJournalFile implements NioJournalConstants {
 
     private static final Logger log = LoggerFactory.getLogger(NioJournalFile.class);
 
+    static byte[] nameBytes(String nameValue) {
+        ByteBuffer encoded = NAME_CHARSET.encode(nameValue);
+        if (encoded.remaining() == encoded.capacity() && encoded.hasArray())
+            return encoded.array();
+        else {
+            byte[] bytes = new byte[encoded.remaining()];
+            encoded.get(bytes);
+            return bytes;
+        }
+    }
+
     private static final String NL = "\r\n";
     private static final String JOURNAL_HEADER_MAGIC_VALUE = "BTM-NTJ-[Version 1.0]";
-    private static final byte[] JOURNAL_HEADER_PREFIX = (JOURNAL_HEADER_MAGIC_VALUE + NL +
+    private static final byte[] JOURNAL_HEADER_PREFIX = nameBytes(JOURNAL_HEADER_MAGIC_VALUE + NL +
             NL +
             "--------- Bitronix Transaction Manager :: Nio Transaction Journal File ---------" + NL +
             NL +
@@ -59,9 +70,9 @@ final class NioJournalFile implements NioJournalConstants {
             "    providing crash recovery on broken commits and rollbacks." + NL +
             NL +
             "--------------------------------------------------------------------------------" + NL +
-            NL).getBytes(NAME_CHARSET);
+            NL);
 
-    private static final byte[] JOURNAL_HEADER_SUFFIX = (NL + NL).getBytes(NAME_CHARSET);
+    private static final byte[] JOURNAL_HEADER_SUFFIX = nameBytes(NL + NL);
 
     static final int FIXED_HEADER_SIZE = 1024;
 

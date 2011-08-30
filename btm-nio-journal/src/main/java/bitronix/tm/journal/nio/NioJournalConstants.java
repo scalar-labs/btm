@@ -36,7 +36,6 @@ import static java.nio.charset.Charset.forName;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableSet;
-import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static javax.transaction.Status.*;
 
@@ -50,6 +49,16 @@ import static javax.transaction.Status.*;
  * @author juergen kellerer, 2011-04-30
  */
 public interface NioJournalConstants {
+
+    /**
+     * The amount of milliseconds for one hour.
+     */
+    long MS_PER_HOUR = 60 * 60 * 1000L;
+
+    /**
+     * The amount of milliseconds for one day.
+     */
+    long MS_PER_DAY = 24 * MS_PER_HOUR;
 
     /**
      * Is the charset used for unique names and for human readable content in the headers.
@@ -97,7 +106,7 @@ public interface NioJournalConstants {
      * This value cleans journal records that are beyond this maximum age and is meant primarily
      * to protect the system from leakage that may be caused by crashes, hardware failures or software bugs.
      */
-    long TRANSACTION_MAX_LIFETIME = max(DAYS.toMillis(1), getLong("bitronix.nio.journal.max.transaction.lifetime", DAYS.toMillis(14)));
+    long TRANSACTION_MAX_LIFETIME = max(MS_PER_DAY, getLong("bitronix.nio.journal.max.transaction.lifetime", MS_PER_DAY * 14));
 
     /**
      * Defines hard limit for journal record sizes to protect from OOM-Errors through DOS attacks

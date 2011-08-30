@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static javax.transaction.Status.*;
 
 /**
@@ -138,8 +137,8 @@ class NioTrackedTransactions implements NioJournalConstants {
 
             final long age = now - journalRecord.getTime();
             if (age > TRANSACTION_MAX_LIFETIME) {
-                log.warn("The maximum lifetime of " + MILLISECONDS.toHours(TRANSACTION_MAX_LIFETIME) + " hours was exceeded " +
-                        "(TX age is " + MILLISECONDS.toHours(age) + " hours). Discarding dangling transaction " + journalRecord);
+                log.warn("The maximum lifetime of " + (TRANSACTION_MAX_LIFETIME / MS_PER_HOUR) + " hours was exceeded " +
+                        "(TX age is " + (age / MS_PER_HOUR) + " hours). Discarding dangling transaction " + journalRecord);
                 i.remove();
             }
         }

@@ -32,6 +32,8 @@ import java.util.Collection;
 import java.util.UUID;
 import java.util.zip.CRC32;
 
+import static bitronix.tm.journal.nio.NioJournalFile.nameBytes;
+
 /**
  * Low level file record.
  * <p/>
@@ -43,9 +45,9 @@ class NioJournalFileRecord implements NioJournalConstants {
 
     private static final Logger log = LoggerFactory.getLogger(NioJournalFileRecord.class);
 
-    private static final byte[] RECORD_DELIMITER_PREFIX = "\r\nLR[".getBytes(NioJournalRecord.NAME_CHARSET);
-    private static final byte[] RECORD_DELIMITER_SUFFIX = "][".getBytes(NioJournalRecord.NAME_CHARSET);
-    private static final byte[] RECORD_DELIMITER_TRAILER = "]-".getBytes(NioJournalRecord.NAME_CHARSET);
+    private static final byte[] RECORD_DELIMITER_PREFIX = nameBytes("\r\nLR[");
+    private static final byte[] RECORD_DELIMITER_SUFFIX = nameBytes("][");
+    private static final byte[] RECORD_DELIMITER_TRAILER = nameBytes("]-");
 
     /**
      * Defines the offset of the 4 byte int value from the beginning of the record that stores the total length of the record itself.
@@ -95,10 +97,7 @@ class NioJournalFileRecord implements NioJournalConstants {
         if (buffer == null)
             return "<no-buffer (null)>";
 
-        buffer = buffer.duplicate();
-        byte[] content = new byte[Math.min(buffer.remaining(), 256)];
-        buffer.get(content);
-        return new String(content, NAME_CHARSET);
+        return NAME_CHARSET.decode(buffer.duplicate()).toString();
     }
 
     /**
