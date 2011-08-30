@@ -32,9 +32,10 @@
 	<groupId>org.codehaus.btm</groupId>
 	<artifactId>btm-jdbc4-stubs</artifactId>
 	<name>Bitronix Transaction Manager :: JDBC4 Stubs</name>
-   <packaging>pom</packaging>
+    <!--packaging>pom</packaging-->
 
 	<dependencies/>
+    <!--
     <build>
         <plugins>
             <plugin>
@@ -56,4 +57,5 @@
             </plugin>
         </plugins>
     </build>
+    -->
 </project>

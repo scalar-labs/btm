@@ -13,6 +13,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.codehaus.btm</groupId>
+            <artifactId>btm-jdbc3-stubs</artifactId>
+            <version>2.2.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>javax.transaction</groupId>
             <artifactId>jta</artifactId>
             <scope>provided</scope>
@@ -56,26 +62,7 @@
                     <source>1.5</source>
                     <target>1.5</target>
                     <compilerArgument>-Xbootclasspath/p:${basedir}/../btm-jdbc3-stubs/target/classes</compilerArgument>
-                    <excludes>
-                        <exclude>**/jdbc4/*.java</exclude>
-                        <exclude>**/jdbc4/lrc/*.java</exclude>
-                    </excludes>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>jdbc4</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <configuration>
-                            <compilerArgument>-Xbootclasspath/p:${basedir}/../btm-jdbc4-stubs/target/classes</compilerArgument>
-                            <excludes>
-                                <exclude>nothing</exclude>
-                            </excludes>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
 
             <plugin>
@@ -167,11 +154,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.9</version>
-                <!--
                 <configuration>
-                   <argLine>-Xbootclasspath/p:${basedir}/src/main/lib/jdbc30_apis.jar</argLine>
+                    <argLine>-Xbootclasspath/p:${basedir}/../btm-jdbc3-stubs/target/classes</argLine>
                 </configuration>
-                -->
             </plugin>
         </plugins>
     </build>

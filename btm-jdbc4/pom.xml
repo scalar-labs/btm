@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.codehaus.btm</groupId>
+        <artifactId>btm-parent</artifactId>
+        <version>2.2.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>btm-jdbc4</artifactId>
+    <name>Bitronix Transaction Manager :: JDBC4 Support</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.codehaus.btm</groupId>
+            <artifactId>btm</artifactId>
+            <version>2.2.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.btm</groupId>
+            <artifactId>btm-jdbc4-stubs</artifactId>
+            <version>2.2.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.5</source>
+                    <target>1.5</target>
+                    <compilerArgument>-Xbootclasspath/p:${basedir}/../btm-jdbc4-stubs/target/classes</compilerArgument>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

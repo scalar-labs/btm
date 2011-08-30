@@ -32,28 +32,4 @@
 	<groupId>org.codehaus.btm</groupId>
 	<artifactId>btm-jdbc3-stubs</artifactId>
 	<name>Bitronix Transaction Manager :: JDBC3 Stubs</name>
-   <packaging>pom</packaging>
-
-	<dependencies/>
-    <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3.2</version>
-                <configuration>
-                    <source>1.5</source>
-                    <target>1.5</target>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>jdbc3</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>

@@ -24,6 +24,7 @@ import bitronix.tm.internal.BitronixRollbackSystemException;
 import bitronix.tm.internal.BitronixSystemException;
 import bitronix.tm.resource.common.*;
 import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
+import bitronix.tm.utils.ClassLoaderUtils;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.ManagementRegistrar;
 import bitronix.tm.utils.MonotonicClock;
@@ -406,7 +407,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     	// JDBC 4.0
     	try {
-			Class<?> handle = JdbcPooledConnection.class.forName("bitronix.tm.resource.jdbc4.Jdbc4ConnectionHandle");
+			Class<?> handle = ClassLoaderUtils.loadClass("bitronix.tm.resource.jdbc4.Jdbc4ConnectionHandle");
 			Constructor<?> constructor = handle.getConstructor( new Class[] {JdbcPooledConnection.class, Connection.class} );
 			return constructor.newInstance( new Object[] {this, connection} );
 		} catch (Exception e) {

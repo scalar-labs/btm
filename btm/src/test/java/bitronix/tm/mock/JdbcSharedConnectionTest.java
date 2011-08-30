@@ -39,7 +39,7 @@ public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
     private final static Logger log = LoggerFactory.getLogger(NewJdbcProperUsageMockTest.class);
 
     public void testSharedConnectionMultithreaded() throws Exception {
-        if (log.isDebugEnabled()) log.debug("*** getting TM");
+        if (log.isDebugEnabled()) log.debug("*** Starting testSharedConnectionMultithreaded: getting TM");
         final BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         tm.setTransactionTimeout(120);
 
@@ -92,7 +92,7 @@ public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
     }
 
     public void testUnSharedConnection() throws Exception {
-        if (log.isDebugEnabled()) log.debug("*** getting TM");
+        if (log.isDebugEnabled()) log.debug("*** Starting testUnSharedConnection: getting TM");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         tm.setTransactionTimeout(120);
 
@@ -120,7 +120,7 @@ public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
 
     public void testSharedConnectionInLocalTransaction() throws Exception {
 
-        if (log.isDebugEnabled()) log.debug("*** getting connection from DS1");
+        if (log.isDebugEnabled()) log.debug("*** Starting testSharedConnectionInLocalTransaction: getting connection from DS1");
         Connection connection1 = poolingDataSource1.getConnection();
         // createStatement causes enlistment
         connection1.createStatement();
@@ -138,7 +138,7 @@ public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
 
     public void testUnSharedConnectionInLocalTransaction() throws Exception {
 
-        if (log.isDebugEnabled()) log.debug("*** getting connection from DS2");
+        if (log.isDebugEnabled()) log.debug("*** Starting testUnSharedConnectionInLocalTransaction: getting connection from DS2");
         Connection connection1 = poolingDataSource2.getConnection();
         // createStatement causes enlistment
         connection1.createStatement();
@@ -155,7 +155,7 @@ public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
     }
 
     public void testSharedConnectionInGlobal() throws Exception {
-        if (log.isDebugEnabled()) log.debug("*** getting TM");
+        if (log.isDebugEnabled()) log.debug("*** testSharedConnectionInGlobal: Starting getting TM");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         tm.setTransactionTimeout(120);
 

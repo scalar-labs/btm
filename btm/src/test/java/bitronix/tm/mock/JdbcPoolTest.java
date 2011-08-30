@@ -30,6 +30,10 @@ import junit.framework.TestCase;
 import javax.sql.DataSource;
 import javax.sql.XADataSource;
 import javax.transaction.TransactionManager;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -45,6 +49,7 @@ import java.sql.Statement;
  */
 public class JdbcPoolTest extends TestCase {
 
+    private final static Logger log = LoggerFactory.getLogger(JdbcPoolTest.class);
     private PoolingDataSource pds;
 
     protected void setUp() throws Exception {
@@ -73,6 +78,7 @@ public class JdbcPoolTest extends TestCase {
     }
 
     public void testInitFailure() throws Exception {
+        if (log.isDebugEnabled()) { log.debug("*** Starting testInitFailure"); }
         pds.close();
 
         pds = new PoolingDataSource();
@@ -102,6 +108,7 @@ public class JdbcPoolTest extends TestCase {
     }
 
     public void testReEnteringRecovery() throws Exception {
+        if (log.isDebugEnabled()) { log.debug("*** Starting testReEnteringRecovery"); }
         pds.startRecovery();
         try {
             pds.startRecovery();
@@ -117,6 +124,7 @@ public class JdbcPoolTest extends TestCase {
     }
 
     public void testPoolGrowth() throws Exception {
+        if (log.isDebugEnabled()) { log.debug("*** Starting testPoolGrowth"); }
         Field poolField = pds.getClass().getDeclaredField("pool");
         poolField.setAccessible(true);
         XAPool pool = (XAPool) poolField.get(pds);
@@ -146,6 +154,7 @@ public class JdbcPoolTest extends TestCase {
     }
 
     public void testPoolShrink() throws Exception {
+        if (log.isDebugEnabled()) { log.debug("*** Starting testPoolShrink"); }
         Field poolField = pds.getClass().getDeclaredField("pool");
         poolField.setAccessible(true);
         XAPool pool = (XAPool) poolField.get(pds);
@@ -164,15 +173,18 @@ public class JdbcPoolTest extends TestCase {
         c1.close();
         c2.close();
 
-        Thread.sleep(1100); // leave enough time for the ide connections to expire
+        Thread.sleep(1100); // leave enough time for the idle connections to expire
         TransactionManagerServices.getTaskScheduler().interrupt(); // wake up the task scheduler
-        Thread.sleep(1100); // leave enough time for the scheduled shrinking task to do its work
+        Thread.sleep(500); // leave enough time for the scheduled shrinking task to do its work
 
+        if (log.isDebugEnabled()) { log.debug("*** checking pool sizes"); }        
         assertEquals(1, pool.inPoolSize());
         assertEquals(1, pool.totalPoolSize());
     }
 
     public void testPoolShrinkErrorHandling() throws Exception {
+        if (log.isDebugEnabled()) { log.debug("*** Starting testPoolShrinkErrorHandling"); }
+
         Field poolField = pds.getClass().getDeclaredField("pool");
         poolField.setAccessible(true);
         XAPool pool = (XAPool) poolField.get(pds);
@@ -203,6 +215,8 @@ public class JdbcPoolTest extends TestCase {
     }
 
     public void testPoolReset() throws Exception {
+        if (log.isDebugEnabled()) { log.debug("*** Starting testPoolReset"); }
+
         Field poolField = pds.getClass().getDeclaredField("pool");
         poolField.setAccessible(true);
         XAPool pool = (XAPool) poolField.get(pds);
@@ -228,6 +242,7 @@ public class JdbcPoolTest extends TestCase {
     }
 
     public void testPoolResetErrorHandling() throws Exception {
+        if (log.isDebugEnabled()) { log.debug("*** Starting testPoolResetErrorHandling"); }
         Field poolField = pds.getClass().getDeclaredField("pool");
         poolField.setAccessible(true);
         XAPool pool = (XAPool) poolField.get(pds);
@@ -256,6 +271,7 @@ public class JdbcPoolTest extends TestCase {
     }
 
     public void testCloseLocalContext() throws Exception {
+        if (log.isDebugEnabled()) { log.debug("*** Starting testCloseLocalContext"); }
         Connection c = pds.getConnection();
         Statement stmt = c.createStatement();
         stmt.close();
@@ -271,6 +287,7 @@ public class JdbcPoolTest extends TestCase {
     }
 
     public void testCloseGlobalContextRecycle() throws Exception {
+        if (log.isDebugEnabled()) { log.debug("*** Starting testCloseGlobalContextRecycle"); }
         TransactionManager tm = TransactionManagerServices.getTransactionManager();
         tm.begin();
 
@@ -318,6 +335,7 @@ public class JdbcPoolTest extends TestCase {
     }
 
     public void testCloseGlobalContextNoRecycle() throws Exception {
+        if (log.isDebugEnabled()) { log.debug("*** Starting testCloseGlobalContextNoRecycle"); }
         TransactionManager tm = TransactionManagerServices.getTransactionManager();
         tm.begin();
 
@@ -365,6 +383,7 @@ public class JdbcPoolTest extends TestCase {
     }
 
     public void testPoolNotStartingTransactionManager() throws Exception {
+        if (log.isDebugEnabled()) { log.debug("*** Starting testPoolNotStartingTransactionManager"); }
         // make sure TM is not running
         TransactionManagerServices.getTransactionManager().shutdown();
         
@@ -393,6 +412,7 @@ public class JdbcPoolTest extends TestCase {
     }
 
     public void testWrappers() throws Exception {
+        if (log.isDebugEnabled()) { log.debug("*** Starting testWrappers"); }
         try {
             Connection.class.getMethod("isWrapperFor");
         } catch (NoSuchMethodException e) {
