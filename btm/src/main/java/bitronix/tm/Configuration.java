@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
 import java.util.Properties;
@@ -625,41 +626,45 @@ public class Configuration implements Service {
             // More important is to avoid contended synchronizations when accessing this array as it is part of Uid creation happening when a TX is opened.
             synchronized (this) {
                 while ((id = serverIdArray.get()) == null) {
-                    final Charset idCharset = Charset.forName("US-ASCII");
                     try {
-                        id = serverId.getBytes(idCharset);
+                        id = serverId.getBytes("US-ASCII");
 
-                        String transcodedId = new String(id, idCharset);
+                        String transcodedId = new String(id, "US-ASCII");
                         if (!transcodedId.equals(serverId)) {
-                            log.warn("The given server ID '" + serverId + "' is not compatible with the ID charset '" + idCharset + "' as it transcodes to '" + transcodedId + "'. " +
+                            log.warn("The given server ID '" + serverId + "' is not compatible with the ID charset 'US-ASCII' as it transcodes to '" + transcodedId + "'. " +
                                     "It is highly recommended that you specify a compatible server ID using only characters that are allowed in the ID charset.");
                         }
                     } catch (Exception ex) {
-                        log.warn("Cannot get the unique server ID for this JVM ('bitronix.tm.serverId'). Make sure it is configured and you only use " + idCharset + " characters. " +
+                        log.warn("Cannot get the unique server ID for this JVM ('bitronix.tm.serverId'). Make sure it is configured and you only use US-ASCII characters. " +
                                 "Will use IP address instead (unsafe for production usage!).");
                         try {
-                            id = InetAddress.getLocalHost().getHostAddress().getBytes(idCharset);
+                            id = InetAddress.getLocalHost().getHostAddress().getBytes("US-ASCII");
                         } catch (Exception ex2) {
                             final String unknownServerId = "unknown-server-id";
                             log.warn("Cannot get the local IP address. Please verify your network configuration. Will use the constant '" + unknownServerId + "' as server ID (highly unsafe!).", ex2);
-                            id = unknownServerId.getBytes(idCharset);
+                            id = unknownServerId.getBytes();
                         }
                     }
 
                     if (id.length > MAX_SERVER_ID_LENGTH) {
                         byte[] truncatedServerId = new byte[MAX_SERVER_ID_LENGTH];
                         System.arraycopy(id, 0, truncatedServerId, 0, MAX_SERVER_ID_LENGTH);
-                        log.warn("The applied server ID '" + new String(id, idCharset) + "' has to be truncated to " + MAX_SERVER_ID_LENGTH +
-                                " chars (builtin hard limit) resulting in " + new String(truncatedServerId, idCharset) + ". This may be highly unsafe if IDs differ with suffixes only!");
+                        log.warn("The applied server ID '" + id + "' has to be truncated to " + MAX_SERVER_ID_LENGTH +
+                                " chars (builtin hard limit) resulting in " + new String(truncatedServerId) + ". This may be highly unsafe if IDs differ with suffixes only!");
                         id = truncatedServerId;
                     }
 
                     if (serverIdArray.compareAndSet(null, id)) {
-                        String idAsString = new String(id, idCharset);
-                        if (serverId == null)
-                            serverId = idAsString;
-
-                        log.info("JVM unique ID: <" + idAsString + "> - Using this server ID to ensure uniqueness of transaction IDs across the network.");
+                        String idAsString;
+						try {
+							idAsString = new String(id, "US-ASCII");
+							if (serverId == null)
+								serverId = idAsString;
+							
+							log.info("JVM unique ID: <" + idAsString + "> - Using this server ID to ensure uniqueness of transaction IDs across the network.");
+						} catch (UnsupportedEncodingException e) {
+							log.error("Unable to translate server is into US-ASCII character set", e);
+						}
                     }
                 }
             }
