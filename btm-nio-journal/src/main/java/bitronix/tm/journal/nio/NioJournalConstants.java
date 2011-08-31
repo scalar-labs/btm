@@ -133,10 +133,9 @@ public interface NioJournalConstants {
      * <p/>
      * Valid values are within a range of 0.1 <= x <= 0.9.
      * <p/>
-     * If growing isn't possible, the system does not stop working but it logs a warning with every
-     * failed attempt to grow the journal. For the case that more transactions are actually open
-     * than fitting into the journal file, it will either grow or writes are blocked until transactions
-     * get closed or fall into a timeout.
+     * If growing isn't possible, the system does not stop working but logs a warning with every failed attempt
+     * to grow the journal. If growing is required to fit all concurrently opened transactions the system will start
+     * to throwing IOExceptions when {@code force()} is called.
      */
     double JOURNAL_GROW_OFFSET = max(0.1D, min(0.9D, parseDouble(getProperty("bitronix.nio.journal.grow.offset", "0.75"))));
 
