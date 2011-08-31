@@ -155,7 +155,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.9</version>
                 <configuration>
-                    <argLine>-Xbootclasspath/p:${basedir}/../btm-jdbc3-stubs/target/classes</argLine>
+                    <argLine>"-Xbootclasspath/p:${basedir}/../btm-jdbc3-stubs/target/classes"</argLine>
                 </configuration>
             </plugin>
         </plugins>
