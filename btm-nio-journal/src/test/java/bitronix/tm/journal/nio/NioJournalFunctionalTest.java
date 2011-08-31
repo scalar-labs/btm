@@ -80,14 +80,14 @@ public class NioJournalFunctionalTest extends AbstractJournalFunctionalTest {
 
         // test accessing a opened journal in write mode.
         try {
-            FileOutputStream outputStream = new FileOutputStream(file);
+            RandomAccessFile rw = new RandomAccessFile(file, "rw");
             try {
-                outputStream.write(' ');
+                rw.getChannel().lock();
             } finally {
-                outputStream.close();
+                rw.close();
             }
             fail("write should fail on opened journal.");
-        } catch (IOException expected) {
+        } catch (OverlappingFileLockException expected) {
         }
 
         journal.close();
