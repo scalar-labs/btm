@@ -79,7 +79,7 @@ final class NioJournalFile implements NioJournalConstants {
     private volatile UUID previousDelimiter = UUID.randomUUID();
     private volatile UUID delimiter = UUID.randomUUID();
 
-    ByteBuffer writeBuffer;
+    private ByteBuffer writeBuffer;
 
     private final File file;
     private final RandomAccessFile randomAccessFile;
@@ -103,40 +103,48 @@ final class NioJournalFile implements NioJournalConstants {
      */
     public NioJournalFile(File file, long initialJournalSize) throws IOException {
         this.file = file;
+        boolean success = false;
         randomAccessFile = new RandomAccessFile(file, "rw");
+        try {
+            fileChannel = randomAccessFile.getChannel();
+            lock = fileChannel.tryLock();
+            if (lock == null)
+                throw new IOException("Failed to acquire an exclusive lock on file " + file + ". It seems the journal is opened in another process.");
 
-        fileChannel = randomAccessFile.getChannel();
-        lock = fileChannel.lock();
-        final boolean createHeader = randomAccessFile.length() == 0;
-
-        if (!createHeader) {
-            try {
-                readJournalHeader();
-            } catch (IOException e) {
-                log.error("Failed reading journal header, refusing to open the file " + file + ".", e);
-                close();
-                throw e;
+            final boolean createHeader = randomAccessFile.length() == 0;
+            if (!createHeader) {
+                try {
+                    readJournalHeader();
+                } catch (IOException e) {
+                    log.error("Failed reading journal header, refusing to open the file " + file + ".", e);
+                    throw e;
+                }
             }
-        }
 
-        // We can increase but not shrink the journal.
-        this.journalSize.set(Math.max(initialJournalSize, randomAccessFile.length()));
-        growJournal(this.journalSize.get());
+            // We can increase but not shrink the journal.
+            this.journalSize.set(Math.max(initialJournalSize, randomAccessFile.length()));
+            growJournal(this.journalSize.get());
 
-        if (createHeader) {
-            writeJournalHeader();
-            log.info("Created a new transaction journal in file " + file + ", insert position is at offset " + fileChannel.position());
-        } else {
-            if (log.isDebugEnabled()) { log.debug("Found existing transaction journal in file " + file + " looking after the insert position."); }
-            NioJournalFileIterable it = (NioJournalFileIterable) readRecords(delimiter, fileChannel, false);
-            long position = it.findPositionAfterLastRecord();
-            fileChannel.position(Math.max(FIXED_HEADER_SIZE, position));
-            long insertPosition = fileChannel.position();
+            if (createHeader) {
+                writeJournalHeader();
+                log.info("Created a new transaction journal in file " + file + ", insert position is at offset " + fileChannel.position());
+            } else {
+                if (log.isDebugEnabled()) { log.debug("Found existing transaction journal in file " + file + " looking after the insert position."); }
+                NioJournalFileIterable it = (NioJournalFileIterable) readRecords(delimiter, fileChannel, false);
+                long position = it.findPositionAfterLastRecord();
+                fileChannel.position(Math.max(FIXED_HEADER_SIZE, position));
+                long insertPosition = fileChannel.position();
 
-            log.info("Opened existing transaction journal in file " + file + ", insert position is at offset " + insertPosition + ".");
+                log.info("Opened existing transaction journal in file " + file + ", insert position is at offset " + insertPosition + ".");
 
-            if (insertPosition == FIXED_HEADER_SIZE)
-                log.warn("The journal file " + file + " appears to be empty.");
+                if (insertPosition == FIXED_HEADER_SIZE)
+                    log.warn("The journal file " + file + " appears to be empty though it was not just created.");
+            }
+
+            success = true;
+        } finally {
+            if (!success)
+                close();
         }
     }
 
@@ -162,7 +170,8 @@ final class NioJournalFile implements NioJournalConstants {
             if (fileChannel != null) {
                 force();
                 try {
-                    lock.release();
+                    if (lock != null)
+                        lock.release();
                 } finally {
                     fileChannel.close();
                 }

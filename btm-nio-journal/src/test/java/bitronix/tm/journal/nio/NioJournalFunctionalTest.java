@@ -68,7 +68,6 @@ public class NioJournalFunctionalTest extends AbstractJournalFunctionalTest {
     }
 
     @Test
-    @Ignore("TODO: requires work.. it fails on various systems...")
     public void testCannotOpenTheSameFileTwice() throws Exception {
         final File file = NioJournal.getJournalFilePath();
         journal.open();
