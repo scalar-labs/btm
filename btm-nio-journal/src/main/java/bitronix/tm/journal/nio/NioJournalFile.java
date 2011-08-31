@@ -44,7 +44,7 @@ import static bitronix.tm.journal.nio.NioJournalFileRecord.readRecords;
  *
  * @author juergen kellerer, 2011-04-30
  */
-final class NioJournalFile implements NioJournalConstants {
+class NioJournalFile implements NioJournalConstants {
 
     private static final Logger log = LoggerFactory.getLogger(NioJournalFile.class);
 
@@ -295,7 +295,7 @@ final class NioJournalFile implements NioJournalConstants {
      *
      * @return an empty record that can be written to the journal.
      */
-    public final NioJournalFileRecord createEmptyRecord() {
+    public NioJournalFileRecord createEmptyRecord() {
         return new NioJournalFileRecord(delimiter);
     }
 
