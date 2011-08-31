@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static java.lang.Boolean.parseBoolean;
 import static java.lang.Double.parseDouble;
 import static java.lang.Integer.getInteger;
 import static java.lang.Long.getLong;
@@ -98,6 +99,14 @@ public interface NioJournalConstants {
      * (should be as large as the majority of transactions may become)
      */
     int PRE_ALLOCATED_BUFFER_SIZE = getInteger("bitronix.nio.journal.buffer.size", 386);
+
+    /**
+     * Specifies whether direct buffers are used when buffering records before the are written to disk.
+     *
+     * Direct buffers are more efficient when writing to disk based on the fact that they can be written
+     * directly without an additional array copy.
+     */
+    boolean USE_DIRECT_BUFFERS = parseBoolean(getProperty("bitronix.nio.journal.buffer.use.direct", "true"));
 
     /**
      * Hard limit, defining the maximum time that a transaction may be held in the journal.

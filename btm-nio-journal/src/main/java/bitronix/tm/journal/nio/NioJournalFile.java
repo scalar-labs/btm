@@ -334,7 +334,7 @@ class NioJournalFile implements NioJournalConstants {
     private ByteBuffer getWriteBuffer(int requiredBytes) {
         ByteBuffer buffer = writeBuffer;
         if (buffer == null || buffer.capacity() < requiredBytes)
-            writeBuffer = buffer = ByteBuffer.allocateDirect(requiredBytes);
+            writeBuffer = buffer = USE_DIRECT_BUFFERS ? ByteBuffer.allocateDirect(requiredBytes) : ByteBuffer.allocate(requiredBytes);
 
         buffer.clear().limit(requiredBytes);
         return buffer;
