@@ -195,4 +195,15 @@ public interface NioJournalConstants {
             STATUS_COMMITTING,
             STATUS_ROLLING_BACK
     )));
+
+    /**
+     * Collects the TX states that must be logged in any case.
+     */
+    Set<Integer> MANDATORY_STATUS_TO_LOG = unmodifiableSet(new HashSet<Integer>(asList(
+            STATUS_UNKNOWN,
+            STATUS_COMMITTED,
+            STATUS_ROLLEDBACK,
+            STATUS_COMMITTING,
+            STATUS_ROLLING_BACK
+    )));
 }

@@ -78,6 +78,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
     volatile NioJournalFile journalFile;
 
     boolean skipForce = !TransactionManagerServices.getConfiguration().isForcedWriteEnabled();
+    boolean logOnlyMandatoryRecords = TransactionManagerServices.getConfiguration().isFilterLogStatus();
 
     /**
      * {@inheritDoc}
@@ -91,6 +92,12 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
             uniqueNames = Collections.emptySet();
 
         final NioJournalRecord record = new NioJournalRecord(status, gtrid, uniqueNames);
+
+        if (logOnlyMandatoryRecords && !MANDATORY_STATUS_TO_LOG.contains(status)) {
+            if (log.isDebugEnabled()) { log.debug("Journaling of non mandatory records is disabled. Skipping " + record); }
+            return;
+        }
+
         trackedTransactions.track(status, gtrid, record);
 
         if (trace) { log.trace("Attempting to log a new transaction log record " + record + "."); }
