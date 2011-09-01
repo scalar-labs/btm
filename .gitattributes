@@ -1,0 +1,13 @@
+.\btm\target\apidocs\package-list
+.gitignore     eol=lf
+.gitattributes eol=lf
+*.css          eol=lf
+*.html         eol=lf
+*.apt          eol=lf
+*.java         eol=lf
+*.properties   eol=lf
+*.txt          eol=lf
+*.xml          eol=lf
+
+*.sh           eol=lf
+*.bat          eol=crlf
