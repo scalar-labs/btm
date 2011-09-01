@@ -3,3 +3,5 @@
 *.ipr
 *.iws
 target/
+*.tlog
+*.class
