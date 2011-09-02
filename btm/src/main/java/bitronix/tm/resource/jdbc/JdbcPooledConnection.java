@@ -136,6 +136,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
         ManagementRegistrar.unregister(jmxName);
 
+        poolingDataSource.unregister(this);
+
         connection.close();
         xaConnection.close();
     }
@@ -435,5 +437,4 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     public Collection<String> getTransactionGtridsCurrentlyHoldingThis() {
         return getXAResourceHolderStateGtrids();
     }
-
 }

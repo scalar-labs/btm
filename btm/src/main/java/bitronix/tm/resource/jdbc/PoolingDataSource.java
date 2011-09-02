@@ -23,7 +23,8 @@ package bitronix.tm.resource.jdbc;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.naming.NamingException;
 import javax.naming.Reference;
@@ -61,6 +62,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     private volatile transient XADataSource xaDataSource;
     private volatile transient RecoveryXAResourceHolder recoveryXAResourceHolder;
     private volatile transient JdbcConnectionHandle recoveryConnectionHandle;
+    private volatile transient Map<XAResource, XAResourceHolder> xaResourceHolderMap;
     private volatile String testQuery;
     private volatile boolean enableJdbc4ConnectionTest;
     private volatile int preparedStatementCacheSize = 0;
@@ -70,6 +72,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     private volatile String jmxName;
 
     public PoolingDataSource() {
+        xaResourceHolderMap = new ConcurrentHashMap<XAResource, XAResourceHolder>();
     }
 
     /**
@@ -296,11 +299,13 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         if (!(xaFactory instanceof XADataSource))
             throw new IllegalArgumentException("class '" + xaFactory.getClass().getName() + "' does not implement " + XADataSource.class.getName());
         XADataSource xads = (XADataSource) xaFactory;
-        return new JdbcPooledConnection(this, xads.getXAConnection());
+        JdbcPooledConnection pooledConnection = new JdbcPooledConnection(this, xads.getXAConnection());
+        xaResourceHolderMap.put(pooledConnection.getXAResource(), pooledConnection);
+        return pooledConnection;
     }
 
     public XAResourceHolder findXAResourceHolder(XAResource xaResource) {
-        return pool.findXAResourceHolder(xaResource);
+        return xaResourceHolderMap.get(xaResource);
     }
 
 
@@ -364,5 +369,10 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
 
     public void reset() throws Exception {
         pool.reset();
+    }
+
+    public void unregister(XAResourceHolder xaResourceHolder) {
+        xaResourceHolderMap.remove(xaResourceHolder.getXAResource());
+        
     }
 }

@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Implementation of all services required by a {@link XAResourceHolder}. This class keeps a list of all
@@ -41,11 +42,54 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
 
     private final static Logger log = LoggerFactory.getLogger(AbstractXAResourceHolder.class);
 
-    private final Map<Uid, Map<Uid, XAResourceHolderState>> xaResourceHolderStates = Collections.synchronizedMap(new HashMap<Uid, Map<Uid, XAResourceHolderState>>());
+    private final Map<Uid, Map<Uid, XAResourceHolderState>> xaResourceHolderStates = new HashMap<Uid, Map<Uid, XAResourceHolderState>>();
+    private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-    public Map<Uid, XAResourceHolderState> getXAResourceHolderStatesForGtrid(Uid gtrid) {
-        synchronized (xaResourceHolderStates) {
+    // This method is only used by tests.  It is (and always was) potentially thread-unsafe depending on what callers do with the returned map. 
+    protected Map<Uid, XAResourceHolderState> getXAResourceHolderStatesForGtrid(Uid gtrid) {
+        rwLock.readLock().lock();
+        try {
             return xaResourceHolderStates.get(gtrid);
+        } finally {
+            rwLock.readLock().unlock();
+        }
+    }
+
+    public boolean isExistXAResourceHolderStatesForGtrid(Uid gtrid) {
+        rwLock.readLock().lock();
+        try {
+            return xaResourceHolderStates.containsKey(gtrid);
+        } finally {
+            rwLock.readLock().unlock();
+        }
+    }
+
+    public int getXAResourceHolderStateCountForGtrid(Uid gtrid) {
+        rwLock.readLock().lock();
+        try {
+            Map<Uid, XAResourceHolderState> statesForGtrid = xaResourceHolderStates.get(gtrid);
+            if (statesForGtrid != null) {
+                return statesForGtrid.size();
+            }
+            return 0;
+        } finally {
+            rwLock.readLock().unlock();
+        }
+    }
+
+    public void acceptVisitorForXAResourceHolderStates(Uid gtrid, XAResourceHolderStateVisitor visitor) {
+        rwLock.readLock().lock();
+        try {
+            Map<Uid, XAResourceHolderState> statesForGtrid = xaResourceHolderStates.get(gtrid);
+            if (statesForGtrid != null) {
+                for (XAResourceHolderState xaResourceHolderState : statesForGtrid.values()) {
+                    if (!visitor.visit(xaResourceHolderState)) {
+                        break;
+                    }
+                }
+            }
+        } finally {
+            rwLock.readLock().unlock();
         }
     }
 
@@ -53,12 +97,14 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
     	Uid gtrid = xid.getGlobalTransactionIdUid();
     	Uid bqual = xid.getBranchQualifierUid();
     	
-        synchronized (xaResourceHolderStates) {
+    	rwLock.writeLock().lock();
+        try {
         	if (log.isDebugEnabled()) { log.debug("putting XAResourceHolderState [" + xaResourceHolderState + "] on " + this); }
             if (!xaResourceHolderStates.containsKey(gtrid)) {
                 if (log.isDebugEnabled()) { log.debug("GTRID [" + gtrid + "] previously unknown to " + this + ", adding it to the resource's transactions list"); }
 
-                Map<Uid, XAResourceHolderState> statesForGtrid = new LinkedHashMap<Uid, XAResourceHolderState>(4); // use a LinkedHashMap as iteration order must be guaranteed
+                // use a LinkedHashMap as iteration order must be guaranteed
+                Map<Uid, XAResourceHolderState> statesForGtrid = new LinkedHashMap<Uid, XAResourceHolderState>(4);
                 statesForGtrid.put(bqual, xaResourceHolderState);
                 xaResourceHolderStates.put(gtrid, statesForGtrid);
             }
@@ -69,13 +115,17 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
                 statesForGtrid.put(bqual, xaResourceHolderState);
             }
         }
+        finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     public void removeXAResourceHolderState(BitronixXid xid) {
     	Uid gtrid = xid.getGlobalTransactionIdUid();
     	Uid bqual = xid.getBranchQualifierUid();
 
-        synchronized (xaResourceHolderStates) {
+        rwLock.writeLock().lock();
+        try {
         	if (log.isDebugEnabled()) { log.debug("removing XAResourceHolderState of xid " + xid + " from " + this); }
 
             Map<Uid, XAResourceHolderState> statesForGtrid = xaResourceHolderStates.get(gtrid);
@@ -94,10 +144,14 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
                 xaResourceHolderStates.remove(gtrid);
             }
         }
+        finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     public boolean hasStateForXAResource(XAResourceHolder xaResourceHolder) {
-        synchronized (xaResourceHolderStates) {
+        rwLock.readLock().lock();
+        try {
             Iterator<Map<Uid, XAResourceHolderState>> statesForGtridIt = xaResourceHolderStates.values().iterator();
             while (statesForGtridIt.hasNext()) {
                 Map<Uid, XAResourceHolderState> statesForGtrid = statesForGtridIt.next();
@@ -116,6 +170,9 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
             if (log.isDebugEnabled()) { log.debug("resource not enlisted in any transaction: " + xaResourceHolder); }
             return false;
         }
+        finally {
+            rwLock.readLock().unlock();
+        }
     }
 
     /**
@@ -123,7 +180,8 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
      * @return true if start() has been successfully called but not end() yet <i>and</i> the transaction is not suspended.
      */
     public boolean isParticipatingInActiveGlobalTransaction() {
-        synchronized (xaResourceHolderStates) {
+        rwLock.readLock().lock();
+        try {
             BitronixTransaction currentTransaction = TransactionContextHelper.currentTransaction();
             Uid gtrid = currentTransaction == null ? null : currentTransaction.getResourceManager().getGtrid();
             if (gtrid == null)
@@ -145,6 +203,9 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
             }
             return false;
         }
+        finally {
+            rwLock.readLock().unlock();
+        }
     }
 
     /**
@@ -153,7 +214,8 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
      * @return a set of String-encoded GTRIDs of transactions in which this resource is enlisted.
      */
     public Set<String> getXAResourceHolderStateGtrids() {
-        synchronized (xaResourceHolderStates) {
+        rwLock.readLock().lock();
+        try {
             HashSet<String> gtridsAsStrings = new HashSet<String>();
 
             Iterator<Uid> gtridsIt = xaResourceHolderStates.keySet().iterator();
@@ -163,6 +225,9 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
             }
 
             return gtridsAsStrings;
+        }
+        finally {
+            rwLock.readLock().unlock();
         }
     }
 }

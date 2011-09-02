@@ -20,23 +20,24 @@
  */
 package bitronix.tm.resource.common;
 
-import bitronix.tm.BitronixTransaction;
-import bitronix.tm.BitronixXid;
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.utils.Uid;
-import bitronix.tm.utils.Scheduler;
-import bitronix.tm.internal.BitronixSystemException;
-import bitronix.tm.internal.XAResourceHolderState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Iterator;
+import java.util.List;
 
 import javax.transaction.RollbackException;
 import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
 import javax.transaction.xa.XAResource;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import bitronix.tm.BitronixTransaction;
+import bitronix.tm.BitronixXid;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.internal.XAResourceHolderState;
+import bitronix.tm.utils.Scheduler;
+import bitronix.tm.utils.Uid;
 
 /**
  * Helper class that contains static logic common accross all resource types.
@@ -93,25 +94,39 @@ public final class TransactionContextHelper {
      * @throws SystemException if an internal error happens.
      */
     public static void delistFromCurrentTransaction(XAResourceHolder xaResourceHolder) throws SystemException {
-        BitronixTransaction currentTransaction = currentTransaction();
+        final BitronixTransaction currentTransaction = currentTransaction();
         ResourceBean bean = xaResourceHolder.getResourceBean();
         if (log.isDebugEnabled()) { log.debug("delisting " + xaResourceHolder + " from " + currentTransaction); }
 
         // End resource as eagerly as possible. This allows to release connections to the pool much earlier
         // with resources fully supporting transaction interleaving.
         if (isInEnlistingGlobalTransactionContext(xaResourceHolder, currentTransaction) && !bean.getDeferConnectionRelease()) {
-            Map<Uid, XAResourceHolderState> statesForGtrid = xaResourceHolder.getXAResourceHolderStatesForGtrid(currentTransaction.getResourceManager().getGtrid());
-            for (XAResourceHolderState xaResourceHolderState : statesForGtrid.values()) {
+            
+            class LocalVisitor implements XAResourceHolderStateVisitor {
+                private SystemException systemException = null;
+                public boolean visit(XAResourceHolderState xaResourceHolderState) {
+                    if (!xaResourceHolderState.isEnded()) {
+                        if (log.isDebugEnabled()) { log.debug("delisting resource " + xaResourceHolderState + " from " + currentTransaction); }
 
-                if (!xaResourceHolderState.isEnded()) {
-                    if (log.isDebugEnabled()) { log.debug("delisting resource " + xaResourceHolderState + " from " + currentTransaction); }
-
-                    // Watch out: the delistResource() call might throw a BitronixRollbackSystemException to indicate a unilateral rollback.
-                    currentTransaction.delistResource(xaResourceHolderState.getXAResource(), XAResource.TMSUCCESS);
+                        // Watch out: the delistResource() call might throw a BitronixRollbackSystemException to indicate a unilateral rollback.
+                        try {
+                            currentTransaction.delistResource(xaResourceHolderState.getXAResource(), XAResource.TMSUCCESS);
+                        } catch (SystemException e) {
+                            systemException = e;
+                            return false; // stop visitation
+                        }
+                    }
+                    else if (log.isDebugEnabled()) { log.debug("avoiding delistment of not enlisted resource " + xaResourceHolderState); }
+                    return true; // continue visitation
                 }
-                else if (log.isDebugEnabled()) { log.debug("avoiding delistment of not enlisted resource " + xaResourceHolderState); }
-            }
+            };
 
+            LocalVisitor xaResourceHolderStateVisitor = new LocalVisitor();
+            xaResourceHolder.acceptVisitorForXAResourceHolderStates(currentTransaction.getResourceManager().getGtrid(), xaResourceHolderStateVisitor);
+
+            if (xaResourceHolderStateVisitor.systemException != null) {
+                throw xaResourceHolderStateVisitor.systemException;
+            }
         } // isInEnlistingGlobalTransactionContext
     }
 
@@ -236,7 +251,7 @@ public final class TransactionContextHelper {
 
     private static boolean isInEnlistingGlobalTransactionContext(XAResourceHolder xaResourceHolder, BitronixTransaction currentTransaction) {
         boolean globalTransactionMode = false;
-        if (currentTransaction != null && xaResourceHolder.getXAResourceHolderStatesForGtrid(currentTransaction.getResourceManager().getGtrid()) != null) {
+        if (currentTransaction != null && xaResourceHolder.isExistXAResourceHolderStatesForGtrid(currentTransaction.getResourceManager().getGtrid())) {
             globalTransactionMode = true;
         }
         if (log.isDebugEnabled()) { log.debug("resource is " + (globalTransactionMode ? "" : "not ") + "in enlisting global transaction context: " + xaResourceHolder); }
@@ -257,29 +272,28 @@ public final class TransactionContextHelper {
         return false;
     }
 
-    private static XAResourceHolderState getLatestAlreadyEnlistedXAResourceHolderState(XAResourceHolder xaResourceHolder, BitronixTransaction currentTransaction) {
+    private static XAResourceHolderState getLatestAlreadyEnlistedXAResourceHolderState(XAResourceHolder xaResourceHolder, final BitronixTransaction currentTransaction) {
         if (currentTransaction == null)
             return null;
-        Map<Uid, XAResourceHolderState> statesForGtrid = xaResourceHolder.getXAResourceHolderStatesForGtrid(currentTransaction.getResourceManager().getGtrid());
-        if (statesForGtrid == null)
-            return null;
 
-        XAResourceHolderState result = null;
+        class LocalVisitor implements XAResourceHolderStateVisitor {
+            private XAResourceHolderState latestEnlistedHolder;
+            public boolean visit(XAResourceHolderState xaResourceHolderState) {
+                if (xaResourceHolderState != null && xaResourceHolderState.getXid() != null) {
+                    BitronixXid bitronixXid = xaResourceHolderState.getXid();
+                    Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
+                    Uid currentTransactionGtrid = currentTransaction.getResourceManager().getGtrid();
 
-        // iteration order is guraranteed so just take the latest matching one in the iterator
-        for (XAResourceHolderState xaResourceHolderState : statesForGtrid.values()) {
-            if (xaResourceHolderState != null && xaResourceHolderState.getXid() != null) {
-                BitronixXid bitronixXid = xaResourceHolderState.getXid();
-                Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
-                Uid currentTransactionGtrid = currentTransaction.getResourceManager().getGtrid();
-
-                if (currentTransactionGtrid.equals(resourceGtrid)) {
-                    result = xaResourceHolderState;
+                    if (currentTransactionGtrid.equals(resourceGtrid)) {
+                        latestEnlistedHolder = xaResourceHolderState;
+                    }
                 }
+                return true;  // continue visitation
             }
         }
+        LocalVisitor xaResourceHolderStateVisitor = new LocalVisitor();
+        xaResourceHolder.acceptVisitorForXAResourceHolderStates(currentTransaction.getResourceManager().getGtrid(), xaResourceHolderStateVisitor);
 
-        return result;
+        return xaResourceHolderStateVisitor.latestEnlistedHolder;
     }
-
 }

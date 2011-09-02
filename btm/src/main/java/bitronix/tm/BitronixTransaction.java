@@ -25,6 +25,7 @@ import bitronix.tm.journal.Journal;
 import bitronix.tm.twopc.*;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.XAResourceHolder;
+import bitronix.tm.resource.common.XAResourceHolderStateVisitor;
 import bitronix.tm.utils.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
@@ -105,7 +106,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         return true;
     }
 
-    public boolean delistResource(XAResource xaResource, int flag) throws IllegalStateException, SystemException {
+    public boolean delistResource(final XAResource xaResource, final int flag) throws IllegalStateException, SystemException {
         if (status == Status.STATUS_NO_TRANSACTION)
             throw new IllegalStateException("transaction hasn't started yet");
         if (flag != XAResource.TMSUCCESS && flag != XAResource.TMSUSPEND && flag != XAResource.TMFAIL)
@@ -117,31 +118,33 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         if (resourceHolder == null)
             throw new BitronixSystemException("unknown XAResource " + xaResource + ", it does not belong to a registered resource");
 
-        Map statesForGtrid = resourceHolder.getXAResourceHolderStatesForGtrid(resourceManager.getGtrid());
-        Iterator statesForGtridIt = statesForGtrid.values().iterator();
-
-        boolean result = false;
-        List exceptions = new ArrayList();
-        List resourceStates = new ArrayList();
-        while (statesForGtridIt.hasNext()) {
-            XAResourceHolderState resourceHolderState = (XAResourceHolderState) statesForGtridIt.next();
-            try {
-                result &= delistResource(resourceHolderState, flag);
-            } catch (BitronixSystemException ex) {
-                if (log.isDebugEnabled()) { log.debug("failed to delist resource state " + resourceHolderState); }
-                exceptions.add(ex);
-                resourceStates.add(resourceHolderState);
+        class LocalVisitor implements XAResourceHolderStateVisitor {
+            private boolean result = true;
+            private List<BitronixSystemException> exceptions = new ArrayList<BitronixSystemException>();
+            private List<XAResourceHolderState> resourceStates = new ArrayList<XAResourceHolderState>();
+            public boolean visit(XAResourceHolderState xaResourceHolderState) {
+                try {
+                    result &= delistResource(xaResourceHolderState, flag);
+                } catch (BitronixSystemException ex) {
+                    if (log.isDebugEnabled()) { log.debug("failed to delist resource state " + xaResourceHolderState); }
+                    exceptions.add(ex);
+                    resourceStates.add(xaResourceHolderState);
+                }
+                return true; // continue visitation
             }
         }
-        if (!exceptions.isEmpty()) {
-            BitronixMultiSystemException multiSystemException = new BitronixMultiSystemException("error delisting resource", exceptions, resourceStates);
+        LocalVisitor xaResourceHolderStateVisitor = new LocalVisitor();
+        resourceHolder.acceptVisitorForXAResourceHolderStates(resourceManager.getGtrid(), xaResourceHolderStateVisitor);
+
+        if (!xaResourceHolderStateVisitor.exceptions.isEmpty()) {
+            BitronixMultiSystemException multiSystemException = new BitronixMultiSystemException("error delisting resource", xaResourceHolderStateVisitor.exceptions, xaResourceHolderStateVisitor.resourceStates);
             if (!multiSystemException.isUnilateralRollback())
                 throw multiSystemException;
             else
                 if (log.isDebugEnabled()) { log.debug("unilateral rollback of resource " + resourceHolder, multiSystemException); }
         }
 
-        return result;
+        return xaResourceHolderStateVisitor.result;
     }
 
     private boolean delistResource(XAResourceHolderState resourceHolderState, int flag) throws BitronixSystemException {

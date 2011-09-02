@@ -20,21 +20,22 @@
  */
 package bitronix.tm.resource.jms;
 
-import bitronix.tm.internal.XAResourceHolderState;
-import bitronix.tm.recovery.RecoveryException;
-import bitronix.tm.resource.ResourceConfigurationException;
-import bitronix.tm.resource.ResourceObjectFactory;
-import bitronix.tm.resource.ResourceRegistrar;
-import bitronix.tm.resource.common.*;
-import bitronix.tm.utils.ManagementRegistrar;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import javax.jms.*;
+import javax.naming.*;
+import javax.transaction.xa.XAResource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jms.*;
-import javax.naming.NamingException;
-import javax.naming.Reference;
-import javax.naming.StringRefAddr;
-import javax.transaction.xa.XAResource;
+import bitronix.tm.internal.XAResourceHolderState;
+import bitronix.tm.recovery.RecoveryException;
+import bitronix.tm.resource.*;
+import bitronix.tm.resource.common.*;
+import bitronix.tm.utils.ManagementRegistrar;
 
 /**
  * Implementation of a JMS {@link ConnectionFactory} wrapping vendor's {@link XAConnectionFactory} implementation.
@@ -48,6 +49,7 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
     private volatile transient XAPool pool;
     private volatile transient JmsPooledConnection recoveryPooledConnection;
     private volatile transient RecoveryXAResourceHolder recoveryXAResourceHolder;
+    private volatile transient List<JmsPooledConnection> xaStatefulHolders;
 
     private volatile boolean cacheProducersConsumers = true;
     private volatile boolean testConnections = false;
@@ -56,10 +58,9 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
     private volatile JmsConnectionHandle recoveryConnectionHandle;
     private volatile String jmxName;
 
-
     public PoolingConnectionFactory() {
+        xaStatefulHolders = Collections.synchronizedList(new ArrayList<JmsPooledConnection>());
     }
-
 
     /**
      * Initialize the pool by creating the initial amount of connections.
@@ -233,11 +234,21 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
             xaConnection = xaConnectionFactory.createXAConnection(user, password);
         }
 
-        return new JmsPooledConnection(this, xaConnection);
+        JmsPooledConnection jmsPooledConnection = new JmsPooledConnection(this, xaConnection);
+        xaStatefulHolders.add(jmsPooledConnection);
+        return jmsPooledConnection;
     }
 
     public XAResourceHolder findXAResourceHolder(XAResource xaResource) {
-        return pool.findXAResourceHolder(xaResource);
+        synchronized (xaStatefulHolders) {
+            for (JmsPooledConnection jmsPooledConnection : xaStatefulHolders) {
+                XAResourceHolder xaResourceHolder = jmsPooledConnection.getXAResourceHolderForXaResource(xaResource);
+                if (xaResourceHolder != null) {
+                    return xaResourceHolder;
+                }
+            }
+            return null;
+        }
     }
 
     /* Referenceable implementation */
@@ -268,5 +279,9 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
 
     public void reset() throws Exception {
         pool.reset();
+    }
+
+    public void unregister(JmsPooledConnection jmsPooledConnection) {
+        xaStatefulHolders.remove(jmsPooledConnection);
     }
 }
