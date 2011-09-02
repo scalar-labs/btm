@@ -34,9 +34,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import static bitronix.tm.journal.nio.NioJournalWritingThread.newRunningInstance;
 import static javax.transaction.Status.STATUS_COMMITTING;
 import static javax.transaction.Status.STATUS_ROLLING_BACK;
 
@@ -76,6 +78,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
     volatile NioJournalFile journalFile;
 
     boolean skipForce = !TransactionManagerServices.getConfiguration().isForcedWriteEnabled();
+    boolean logOnlyMandatoryRecords = TransactionManagerServices.getConfiguration().isFilterLogStatus();
 
     /**
      * {@inheritDoc}
@@ -89,6 +92,12 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
             uniqueNames = Collections.emptySet();
 
         final NioJournalRecord record = new NioJournalRecord(status, gtrid, uniqueNames);
+
+        if (logOnlyMandatoryRecords && !MANDATORY_STATUS_TO_LOG.contains(status)) {
+            if (log.isDebugEnabled()) { log.debug("Journaling of non mandatory records is disabled. Skipping " + record); }
+            return;
+        }
+
         trackedTransactions.track(status, gtrid, record);
 
         if (trace) { log.trace("Attempting to log a new transaction log record " + record + "."); }
@@ -99,7 +108,9 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
             pendingRecordsQueue.putElement(fileRecord);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IOException(e);
+            IOException ioException = new InterruptedIOException(e.getMessage());
+            ioException.initCause(e);
+            throw ioException;
         }
 
     }
@@ -165,13 +176,12 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
         log.info("Found " + trackedTransactions.size() + " unfinished transactions within the journal.");
         trackedTransactions.purgeTransactionsExceedingLifetime();
 
-        journalWritingThread = new NioJournalWritingThread(trackedTransactions, journalFile, isSkipForce() ? null : forceSynchronizer, pendingRecordsQueue);
         try {
-            journalWritingThread.waitUntilRunning();
+            journalWritingThread = newRunningInstance(trackedTransactions, journalFile, isSkipForce() ? null : forceSynchronizer, pendingRecordsQueue);
             log.info("Successfully started a new log appender on the journal file " + journalFilePath + ".");
         } catch (InterruptedException e) {
-            log.info("Interrupted executing thread while opening the journal file " + journalFilePath + ". " +
-                    "Will close the file now and delegate the interrupt to the caller for letting it shutdown gracefully.");
+            log.info("Interrupted the attempt to open the journal file " + journalFilePath + ". Will close the file now and " +
+                    "delegate the interrupt to the caller, letting it shutdown gracefully.");
             try {
                 close();
                 throw new IOException("Failed to open journal file " + journalFilePath + " as the calling thread was interrupted.");
@@ -215,7 +225,7 @@ public class NioJournal implements Journal, MigratableJournal, ReadableJournal, 
         if (journalWritingThread != null) {
             if (log.isDebugEnabled()) { log.debug("Attempting to close the nio log appender."); }
 
-            journalWritingThread.close();
+            journalWritingThread.shutdown();
             journalWritingThread = null;
         }
     }

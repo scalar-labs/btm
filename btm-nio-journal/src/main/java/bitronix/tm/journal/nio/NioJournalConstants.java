@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static java.lang.Boolean.parseBoolean;
 import static java.lang.Double.parseDouble;
 import static java.lang.Integer.getInteger;
 import static java.lang.Long.getLong;
@@ -36,7 +37,6 @@ import static java.nio.charset.Charset.forName;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Collections.unmodifiableSet;
-import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static javax.transaction.Status.*;
 
@@ -50,6 +50,16 @@ import static javax.transaction.Status.*;
  * @author juergen kellerer, 2011-04-30
  */
 public interface NioJournalConstants {
+
+    /**
+     * The amount of milliseconds for one hour.
+     */
+    long MS_PER_HOUR = 60 * 60 * 1000L;
+
+    /**
+     * The amount of milliseconds for one day.
+     */
+    long MS_PER_DAY = 24 * MS_PER_HOUR;
 
     /**
      * Is the charset used for unique names and for human readable content in the headers.
@@ -91,13 +101,21 @@ public interface NioJournalConstants {
     int PRE_ALLOCATED_BUFFER_SIZE = getInteger("bitronix.nio.journal.buffer.size", 386);
 
     /**
+     * Specifies whether direct buffers are used when buffering records before the are written to disk.
+     *
+     * Direct buffers are more efficient when writing to disk based on the fact that they can be written
+     * directly without an additional array copy.
+     */
+    boolean USE_DIRECT_BUFFERS = parseBoolean(getProperty("bitronix.nio.journal.buffer.use.direct", "true"));
+
+    /**
      * Hard limit, defining the maximum time that a transaction may be held in the journal.
      * (= the maximum supported timeout for a transaction, defaults to 14 days)
      * <p/>
      * This value cleans journal records that are beyond this maximum age and is meant primarily
      * to protect the system from leakage that may be caused by crashes, hardware failures or software bugs.
      */
-    long TRANSACTION_MAX_LIFETIME = max(DAYS.toMillis(1), getLong("bitronix.nio.journal.max.transaction.lifetime", DAYS.toMillis(14)));
+    long TRANSACTION_MAX_LIFETIME = max(MS_PER_DAY, getLong("bitronix.nio.journal.max.transaction.lifetime", MS_PER_DAY * 14));
 
     /**
      * Defines hard limit for journal record sizes to protect from OOM-Errors through DOS attacks
@@ -115,10 +133,9 @@ public interface NioJournalConstants {
      * <p/>
      * Valid values are within a range of 0.1 <= x <= 0.9.
      * <p/>
-     * If growing isn't possible, the system does not stop working but it logs a warning with every
-     * failed attempt to grow the journal. For the case that more transactions are actually open
-     * than fitting into the journal file, it will either grow or writes are blocked until transactions
-     * get closed or fall into a timeout.
+     * If growing isn't possible, the system does not stop working but logs a warning with every failed attempt
+     * to grow the journal. If growing is required to fit all concurrently opened transactions the system will start
+     * to throwing IOExceptions when {@code force()} is called.
      */
     double JOURNAL_GROW_OFFSET = max(0.1D, min(0.9D, parseDouble(getProperty("bitronix.nio.journal.grow.offset", "0.75"))));
 
@@ -183,6 +200,17 @@ public interface NioJournalConstants {
             STATUS_COMMITTED,
             STATUS_ROLLEDBACK,
             STATUS_PREPARING,
+            STATUS_COMMITTING,
+            STATUS_ROLLING_BACK
+    )));
+
+    /**
+     * Collects the TX states that must be logged in any case.
+     */
+    Set<Integer> MANDATORY_STATUS_TO_LOG = unmodifiableSet(new HashSet<Integer>(asList(
+            STATUS_UNKNOWN,
+            STATUS_COMMITTED,
+            STATUS_ROLLEDBACK,
             STATUS_COMMITTING,
             STATUS_ROLLING_BACK
     )));

@@ -21,36 +21,23 @@
 
 package bitronix.tm.journal.nio;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
+import bitronix.tm.journal.nio.util.SequencedBlockingQueue;
+import bitronix.tm.journal.nio.util.SequencedQueueEntry;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.*;
+import java.util.concurrent.*;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests the functionality of NioForceSynchronizer.
  *
  * @author juergen kellerer, 2011-05-29
  */
-@Ignore
 public class NioForceSynchronizerTest {
 
     static ExecutorService service;
@@ -66,14 +53,13 @@ public class NioForceSynchronizerTest {
     }
 
     volatile List<Object> elements;
-    volatile BlockingQueue<NioForceSynchronizer<Object>.ForceableElement> queue;
 
-    final NioForceSynchronizer<Object> forceSynchronizer = new NioForceSynchronizer<Object>();
+    final SequencedBlockingQueue<Object> queue = new SequencedBlockingQueue<Object>();
+    final NioForceSynchronizer forceSynchronizer = new NioForceSynchronizer(queue);
 
     @Before
     public void setUp() throws Exception {
         elements = new ArrayList<Object>();
-        queue = new ArrayBlockingQueue<NioForceSynchronizer<Object>.ForceableElement>(10);
         for (int i = 0; i < 6; i++)
             elements.add(new Object());
     }
@@ -81,10 +67,10 @@ public class NioForceSynchronizerTest {
     @Test
     public void testCanEnlistAndUnWrapElements() throws Exception {
         for (Object element : elements)
-            forceSynchronizer.enlistElement(element, queue);
+            queue.putElement(element);
 
         List<Object> enlistedElements = new ArrayList<Object>();
-        NioForceSynchronizer.unwrap(queue, enlistedElements);
+        queue.drainElementsTo(enlistedElements);
 
         assertArrayEquals(elements.toArray(), enlistedElements.toArray());
     }
@@ -107,12 +93,19 @@ public class NioForceSynchronizerTest {
     public void testWaitOnEnlistedFailuresIntersectSuccess() throws Exception {
         final Random random = new Random();
         Map<Future<Boolean>, Boolean> expectedResults = new HashMap<Future<Boolean>, Boolean>();
-        for (int i = 0; i < 10000; i++) {
+        int successCount = 1000, errorCount = 1000;
+        while (successCount > 0 || errorCount > 0) {
             setUp();
 
-            boolean success = random.nextBoolean();
-            for (Future<Boolean> future : (success ?
-                    doTestWaitOnEnlistedWithSuccess() : doTestWaitOnEnlistedWithFailure()))
+            final boolean success = random.nextBoolean();
+            if (success) successCount--;
+            else errorCount--;
+
+            final List<Future<Boolean>> futures = success ?
+                    doTestWaitOnEnlistedWithSuccess() :
+                    doTestWaitOnEnlistedWithFailure();
+
+            for (Future<Boolean> future : futures)
                 expectedResults.put(future, success);
         }
 
@@ -137,13 +130,14 @@ public class NioForceSynchronizerTest {
     }
 
     private List<Future<Boolean>> doTestWaitOnEnlisted(Callable<Object> callable) throws Exception {
-        final CountDownLatch enlistCountDown = new CountDownLatch(elements.size());
+        final List<Object> objects = elements;
+        final CountDownLatch enlistCountDown = new CountDownLatch(objects.size());
 
         List<Future<Boolean>> futures = new ArrayList<Future<Boolean>>();
-        for (final Object element : elements) {
+        for (final Object element : objects) {
             futures.add(service.submit(new Callable<Boolean>() {
                 public Boolean call() throws Exception {
-                    forceSynchronizer.enlistElement(element, queue);
+                    queue.putElement(element);
                     enlistCountDown.countDown();
                     return forceSynchronizer.waitOnEnlisted();
                 }
@@ -154,8 +148,10 @@ public class NioForceSynchronizerTest {
         for (Future<?> future : futures) assertFalse(future.isDone());
 
         try {
-            if (!forceSynchronizer.processEnlistedIfRequired(callable, queue))
-                forceSynchronizer.processEnlisted(callable, queue);
+            ArrayList<SequencedQueueEntry<Object>> entries = new ArrayList<SequencedQueueEntry<Object>>();
+            queue.takeAndDrainElementsTo(entries, new ArrayList<Object>());
+            if (!forceSynchronizer.processEnlistedIfRequired(callable, entries))
+                forceSynchronizer.processEnlisted(callable, entries);
         } catch (Exception e) {
             // ignore.
         }

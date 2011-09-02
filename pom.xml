@@ -48,6 +48,9 @@
         <java.version>1.5</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- Stubs should not be analyzed by Sonar -->
+        <sonar.skippedModules>btm-jdbc3-stubs,btm-jdbc4-stubs</sonar.skippedModules>
     </properties>
 
     <modules>

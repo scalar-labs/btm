@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.UUID;
 
+import static bitronix.tm.journal.nio.NioJournalConstants.NAME_CHARSET;
 import static bitronix.tm.journal.nio.NioJournalFileRecord.*;
 import static bitronix.tm.journal.nio.NioJournalFileRecord.ReadStatus.*;
 import static bitronix.tm.utils.UidGenerator.generateUid;
@@ -82,7 +83,7 @@ public class NioJournalFileRecordTest {
     @Test
     public void testCanReadInvalidEntry() throws Exception {
         byte[] recordBytes = recordToBytes();
-        int namePosition = new String(recordBytes, NioJournalConstants.NAME_CHARSET).indexOf("a name");
+        int namePosition = new String(recordBytes, NAME_CHARSET.name()).indexOf("a name");
 
         ByteBuffer buffer = wrap(recordBytes);
         buffer.put(namePosition, (byte) '#');
@@ -178,7 +179,7 @@ public class NioJournalFileRecordTest {
         final ByteBuffer byteBuffer = wrap(chunk);
 
         byte corruptionByte = '#';
-        String recordString = new String(recordBytes, NAME_CHARSET);
+        String recordString = new String(recordBytes, NAME_CHARSET.name());
         while (recordString.indexOf((char) corruptionByte) != -1)
             corruptionByte = (byte) random.nextInt(256);
 

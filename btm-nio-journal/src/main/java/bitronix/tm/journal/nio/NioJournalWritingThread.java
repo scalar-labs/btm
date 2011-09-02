@@ -46,6 +46,38 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     private static final Logger log = LoggerFactory.getLogger(NioJournalWritingThread.class);
     private static final boolean trace = log.isTraceEnabled();
 
+    /**
+     * Constructs and starts a thread on the given journal that handles writes.
+     * <p/>
+     * This method does not return until the thread was started and is ready to listed on the given queue.
+     * Threads that were created with this method are guaranteed to process all elements that were contained in the given
+     * queue just before {@link #shutdown()} is called.
+     *
+     * @param transactions  the shared map of dangling transactions.
+     * @param journal       the journal to operate on.
+     * @param synchronizer  the synchronizer used allowing logging threads to wait on the force command.
+     * @param incomingQueue the queue instance to operate on.
+     * @return returns a started journal writing thread in running or waiting state.
+     * @throws InterruptedException In case of the calling thread was interrupted before the journal writer switched to running mode.
+     */
+    public static NioJournalWritingThread newRunningInstance(NioTrackedTransactions transactions, NioJournalFile journal, NioForceSynchronizer synchronizer,
+                                                             SequencedBlockingQueue<NioJournalFileRecord> incomingQueue) throws InterruptedException {
+        final NioJournalWritingThread thread = new NioJournalWritingThread(transactions, journal, synchronizer, incomingQueue);
+        synchronized (thread) {
+            try {
+                while (!thread.running)
+                    thread.wait();
+            } catch (InterruptedException e) {
+                log.info("The attempt to open a journal writer on file " + journal.getFile() + " was interrupted before the writer was ready. " +
+                        "Closing the uninitialized writer now.");
+                // we need to shutdown the thread as we only the caller was interrupted so far.
+                thread.shutdown();
+                throw e;
+            }
+        }
+        return thread;
+    }
+
     private final List<SequencedQueueEntry<NioJournalFileRecord>> pendingEntriesToWorkOn =
             new ArrayList<SequencedQueueEntry<NioJournalFileRecord>>(CONCURRENCY);
 
@@ -73,18 +105,8 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
         }
     };
 
-    /**
-     * Constructs and starts a thread on the given journal that handles writes.
-     *
-     * @param trackedTransactions the shared map of dangling transactions.
-     * @param journalFile         the journal to operate on.
-     * @param forceSynchronizer   the synchronizer used allowing logging threads to wait on the force command.
-     * @param incomingQueue       the queue instance to operate on.
-     */
-    public NioJournalWritingThread(NioTrackedTransactions trackedTransactions,
-                                   NioJournalFile journalFile,
-                                   NioForceSynchronizer forceSynchronizer,
-                                   SequencedBlockingQueue<NioJournalFileRecord> incomingQueue) {
+    private NioJournalWritingThread(NioTrackedTransactions trackedTransactions, NioJournalFile journalFile,
+                                    NioForceSynchronizer forceSynchronizer, SequencedBlockingQueue<NioJournalFileRecord> incomingQueue) {
         super("Bitronix - Nio Transaction Journal - JournalWriter");
         this.trackedTransactions = trackedTransactions;
         this.journalFile = journalFile;
@@ -94,20 +116,13 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
     }
 
     /**
-     * Waits until the thread runs.
-     *
-     * @throws InterruptedException in case of the waiting thread was interrupted.
+     * Attempts to shutdown the thread gracefully.
      */
-    public synchronized void waitUntilRunning() throws InterruptedException {
-        while (!running && !closeRequested)
-            wait();
-    }
-
-    /**
-     * Attempts to close the thread gracefully.
-     */
-    public synchronized void close() {
+    public synchronized void shutdown() {
         closeRequested = true;
+
+        if (!running)
+            return;
 
         try {
             for (int i = 0; i < 60 && running; i++) {
@@ -146,7 +161,7 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
         }
 
         if (running) {
-            final String msg = "Failed to close the nio log appender on journal " + journalFile.getFile() + ". The thread is still alive.";
+            final String msg = "Failed to shutdown the nio log appender on journal " + journalFile.getFile() + ". The thread is still alive.";
             log.error(msg);
             throw new IllegalStateException(msg);
         } else {
@@ -159,82 +174,82 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
      */
     @Override
     public void run() {
+        boolean wasInterrupted = interrupted();
+        final List<NioJournalFileRecord> recordsToWorkOn = new ArrayList<NioJournalFileRecord>(CONCURRENCY);
+
         try {
-            final List<NioJournalFileRecord> recordsToWorkOn = new ArrayList<NioJournalFileRecord>(CONCURRENCY);
             while (!isInterrupted() && !closeRequested) {
-
-                // We are in running mode if we process at least those records that were already queued.
-                synchronized (this) {
-                    running = true;
-                    notifyAll();
-                }
-
                 try {
                     pendingEntriesToWorkOn.clear();
-
-                    for (int iterationsBeforeForce = WRITE_ITERATIONS_BEFORE_FORCE; iterationsBeforeForce > 0; iterationsBeforeForce--) {
-                        boolean wasInterrupted = interrupted();
+                    for (int iterationsBeforeForce = WRITE_ITERATIONS_BEFORE_FORCE; iterationsBeforeForce > 0 && !wasInterrupted; iterationsBeforeForce--) {
+                        boolean success = false;
                         try {
-                            recordsToWorkOn.clear();
-                            final boolean blockForRecords = !wasInterrupted && !closeRequested && iterationsBeforeForce == WRITE_ITERATIONS_BEFORE_FORCE;
-                            if (collectWork(recordsToWorkOn, blockForRecords) == 0)
-                                break;
+                            try {
+                                // We are in running mode if we process at least those records that were already queued.
+                                synchronized (this) {
+                                    running = true;
+                                    notifyAll();
+                                }
+
+                                recordsToWorkOn.clear();
+                                final boolean blockForRecords = !wasInterrupted && !closeRequested && iterationsBeforeForce == WRITE_ITERATIONS_BEFORE_FORCE;
+                                if (collectWork(recordsToWorkOn, blockForRecords) == 0) {
+                                    // there's no more pending work, break loop and force entries.
+                                    break;
+                                }
+                            } catch (InterruptedException e) {
+                                wasInterrupted = true;
+                                log.info("Waiting for pending journal records was interrupted. Will attempt to write " +
+                                        recordsToWorkOn.size() + " records into the journal and shutdown gracefully afterwards.");
+                            }
 
                             if (trace) { log.trace("Attempting to write " + recordsToWorkOn.size() + " log entries into the journal file."); }
 
-                            // TODO: Handle the case that growing is not working and not enough remaining space
-                            // TODO: is available. ClassicJournal blocks until TX are committed. This should do
-                            // TODO: the same without causing a deadlock.
-
-                            // Attempt to clear interrupt before starting to write.
-                            if (!wasInterrupted) { wasInterrupted = interrupted(); }
-
                             handleJournalRollover(recordsToWorkOn);
-
                             journalFile.write(recordsToWorkOn);
                             processedCount += recordsToWorkOn.size();
-                        } catch (InterruptedException e) {
-                            throw e; // NOSONAR - Must be handled in upper block to ensure we handle interruptions at one location only.
-                        } catch (Exception e) {
-                            log.error("Failed storing " + recordsToWorkOn.size() + " transaction log records.", e);
-                            for (NioJournalFileRecord record : recordsToWorkOn)
-                                log.error("Failed storing transaction " + new NioJournalRecord(record.getPayload(), record.isValid()) + ".");
+                            success = true;
                         } finally {
-                            try {
-                                disposeAll(recordsToWorkOn);
-                            } finally {
-                                if (wasInterrupted) { interrupt(); }
+                            if (!success) {
+                                for (NioJournalFileRecord record : recordsToWorkOn)
+                                    log.error("Failed storing transaction journal record " + new NioJournalRecord(record.getPayload(), record.isValid()) + ".");
                             }
-                        }
 
-                        if (wasInterrupted)
-                            throw new InterruptedException();
+                            disposeAll(recordsToWorkOn);
+                        }
                     }
 
                     tryForceAndReportAllRemainingElementsAsSuccess();
 
                 } catch (InterruptedException t) {
-                    if (recordsToWorkOn.isEmpty()) {
-                        if (log.isDebugEnabled()) { log.debug("Cleanly interrupted log appender."); }
-                    } else {
-                        log.warn("Interrupted log appender with " + recordsToWorkOn.size() + " entries still in queue.");
-                        reportAllRemainingElementsAsFailed();
-                    }
+                    wasInterrupted = true;
                     interrupt();
                 } catch (Throwable t) { //NOSONAR: The log writer must not stop execution even when a fatal error occurred.
-                    log.error("Fatal error when storing logs. Reporting " + pendingEntriesToWorkOn.size() + " remaining elements as failures.", t);
+                    log.error("Caught fatal error when writing records to the transaction journal " + journalFile.getFile() + ". " +
+                            "Reporting " + pendingEntriesToWorkOn.size() + " unwritten records as failures.", t);
 
-                    // Waiting for 1 second to avoid running in endless loops when every invocation causes a fatal error.
+                    // Waiting for 1 second to avoid consuming 100% CPU when every invocation causes a fatal error.
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
-                        break;
+                        wasInterrupted = true;
                     }
                 } finally {
-                    reportAllRemainingElementsAsFailed();
+                    try {
+                        reportAllRemainingElementsAsFailed();
+                    } finally {
+                        if (wasInterrupted)
+                            interrupt();
+                    }
                 }
             }
         } finally {
+            if (recordsToWorkOn.isEmpty()) {
+                if (log.isDebugEnabled()) { log.debug("Cleanly interrupted transaction journal writer."); }
+            } else {
+                log.warn("Closed transaction journal writer with " + recordsToWorkOn.size() + " unwritten records in the write queue. Reported records as failures.");
+            }
+
             synchronized (this) {
                 running = false;
                 notifyAll();
@@ -319,17 +334,17 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
                 chunks.add(fileRecord);
 
                 if (chunks.size() == CONCURRENCY)
-                    writeUnfinishedTransactionsChunks(chunks);
+                    writeUnfinishedTransactionChunks(chunks);
             }
 
             if (!chunks.isEmpty())
-                writeUnfinishedTransactionsChunks(chunks);
+                writeUnfinishedTransactionChunks(chunks);
 
             if (debug) { log.debug("Successfully wrote " + records.size() + " unfinished transactions to the journal after the rollover."); }
         }
     }
 
-    private void writeUnfinishedTransactionsChunks(List<NioJournalFileRecord> chunks) throws IOException {
+    private void writeUnfinishedTransactionChunks(List<NioJournalFileRecord> chunks) throws IOException {
         attemptToGrowJournalIfRequired(calculateRequiredBytes(chunks));
 
         journalFile.write(chunks);
@@ -370,10 +385,15 @@ class NioJournalWritingThread extends Thread implements NioJournalConstants {
             }
 
             if (!success && journalFile.remainingCapacity() < minRequiredCapacity) {
-                log.error("Growing the journal " + journalFile.getFile() + " is required to service the next write request of " +
-                        minRequiredCapacity + " bytes, however the remaining journal capacity is " + journalFile.remainingCapacity() + ". " +
-                        "Increase the initial journal size if the ability to grow the journal was disabled or check the remaining capacity " +
-                        "of the storage device.");
+                log.error("The transaction journal's storage space is exhausted. " +
+                        "Growing the journal " + journalFile.getFile() + " is required to service the next request of writing " +
+                        minRequiredCapacity + " bytes (remaining capacity is " + journalFile.remainingCapacity() + "). " + System.getProperty("line.separator") +
+                        "In order to fix this issue, check the remaining capacity of the storage device or increase the pre-allocated journal size if the ability to " +
+                        "auto-grow the journal was disabled inside the configuration.");
+
+                // We must throw an exception here to avoid an endless loop / deadlock in the attempt to grow or rollover the journal.
+                throw new IOException("Cannot write any further entries into the transaction journal as its storage space is exhausted " +
+                        "and growing is not possible.");
             }
         }
     }

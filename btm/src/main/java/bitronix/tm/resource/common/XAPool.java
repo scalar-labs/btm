@@ -272,6 +272,7 @@ public class XAPool implements StateChangeListener {
                 availablePool.add(xaStatefulHolder);
             }
         } // for
+
         if (log.isDebugEnabled()) { log.debug("closed " + closed + (forceClose ? " " : " idle ") + "connection(s)"); }
         growUntilMinPoolSize();
     }
