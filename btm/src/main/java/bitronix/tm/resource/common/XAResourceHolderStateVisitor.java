@@ -18,25 +18,22 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA 02110-1301 USA
  */
-package bitronix.tm.resource.jdbc4.lrc;
+package bitronix.tm.resource.common;
 
-import java.sql.Connection;
+import bitronix.tm.internal.XAResourceHolderState;
 
-import javax.sql.StatementEventListener;
+/**
+ * This is a thread-safe visitor of a collection of {@link XAResourceHolderState}s
+ * guaranteed to be called within the context of a lock.
+ *
+ * @author brettw
+ */
+public interface XAResourceHolderStateVisitor {
 
-import bitronix.tm.resource.jdbc.lrc.LrcXAConnection;
-
-public class LrcJdbc4Connection extends LrcXAConnection {
-
-	public LrcJdbc4Connection(Connection connection) {
-		super(connection);
-	}
-
-	public void addStatementEventListener(StatementEventListener arg0) {
-		// TODO: should we do something here?
-	}
-
-	public void removeStatementEventListener(StatementEventListener arg0) {
-		// TODO: should we do something here?
-	}
+    /**
+     * Called when visiting all {@link XAResourceHolderState}s.
+     * @param xaResourceHolderState the currently visited {@link XAResourceHolderState}
+     * @return return <code>true</code> to continue visitation, <code>false</code> to stop visitation
+     */
+    boolean visit(XAResourceHolderState xaResourceHolderState);
 }

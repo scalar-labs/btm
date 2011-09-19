@@ -25,6 +25,7 @@ import bitronix.tm.internal.BitronixSystemException;
 import bitronix.tm.internal.BitronixRollbackSystemException;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.resource.common.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -367,10 +368,17 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
     /* XAStatefulHolder implementation */
 
-    public List getXAResourceHolders() {
-        List holders = new ArrayList(1);
+    public List<XAResourceHolder> getXAResourceHolders() {
+        List<XAResourceHolder> holders = new ArrayList<XAResourceHolder>(1);
         holders.add(this);
         return holders;
+    }
+
+    public XAResourceHolder getXAResourceHolderForXaResource(XAResource xaResource) {
+        if (xaResource == this.xaResource) {
+            return this;
+        }
+        return null;
     }
 
     public Object getConnectionHandle() throws Exception {
@@ -497,5 +505,4 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
             }
         } // if getAutomaticEnlistingEnabled
     }
-
 }

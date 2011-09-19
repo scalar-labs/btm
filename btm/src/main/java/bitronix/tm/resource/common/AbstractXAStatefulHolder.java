@@ -21,6 +21,7 @@
 package bitronix.tm.resource.common;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.*;
 
@@ -35,29 +36,27 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
 
     private final static Logger log = LoggerFactory.getLogger(AbstractXAStatefulHolder.class);
 
-    private volatile int state = STATE_IN_POOL;
+    private AtomicInteger state = new AtomicInteger(STATE_IN_POOL);
     private final List<StateChangeListener> stateChangeEventListeners = new ArrayList<StateChangeListener>();
 
-    public synchronized int getState() {
-        return state;
+    public int getState() {
+        return state.get();
     }
 
-    public void setState(int state) {
-        int oldState = this.state;
-        fireStateChanging(oldState, state);
+    public void setState(int newState) {
+        int oldState = state.get();
+        fireStateChanging(oldState, newState);
 
-        synchronized (this) {
-            if (oldState == state)
-                throw new IllegalArgumentException("cannot switch state from " + Decoder.decodeXAStatefulHolderState(oldState) +
-                        " to " + Decoder.decodeXAStatefulHolderState(state));
+        if (oldState == newState)
+            throw new IllegalArgumentException("cannot switch state from " + Decoder.decodeXAStatefulHolderState(oldState) +
+                    " to " + Decoder.decodeXAStatefulHolderState(newState));
 
-            if (log.isDebugEnabled()) log.debug("state changing from " + Decoder.decodeXAStatefulHolderState(oldState) +
-                    " to " + Decoder.decodeXAStatefulHolderState(state) + " in " + this);
+        if (log.isDebugEnabled()) log.debug("state changing from " + Decoder.decodeXAStatefulHolderState(oldState) +
+                " to " + Decoder.decodeXAStatefulHolderState(newState) + " in " + this);
 
-            this.state = state;
-        }
+        state.set(newState);
 
-        fireStateChanged(oldState, state);
+        fireStateChanged(oldState, newState);
     }
 
     public void addStateChangeEventListener(StateChangeListener listener) {
