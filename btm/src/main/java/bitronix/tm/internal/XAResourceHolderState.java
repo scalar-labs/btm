@@ -59,6 +59,7 @@ public class XAResourceHolderState {
     private volatile Date transactionTimeoutDate;
     private volatile boolean isTimeoutAlreadySet;
     private volatile boolean failed;
+    private volatile int hashCode;
 
     public XAResourceHolderState(XAResourceHolder resourceHolder, ResourceBean bean) {
         this.bean = bean;
@@ -69,6 +70,7 @@ public class XAResourceHolderState {
         suspended = false;
         isTimeoutAlreadySet = false;
         xid = null;
+        hashCode = 17 * bean.hashCode();
     }
 
     public XAResourceHolderState(XAResourceHolderState resourceHolderState) {
@@ -80,6 +82,7 @@ public class XAResourceHolderState {
         suspended = false;
         isTimeoutAlreadySet = false;
         xid = null;
+        hashCode = 17 * bean.hashCode();
     }
 
     public BitronixXid getXid() {
@@ -91,6 +94,7 @@ public class XAResourceHolderState {
         if (this.xid != null && !xid.equals(this.xid))
             throw new BitronixSystemException("a XID has already been assigned to " + this);
         this.xid = xid;
+        hashCode = 17 * (bean.hashCode() + (xid != null ? xid.hashCode() : 0));
     }
 
     public XAResource getXAResource() {
@@ -225,11 +229,11 @@ public class XAResourceHolderState {
     }
 
     public int hashCode() {
-        return 17 * (bean.hashCode() + xid.hashCode());
+        return hashCode;
     }
 
     public boolean equals(Object obj) {
-        if (!(obj instanceof XAResourceHolderState))
+        if (!(obj instanceof XAResourceHolderState) || this.hashCode != obj.hashCode())
             return false;
 
         XAResourceHolderState other = (XAResourceHolderState) obj;
@@ -253,5 +257,4 @@ public class XAResourceHolderState {
                 (suspended ? " (suspended)":"") +
                 " with XID " + xid;
     }
-
 }
