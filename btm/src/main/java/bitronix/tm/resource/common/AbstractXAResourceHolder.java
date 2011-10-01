@@ -152,14 +152,8 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
     public boolean hasStateForXAResource(XAResourceHolder xaResourceHolder) {
         rwLock.readLock().lock();
         try {
-            Iterator<Map<Uid, XAResourceHolderState>> statesForGtridIt = xaResourceHolderStates.values().iterator();
-            while (statesForGtridIt.hasNext()) {
-                Map<Uid, XAResourceHolderState> statesForGtrid = statesForGtridIt.next();
-
-                Iterator<XAResourceHolderState> statesForBqualIt = statesForGtrid.values().iterator();
-                while (statesForBqualIt.hasNext()) {
-                    XAResourceHolderState otherXaResourceHolderState = statesForBqualIt.next();
-
+            for (Map<Uid, XAResourceHolderState> statesForGtrid : xaResourceHolderStates.values()) {
+                for (XAResourceHolderState otherXaResourceHolderState : statesForGtrid.values()) {
                     if (otherXaResourceHolderState.getXAResource() == xaResourceHolder.getXAResource()) {
                         if (log.isDebugEnabled()) { log.debug("resource " + xaResourceHolder + " is enlisted in another transaction with " + otherXaResourceHolderState.getXid().toString()); }
                         return true;
@@ -191,10 +185,7 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
             if (statesForGtrid == null)
                 return false;
 
-            Iterator<XAResourceHolderState> statesForBqualIt = statesForGtrid.values().iterator();
-            while (statesForBqualIt.hasNext()) {
-                XAResourceHolderState xaResourceHolderState = statesForBqualIt.next();
-
+            for (XAResourceHolderState xaResourceHolderState : statesForGtrid.values()) {
                 if (xaResourceHolderState != null &&
                         xaResourceHolderState.isStarted() &&
                         !xaResourceHolderState.isSuspended() &&
@@ -218,9 +209,7 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
         try {
             HashSet<String> gtridsAsStrings = new HashSet<String>();
 
-            Iterator<Uid> gtridsIt = xaResourceHolderStates.keySet().iterator();
-            while (gtridsIt.hasNext()) {
-                Uid uid = gtridsIt.next();
+            for (Uid uid : xaResourceHolderStates.keySet()) {
                 gtridsAsStrings.add(uid.toString());
             }
 

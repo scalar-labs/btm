@@ -207,11 +207,11 @@ public final class TransactionContextHelper {
     }
 
     private static DeferredReleaseSynchronization findDeferredRelease(XAStatefulHolder xaStatefulHolder, BitronixTransaction currentTransaction) {
-        Scheduler synchronizationScheduler = currentTransaction.getSynchronizationScheduler();
-        Iterator it = synchronizationScheduler.iterator();
+        Scheduler<Synchronization> synchronizationScheduler = currentTransaction.getSynchronizationScheduler();
+        Iterator<Synchronization> it = synchronizationScheduler.iterator();
 
         while (it.hasNext()) {
-            Synchronization synchronization = (Synchronization) it.next();
+            Synchronization synchronization = it.next();
             if (synchronization instanceof DeferredReleaseSynchronization) {
                 DeferredReleaseSynchronization deferredReleaseSynchronization = (DeferredReleaseSynchronization) synchronization;
                 if (deferredReleaseSynchronization.getXAStatefulHolder() == xaStatefulHolder) {
@@ -236,12 +236,11 @@ public final class TransactionContextHelper {
 
     private static boolean isEnlistedInSomeTransaction(XAStatefulHolder xaStatefulHolder) throws BitronixSystemException {
         List<XAResourceHolder> xaResourceHolders = xaStatefulHolder.getXAResourceHolders();
-        if (xaResourceHolders == null)
+        if (xaResourceHolders == null || xaResourceHolders.isEmpty())
             return false;
 
         for (XAResourceHolder xaResourceHolder : xaResourceHolders) {
-            boolean enlisted = isEnlistedInSomeTransaction(xaResourceHolder);
-            if (enlisted)
+            if (isEnlistedInSomeTransaction(xaResourceHolder))
                 return true;
         }
 
@@ -260,12 +259,11 @@ public final class TransactionContextHelper {
 
     private static boolean isInEnlistingGlobalTransactionContext(XAStatefulHolder xaStatefulHolder, BitronixTransaction currentTransaction) {
         List<XAResourceHolder> xaResourceHolders = xaStatefulHolder.getXAResourceHolders();
-        if (xaResourceHolders == null)
+        if (xaResourceHolders == null || xaResourceHolders.isEmpty())
             return false;
 
         for (XAResourceHolder xaResourceHolder : xaResourceHolders) {
-            boolean enlisted = isInEnlistingGlobalTransactionContext(xaResourceHolder, currentTransaction);
-            if (enlisted)
+            if (isInEnlistingGlobalTransactionContext(xaResourceHolder, currentTransaction))
                 return true;
         }
 

@@ -46,8 +46,8 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     private final static Logger log = LoggerFactory.getLogger(BitronixTransaction.class);
 
     private final XAResourceManager resourceManager;
-    private final Scheduler synchronizationScheduler = new Scheduler();
-    private final List transactionStatusListeners = new ArrayList();
+    private final Scheduler<Synchronization> synchronizationScheduler = new Scheduler<Synchronization>();
+    private final List<TransactionStatusChangeListener> transactionStatusListeners = new ArrayList<TransactionStatusChangeListener>();
 
     private volatile int status = Status.STATUS_NO_TRANSACTION;
     private volatile boolean timeout = false;
@@ -180,7 +180,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         synchronizationScheduler.add(synchronization, Scheduler.DEFAULT_POSITION);
     }
 
-    public Scheduler getSynchronizationScheduler() {
+    public Scheduler<Synchronization> getSynchronizationScheduler() {
         return synchronizationScheduler;
     }
 
@@ -327,7 +327,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         setStatus(status, resourceManager.collectUniqueNames());
     }
 
-    public void setStatus(int status, Set uniqueNames) throws BitronixSystemException {
+    public void setStatus(int status, Set<String> uniqueNames) throws BitronixSystemException {
         try {
             boolean force = (resourceManager.size() > 1) && (status == Status.STATUS_COMMITTING);
             if (log.isDebugEnabled()) { log.debug("changing transaction status to " + Decoder.decodeStatus(status) + (force ? " (forced)" : "")); }
@@ -354,8 +354,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         if (log.isDebugEnabled()) log.debug("transaction status is changing from " + Decoder.decodeStatus(oldStatus) + " to " +
                 Decoder.decodeStatus(newStatus) + " - executing " + transactionStatusListeners.size() + " listener(s)");
         
-        for (int i = 0; i < transactionStatusListeners.size(); i++) {
-            TransactionStatusChangeListener listener = (TransactionStatusChangeListener) transactionStatusListeners.get(i);
+        for (TransactionStatusChangeListener listener : transactionStatusListeners) {
             if (log.isDebugEnabled()) { log.debug("executing TransactionStatusChangeListener " + listener); }
             listener.statusChanged(oldStatus, newStatus);
             if (log.isDebugEnabled()) { log.debug("executed TransactionStatusChangeListener " + listener); }
@@ -474,9 +473,9 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
      */
     private void fireBeforeCompletionEvent() throws BitronixSystemException {
         if (log.isDebugEnabled()) { log.debug("before completion, " + synchronizationScheduler.size() + " synchronization(s) to execute"); }
-        Iterator it = synchronizationScheduler.reverseIterator();
+        Iterator<Synchronization> it = synchronizationScheduler.reverseIterator();
         while (it.hasNext()) {
-            Synchronization synchronization = (Synchronization) it.next();
+            Synchronization synchronization = it.next();
             try {
                 if (log.isDebugEnabled()) { log.debug("executing synchronization " + synchronization); }
                 synchronization.beforeCompletion();
@@ -493,9 +492,9 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         getResourceManager().clearXAResourceHolderStates();
 
         if (log.isDebugEnabled()) { log.debug("after completion, " + synchronizationScheduler.size() + " synchronization(s) to execute"); }
-        Iterator it = synchronizationScheduler.iterator();
+        Iterator<Synchronization> it = synchronizationScheduler.iterator();
         while (it.hasNext()) {
-            Synchronization synchronization = (Synchronization) it.next();
+            Synchronization synchronization = it.next();
             try {
                 if (log.isDebugEnabled()) { log.debug("executing synchronization " + synchronization + " with status=" + Decoder.decodeStatus(status)); }
                 synchronization.afterCompletion(status);
@@ -541,7 +540,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         return Decoder.decodeStatus(status);
     }
 
-    public Collection getEnlistedResourcesUniqueNames() {
+    public Collection<String> getEnlistedResourcesUniqueNames() {
         return resourceManager.collectUniqueNames();
     }
 

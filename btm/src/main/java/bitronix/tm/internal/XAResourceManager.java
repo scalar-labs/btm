@@ -44,7 +44,7 @@ public class XAResourceManager {
     private final static Logger log = LoggerFactory.getLogger(XAResourceManager.class);
 
     private final Uid gtrid;
-    private final Scheduler resources = new Scheduler();
+    private final Scheduler<XAResourceHolderState> resources = new Scheduler<XAResourceHolderState>();
 
     /**
      * Create a resource manager for the specified GTRID.
@@ -102,7 +102,7 @@ public class XAResourceManager {
         // unless this is explicitly allowed in the config
         if (flag != XAResource.TMJOIN && xaResourceHolderState.getTwoPcOrderingPosition() == Scheduler.ALWAYS_LAST_POSITION &&
                 !TransactionManagerServices.getConfiguration().isAllowMultipleLrc()) {
-            List alwaysLastResources = resources.getByNaturalOrderForPosition(Scheduler.ALWAYS_LAST_POSITION_KEY);
+            List<XAResourceHolderState> alwaysLastResources = resources.getByNaturalOrderForPosition(Scheduler.ALWAYS_LAST_POSITION_KEY);
             if (alwaysLastResources != null && !alwaysLastResources.isEmpty())
                 throw new BitronixSystemException("cannot enlist more than one non-XA resource, tried enlisting " + xaResourceHolderState + ", already enlisted: " + alwaysLastResources.get(0));
         }
@@ -143,9 +143,9 @@ public class XAResourceManager {
      * @throws XAException if the resource threw an exception during suspend.
      */
     public void suspend() throws XAException {
-        Iterator it = resources.iterator();
+        Iterator<XAResourceHolderState> it = resources.iterator();
         while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
+            XAResourceHolderState xaResourceHolderState = it.next();
             if (!xaResourceHolderState.isEnded()) {
                 if (log.isDebugEnabled()) { log.debug("suspending " + xaResourceHolderState); }
                 xaResourceHolderState.end(XAResource.TMSUCCESS);
@@ -161,11 +161,11 @@ public class XAResourceManager {
         // all XAResource needs to be re-enlisted but this must happen
         // outside the Schduler's iteration as enlist() can change the
         // collection's content and confuse the iterator.
-        List toBeReEnlisted = new ArrayList();
+        List<XAResourceHolderState> toBeReEnlisted = new ArrayList();
 
-        Iterator it = resources.iterator();
+        Iterator<XAResourceHolderState> it = resources.iterator();
         while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
+            XAResourceHolderState xaResourceHolderState = it.next();
             if (log.isDebugEnabled()) { log.debug("resuming " + xaResourceHolderState); }
 
             // If a prepared statement is (re-)used after suspend/resume is performed its XAResource needs to be
@@ -174,9 +174,7 @@ public class XAResourceManager {
         }
 
         if (toBeReEnlisted.size() > 0 && log.isDebugEnabled()) { log.debug("re-enlisting " + toBeReEnlisted.size() + " resource(s)"); }
-        for (int i = 0; i < toBeReEnlisted.size(); i++) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) toBeReEnlisted.get(i);
-
+        for (XAResourceHolderState xaResourceHolderState : toBeReEnlisted) {
             if (log.isDebugEnabled()) { log.debug("re-enlisting resource " + xaResourceHolderState); }
             try {
                 enlist(xaResourceHolderState);
@@ -195,9 +193,9 @@ public class XAResourceManager {
      * @throws BitronixSystemException if an internal error happens.
      */
     public XAResourceHolderState findXAResourceHolderState(XAResource xaResource) throws BitronixSystemException {
-        Iterator it = resources.iterator();
+        Iterator<XAResourceHolderState> it = resources.iterator();
         while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
+            XAResourceHolderState xaResourceHolderState = it.next();
 
             if (xaResourceHolderState.getXAResource() == xaResource)
                 return xaResourceHolderState;
@@ -220,9 +218,9 @@ public class XAResourceManager {
             return null;
         }
 
-        Iterator it = resources.iterator();
+        Iterator<XAResourceHolderState> it = resources.iterator();
         while (it.hasNext()) {
-            XAResourceHolderState alreadyEnlistedHolderState = (XAResourceHolderState) it.next();
+            XAResourceHolderState alreadyEnlistedHolderState = it.next();
 
             if (log.isDebugEnabled()) { log.debug("checking joinability of " + xaResourceHolderState + " with " + alreadyEnlistedHolderState); }
             if ( alreadyEnlistedHolderState.isEnded() &&
@@ -244,9 +242,9 @@ public class XAResourceManager {
      */
     public void clearXAResourceHolderStates() {
         if (log.isDebugEnabled()) { log.debug("clearing XAResourceHolder states on " + resources.size() + " resource(s)"); }
-        Iterator it = resources.iterator();
+        Iterator<XAResourceHolderState> it = resources.iterator();
         while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
+            XAResourceHolderState xaResourceHolderState = it.next();
             XAResourceHolder resourceHolder = xaResourceHolderState.getXAResourceHolder();
 
             // clear out the current state
@@ -264,37 +262,36 @@ public class XAResourceManager {
      * Get a {@link Set} of unique names of all the enlisted {@link XAResourceHolderState}s.
      * @return a {@link Set} of unique names of all the enlisted {@link XAResourceHolderState}s.
      */
-    public Set collectUniqueNames() {
-        Set names = new HashSet();
-        Iterator it = resources.iterator();
+    public Set<String> collectUniqueNames() {
+        Set<String> names = new HashSet<String>();
+        Iterator<XAResourceHolderState> it = resources.iterator();
         while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
-            names.add(xaResourceHolderState.getUniqueName());
+            names.add(it.next().getUniqueName());
         }
         return names;
     }
 
-    public SortedSet getNaturalOrderPositions() {
+    public SortedSet<Integer> getNaturalOrderPositions() {
         return resources.getNaturalOrderPositions();
     }
 
-    public SortedSet getReverseOrderPositions() {
+    public SortedSet<Integer> getReverseOrderPositions() {
         return resources.getReverseOrderPositions();
     }
 
-    public List getNaturalOrderResourcesForPosition(Object positionKey) {
+    public List<XAResourceHolderState> getNaturalOrderResourcesForPosition(Object positionKey) {
         return resources.getByNaturalOrderForPosition(positionKey);
     }
 
-    public List getReverseOrderResourcesForPosition(Object positionKey) {
+    public List<XAResourceHolderState> getReverseOrderResourcesForPosition(Object positionKey) {
         return resources.getByReverseOrderForPosition(positionKey);
     }
 
-    public List getAllResources() {
-        List result = new ArrayList();
-        Iterator it = resources.getNaturalOrderPositions().iterator();
+    public List<XAResourceHolderState> getAllResources() {
+        List<XAResourceHolderState> result = new ArrayList<XAResourceHolderState>();
+        Iterator<Integer> it = resources.getNaturalOrderPositions().iterator();
         while (it.hasNext()) {
-            Object positionKey = it.next();
+            Integer positionKey = it.next();
             result.addAll(resources.getByNaturalOrderForPosition(positionKey));
         }
         return result;
