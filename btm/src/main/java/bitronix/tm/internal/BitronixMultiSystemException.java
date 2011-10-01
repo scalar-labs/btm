@@ -22,7 +22,6 @@ package bitronix.tm.internal;
 
 import bitronix.tm.utils.Decoder;
 
-import javax.transaction.SystemException;
 import javax.transaction.xa.XAException;
 import java.util.ArrayList;
 import java.util.List;
