@@ -102,6 +102,10 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
                 if (!found) {
                     LOG.error("no XAResource " + xaResource + " found in XAResourceProducer with name " + uniqueName);
                 }
+                if (xaResourceProducer.xaResourceHolders.isEmpty()) {
+                    xaResourceProducer.close();
+                    PRODUCERS.remove(uniqueName);
+                }
             } else {
                 LOG.error("no XAResourceProducer registered with name " + uniqueName);
             }
