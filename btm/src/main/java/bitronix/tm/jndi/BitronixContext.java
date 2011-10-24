@@ -161,11 +161,11 @@ public class BitronixContext implements Context {
     }
 
     public NameParser getNameParser(Name name) throws NamingException {
-        throw new OperationNotSupportedException();
+        return BitronixNameParser.INSTANCE;
     }
 
     public NameParser getNameParser(String s) throws NamingException {
-        throw new OperationNotSupportedException();
+        return BitronixNameParser.INSTANCE;
     }
 
     public Name composeName(Name name, Name name1) throws NamingException {
@@ -191,4 +191,13 @@ public class BitronixContext implements Context {
     public String getNameInNamespace() throws NamingException {
         throw new OperationNotSupportedException();
     }
+
+    private final static class BitronixNameParser implements NameParser {
+        private static final BitronixNameParser INSTANCE = new BitronixNameParser();
+
+        public Name parse(final String name) throws NamingException {
+            return new CompositeName(name);
+        }
+    }
+
 }
