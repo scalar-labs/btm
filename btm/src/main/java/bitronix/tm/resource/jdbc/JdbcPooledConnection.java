@@ -151,8 +151,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             if (log.isDebugEnabled()) log.debug("close connection with usage count > 0, " + this);
         }
 
-        poolingDataSource.fireOnDestroy(connection);
-
         setState(STATE_CLOSED);
 
         // cleanup of pooled resources
@@ -162,6 +160,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
         connection.close();
         xaConnection.close();
+
+        poolingDataSource.fireOnDestroy(connection);
     }
 
     public RecoveryXAResourceHolder createRecoveryXAResourceHolder() {
