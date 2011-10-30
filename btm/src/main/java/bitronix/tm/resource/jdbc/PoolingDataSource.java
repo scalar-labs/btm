@@ -23,6 +23,9 @@ package bitronix.tm.resource.jdbc;
 import java.io.PrintWriter;
 import java.lang.reflect.*;
 import java.sql.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.naming.*;
 import javax.sql.*;
@@ -57,6 +60,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
 	private String cursorHoldability;
 	private String localAutoCommit;
     private String jmxName;
+    private final List connectionCustomizers = new CopyOnWriteArrayList();
 
     public PoolingDataSource() {
     }
@@ -188,6 +192,43 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     	this.localAutoCommit = localAutoCommit;
     }
 
+    public void addConnectionCustomizer(ConnectionCustomizer connectionCustomizer) {
+        connectionCustomizers.add(connectionCustomizer);
+    }
+
+    public void removeConnectionCustomizer(ConnectionCustomizer connectionCustomizer) {
+        Iterator it = connectionCustomizers.iterator();
+        while (it.hasNext()) {
+            ConnectionCustomizer customizer = (ConnectionCustomizer)it.next();
+            if (customizer == connectionCustomizer) {
+                it.remove();
+                return;
+            }
+        }
+    }
+
+    void fireOnAcquire(Connection connection) {
+        for (int i = 0; i < connectionCustomizers.size(); i++) {
+            ConnectionCustomizer connectionCustomizer = (ConnectionCustomizer)connectionCustomizers.get(i);
+            try {
+                connectionCustomizer.onAcquire(connection, getUniqueName());
+            } catch (Exception ex) {
+                log.warn("ConnectionCustomizer.onAcquire() failed for " + connectionCustomizer, ex);
+            }
+        }
+    }
+
+    void fireOnDestroy(Connection connection) {
+        for (int i = 0; i < connectionCustomizers.size(); i++) {
+            ConnectionCustomizer connectionCustomizer = (ConnectionCustomizer)connectionCustomizers.get(i);
+            try {
+                connectionCustomizer.onDestroy(connection, getUniqueName());
+            } catch (Exception ex) {
+                log.warn("ConnectionCustomizer.onDestroy() failed for " + connectionCustomizer, ex);
+            }
+        }
+    }
+
 
     /* Implementation of DataSource interface */
 
@@ -274,6 +315,8 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         if (log.isDebugEnabled()) log.debug("closing " + this);
         pool.close();
         pool = null;
+
+        connectionCustomizers.clear();
 
         ManagementRegistrar.unregister(jmxName);
         jmxName = null;

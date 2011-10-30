@@ -99,6 +99,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
         this.jmxName = "bitronix.tm:type=JDBC,UniqueName=" + ManagementRegistrar.makeValidName(poolingDataSource.getUniqueName()) + ",Id=" + poolingDataSource.incCreatedResourcesCounter();
         ManagementRegistrar.register(jmxName, this);
+
+        poolingDataSource.fireOnAcquire(connection);
     }
 
     private synchronized void detectJdbcVersion(Connection connection) {
@@ -148,6 +150,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         if (usageCount > 0) {
             if (log.isDebugEnabled()) log.debug("close connection with usage count > 0, " + this);
         }
+
+        poolingDataSource.fireOnDestroy(connection);
 
         setState(STATE_CLOSED);
 
