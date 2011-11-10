@@ -56,9 +56,8 @@ public final class Rollbacker extends AbstractPhaseEngine {
     }
 
     /**
-     * Rollback the current XA transaction. {@link bitronix.tm.internal.TransactionTimeoutException} won't be thrown
-     * while changing status but rather by some extra logic that will manually throw the exception after doing as much
-     * cleanup as possible.
+     * Rollback the current XA transaction. Transaction will not timeout while changing status but rather by some
+     * extra logic that will manually throw the exception after doing as much cleanup as possible.
      *
      * @param transaction the transaction to rollback.
      * @param interestedResources resources that should be rolled back.
