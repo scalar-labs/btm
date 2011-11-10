@@ -41,7 +41,7 @@ public class ResourceRegistrar {
 
     private final static Logger log = LoggerFactory.getLogger(ResourceRegistrar.class);
 
-    private static Map resources = new HashMap();
+    private final static Map<String, XAResourceProducer> resources = new HashMap<String, XAResourceProducer>();
 
     /**
      * Get a registered {@link XAResourceProducer}.
@@ -49,15 +49,15 @@ public class ResourceRegistrar {
      * @return the {@link XAResourceProducer} or null if there was none registered under that name.
      */
     public synchronized static XAResourceProducer get(String uniqueName) {
-        return (XAResourceProducer) resources.get(uniqueName);
+        return resources.get(uniqueName);
     }
 
     /**
      * Get all {@link XAResourceProducer}s unique names.
      * @return a Set containing all {@link bitronix.tm.resource.common.XAResourceProducer}s unique names.
      */
-    public synchronized static Set getResourcesUniqueNames() {
-        return new HashSet(resources.keySet());
+    public synchronized static Set<String> getResourcesUniqueNames() {
+        return Collections.unmodifiableSet(resources.keySet());
     }
 
     /**
@@ -102,10 +102,8 @@ public class ResourceRegistrar {
      * @return the associated {@link XAResourceHolder} or null if it cannot be found.
      */
     public synchronized static XAResourceHolder findXAResourceHolder(XAResource xaResource) {
-        Iterator it = resources.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            XAResourceProducer producer = (XAResourceProducer) entry.getValue();
+        for (Map.Entry<String, XAResourceProducer> entry : resources.entrySet()) {
+            XAResourceProducer producer = entry.getValue();
 
             XAResourceHolder resourceHolder = producer.findXAResourceHolder(xaResource);
             if (resourceHolder != null) {

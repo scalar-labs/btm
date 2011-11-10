@@ -30,7 +30,6 @@ import bitronix.tm.utils.Decoder;
 
 import java.util.Set;
 import java.util.Map;
-import java.util.Iterator;
 import java.util.HashSet;
 import java.io.IOException;
 
@@ -61,16 +60,14 @@ public class IncrementalRecoverer {
         try {
             XAResourceHolderState xaResourceHolderState = xaResourceProducer.startRecovery();
             boolean success = true;
-            Set xids = RecoveryHelper.recover(xaResourceHolderState);
+            Set<BitronixXid> xids = RecoveryHelper.recover(xaResourceHolderState);
             if (log.isDebugEnabled()) log.debug(xids.size() + " dangling transaction(s) found on resource");
             Map danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
             if (log.isDebugEnabled()) log.debug(danglingRecords.size() + " dangling transaction(s) found in journal");
 
             int commitCount = 0;
             int rollbackCount = 0;
-            Iterator it = xids.iterator();
-            while (it.hasNext()) {
-                BitronixXid xid = (BitronixXid) it.next();
+            for (BitronixXid xid : xids) {
                 Uid gtrid = xid.getGlobalTransactionIdUid();
 
                 TransactionLogRecord tlog = (TransactionLogRecord) danglingRecords.get(gtrid);
@@ -79,8 +76,7 @@ public class IncrementalRecoverer {
                     success &= RecoveryHelper.commit(xaResourceHolderState, xid);
                     updateJournal(xid.getGlobalTransactionIdUid(), uniqueName, Status.STATUS_COMMITTED);
                     commitCount++;
-                }
-                else {
+                } else {
                     if (log.isDebugEnabled()) log.debug("rolling back " + xid);
                     success &= RecoveryHelper.rollback(xaResourceHolderState, xid);
                     updateJournal(xid.getGlobalTransactionIdUid(), uniqueName, Status.STATUS_ROLLEDBACK);
@@ -119,7 +115,7 @@ public class IncrementalRecoverer {
 
     private static void updateJournal(Uid gtrid, String uniqueName, int status) throws IOException {
         if (log.isDebugEnabled()) log.debug("updating journal, adding " + Decoder.decodeStatus(status) + " entry for [" + uniqueName + "] on GTRID [" +  gtrid + "]");
-        Set participatingUniqueNames = new HashSet();
+        Set<String> participatingUniqueNames = new HashSet<String>();
         participatingUniqueNames.add(uniqueName);
         TransactionManagerServices.getJournal().log(status, gtrid, participatingUniqueNames);
     }

@@ -52,8 +52,8 @@ public class RecoveryHelper {
      * @param xaResourceHolderState the {@link XAResourceHolderState} to recover.
      * @throws javax.transaction.xa.XAException if {@link XAResource#recover(int)} calls fail.
      */
-    public static Set recover(XAResourceHolderState xaResourceHolderState) throws XAException {
-        Set xids = new HashSet();
+    public static Set<BitronixXid> recover(XAResourceHolderState xaResourceHolderState) throws XAException {
+        Set<BitronixXid> xids = new HashSet<BitronixXid>();
 
         if (log.isDebugEnabled()) log.debug("recovering with STARTRSCAN");
         int xidCount;
@@ -99,21 +99,20 @@ public class RecoveryHelper {
      * @param flags any combination of {@link XAResource#TMSTARTRSCAN}, {@link XAResource#TMNOFLAGS} or {@link XAResource#TMENDRSCAN}.
      * @throws javax.transaction.xa.XAException if {@link XAResource#recover(int)} call fails.
      */
-    private static int recover(XAResourceHolderState resourceHolderState, Set alreadyRecoveredXids, int flags) throws XAException {
+    private static int recover(XAResourceHolderState resourceHolderState, Set<BitronixXid> alreadyRecoveredXids, int flags) throws XAException {
         Xid[] xids = resourceHolderState.getXAResource().recover(flags);
         if (xids == null)
             return 0;
 
         boolean currentNodeOnly = TransactionManagerServices.getConfiguration().isCurrentNodeOnlyRecovery();
 
-        Set freshlyRecoveredXids = new HashSet();
-        for (int i = 0; i < xids.length; i++) {
-            Xid xid = xids[i];
+        Set<BitronixXid> freshlyRecoveredXids = new HashSet<BitronixXid>();
+        for (Xid xid : xids) {
             if (xid.getFormatId() != BitronixXid.FORMAT_ID) {
                 if (log.isDebugEnabled()) log.debug("skipping non-bitronix XID " + xid + "(format ID: " + xid.getFormatId() +
                      " GTRID: " + new Uid(xid.getGlobalTransactionId()) + "BQUAL: " + new Uid(xid.getBranchQualifier()) + ")");
                 continue;
-             }
+            }
 
             BitronixXid bitronixXid = new BitronixXid(xid);
 
@@ -134,8 +133,7 @@ public class RecoveryHelper {
                     if (log.isDebugEnabled()) log.debug("skipping XID " + bitronixXid + " as its GTRID's serverId <" + extractedServerIdString + "> does not match this JVM unique ID <" + jvmUniqueIdString + ">");
                     continue;
                 }
-            }
-            else {
+            } else {
                 if (log.isDebugEnabled()) log.debug("recovering all XIDs regardless of this JVM uniqueId");
             }
 

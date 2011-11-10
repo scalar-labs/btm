@@ -68,6 +68,6 @@ public interface Journal extends Service {
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
      * @throws IOException if an I/O error occurs.
      */
-    public Map collectDanglingRecords() throws IOException;
+    public Map<Uid, TransactionLogRecord> collectDanglingRecords() throws IOException;
 
 }

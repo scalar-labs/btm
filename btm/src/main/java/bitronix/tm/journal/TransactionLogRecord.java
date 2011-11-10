@@ -69,7 +69,7 @@ public class TransactionLogRecord {
     private int sequenceNumber;
     private int crc32;
     private Uid gtrid;
-    private SortedSet uniqueNames;
+    private SortedSet<String> uniqueNames;
     private int endRecord;
 
     /**
@@ -141,7 +141,7 @@ public class TransactionLogRecord {
         return gtrid;
     }
 
-    public Set getUniqueNames() {
+    public Set<String> getUniqueNames() {
         return Collections.unmodifiableSortedSet(uniqueNames);
     }
 
