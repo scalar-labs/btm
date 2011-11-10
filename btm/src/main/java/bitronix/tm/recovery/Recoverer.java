@@ -40,6 +40,7 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Recovery process implementation. Here is Mike Spille's description of XA recovery:
@@ -507,42 +508,6 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 resourcesUniqueNames.append(", ");
         }
         return resourcesUniqueNames.toString();
-    }
-
-    /**
-     * A boolean value that may be updated atomically. This is a simplified subset of the JDK 1.5+
-     * java.util.concurrent.atomic.AtomicBoolean class.
-     */
-    private static class AtomicBoolean {
-        private boolean value;
-
-        public AtomicBoolean(boolean value) {
-            this.value = value;
-        }
-
-        public synchronized boolean get() {
-            return value;
-        }
-
-        public synchronized void set(boolean value) {
-            this.value = value;
-        }
-
-        /**
-         * Atomically sets the value to the given updated value if the current value == the expected value.
-         *
-         * @param expect the expected value.
-         * @param update the new value.
-         * @return true if successful. False return indicates that the actual value was not equal to the expected value.
-         */
-        public synchronized boolean compareAndSet(boolean expect, boolean update) {
-            if (this.value == expect) {
-                this.value = update;
-                return true;
-            }
-            return false;
-        }
-
     }
 
 }

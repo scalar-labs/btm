@@ -21,13 +21,13 @@
 package bitronix.tm.journal;
 
 import bitronix.tm.utils.Encoder;
-import bitronix.tm.utils.UidGenerator;
 import bitronix.tm.utils.*;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
 /**
@@ -59,6 +59,8 @@ import java.util.zip.CRC32;
 public class TransactionLogRecord {
 
     private final static Logger log = LoggerFactory.getLogger(TransactionLogRecord.class);
+
+    private final static AtomicInteger sequenceGenerator = new AtomicInteger();
 
     private int status;
     private int recordLength;
@@ -103,7 +105,7 @@ public class TransactionLogRecord {
     public TransactionLogRecord(int status, Uid gtrid, Set uniqueNames) {
         this.status = status;
         time = System.currentTimeMillis();
-        sequenceNumber = UidGenerator.getNextSequenceNumber();
+        sequenceNumber = sequenceGenerator.incrementAndGet();
         this.gtrid = gtrid;
         this.uniqueNames = new TreeSet(uniqueNames);
         endRecord = TransactionLogAppender.END_RECORD;

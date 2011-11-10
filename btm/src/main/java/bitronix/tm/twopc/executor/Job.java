@@ -31,11 +31,11 @@ import javax.transaction.xa.XAException;
  * @author lorban
  */
 public abstract class Job implements Runnable {
-    private Object future;
-    private XAResourceHolderState resourceHolder;
+    private final XAResourceHolderState resourceHolder;
 
-    protected XAException xaException;
-    protected RuntimeException runtimeException;
+    private volatile Object future;
+    protected volatile XAException xaException;
+    protected volatile RuntimeException runtimeException;
 
     public Job(XAResourceHolderState resourceHolder) {
         this.resourceHolder = resourceHolder;
@@ -62,12 +62,17 @@ public abstract class Job implements Runnable {
     }
 
     public final void run() {
+        String oldThreadName = null;
         if (TransactionManagerServices.getConfiguration().isAsynchronous2Pc()) {
+            oldThreadName = Thread.currentThread().getName();
             Thread.currentThread().setName("bitronix-2pc [ " +
                     resourceHolder.getXid().toString() +
                     " ]");
         }
         execute();
+        if (oldThreadName != null) {
+            Thread.currentThread().setName(oldThreadName);
+        }
     }
 
     protected abstract void execute();

@@ -39,10 +39,6 @@ public class SyncExecutor implements Executor {
         return true;
     }
 
-    public boolean isUsable() {
-        return true;
-    }
-
     public void shutdown() {
     }
 }
