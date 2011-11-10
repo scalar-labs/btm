@@ -42,7 +42,7 @@ public abstract class AbstractPhaseEngine {
 
     private final static Logger log = LoggerFactory.getLogger(AbstractPhaseEngine.class);
 
-    private Executor executor;
+    private final Executor executor;
 
     protected AbstractPhaseEngine(Executor executor) {
         this.executor = executor;
@@ -60,7 +60,7 @@ public abstract class AbstractPhaseEngine {
      * @see bitronix.tm.twopc.executor.AsyncExecutor
      */
     protected void executePhase(XAResourceManager resourceManager, boolean reverse) throws PhaseException {
-        SortedSet positions;
+        SortedSet<Integer> positions;
         if (reverse) {
             positions = resourceManager.getReverseOrderPositions();
             if (log.isDebugEnabled()) log.debug("executing phase on " + resourceManager.size() + " resource(s) enlisted in " + positions.size() + " position(s) in reverse position order");
@@ -70,17 +70,13 @@ public abstract class AbstractPhaseEngine {
             if (log.isDebugEnabled()) log.debug("executing phase on " + resourceManager.size() + " resource(s) enlisted in " + positions.size() + " position(s) in natural position order");
         }
 
-        List positionErrorReports = new ArrayList();
+        List<JobsExecutionReport> positionErrorReports = new ArrayList<JobsExecutionReport>();
 
-        Iterator it = positions.iterator();
-        while (it.hasNext()) {
-            Object positionKey = it.next();
-            
-            List resources;
+        for (Integer positionKey : positions) {
+            List<XAResourceHolderState> resources;
             if (reverse) {
                 resources = resourceManager.getReverseOrderResourcesForPosition(positionKey);
-            }
-            else {
+            } else {
                 resources = resourceManager.getNaturalOrderResourcesForPosition(positionKey);
             }
 
@@ -96,11 +92,10 @@ public abstract class AbstractPhaseEngine {
 
         if (positionErrorReports.size() > 0) {
             // merge all resources and exceptions lists
-            List exceptions = new ArrayList();
-            List resources = new ArrayList();
+            List<Exception> exceptions = new ArrayList<Exception>();
+            List<XAResourceHolderState> resources = new ArrayList<XAResourceHolderState>();
 
-            for (int i = 0; i < positionErrorReports.size(); i++) {
-                JobsExecutionReport report = (JobsExecutionReport) positionErrorReports.get(i);
+            for (JobsExecutionReport report : positionErrorReports) {
                 exceptions.addAll(report.getExceptions());
                 resources.addAll(report.getResources());
             }
@@ -109,30 +104,26 @@ public abstract class AbstractPhaseEngine {
         }
     }
 
-    private JobsExecutionReport runJobsForPosition(List resources) {
-        Iterator it = resources.iterator();
-        List jobs = new ArrayList();
-        List exceptions = new ArrayList();
-        List errorResources = new ArrayList();
+    private JobsExecutionReport runJobsForPosition(List<XAResourceHolderState> resources) {
+        List<Job> jobs = new ArrayList<Job>();
+        List<Exception> exceptions = new ArrayList<Exception>();
+        List<XAResourceHolderState> errorResources = new ArrayList<XAResourceHolderState>();
 
         // start threads
-        while (it.hasNext()) {
-            XAResourceHolderState resourceHolderState = (XAResourceHolderState) it.next();
-            if (!isParticipating(resourceHolderState)) {
-                if (log.isDebugEnabled()) log.debug("skipping not participating resource " + resourceHolderState);
+        for (XAResourceHolderState resource : resources) {
+            if (!isParticipating(resource)) {
+                if (log.isDebugEnabled()) log.debug("skipping not participating resource " + resource);
                 continue;
             }
 
-            Job job = createJob(resourceHolderState);
+            Job job = createJob(resource);
             Object future = executor.submit(job);
             job.setFuture(future);
             jobs.add(job);
         }
 
         // wait for threads to finish and check results
-        for (int i = 0; i < jobs.size(); i++) {
-            Job job = (Job) jobs.get(i);
-
+        for (Job job : jobs) {
             Object future = job.getFuture();
             while (!executor.isDone(future)) {
                 executor.waitFor(future, 1000L);
@@ -176,34 +167,30 @@ public abstract class AbstractPhaseEngine {
      * @param ex the phase exception.
      */
     protected void logFailedResources(PhaseException ex) {
-        List exceptions = ex.getExceptions();
-        List resources = ex.getResourceStates();
+        List<Exception> exceptions = ex.getExceptions();
+        List<XAResourceHolderState> resources = ex.getResourceStates();
 
         for (int i = 0; i < exceptions.size(); i++) {
-            Throwable t = (Throwable) exceptions.get(i);
-            XAResourceHolderState holderState = (XAResourceHolderState) resources.get(i);
-            log.error("resource " + holderState.getUniqueName() + " failed on " + holderState.getXid(), t);
+            Exception e = exceptions.get(i);
+            XAResourceHolderState holderState = resources.get(i);
+            log.error("resource " + holderState.getUniqueName() + " failed on " + holderState.getXid(), e);
         }
     }
 
-    protected static Set collectResourcesUniqueNames(List resources) {
-        Set uniqueNames = new HashSet();
+    protected static Set<String> collectResourcesUniqueNames(List<XAResourceHolderState> resources) {
+        Set<String> uniqueNames = new HashSet<String>();
 
-        for (int i = 0; i < resources.size(); i++) {
-            XAResourceHolderState resourceHolderState = (XAResourceHolderState) resources.get(i);
-            String uniqueName = resourceHolderState.getUniqueName();
-            uniqueNames.add(uniqueName);
+        for (XAResourceHolderState resourceHolderState : resources) {
+            uniqueNames.add(resourceHolderState.getUniqueName());
         }
 
         return uniqueNames;
     }
 
-    protected static List collectNotInterestedResources(List allResources, List interestedResources) {
-        List result = new ArrayList();
+    protected static List<XAResourceHolderState> collectNotInterestedResources(List<XAResourceHolderState> allResources, List<XAResourceHolderState> interestedResources) {
+        List<XAResourceHolderState> result = new ArrayList<XAResourceHolderState>();
 
-        for (int i = 0; i < allResources.size(); i++) {
-            XAResourceHolderState resourceHolderState = (XAResourceHolderState) allResources.get(i);
-
+        for (XAResourceHolderState resourceHolderState : allResources) {
             if (!CollectionUtils.containsByIdentity(interestedResources, resourceHolderState))
                 result.add(resourceHolderState);
         }
@@ -212,19 +199,19 @@ public abstract class AbstractPhaseEngine {
     }
 
     private final static class JobsExecutionReport {
-        private List exceptions;
-        private List resources;
+        private final List<Exception> exceptions;
+        private final List<XAResourceHolderState> resources;
 
-        private JobsExecutionReport(List exceptions, List resources) {
-            this.exceptions = exceptions;
-            this.resources = resources;
+        private JobsExecutionReport(List<Exception> exceptions, List<XAResourceHolderState> resources) {
+            this.exceptions = Collections.unmodifiableList(exceptions);
+            this.resources = Collections.unmodifiableList(resources);
         }
 
-        public List getExceptions() {
+        public List<Exception> getExceptions() {
             return exceptions;
         }
 
-        public List getResources() {
+        public List<XAResourceHolderState> getResources() {
             return resources;
         }
     }

@@ -40,12 +40,12 @@ import java.util.*;
  *
  * @author lorban
  */
-public class Preparer extends AbstractPhaseEngine {
+public final class Preparer extends AbstractPhaseEngine {
 
     private final static Logger log = LoggerFactory.getLogger(Preparer.class);
 
     // this list has to be thread-safe as the PrepareJobs can be executed in parallel (when async 2PC is configured)
-    private final List preparedResources = Collections.synchronizedList(new ArrayList());
+    private final List<XAResourceHolderState> preparedResources = Collections.synchronizedList(new ArrayList<XAResourceHolderState>());
 
     public Preparer(Executor executor) {
         super(executor);
@@ -59,9 +59,10 @@ public class Preparer extends AbstractPhaseEngine {
      * @throws RollbackException when an error occured that can be fixed with a rollback.
      * @throws bitronix.tm.internal.BitronixSystemException when an internal error occured.
      */
-    public List prepare(BitronixTransaction transaction) throws RollbackException, BitronixSystemException {
+    public List<XAResourceHolderState> prepare(BitronixTransaction transaction) throws RollbackException, BitronixSystemException {
         XAResourceManager resourceManager = transaction.getResourceManager();
         transaction.setStatus(Status.STATUS_PREPARING);
+        preparedResources.clear();
 
         if (resourceManager.size() == 0) {
             if (TransactionManagerServices.getConfiguration().isWarnAboutZeroResourceTransaction())
@@ -75,7 +76,7 @@ public class Preparer extends AbstractPhaseEngine {
 
         // 1PC optimization
         if (resourceManager.size() == 1) {
-            XAResourceHolderState resourceHolder = (XAResourceHolderState) resourceManager.getAllResources().get(0);
+            XAResourceHolderState resourceHolder = resourceManager.getAllResources().get(0);
 
             preparedResources.add(resourceHolder);
             if (log.isDebugEnabled()) log.debug("1 resource enlisted, no prepare needed (1PC)");
@@ -92,19 +93,19 @@ public class Preparer extends AbstractPhaseEngine {
 
         transaction.setStatus(Status.STATUS_PREPARED);
         if (log.isDebugEnabled()) log.debug("successfully prepared " + preparedResources.size() + " resource(s)");
-        return preparedResources;
+        return Collections.unmodifiableList(preparedResources);
     }
 
     private void throwException(String message, PhaseException phaseException) throws BitronixRollbackException {
-        List exceptions = phaseException.getExceptions();
-        List resources = phaseException.getResourceStates();
+        List<Exception> exceptions = phaseException.getExceptions();
+        List<XAResourceHolderState> resources = phaseException.getResourceStates();
 
-        List heuristicResources = new ArrayList();
-        List errorResources = new ArrayList();
+        List<XAResourceHolderState> heuristicResources = new ArrayList<XAResourceHolderState>();
+        List<XAResourceHolderState> errorResources = new ArrayList<XAResourceHolderState>();
 
         for (int i = 0; i < exceptions.size(); i++) {
-            Exception ex = (Exception) exceptions.get(i);
-            XAResourceHolderState resourceHolder = (XAResourceHolderState) resources.get(i);
+            Exception ex = exceptions.get(i);
+            XAResourceHolderState resourceHolder = resources.get(i);
             if (ex instanceof XAException) {
                 XAException xaEx = (XAException) ex;
                 /**
@@ -140,7 +141,7 @@ public class Preparer extends AbstractPhaseEngine {
     }
 
 
-    private class PrepareJob extends Job {
+    private final class PrepareJob extends Job {
         public PrepareJob(XAResourceHolderState resourceHolder) {
             super(resourceHolder);
         }

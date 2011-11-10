@@ -51,9 +51,9 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     private boolean timeout = false;
     private Date timeoutDate;
 
-    private Preparer preparer = new Preparer(TransactionManagerServices.getExecutor());
-    private Committer committer = new Committer(TransactionManagerServices.getExecutor());
-    private Rollbacker rollbacker = new Rollbacker(TransactionManagerServices.getExecutor());
+    private final Preparer preparer = new Preparer(TransactionManagerServices.getExecutor());
+    private final Committer committer = new Committer(TransactionManagerServices.getExecutor());
+    private final Rollbacker rollbacker = new Rollbacker(TransactionManagerServices.getExecutor());
 
     /* management */
     private String threadName;
@@ -206,7 +206,8 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         } catch (BitronixRollbackException ex) {
             if (log.isDebugEnabled()) log.debug("delistment error causing transaction rollback", ex);
             rollback();
-            throw new BitronixRollbackException("delistment error caused transaction rollback", ex);
+            // the caught BitronixRollbackException's message is pre-formatted to be appended to this message
+            throw new BitronixRollbackException("delistment error caused transaction rollback" + ex.getMessage());
         }
 
         if (status == Status.STATUS_MARKED_ROLLBACK) {
@@ -441,7 +442,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
      * @throws BitronixSystemException when a resource could not rollback prepapared state.
      */
     private void rollbackPrepareFailure(RollbackException rbEx) throws BitronixSystemException {
-        List interestedResources = resourceManager.getAllResources();
+        List<XAResourceHolderState> interestedResources = resourceManager.getAllResources();
         try {
             rollbacker.rollback(this, interestedResources);
             if (log.isDebugEnabled()) log.debug("rollback after prepare failure succeeded");
@@ -450,8 +451,8 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             PhaseException preparePhaseEx = (PhaseException) rbEx.getCause();
             PhaseException rollbackPhaseEx = (PhaseException) ex.getCause();
 
-            List exceptions = new ArrayList();
-            List resources = new ArrayList();
+            List<Exception> exceptions = new ArrayList<Exception>();
+            List<XAResourceHolderState> resources = new ArrayList<XAResourceHolderState>();
 
             exceptions.addAll(preparePhaseEx.getExceptions());
             exceptions.addAll(rollbackPhaseEx.getExceptions());

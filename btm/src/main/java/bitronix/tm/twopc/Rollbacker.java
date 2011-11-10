@@ -36,19 +36,20 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * Phase 1 & 2 Rollback logic engine.
  *
  * @author lorban
  */
-public class Rollbacker extends AbstractPhaseEngine {
+public final class Rollbacker extends AbstractPhaseEngine {
 
     private final static Logger log = LoggerFactory.getLogger(Rollbacker.class);
 
-    private List interestedResources;
+    private final List<XAResourceHolderState> interestedResources = Collections.synchronizedList(new ArrayList<XAResourceHolderState>());
     // this list has to be thread-safe as the RollbackJobs can be executed in parallel (when async 2PC is configured)
-    private final List rolledbackResources = Collections.synchronizedList(new ArrayList());
+    private final List<XAResourceHolderState> rolledbackResources = Collections.synchronizedList(new ArrayList<XAResourceHolderState>());
 
     public Rollbacker(Executor executor) {
         super(executor);
@@ -65,10 +66,11 @@ public class Rollbacker extends AbstractPhaseEngine {
      * @throws HeuristicMixedException when some resources committed and some rolled back.
      * @throws bitronix.tm.internal.BitronixSystemException when an internal error occured.
      */
-    public void rollback(BitronixTransaction transaction, List interestedResources) throws HeuristicMixedException, HeuristicCommitException, BitronixSystemException {
+    public void rollback(BitronixTransaction transaction, List<XAResourceHolderState> interestedResources) throws HeuristicMixedException, HeuristicCommitException, BitronixSystemException {
         XAResourceManager resourceManager = transaction.getResourceManager();
         transaction.setStatus(Status.STATUS_ROLLING_BACK);
-        this.interestedResources = Collections.unmodifiableList(interestedResources);
+        this.interestedResources.clear();
+        this.interestedResources.addAll(interestedResources);
 
         try {
             executePhase(resourceManager, true);
@@ -85,33 +87,33 @@ public class Rollbacker extends AbstractPhaseEngine {
         // ones should be picked up by the recoverer.
         // Not interested resources have to be included as well since they returned XA_RDONLY and they
         // don't participate in phase 2: the TX succeded for them.
-        List rolledbackAndNotInterestedUniqueNames = new ArrayList();
+        Set<String> rolledbackAndNotInterestedUniqueNames = new HashSet<String>();
         rolledbackAndNotInterestedUniqueNames.addAll(collectResourcesUniqueNames(rolledbackResources));
-        List notInterestedResources = collectNotInterestedResources(resourceManager.getAllResources(), interestedResources);
+        List<XAResourceHolderState> notInterestedResources = collectNotInterestedResources(resourceManager.getAllResources(), interestedResources);
         rolledbackAndNotInterestedUniqueNames.addAll(collectResourcesUniqueNames(notInterestedResources));
 
         if (log.isDebugEnabled()) {
-            List rolledbackAndNotInterestedResources = new ArrayList();
+            List<XAResourceHolderState> rolledbackAndNotInterestedResources = new ArrayList<XAResourceHolderState>();
             rolledbackAndNotInterestedResources.addAll(rolledbackResources);
             rolledbackAndNotInterestedResources.addAll(notInterestedResources);
 
             log.debug("rollback succeeded on resources " + Decoder.collectResourcesNames(rolledbackAndNotInterestedResources));
         }
 
-        transaction.setStatus(Status.STATUS_ROLLEDBACK, new HashSet(rolledbackAndNotInterestedUniqueNames));
+        transaction.setStatus(Status.STATUS_ROLLEDBACK, rolledbackAndNotInterestedUniqueNames);
     }
 
     private void throwException(String message, PhaseException phaseException, int totalResourceCount) throws HeuristicMixedException, HeuristicCommitException {
-        List exceptions = phaseException.getExceptions();
-        List resources = phaseException.getResourceStates();
+        List<Exception> exceptions = phaseException.getExceptions();
+        List<XAResourceHolderState> resources = phaseException.getResourceStates();
 
         boolean hazard = false;
-        List heuristicResources = new ArrayList();
-        List errorResources = new ArrayList();
+        List<XAResourceHolderState> heuristicResources = new ArrayList<XAResourceHolderState>();
+        List<XAResourceHolderState> errorResources = new ArrayList<XAResourceHolderState>();
 
         for (int i = 0; i < exceptions.size(); i++) {
-            Exception ex = (Exception) exceptions.get(i);
-            XAResourceHolderState resourceHolder = (XAResourceHolderState) resources.get(i);
+            Exception ex = exceptions.get(i);
+            XAResourceHolderState resourceHolder = resources.get(i);
             if (ex instanceof XAException) {
                 XAException xaEx = (XAException) ex;
                 switch (xaEx.errorCode) {
@@ -147,15 +149,14 @@ public class Rollbacker extends AbstractPhaseEngine {
     }
 
     protected boolean isParticipating(XAResourceHolderState xaResourceHolderState) {
-        for (int i = 0; i < interestedResources.size(); i++) {
-            XAResourceHolderState resourceHolderState = (XAResourceHolderState) interestedResources.get(i);
+        for (XAResourceHolderState resourceHolderState : interestedResources) {
             if (xaResourceHolderState == resourceHolderState)
                 return true;
         }
         return false;
     }
 
-    private class RollbackJob extends Job {
+    private final class RollbackJob extends Job {
 
         public RollbackJob(XAResourceHolderState resourceHolder) {
             super(resourceHolder);

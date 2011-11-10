@@ -29,9 +29,9 @@ import java.util.Arrays;
  */
 public final class Uid {
 
-    private byte[] array;
-    private int hashCodeValue;
-    private String toStringValue;
+    private final byte[] array;
+    private final int hashCodeValue;
+    private final String toStringValue;
 
     public Uid(byte[] array) {
         this.array = new byte[array.length];

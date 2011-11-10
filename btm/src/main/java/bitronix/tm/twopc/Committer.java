@@ -36,20 +36,21 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * Phase 2 Commit logic engine.
  *
  * @author lorban
  */
-public class Committer extends AbstractPhaseEngine {
+public final class Committer extends AbstractPhaseEngine {
 
     private final static Logger log = LoggerFactory.getLogger(Committer.class);
 
-    private boolean onePhase;
-    private List interestedResources;
+    private volatile boolean onePhase;
+    private final List<XAResourceHolderState> interestedResources = Collections.synchronizedList(new ArrayList<XAResourceHolderState>());
     // this list has to be thread-safe as the CommitJobs can be executed in parallel (when async 2PC is configured)
-    private final List committedResources = Collections.synchronizedList(new ArrayList());
+    private final List<XAResourceHolderState> committedResources = Collections.synchronizedList(new ArrayList<XAResourceHolderState>());
 
 
     public Committer(Executor executor) {
@@ -64,7 +65,7 @@ public class Committer extends AbstractPhaseEngine {
      * @throws HeuristicMixedException when some resources committed and some rolled back.
      * @throws bitronix.tm.internal.BitronixSystemException when an internal error occured.
      */
-    public void commit(BitronixTransaction transaction, List interestedResources) throws HeuristicMixedException, HeuristicRollbackException, BitronixSystemException {
+    public void commit(BitronixTransaction transaction, List<XAResourceHolderState> interestedResources) throws HeuristicMixedException, HeuristicRollbackException, BitronixSystemException {
         XAResourceManager resourceManager = transaction.getResourceManager();
         if (resourceManager.size() == 0) {
             transaction.setStatus(Status.STATUS_COMMITTING); //TODO: there is a disk force here that could be avoided
@@ -75,7 +76,8 @@ public class Committer extends AbstractPhaseEngine {
 
         transaction.setStatus(Status.STATUS_COMMITTING);
 
-        this.interestedResources = Collections.unmodifiableList(interestedResources);
+        this.interestedResources.clear();
+        this.interestedResources.addAll(interestedResources);
         this.onePhase = resourceManager.size() == 1;
 
         try {
@@ -93,33 +95,33 @@ public class Committer extends AbstractPhaseEngine {
         // ones should be picked up by the recoverer.
         // Not interested resources have to be included as well since they returned XA_RDONLY and they
         // don't participate in phase 2: the TX succeded for them.
-        List committedAndNotInterestedUniqueNames = new ArrayList();
+        Set<String> committedAndNotInterestedUniqueNames = new HashSet<String>();
         committedAndNotInterestedUniqueNames.addAll(collectResourcesUniqueNames(committedResources));
-        List notInterestedResources = collectNotInterestedResources(resourceManager.getAllResources(), interestedResources);
+        List<XAResourceHolderState> notInterestedResources = collectNotInterestedResources(resourceManager.getAllResources(), interestedResources);
         committedAndNotInterestedUniqueNames.addAll(collectResourcesUniqueNames(notInterestedResources));
 
         if (log.isDebugEnabled()) {
-            List committedAndNotInterestedResources = new ArrayList();
+            List<XAResourceHolderState> committedAndNotInterestedResources = new ArrayList<XAResourceHolderState>();
             committedAndNotInterestedResources.addAll(committedResources);
             committedAndNotInterestedResources.addAll(notInterestedResources);
 
             log.debug("phase 2 commit succeeded on resources " + Decoder.collectResourcesNames(committedAndNotInterestedResources));
         }
 
-        transaction.setStatus(Status.STATUS_COMMITTED, new HashSet(committedAndNotInterestedUniqueNames));
+        transaction.setStatus(Status.STATUS_COMMITTED, committedAndNotInterestedUniqueNames);
     }
 
     private void throwException(String message, PhaseException phaseException, int totalResourceCount) throws HeuristicMixedException, HeuristicRollbackException {
-        List exceptions = phaseException.getExceptions();
-        List resources = phaseException.getResourceStates();
+        List<Exception> exceptions = phaseException.getExceptions();
+        List<XAResourceHolderState> resources = phaseException.getResourceStates();
 
         boolean hazard = false;
-        List heuristicResources = new ArrayList();
-        List errorResources = new ArrayList();
+        List<XAResourceHolderState> heuristicResources = new ArrayList<XAResourceHolderState>();
+        List<XAResourceHolderState> errorResources = new ArrayList<XAResourceHolderState>();
 
         for (int i = 0; i < exceptions.size(); i++) {
-            Exception ex = (Exception) exceptions.get(i);
-            XAResourceHolderState resourceHolder = (XAResourceHolderState) resources.get(i);
+            Exception ex = exceptions.get(i);
+            XAResourceHolderState resourceHolder = resources.get(i);
             if (ex instanceof XAException) {
                 XAException xaEx = (XAException) ex;
                 switch (xaEx.errorCode) {
@@ -155,8 +157,7 @@ public class Committer extends AbstractPhaseEngine {
     }
 
     protected boolean isParticipating(XAResourceHolderState xaResourceHolderState) {
-        for (int i = 0; i < interestedResources.size(); i++) {
-            XAResourceHolderState resourceHolderState = (XAResourceHolderState) interestedResources.get(i);
+        for (XAResourceHolderState resourceHolderState : interestedResources) {
             if (xaResourceHolderState == resourceHolderState)
                 return true;
         }
@@ -164,7 +165,7 @@ public class Committer extends AbstractPhaseEngine {
     }
 
 
-    private class CommitJob extends Job {
+    private final class CommitJob extends Job {
 
         public CommitJob(XAResourceHolderState resourceHolder) {
             super(resourceHolder);
