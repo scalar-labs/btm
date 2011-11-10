@@ -114,6 +114,18 @@ public class DiskJournalTest extends TestCase {
         journal.log(Status.STATUS_COMMITTED, gtrid2, csvToSet("name3,name1"));
         assertEquals(0, journal.collectDanglingRecords().size());
 
+        journal.log(Status.STATUS_COMMITTING, gtrid2, csvToSet("name1,name2,name3"));
+        assertEquals(1, journal.collectDanglingRecords().size());
+
+        journal.log(Status.STATUS_UNKNOWN, gtrid2, csvToSet("name2"));
+        assertEquals(1, journal.collectDanglingRecords().size());
+
+        journal.log(Status.STATUS_COMMITTED, gtrid2, csvToSet("name1"));
+        assertEquals(1, journal.collectDanglingRecords().size());
+
+        journal.log(Status.STATUS_COMMITTED, gtrid2, csvToSet("name3"));
+        assertEquals(0, journal.collectDanglingRecords().size());
+
         journal.close();
     }
 
