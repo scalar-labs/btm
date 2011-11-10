@@ -42,8 +42,8 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionManager.class);
     private final static String MDC_GTRID_KEY = "btm-gtrid";
 
-    private final Map contexts = Collections.synchronizedMap(new HashMap());
-    private final Map inFlightTransactions = Collections.synchronizedMap(new HashMap());
+    private final Map<Thread, ThreadContext> contexts = Collections.synchronizedMap(new HashMap<Thread, ThreadContext>());
+    private final Map<Uid, BitronixTransaction> inFlightTransactions = Collections.synchronizedMap(new HashMap<Uid, BitronixTransaction>());
 
     private volatile boolean shuttingDown;
 
@@ -232,10 +232,8 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
             long oldestTimestamp = Long.MAX_VALUE;
 
-            Iterator it = inFlightTransactions.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry entry = (Map.Entry) it.next();
-                Uid gtrid = (Uid) entry.getKey();
+            for (Map.Entry<Uid, BitronixTransaction> entry : inFlightTransactions.entrySet()) {
+                Uid gtrid = entry.getKey();
                 long currentTimestamp = gtrid.extractTimestamp();
 
                 if (currentTimestamp < oldestTimestamp)
@@ -272,10 +270,8 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         if (log.isDebugEnabled()) {
             if (log.isDebugEnabled()) log.debug("dumping " + inFlightTransactions.size() + " transaction context(s)");
             synchronized (inFlightTransactions) {
-                Iterator it = inFlightTransactions.entrySet().iterator();
-                while (it.hasNext()) {
-                    Map.Entry entry = (Map.Entry) it.next();
-                    BitronixTransaction tx = (BitronixTransaction) entry.getValue();
+                for (Map.Entry<Uid, BitronixTransaction> entry : inFlightTransactions.entrySet()) {
+                    BitronixTransaction tx = entry.getValue();
                     if (log.isDebugEnabled()) log.debug(tx.toString());
                 }
             } // synchronized (inFlightTransactions)

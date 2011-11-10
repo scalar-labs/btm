@@ -48,8 +48,8 @@ public class BitronixXid implements Xid {
      */
     public static final int FORMAT_ID = 0x42746e78;
 
-    private Uid globalTransactionId;
-    private Uid branchQualifier;
+    private final Uid globalTransactionId;
+    private final Uid branchQualifier;
 
     /**
      * Create a new XID using the specified GTRID and BQUAL.
@@ -103,7 +103,7 @@ public class BitronixXid implements Xid {
      * @return a human-readable string representation.
      */
     public String toString() {
-        StringBuffer sb = new StringBuffer(288);
+        StringBuilder sb = new StringBuilder(288);
         sb.append("a Bitronix XID [");
         sb.append(globalTransactionId.toString());
         sb.append(" : ");

@@ -263,7 +263,7 @@ public class XAResourceManager {
      * @return a {@link Set} of unique names of all the enlisted {@link XAResourceHolderState}s.
      */
     public Set<String> collectUniqueNames() {
-        Set<String> names = new HashSet<String>();
+        Set<String> names = new HashSet<String>(resources.size());
         Iterator<XAResourceHolderState> it = resources.iterator();
         while (it.hasNext()) {
             XAResourceHolderState xaResourceHolderState = it.next();
@@ -273,27 +273,27 @@ public class XAResourceManager {
     }
 
     public SortedSet<Integer> getNaturalOrderPositions() {
-        return resources.getNaturalOrderPositions();
+        return Collections.unmodifiableSortedSet(resources.getNaturalOrderPositions());
     }
 
     public SortedSet<Integer> getReverseOrderPositions() {
-        return resources.getReverseOrderPositions();
+        return Collections.unmodifiableSortedSet(resources.getReverseOrderPositions());
     }
 
     public List<XAResourceHolderState> getNaturalOrderResourcesForPosition(Integer position) {
-        return resources.getByNaturalOrderForPosition(position);
+        return Collections.unmodifiableList(resources.getByNaturalOrderForPosition(position));
     }
 
     public List<XAResourceHolderState> getReverseOrderResourcesForPosition(Integer position) {
-        return resources.getByReverseOrderForPosition(position);
+        return Collections.unmodifiableList(resources.getByReverseOrderForPosition(position));
     }
 
     public List<XAResourceHolderState> getAllResources() {
-        List<XAResourceHolderState> result = new ArrayList<XAResourceHolderState>();
+        List<XAResourceHolderState> result = new ArrayList<XAResourceHolderState>(resources.size());
         for (Integer positionKey : resources.getNaturalOrderPositions()) {
             result.addAll(resources.getByNaturalOrderForPosition(positionKey));
         }
-        return result;
+        return Collections.unmodifiableList(result);
     }
 
     /**

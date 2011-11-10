@@ -49,27 +49,27 @@ public class Configuration implements Service {
 
     private final static int MAX_SERVER_ID_LENGTH = 51;
 
-    private String serverId;
-    private byte[] serverIdArray;
-    private String logPart1Filename;
-    private String logPart2Filename;
-    private boolean forcedWriteEnabled;
-    private boolean forceBatchingEnabled;
-    private int maxLogSizeInMb;
-    private boolean filterLogStatus;
-    private boolean skipCorruptedLogs;
-    private boolean asynchronous2Pc;
-    private boolean warnAboutZeroResourceTransaction;
-    private int defaultTransactionTimeout;
-    private int gracefulShutdownInterval;
-    private int backgroundRecoveryIntervalSeconds;
-    private boolean disableJmx;
-    private String jndiUserTransactionName;
-    private String jndiTransactionSynchronizationRegistryName;
-    private String journal;
-    private boolean currentNodeOnlyRecovery;
-    private boolean allowMultipleLrc;
-    private String resourceConfigurationFilename;
+    private volatile String serverId;
+    private volatile byte[] serverIdArray;
+    private volatile String logPart1Filename;
+    private volatile String logPart2Filename;
+    private volatile boolean forcedWriteEnabled;
+    private volatile boolean forceBatchingEnabled;
+    private volatile int maxLogSizeInMb;
+    private volatile boolean filterLogStatus;
+    private volatile boolean skipCorruptedLogs;
+    private volatile boolean asynchronous2Pc;
+    private volatile boolean warnAboutZeroResourceTransaction;
+    private volatile int defaultTransactionTimeout;
+    private volatile int gracefulShutdownInterval;
+    private volatile int backgroundRecoveryIntervalSeconds;
+    private volatile boolean disableJmx;
+    private volatile String jndiUserTransactionName;
+    private volatile String jndiTransactionSynchronizationRegistryName;
+    private volatile String journal;
+    private volatile boolean currentNodeOnlyRecovery;
+    private volatile boolean allowMultipleLrc;
+    private volatile String resourceConfigurationFilename;
 
 
     protected Configuration() {
@@ -625,7 +625,7 @@ public class Configuration implements Service {
     }
 
     public String toString() {
-        StringBuffer sb = new StringBuffer(512);
+        StringBuilder sb = new StringBuilder(512);
         sb.append("a Configuration with [");
 
         try {
@@ -659,7 +659,7 @@ public class Configuration implements Service {
     }
 
     static boolean getBoolean(Properties properties, String key, boolean defaultValue) {
-        return Boolean.valueOf(getString(properties, key, "" + defaultValue)).booleanValue();
+        return Boolean.valueOf(getString(properties, key, "" + defaultValue));
     }
 
     static int getInt(Properties properties, String key, int defaultValue) {

@@ -50,9 +50,9 @@ public class XAResourceHolderState {
 
     private final static Logger log = LoggerFactory.getLogger(XAResourceHolderState.class);
 
-    private ResourceBean bean;
+    private final ResourceBean bean;
+    private final XAResourceHolder xaResourceHolder;
     private BitronixXid xid;
-    private XAResourceHolder xaResourceHolder;
     private boolean started;
     private boolean ended;
     private boolean suspended;
