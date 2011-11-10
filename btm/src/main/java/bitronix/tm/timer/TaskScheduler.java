@@ -42,14 +42,14 @@ public class TaskScheduler extends Thread implements Service {
 
     private final static Logger log = LoggerFactory.getLogger(TaskScheduler.class);
 
-    private final Queue tasks = new ConcurrentLinkedQueue();
+    private final Queue<Task> tasks = new ConcurrentLinkedQueue<Task>();
     private final AtomicBoolean active = new AtomicBoolean(true);
 
     public TaskScheduler() {
         // it is up to the ShutdownHandler to control the lifespan of the JVM and give some time for this thread
         // to die gracefully, meaning enough time for all tasks to get executed. This is why it is set as daemon.
         setDaemon(true);
-        setName("bitronix-scheduler");
+        setName("bitronix-task-scheduler");
     }
 
     /**
@@ -170,13 +170,11 @@ public class TaskScheduler extends Thread implements Service {
     private boolean removeTaskByObject(Object obj) {
         if (log.isDebugEnabled()) log.debug("removing task by " + obj);
 
-        Iterator it = tasks.iterator();
-        while (it.hasNext()) {
-            Task task = (Task) it.next();
-
+        for (Task task : tasks) {
             if (task.getObject() == obj) {
                 tasks.remove(task);
-                if (log.isDebugEnabled()) log.debug("cancelled " + task + ", total task(s) still queued: " + tasks.size());
+                if (log.isDebugEnabled())
+                    log.debug("cancelled " + task + ", total task(s) still queued: " + tasks.size());
                 return true;
             }
         }
@@ -199,16 +197,14 @@ public class TaskScheduler extends Thread implements Service {
             } catch (InterruptedException ex) {
                 // ignore
             }
-        } // while
+        }
     }
 
     private void executeElapsedTasks() {
         if (this.tasks.isEmpty())
             return;
 
-        Iterator it = tasks.iterator();
-        while (it.hasNext()) {
-            Task task = (Task) it.next();
+        for (Task task : tasks) {
             if (task.getExecutionTime().compareTo(new Date(MonotonicClock.currentTimeMillis())) <= 0) { // if the execution time is now or in the past
                 if (log.isDebugEnabled()) log.debug("running " + task);
                 try {
@@ -221,7 +217,7 @@ public class TaskScheduler extends Thread implements Service {
                     if (log.isDebugEnabled()) log.debug("total task(s) still queued: " + tasks.size());
                 }
             } // if
-        } // while
+        }
 
     }
 

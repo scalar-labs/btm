@@ -29,8 +29,8 @@ import java.util.Date;
  */
 public abstract class Task {
 
-    private Date executionTime;
-    private TaskScheduler taskScheduler;
+    private final Date executionTime;
+    private final TaskScheduler taskScheduler;
 
     protected Task(Date executionTime, TaskScheduler scheduler) {
         this.executionTime = executionTime;
@@ -39,10 +39,6 @@ public abstract class Task {
 
     public Date getExecutionTime() {
         return executionTime;
-    }
-
-    public void setExecutionTime(Date executionTime) {
-        this.executionTime = executionTime;
     }
 
     protected TaskScheduler getTaskScheduler() {
