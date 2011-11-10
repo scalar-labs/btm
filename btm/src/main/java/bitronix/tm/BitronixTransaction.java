@@ -206,7 +206,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         } catch (BitronixRollbackException ex) {
             if (log.isDebugEnabled()) log.debug("delistment error causing transaction rollback", ex);
             rollback();
-            throw new BitronixRollbackException("delistment error caused transaction rollback" + ex.getMessage());
+            throw new BitronixRollbackException("delistment error caused transaction rollback", ex);
         }
 
         if (status == Status.STATUS_MARKED_ROLLBACK) {
