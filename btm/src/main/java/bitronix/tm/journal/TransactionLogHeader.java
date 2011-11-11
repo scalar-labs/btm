@@ -75,11 +75,11 @@ public class TransactionLogHeader {
 
 
     private final RandomAccessFile randomAccessFile;
+    private final long maxFileLength;
     private int formatId;
     private long timestamp;
     private byte state;
     private long position;
-    private long maxFileLength;
 
     /**
      * TransactionLogHeader are used to control headers of the specified RandomAccessFile.
@@ -92,12 +92,14 @@ public class TransactionLogHeader {
         this.randomAccessFile = randomAccessFile;
         this.maxFileLength = maxFileLength;
 
-        randomAccessFile.seek(FORMAT_ID_HEADER);
-        formatId = randomAccessFile.readInt();
-        timestamp = randomAccessFile.readLong();
-        state = randomAccessFile.readByte();
-        position = randomAccessFile.readLong();
-        randomAccessFile.seek(position);
+        synchronized (this.randomAccessFile) {
+            randomAccessFile.seek(FORMAT_ID_HEADER);
+            formatId = randomAccessFile.readInt();
+            timestamp = randomAccessFile.readLong();
+            state = randomAccessFile.readByte();
+            position = randomAccessFile.readLong();
+            randomAccessFile.seek(position);
+        }
 
         if (log.isDebugEnabled()) log.debug("read header " + this);
     }
@@ -108,7 +110,9 @@ public class TransactionLogHeader {
      * @return the FORMAT_ID_HEADER value.
      */
     public int getFormatId() {
-        return formatId;
+        synchronized (randomAccessFile) {
+            return formatId;
+        }
     }
 
     /**
@@ -117,7 +121,9 @@ public class TransactionLogHeader {
      * @return the TIMESTAMP_HEADER value.
      */
     public long getTimestamp() {
-        return timestamp;
+        synchronized (randomAccessFile) {
+            return timestamp;
+        }
     }
 
     /**
@@ -126,7 +132,9 @@ public class TransactionLogHeader {
      * @return the STATE_HEADER value.
      */
     public byte getState() {
-        return state;
+        synchronized (randomAccessFile) {
+            return state;
+        }
     }
 
     /**
@@ -135,7 +143,9 @@ public class TransactionLogHeader {
      * @return the CURRENT_POSITION_HEADER value.
      */
     public long getPosition() {
-        return position;
+        synchronized (randomAccessFile) {
+            return position;
+        }
     }
 
     /**
@@ -150,9 +160,8 @@ public class TransactionLogHeader {
             randomAccessFile.seek(FORMAT_ID_HEADER);
             randomAccessFile.writeInt(formatId);
             randomAccessFile.seek(currentPos);
+            this.formatId = formatId;
         }
-
-        this.formatId = formatId;
     }
 
     /**
@@ -167,9 +176,8 @@ public class TransactionLogHeader {
             randomAccessFile.seek(TIMESTAMP_HEADER);
             randomAccessFile.writeLong(timestamp);
             randomAccessFile.seek(currentPos);
+            this.timestamp = timestamp;
         }
-
-        this.timestamp = timestamp;
     }
 
     /**
@@ -184,9 +192,8 @@ public class TransactionLogHeader {
             randomAccessFile.seek(STATE_HEADER);
             randomAccessFile.writeByte(state);
             randomAccessFile.seek(currentPos);
+            this.state = state;
         }
-
-        this.state = state;
     }
 
     /**
@@ -205,9 +212,8 @@ public class TransactionLogHeader {
             randomAccessFile.seek(CURRENT_POSITION_HEADER);
             randomAccessFile.writeLong(position);
             randomAccessFile.seek(position);
+            this.position = position;
         }
-
-        this.position = position;
     }
 
     /**

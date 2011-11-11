@@ -54,7 +54,7 @@ public class DiskJournal implements Journal {
      * The active log appender. This is exactly the same reference as tla1 or tla2 depending on which one is
      * currently active
      */
-    private TransactionLogAppender activeTla;
+    private volatile TransactionLogAppender activeTla;
 
     /**
      * The transaction log appender writing on the 1st file
@@ -82,7 +82,7 @@ public class DiskJournal implements Journal {
      * this transaction.
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
-    public void log(int status, Uid gtrid, Set uniqueNames) throws IOException {
+    public void log(int status, Uid gtrid, Set<String> uniqueNames) throws IOException {
         if (activeTla == null)
             throw new IOException("cannot write log, disk logger is not open");
 
@@ -135,8 +135,13 @@ public class DiskJournal implements Journal {
         if (!file1.exists() && !file2.exists()) {
             log.debug("creation of log files");
             createLogfile(file2, TransactionManagerServices.getConfiguration().getMaxLogSizeInMb());
-            // let the clock run a little before creating the 2nd log file to make the timestamp headers not the same
-            try { Thread.sleep(50); } catch (InterruptedException ex) { /* ignore */ }
+
+            // make the clock run a little before creating the 2nd log file to ensure the timestamp headers are not the same
+            long before = MonotonicClock.currentTimeMillis();
+            while (MonotonicClock.currentTimeMillis() < before + 100L) {
+                try { Thread.sleep(100); } catch (InterruptedException ex) { /* ignore */ }
+            }
+
             createLogfile(file1, TransactionManagerServices.getConfiguration().getMaxLogSizeInMb());
         }
 
@@ -183,7 +188,7 @@ public class DiskJournal implements Journal {
         tla2 = null;
         activeTla = null;
 
-        log.debug("disk journal closed");
+        if (log.isDebugEnabled()) log.debug("disk journal closed");
     }
 
     public void shutdown() {
@@ -199,7 +204,7 @@ public class DiskJournal implements Journal {
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
-    public Map collectDanglingRecords() throws IOException {
+    public Map<Uid, TransactionLogRecord> collectDanglingRecords() throws IOException {
         if (activeTla == null)
             throw new IOException("cannot collect dangling records, disk logger is not open");
         return collectDanglingRecords(activeTla);
@@ -239,7 +244,7 @@ public class DiskJournal implements Journal {
 
             byte[] buffer = new byte[4096];
             int length = (maxLogSizeInMb *1024 *1024) /4096;
-            for(int i=0; i<length ;i++) {
+            for (int i = 0; i < length; i++) {
                 raf.write(buffer);
             }
         } finally {
@@ -256,7 +261,7 @@ public class DiskJournal implements Journal {
      * @return the state of the designated active TransactionLogAppender as returned by TransactionLogHeader.getState()
      * @throws java.io.IOException in case of disk IO failure.
      */
-    private byte pickActiveJournalFile(TransactionLogAppender tla1, TransactionLogAppender tla2) throws IOException {
+    private synchronized byte pickActiveJournalFile(TransactionLogAppender tla1, TransactionLogAppender tla2) throws IOException {
         if (tla1.getHeader().getTimestamp() > tla2.getHeader().getTimestamp()) {
             activeTla = tla1;
             if (log.isDebugEnabled()) log.debug("logging to file 1: " + activeTla);
@@ -286,7 +291,7 @@ public class DiskJournal implements Journal {
      * </ul>
      * @throws java.io.IOException in case of disk IO failure.
      */
-    private void swapJournalFiles() throws IOException {
+    private synchronized void swapJournalFiles() throws IOException {
         if (log.isDebugEnabled()) log.debug("swapping journal log file to " + getPassiveTransactionLogAppender());
 
         //step 1
@@ -314,7 +319,7 @@ public class DiskJournal implements Journal {
     /**
      * @return the TransactionFileAppender of the passive journal file.
      */
-    private TransactionLogAppender getPassiveTransactionLogAppender() {
+    private synchronized TransactionLogAppender getPassiveTransactionLogAppender() {
         if (tla1 == activeTla)
             return tla2;
         return tla1;
@@ -329,10 +334,8 @@ public class DiskJournal implements Journal {
     private static void copyDanglingRecords(TransactionLogAppender fromTla, TransactionLogAppender toTla) throws IOException {
         if (log.isDebugEnabled()) log.debug("starting copy of dangling records");
 
-        Map danglingRecords = collectDanglingRecords(fromTla);
-
-        for (Iterator iterator = danglingRecords.values().iterator(); iterator.hasNext();) {
-            TransactionLogRecord tlog = (TransactionLogRecord) iterator.next();
+        Map<Uid, TransactionLogRecord> danglingRecords = collectDanglingRecords(fromTla);
+        for (TransactionLogRecord tlog : danglingRecords.values()) {
             toTla.writeLog(tlog);
         }
 
@@ -346,8 +349,8 @@ public class DiskJournal implements Journal {
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
      * @throws java.io.IOException in case of disk IO failure.
      */
-    private static Map collectDanglingRecords(TransactionLogAppender tla) throws IOException {
-        Map danglingRecords = new HashMap(64);
+    private static Map<Uid, TransactionLogRecord> collectDanglingRecords(TransactionLogAppender tla) throws IOException {
+        Map<Uid, TransactionLogRecord> danglingRecords = new HashMap<Uid, TransactionLogRecord>(64);
         TransactionLogCursor tlc = tla.getCursor();
 
         try {
@@ -375,12 +378,15 @@ public class DiskJournal implements Journal {
                     committing++;
                 }
                 if (status == Status.STATUS_COMMITTED || status == Status.STATUS_UNKNOWN) {
-                    TransactionLogRecord rec = (TransactionLogRecord) danglingRecords.get(tlog.getGtrid());
+                    TransactionLogRecord rec = danglingRecords.get(tlog.getGtrid());
                     if (rec != null) {
-                        rec.removeUniqueNames(tlog.getUniqueNames());
-                        if (rec.getUniqueNames().isEmpty()) {
+                        Set<String> recUniqueNames = new HashSet<String>(rec.getUniqueNames());
+                        recUniqueNames.removeAll(tlog.getUniqueNames());
+                        if (recUniqueNames.isEmpty()) {
                             danglingRecords.remove(tlog.getGtrid());
                             committed++;
+                        } else {
+                            danglingRecords.put(tlog.getGtrid(), new TransactionLogRecord(rec.getStatus(), rec.getGtrid(), recUniqueNames));
                         }
                     }
                 }

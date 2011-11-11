@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Iterator;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileLock;
 
 /**
@@ -50,10 +50,9 @@ public class TransactionLogAppender {
     private final RandomAccessFile randomAccessFile;
     private final FileLock lock;
     private final TransactionLogHeader header;
-    
-    private long maxFileLength;
+    private final long maxFileLength;
 
-    private static DiskForceBatcherThread diskForceBatcherThread;
+    private static volatile DiskForceBatcherThread diskForceBatcherThread;
 
     /**
      * Create an appender that will write to specified file up to the specified maximum length.
@@ -98,22 +97,24 @@ public class TransactionLogAppender {
             }
             if (log.isDebugEnabled()) log.debug("between " + getHeader().getPosition() + " and " + futureFilePosition + ", writing " + tlog);
 
-            randomAccessFile.writeInt(tlog.getStatus());
-            randomAccessFile.writeInt(tlog.getRecordLength());
-            randomAccessFile.writeInt(tlog.getHeaderLength());
-            randomAccessFile.writeLong(tlog.getTime());
-            randomAccessFile.writeInt(tlog.getSequenceNumber());
-            randomAccessFile.writeInt(tlog.getCrc32());
-            randomAccessFile.writeByte((byte) tlog.getGtrid().getArray().length);
-            randomAccessFile.write(tlog.getGtrid().getArray());
-            randomAccessFile.writeInt(tlog.getUniqueNames().size());
-            Iterator it = tlog.getUniqueNames().iterator();
-            while (it.hasNext()) {
-                String uniqueName = (String) it.next();
-                randomAccessFile.writeShort(uniqueName.length());
-                randomAccessFile.writeBytes(uniqueName); // this writes each character discarding the 8th bit. Isn't that US-ASCII ?
+            ByteBuffer byteBuffer = ByteBuffer.allocate(tlog.calculateTotalRecordSize());
+            byteBuffer.putInt(tlog.getStatus());
+            byteBuffer.putInt(tlog.getRecordLength());
+            byteBuffer.putInt(tlog.getHeaderLength());
+            byteBuffer.putLong(tlog.getTime());
+            byteBuffer.putInt(tlog.getSequenceNumber());
+            byteBuffer.putInt(tlog.getCrc32());
+            byteBuffer.put((byte) tlog.getGtrid().getArray().length);
+            byteBuffer.put(tlog.getGtrid().getArray());
+            byteBuffer.putInt(tlog.getUniqueNames().size());
+            for (String uniqueName : tlog.getUniqueNames()) {
+                byteBuffer.putShort((short) uniqueName.length());
+                byteBuffer.put(uniqueName.getBytes());
             }
-            randomAccessFile.writeInt(tlog.getEndRecord());
+            byteBuffer.putInt(tlog.getEndRecord());
+            byteBuffer.flip();
+            randomAccessFile.getChannel().write(byteBuffer);
+
             getHeader().goAhead(tlog.calculateTotalRecordSize());
             if (log.isDebugEnabled()) log.debug("disk journal appender now at position " + getHeader().getPosition());
 

@@ -57,7 +57,7 @@ public class ResourceRegistrar {
      * @return a Set containing all {@link bitronix.tm.resource.common.XAResourceProducer}s unique names.
      */
     public synchronized static Set<String> getResourcesUniqueNames() {
-        return Collections.unmodifiableSet(resources.keySet());
+        return Collections.unmodifiableSet(new HashSet<String>(resources.keySet()));
     }
 
     /**

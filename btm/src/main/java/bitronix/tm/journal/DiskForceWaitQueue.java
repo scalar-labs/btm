@@ -37,7 +37,7 @@ public class DiskForceWaitQueue {
 
     private final static Logger log = LoggerFactory.getLogger(DiskForceWaitQueue.class);
 
-    private final List objects = new ArrayList();
+    private final List<TransactionLogAppender> objects = new ArrayList<TransactionLogAppender>();
     private boolean isCleared = false;
 
 
@@ -59,7 +59,7 @@ public class DiskForceWaitQueue {
 
     public synchronized TransactionLogAppender head() {
         if (log.isDebugEnabled()) log.debug("returning head TransactionLogAppender");
-        return (TransactionLogAppender) objects.get(0);
+        return objects.get(0);
     }
 
     public synchronized void clear() {

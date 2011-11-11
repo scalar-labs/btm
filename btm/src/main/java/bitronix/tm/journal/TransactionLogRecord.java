@@ -62,15 +62,15 @@ public class TransactionLogRecord {
 
     private final static AtomicInteger sequenceGenerator = new AtomicInteger();
 
-    private int status;
-    private int recordLength;
-    private int headerLength;
-    private long time;
-    private int sequenceNumber;
-    private int crc32;
-    private Uid gtrid;
-    private SortedSet<String> uniqueNames;
-    private int endRecord;
+    private final int status;
+    private final int recordLength;
+    private final int headerLength;
+    private final long time;
+    private final int sequenceNumber;
+    private final int crc32;
+    private final Uid gtrid;
+    private final SortedSet<String> uniqueNames;
+    private final int endRecord;
 
     /**
      * Use this constructor when restoring a log from the disk.
@@ -84,7 +84,7 @@ public class TransactionLogRecord {
      * @param uniqueNames unique names of XA data sources used in this transaction
      * @param endRecord end of record marker
      */
-    public TransactionLogRecord(int status, int recordLength, int headerLength, long time, int sequenceNumber, int crc32, Uid gtrid, Set uniqueNames, int endRecord) {
+    public TransactionLogRecord(int status, int recordLength, int headerLength, long time, int sequenceNumber, int crc32, Uid gtrid, Set<String> uniqueNames, int endRecord) {
         this.status = status;
         this.recordLength = recordLength;
         this.headerLength = headerLength;
@@ -92,7 +92,7 @@ public class TransactionLogRecord {
         this.sequenceNumber = sequenceNumber;
         this.crc32 = crc32;
         this.gtrid = gtrid;
-        this.uniqueNames = new TreeSet(uniqueNames);
+        this.uniqueNames = new TreeSet<String>(uniqueNames);
         this.endRecord = endRecord;
     }
 
@@ -102,15 +102,17 @@ public class TransactionLogRecord {
      * @param gtrid global transaction id
      * @param uniqueNames unique names of XA data sources used in this transaction
      */
-    public TransactionLogRecord(int status, Uid gtrid, Set uniqueNames) {
+    public TransactionLogRecord(int status, Uid gtrid, Set<String> uniqueNames) {
         this.status = status;
-        time = MonotonicClock.currentTimeMillis();
-        sequenceNumber = sequenceGenerator.incrementAndGet();
+        this.time = MonotonicClock.currentTimeMillis();
+        this.sequenceNumber = sequenceGenerator.incrementAndGet();
         this.gtrid = gtrid;
-        this.uniqueNames = new TreeSet(uniqueNames);
-        endRecord = TransactionLogAppender.END_RECORD;
+        this.uniqueNames = new TreeSet<String>(uniqueNames);
+        this.endRecord = TransactionLogAppender.END_RECORD;
 
-        refresh();
+        this.recordLength = calculateRecordLength(this.uniqueNames);
+        this.headerLength = getRecordHeaderLength();
+        this.crc32 = calculateCrc32();
     }
 
     public int getStatus() {
@@ -150,21 +152,6 @@ public class TransactionLogRecord {
     }
 
 
-    public void removeUniqueNames(Collection namesToRemove) {
-        uniqueNames.removeAll(namesToRemove);
-        refresh();
-    }
-
-    /**
-     * Recalculate and store the dynamic values of this record: {@link #getRecordLength()}, {@link #getRecordHeaderLength()}
-     * and {@link #calculateCrc32()}. This method must be called each time after the set of contained unique names is updated.
-     */
-    private void refresh() {
-        recordLength = calculateRecordLength(uniqueNames);
-        headerLength = getRecordHeaderLength();
-        crc32 = calculateCrc32();
-    }
-
     /**
      * Recalculate the CRC32 value of this record (using {@link #calculateCrc32()}) and compare it with the stored value.
      * @return true if the recalculated value equals the stored one, false otherwise.
@@ -187,9 +174,7 @@ public class TransactionLogRecord {
         crc32.update(gtrid.getArray());
         crc32.update(Encoder.intToBytes(uniqueNames.size()));
 
-        Iterator it = uniqueNames.iterator();
-        while (it.hasNext()) {
-            String name = (String) it.next();
+        for (String name : uniqueNames) {
             crc32.update(Encoder.shortToBytes((short) name.length()));
             try {
                 crc32.update(name.getBytes("US-ASCII"));
@@ -203,7 +188,7 @@ public class TransactionLogRecord {
     }
 
     public String toString() {
-        StringBuffer sb = new StringBuffer(128);
+        StringBuilder sb = new StringBuilder(128);
 
         sb.append("a Bitronix TransactionLogRecord with ");
         sb.append("status="); sb.append(Decoder.decodeStatus(status)); sb.append(", ");
@@ -239,12 +224,10 @@ public class TransactionLogRecord {
      * @param uniqueNames the unique names ofthe record.
      * @return recordLength
      */
-    private int calculateRecordLength(Set uniqueNames) {
+    private int calculateRecordLength(Set<String> uniqueNames) {
         int totalSize = 0;
 
-        Iterator it = uniqueNames.iterator();
-        while (it.hasNext()) {
-            String uniqueName = (String) it.next();
+        for (String uniqueName : uniqueNames) {
             totalSize += 2 + uniqueName.length(); // 2 bytes for storing the unique name length + unique name length
         }
 

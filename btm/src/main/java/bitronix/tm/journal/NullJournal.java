@@ -39,7 +39,7 @@ public class NullJournal implements Journal {
     public NullJournal() {
     }
 
-    public void log(int status, Uid gtrid, Set uniqueNames) throws IOException {
+    public void log(int status, Uid gtrid, Set<String> uniqueNames) throws IOException {
     }
 
     public void open() throws IOException {
@@ -51,8 +51,8 @@ public class NullJournal implements Journal {
     public void force() throws IOException {
     }
 
-    public Map collectDanglingRecords() throws IOException {
-        return Collections.EMPTY_MAP;
+    public Map<Uid, TransactionLogRecord> collectDanglingRecords() throws IOException {
+        return Collections.emptyMap();
     }
 
     public void shutdown() {

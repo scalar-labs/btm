@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Thread that executes disk force batches.
@@ -33,10 +34,9 @@ import java.io.IOException;
 public final class DiskForceBatcherThread extends Thread {
 
     private final static Logger log = LoggerFactory.getLogger(DiskForceBatcherThread.class);
-    private static DiskForceBatcherThread instance;
+    private static volatile DiskForceBatcherThread instance;
 
-    // both variables must be volatile to prevent race conditions with JDK 1.5+ memory model
-    private volatile boolean alive = true;
+    private final AtomicBoolean alive = new AtomicBoolean();
     private volatile DiskForceWaitQueue waitQueue = new DiskForceWaitQueue();
 
     /**
@@ -52,17 +52,19 @@ public final class DiskForceBatcherThread extends Thread {
 
     private DiskForceBatcherThread() {
         setName("bitronix-disk-force-batcher");
-        setPriority(Thread.NORM_PRIORITY -1);
+        setPriority(Thread.NORM_PRIORITY - 1);
         setDaemon(true);
+        alive.set(true);
         start();
     }
 
     /**
      * Thread will run for as long as this flag is not false.
      * @param alive The new flag value.
+     * @return the old flag value.
      */
-    public void setAlive(boolean alive) {
-        this.alive = alive;
+    public boolean setAlive(boolean alive) {
+        return this.alive.getAndSet(alive);
     }
 
     /**
@@ -86,14 +88,14 @@ public final class DiskForceBatcherThread extends Thread {
 
     private void runForceBatch() throws IOException {
         if (log.isDebugEnabled()) log.debug("waiting for the wait queue to fill up");
-        while(alive && waitQueue.isEmpty()) {
+        while(alive.get() && waitQueue.isEmpty()) {
             try {
                 waitQueue.waitUntilNotEmpty();
             } catch (InterruptedException ex) {
                 // ignore
             }
-        } // while
-        if (!alive) {
+        }
+        if (!alive.get()) {
             if (log.isDebugEnabled()) log.debug("interrupted while waiting for the queue to fill up");
             return;
         }
@@ -109,7 +111,7 @@ public final class DiskForceBatcherThread extends Thread {
 
     public void run() {
         if (log.isDebugEnabled()) log.debug("disk force thread is up and running");
-        while (alive) {
+        while (alive.get()) {
             try {
                 runForceBatch();
             } catch (Exception ex) {
