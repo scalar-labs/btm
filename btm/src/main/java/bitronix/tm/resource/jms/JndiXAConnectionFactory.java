@@ -20,9 +20,9 @@
  */
 package bitronix.tm.resource.jms;
 
-import javax.jms.XAConnectionFactory;
-import javax.jms.XAConnection;
 import javax.jms.JMSException;
+import javax.jms.XAConnection;
+import javax.jms.XAConnectionFactory;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -38,15 +38,15 @@ import java.util.Properties;
  */
 public class JndiXAConnectionFactory implements XAConnectionFactory {
 
-    private String initialContextFactory;
-    private String providerUrl;
-    private String urlPkgPrefixes;
-    private String name;
-    private String securityPrincipal;
-    private String securityCredentials;
-    private Properties extraJndiProperties = new Properties();
-    private boolean narrowJndiObject = false;
-    private XAConnectionFactory wrappedFactory;
+    private volatile String initialContextFactory;
+    private volatile String providerUrl;
+    private volatile String urlPkgPrefixes;
+    private volatile String name;
+    private volatile String securityPrincipal;
+    private volatile String securityCredentials;
+    private volatile Properties extraJndiProperties = new Properties();
+    private volatile boolean narrowJndiObject = false;
+    private volatile XAConnectionFactory wrappedFactory;
 
 
     public JndiXAConnectionFactory() {
@@ -192,7 +192,7 @@ public class JndiXAConnectionFactory implements XAConnectionFactory {
 
         Context ctx;
         if (!isEmpty(initialContextFactory)) {
-            Hashtable env = new Hashtable();
+            Hashtable<Object, Object> env = new Hashtable<Object, Object>();
             env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
             if (!isEmpty(providerUrl))
                 env.put(Context.PROVIDER_URL, providerUrl);

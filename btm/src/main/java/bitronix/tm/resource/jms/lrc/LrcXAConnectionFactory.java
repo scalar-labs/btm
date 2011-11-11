@@ -23,10 +23,10 @@ package bitronix.tm.resource.jms.lrc;
 import bitronix.tm.utils.ClassLoaderUtils;
 import bitronix.tm.utils.PropertyUtils;
 
-import javax.jms.XAConnectionFactory;
-import javax.jms.XAConnection;
-import javax.jms.JMSException;
 import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
+import javax.jms.XAConnection;
+import javax.jms.XAConnectionFactory;
 import java.util.Properties;
 
 /**
@@ -36,8 +36,8 @@ import java.util.Properties;
  */
 public class LrcXAConnectionFactory implements XAConnectionFactory {
 
-    private String connectionFactoryClassName;
-    private Properties properties = new Properties();
+    private volatile String connectionFactoryClassName;
+    private volatile Properties properties = new Properties();
 
     public LrcXAConnectionFactory() {
     }

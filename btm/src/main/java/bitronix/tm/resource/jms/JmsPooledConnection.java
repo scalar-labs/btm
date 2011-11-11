@@ -21,17 +21,32 @@
 package bitronix.tm.resource.jms;
 
 import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.resource.common.AbstractXAStatefulHolder;
+import bitronix.tm.resource.common.RecoveryXAResourceHolder;
+import bitronix.tm.resource.common.StateChangeListener;
+import bitronix.tm.resource.common.TransactionContextHelper;
+import bitronix.tm.resource.common.XAResourceHolder;
+import bitronix.tm.resource.common.XAStatefulHolder;
+import bitronix.tm.resource.jms.lrc.LrcXAConnectionFactory;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.ManagementRegistrar;
 import bitronix.tm.utils.MonotonicClock;
 import bitronix.tm.utils.Scheduler;
-import bitronix.tm.resource.common.*;
-import bitronix.tm.resource.jms.lrc.LrcXAConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jms.*;
-import java.util.*;
+import javax.jms.JMSException;
+import javax.jms.Session;
+import javax.jms.TemporaryQueue;
+import javax.jms.XAConnection;
+import javax.jms.XASession;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Implementation of a JMS pooled connection wrapping vendor's {@link XAConnection} implementation.
@@ -43,14 +58,15 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
 
     private final static Logger log = LoggerFactory.getLogger(JmsPooledConnection.class);
 
-    private XAConnection xaConnection;
-    private PoolingConnectionFactory poolingConnectionFactory;
-    private final List sessions = Collections.synchronizedList(new ArrayList());
+    private final XAConnection xaConnection;
+    private final PoolingConnectionFactory poolingConnectionFactory;
+    private final List<DualSessionWrapper> sessions = Collections.synchronizedList(new ArrayList<DualSessionWrapper>());
+    private boolean closed = false;
 
     /* management */
-    private String jmxName;
-    private Date acquisitionDate;
-    private Date lastReleaseDate;
+    private final String jmxName;
+    private volatile Date acquisitionDate;
+    private volatile Date lastReleaseDate;
 
     protected JmsPooledConnection(PoolingConnectionFactory poolingConnectionFactory, XAConnection connection) {
         this.poolingConnectionFactory = poolingConnectionFactory;
@@ -86,16 +102,16 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     }
 
     public synchronized void close() throws JMSException {
-        if (xaConnection != null) {
+        if (!closed) {
             setState(STATE_CLOSED);
             xaConnection.close();
         }
-        xaConnection = null;
+        closed = true;
     }
 
-    public List getXAResourceHolders() {
+    public List<XAResourceHolder> getXAResourceHolders() {
         synchronized (sessions) {
-            return new ArrayList(sessions);
+            return new ArrayList<XAResourceHolder>(sessions);
         }
     }
 
@@ -149,8 +165,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
 
     private void closePendingSessions() {
         synchronized (sessions) {
-            for (int i = 0; i < sessions.size(); i++) {
-                DualSessionWrapper dualSessionWrapper = (DualSessionWrapper) sessions.get(i);
+            for (DualSessionWrapper dualSessionWrapper : sessions) {
                 if (dualSessionWrapper.getState() != STATE_ACCESSIBLE)
                     continue;
 
@@ -186,8 +201,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
      private DualSessionWrapper getNotAccessibleSession() {
         synchronized (sessions) {
             if (log.isDebugEnabled()) log.debug(sessions.size() + " session(s) open from " + this);
-            for (int i = 0; i < sessions.size(); i++) {
-                DualSessionWrapper sessionHandle = (DualSessionWrapper) sessions.get(i);
+            for (DualSessionWrapper sessionHandle : sessions) {
                 if (sessionHandle.getState() == XAResourceHolder.STATE_NOT_ACCESSIBLE)
                     return sessionHandle;
             }
@@ -216,11 +230,10 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
         return acquisitionDate;
     }
 
-    public Collection getTransactionGtridsCurrentlyHoldingThis() {
+    public Collection<String> getTransactionGtridsCurrentlyHoldingThis() {
         synchronized (sessions) {
-            Set result = new HashSet();
-            for (int i = 0; i < sessions.size(); i++) {
-                DualSessionWrapper dsw = (DualSessionWrapper) sessions.get(i);
+            Set<String> result = new HashSet<String>();
+            for (DualSessionWrapper dsw : sessions) {
                 result.addAll(dsw.getXAResourceHolderStateGtrids());
             }
             return result;

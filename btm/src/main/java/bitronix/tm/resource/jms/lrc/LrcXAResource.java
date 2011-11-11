@@ -22,15 +22,14 @@ package bitronix.tm.resource.jms.lrc;
 
 import bitronix.tm.internal.BitronixXAException;
 import bitronix.tm.utils.Decoder;
-
-import javax.transaction.xa.XAResource;
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.Xid;
-import javax.jms.Session;
-import javax.jms.JMSException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.jms.JMSException;
+import javax.jms.Session;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
 
 /**
  * XAResource implementation for a non-XA JMS connection emulating XA with Last Resource Commit.
@@ -70,9 +69,9 @@ public class LrcXAResource implements XAResource {
     public static final int ENDED = 2;
     public static final int PREPARED = 3;
 
-    private Session session;
-    private Xid xid;
-    private int state = NO_TX;
+    private final Session session;
+    private volatile Xid xid;
+    private volatile int state = NO_TX;
 
     public LrcXAResource(Session session) {
         this.session = session;

@@ -20,9 +20,9 @@
  */
 package bitronix.tm.resource.jms;
 
-import javax.jms.TopicSubscriber;
-import javax.jms.Topic;
 import javax.jms.JMSException;
+import javax.jms.Topic;
+import javax.jms.TopicSubscriber;
 
 /**
  * {@link TopicSubscriber} wrapper that adds XA enlistment semantics.

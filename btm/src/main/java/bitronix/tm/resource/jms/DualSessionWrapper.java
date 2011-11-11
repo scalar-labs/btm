@@ -21,20 +21,49 @@
 package bitronix.tm.resource.jms;
 
 import bitronix.tm.BitronixTransaction;
-import bitronix.tm.internal.BitronixSystemException;
 import bitronix.tm.internal.BitronixRollbackSystemException;
+import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.resource.common.AbstractXAResourceHolder;
+import bitronix.tm.resource.common.ResourceBean;
+import bitronix.tm.resource.common.StateChangeListener;
+import bitronix.tm.resource.common.TransactionContextHelper;
+import bitronix.tm.resource.common.XAResourceHolder;
+import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.utils.Decoder;
-import bitronix.tm.resource.common.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jms.*;
+import javax.jms.BytesMessage;
+import javax.jms.Destination;
 import javax.jms.IllegalStateException;
+import javax.jms.JMSException;
+import javax.jms.MapMessage;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
+import javax.jms.MessageProducer;
+import javax.jms.ObjectMessage;
+import javax.jms.QueueBrowser;
+import javax.jms.Session;
+import javax.jms.StreamMessage;
+import javax.jms.TemporaryQueue;
+import javax.jms.TemporaryTopic;
+import javax.jms.TextMessage;
+import javax.jms.Topic;
+import javax.jms.TopicSubscriber;
+import javax.jms.TransactionInProgressException;
+import javax.jms.TransactionRolledBackException;
+import javax.jms.XASession;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.xa.XAResource;
 import java.io.Serializable;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * JMS Session wrapper that will send calls to either a XASession or to a non-XA Session depending on the calling
@@ -46,9 +75,9 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
     private final static Logger log = LoggerFactory.getLogger(DualSessionWrapper.class);
 
-    private JmsPooledConnection pooledConnection;
-    private boolean transacted;
-    private int acknowledgeMode;
+    private final JmsPooledConnection pooledConnection;
+    private final boolean transacted;
+    private final int acknowledgeMode;
 
     private XASession xaSession;
     private Session session;
@@ -56,9 +85,9 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
     private MessageListener listener;
 
     //TODO: shouldn't producers/consumers/subscribers be separated between XA and non-XA session ?
-    private Map messageProducers = new HashMap();
-    private Map messageConsumers = new HashMap();
-    private Map topicSubscribers = new HashMap();
+    private final Map<MessageProducerConsumerKey, MessageProducer> messageProducers = new HashMap<MessageProducerConsumerKey, MessageProducer>();
+    private final Map<MessageProducerConsumerKey, MessageConsumer> messageConsumers = new HashMap<MessageProducerConsumerKey, MessageConsumer>();
+    private final Map<MessageProducerConsumerKey, TopicSubscriberWrapper> topicSubscribers = new HashMap<MessageProducerConsumerKey, TopicSubscriberWrapper>();
 
     public DualSessionWrapper(JmsPooledConnection pooledConnection, boolean transacted, int acknowledgeMode) {
         this.pooledConnection = pooledConnection;
@@ -298,7 +327,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
     public TopicSubscriber createDurableSubscriber(Topic topic, String name) throws JMSException {
         MessageProducerConsumerKey key = new MessageProducerConsumerKey(topic);
         if (log.isDebugEnabled()) log.debug("looking for durable subscriber based on " + key);
-        TopicSubscriberWrapper topicSubscriber = (TopicSubscriberWrapper) topicSubscribers.get(key);
+        TopicSubscriberWrapper topicSubscriber = topicSubscribers.get(key);
         if (topicSubscriber == null) {
             if (log.isDebugEnabled()) log.debug("found no durable subscriber based on " + key + ", creating it");
             topicSubscriber = new TopicSubscriberWrapper(getSession().createDurableSubscriber(topic, name), this, pooledConnection.getPoolingConnectionFactory());
@@ -315,7 +344,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
     public TopicSubscriber createDurableSubscriber(Topic topic, String name, String messageSelector, boolean noLocal) throws JMSException {
         MessageProducerConsumerKey key = new MessageProducerConsumerKey(topic, messageSelector, noLocal);
         if (log.isDebugEnabled()) log.debug("looking for durable subscriber based on " + key);
-        TopicSubscriberWrapper topicSubscriber = (TopicSubscriberWrapper) topicSubscribers.get(key);
+        TopicSubscriberWrapper topicSubscriber = topicSubscribers.get(key);
         if (topicSubscriber == null) {
             if (log.isDebugEnabled()) log.debug("found no durable subscriber based on " + key + ", creating it");
             topicSubscriber = new TopicSubscriberWrapper(getSession().createDurableSubscriber(topic, name, messageSelector, noLocal), this, pooledConnection.getPoolingConnectionFactory());
@@ -367,10 +396,8 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
     /* XAStatefulHolder implementation */
 
-    public List getXAResourceHolders() {
-        List holders = new ArrayList(1);
-        holders.add(this);
-        return holders;
+    public List<XAResourceHolder> getXAResourceHolders() {
+        return Arrays.asList((XAResourceHolder) this);
     }
 
     public Object getConnectionHandle() throws Exception {

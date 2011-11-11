@@ -53,9 +53,9 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
 
     private static final Logger LOG = LoggerFactory.getLogger(EhCacheXAResourceProducer.class.getName());
 
-    private static final Map PRODUCERS = new HashMap();
+    private static final Map<String, EhCacheXAResourceProducer> producers = new HashMap<String, EhCacheXAResourceProducer>();
 
-    private final List xaResourceHolders = new ArrayList();
+    private final List<EhCacheXAResourceHolder> xaResourceHolders = new ArrayList<EhCacheXAResourceHolder>();
     private RecoveryXAResourceHolder recoveryXAResourceHolder;
 
 
@@ -71,8 +71,8 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
      * @param xaResource the XAResource to be registered
      */
     public static void registerXAResource(String uniqueName, XAResource xaResource) {
-        synchronized (PRODUCERS) {
-            EhCacheXAResourceProducer xaResourceProducer = (EhCacheXAResourceProducer) PRODUCERS.get(uniqueName);
+        synchronized (producers) {
+            EhCacheXAResourceProducer xaResourceProducer = producers.get(uniqueName);
 
             if (xaResourceProducer == null) {
                 xaResourceProducer = new EhCacheXAResourceProducer();
@@ -81,7 +81,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
                 xaResourceProducer.addXAResource(xaResource);
                 xaResourceProducer.init();
 
-                PRODUCERS.put(uniqueName, xaResourceProducer);
+                producers.put(uniqueName, xaResourceProducer);
             } else {
                 xaResourceProducer.addXAResource(xaResource);
             }
@@ -94,8 +94,8 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
      * @param xaResource the XAResource to be registered
      */
     public static synchronized void unregisterXAResource(String uniqueName, XAResource xaResource) {
-        synchronized (PRODUCERS) {
-            EhCacheXAResourceProducer xaResourceProducer = (EhCacheXAResourceProducer) PRODUCERS.get(uniqueName);
+        synchronized (producers) {
+            EhCacheXAResourceProducer xaResourceProducer = producers.get(uniqueName);
 
             if (xaResourceProducer != null) {
                 boolean found = xaResourceProducer.removeXAResource(xaResource);
@@ -104,7 +104,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
                 }
                 if (xaResourceProducer.xaResourceHolders.isEmpty()) {
                     xaResourceProducer.close();
-                    PRODUCERS.remove(uniqueName);
+                    producers.remove(uniqueName);
                 }
             } else {
                 LOG.error("no XAResourceProducer registered with name " + uniqueName);
@@ -124,7 +124,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
     private boolean removeXAResource(XAResource xaResource) {
         synchronized (xaResourceHolders) {
             for (int i = 0; i < xaResourceHolders.size(); i++) {
-                EhCacheXAResourceHolder xaResourceHolder = (EhCacheXAResourceHolder) xaResourceHolders.get(i);
+                EhCacheXAResourceHolder xaResourceHolder = xaResourceHolders.get(i);
                 if (xaResourceHolder.getXAResource() == xaResource) {
                     xaResourceHolders.remove(i);
                     return true;
@@ -147,7 +147,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
                 throw new RecoveryException("no XAResource registered, recovery cannot be done on " + this);
             }
 
-            recoveryXAResourceHolder = new RecoveryXAResourceHolder((XAResourceHolder) xaResourceHolders.get(0));
+            recoveryXAResourceHolder = new RecoveryXAResourceHolder(xaResourceHolders.get(0));
             return new XAResourceHolderState(recoveryXAResourceHolder, this);
         }
     }
@@ -156,7 +156,9 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
      * {@inheritDoc}
      */
     public void endRecovery() throws RecoveryException {
-        recoveryXAResourceHolder = null;
+        synchronized (xaResourceHolders) {
+            recoveryXAResourceHolder = null;
+        }
     }
 
     /**
@@ -171,8 +173,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
      */
     public XAResourceHolder findXAResourceHolder(XAResource xaResource) {
         synchronized (xaResourceHolders) {
-            for (int i = 0; i < xaResourceHolders.size(); i++) {
-                EhCacheXAResourceHolder xaResourceHolder = (EhCacheXAResourceHolder) xaResourceHolders.get(i);
+            for (EhCacheXAResourceHolder xaResourceHolder : xaResourceHolders) {
                 if (xaResource == xaResourceHolder.getXAResource()) {
                     return xaResourceHolder;
                 }
@@ -188,8 +189,8 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
     public void init() {
         try {
             ResourceRegistrar.register(this);
-        } catch (RecoveryException e) {
-            throw new BitronixRuntimeException("error recovering " + this, e);
+        } catch (RecoveryException ex) {
+            throw new BitronixRuntimeException("error recovering " + this, ex);
         }
     }
 
@@ -207,7 +208,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
      * {@inheritDoc}
      */
     public XAStatefulHolder createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
-        throw new UnsupportedOperationException("EhCache is not connection-oriented");
+        throw new UnsupportedOperationException("Ehcache is not connection-oriented");
     }
 
     /**

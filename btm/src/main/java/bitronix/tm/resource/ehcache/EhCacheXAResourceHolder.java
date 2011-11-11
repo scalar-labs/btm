@@ -22,14 +22,16 @@ package bitronix.tm.resource.ehcache;
 
 import bitronix.tm.resource.common.AbstractXAResourceHolder;
 import bitronix.tm.resource.common.ResourceBean;
+import bitronix.tm.resource.common.XAResourceHolder;
 
 import javax.transaction.xa.XAResource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
 /**
- * EHCache implementation of BTM's XAResourceHolder.
+ * Ehcache implementation of BTM's XAResourceHolder.
  * <p>
  *   Copyright 2003-2010 Terracotta, Inc.
  * </p>
@@ -88,10 +90,8 @@ public class EhCacheXAResourceHolder extends AbstractXAResourceHolder {
     /**
      * {@inheritDoc}
      */
-    public List getXAResourceHolders() {
-        List xaResourceHolders = new ArrayList(1);
-        xaResourceHolders.add(this);
-        return xaResourceHolders;
+    public List<XAResourceHolder> getXAResourceHolders() {
+        return Arrays.asList((XAResourceHolder) this);
     }
 
 }
