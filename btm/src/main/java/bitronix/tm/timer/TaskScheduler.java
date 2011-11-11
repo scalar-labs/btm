@@ -24,14 +24,20 @@ import bitronix.tm.BitronixTransaction;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.recovery.Recoverer;
 import bitronix.tm.resource.common.XAPool;
+import bitronix.tm.utils.ClassLoaderUtils;
 import bitronix.tm.utils.MonotonicClock;
 import bitronix.tm.utils.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Timed tasks service.
@@ -42,7 +48,8 @@ public class TaskScheduler extends Thread implements Service {
 
     private final static Logger log = LoggerFactory.getLogger(TaskScheduler.class);
 
-    private final Queue<Task> tasks = new ConcurrentLinkedQueue<Task>();
+    private final SortedSet<Task> tasks;
+    private final Lock tasksLock;
     private final AtomicBoolean active = new AtomicBoolean(true);
 
     public TaskScheduler() {
@@ -50,6 +57,34 @@ public class TaskScheduler extends Thread implements Service {
         // to die gracefully, meaning enough time for all tasks to get executed. This is why it is set as daemon.
         setDaemon(true);
         setName("bitronix-task-scheduler");
+
+        SortedSet<Task> tasks;
+        Lock tasksLock;
+        try {
+            @SuppressWarnings("unchecked")
+            Class<SortedSet<Task>> clazz = ClassLoaderUtils.loadClass("java.util.concurrent.ConcurrentSkipListSet");
+            tasks = clazz.newInstance();
+            tasksLock = null;
+            if (log.isDebugEnabled()) log.debug("task scheduler backed by ConcurrentSkipListSet");
+        } catch (Exception e) {
+            tasks = new TreeSet<Task>();
+            tasksLock = new ReentrantLock();
+            if (log.isDebugEnabled()) log.debug("task scheduler backed by locked TreeSet");
+        }
+        this.tasks = tasks;
+        this.tasksLock = tasksLock;
+    }
+
+    private void lock() {
+        if (tasksLock != null) {
+            tasksLock.lock();
+        }
+    }
+
+    private void unlock() {
+        if (tasksLock != null) {
+            tasksLock.unlock();
+        }
     }
 
     /**
@@ -57,7 +92,12 @@ public class TaskScheduler extends Thread implements Service {
      * @return the amount of tasks currently queued.
      */
     public int countTasksQueued() {
-        return tasks.size();
+        lock();
+        try {
+            return tasks.size();
+        } finally {
+            unlock();
+        }
     }
 
     public void shutdown() {
@@ -162,23 +202,32 @@ public class TaskScheduler extends Thread implements Service {
             if (log.isDebugEnabled()) log.debug("no task found based on object " + xaPool);
     }
 
-    private void addTask(Task task) {
-        removeTaskByObject(task.getObject());
-        tasks.add(task);
+    void addTask(Task task) {
+        lock();
+        try {
+            removeTaskByObject(task.getObject());
+            tasks.add(task);
+        } finally {
+            unlock();
+        }
     }
 
-    private boolean removeTaskByObject(Object obj) {
-        if (log.isDebugEnabled()) log.debug("removing task by " + obj);
+    boolean removeTaskByObject(Object obj) {
+        lock();
+        try {
+            if (log.isDebugEnabled()) log.debug("removing task by " + obj);
 
-        for (Task task : tasks) {
-            if (task.getObject() == obj) {
-                tasks.remove(task);
-                if (log.isDebugEnabled())
-                    log.debug("cancelled " + task + ", total task(s) still queued: " + tasks.size());
-                return true;
+            for (Task task : tasks) {
+                if (task.getObject() == obj) {
+                    tasks.remove(task);
+                    if (log.isDebugEnabled()) log.debug("cancelled " + task + ", total task(s) still queued: " + tasks.size());
+                    return true;
+                }
             }
+            return false;
+        } finally {
+            unlock();
         }
-        return false;
     }
 
     boolean setActive(boolean active) {
@@ -201,24 +250,31 @@ public class TaskScheduler extends Thread implements Service {
     }
 
     private void executeElapsedTasks() {
-        if (this.tasks.isEmpty())
-            return;
+        lock();
+        try {
+            if (this.tasks.isEmpty())
+                return;
 
-        for (Task task : tasks) {
-            if (task.getExecutionTime().compareTo(new Date(MonotonicClock.currentTimeMillis())) <= 0) { // if the execution time is now or in the past
-                if (log.isDebugEnabled()) log.debug("running " + task);
-                try {
-                    task.execute();
-                    if (log.isDebugEnabled()) log.debug("successfully ran " + task);
-                } catch (Exception ex) {
-                    log.warn("error running " + task, ex);
-                } finally {
-                    this.tasks.remove(task);
-                    if (log.isDebugEnabled()) log.debug("total task(s) still queued: " + tasks.size());
-                }
-            } // if
+            Set<Task> toRemove = new HashSet<Task>();
+            for (Task task : tasks) {
+                if (task.getExecutionTime().compareTo(new Date(MonotonicClock.currentTimeMillis())) <= 0) {
+                    // if the execution time is now or in the past
+                    if (log.isDebugEnabled()) log.debug("running " + task);
+                    try {
+                        task.execute();
+                        if (log.isDebugEnabled()) log.debug("successfully ran " + task);
+                    } catch (Exception ex) {
+                        log.warn("error running " + task, ex);
+                    } finally {
+                        toRemove.add(task);
+                        if (log.isDebugEnabled()) log.debug("total task(s) still queued: " + tasks.size());
+                    }
+                } // if
+            }
+            this.tasks.removeAll(toRemove);
+        } finally {
+            unlock();
         }
-
     }
 
 }

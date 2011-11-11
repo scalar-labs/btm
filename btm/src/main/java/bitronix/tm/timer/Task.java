@@ -27,7 +27,7 @@ import java.util.Date;
  *
  * @author lorban
  */
-public abstract class Task {
+public abstract class Task implements Comparable<Task> {
 
     private final Date executionTime;
     private final TaskScheduler taskScheduler;
@@ -43,6 +43,10 @@ public abstract class Task {
 
     protected TaskScheduler getTaskScheduler() {
         return taskScheduler;
+    }
+
+    public int compareTo(Task otherTask) {
+        return this.executionTime.compareTo(otherTask.executionTime);
     }
 
     public abstract Object getObject();

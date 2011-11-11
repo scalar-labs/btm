@@ -21,9 +21,13 @@
 package bitronix.tm.timer;
 
 import bitronix.tm.recovery.Recoverer;
+import bitronix.tm.utils.MonotonicClock;
 import junit.framework.TestCase;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -31,11 +35,23 @@ import java.util.Date;
  * @author lorban
  */
 public class TaskSchedulerTest extends TestCase {
-    
-    public void testRecoveryTask() throws Exception {
-        TaskScheduler ts = new TaskScheduler();
-        ts.start();
 
+    private TaskScheduler ts;
+
+    @Override
+    protected void setUp() throws Exception {
+        ts = new TaskScheduler();
+        ts.start();
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        assertEquals(0, ts.countTasksQueued());
+        ts.shutdown();
+    }
+
+
+    public void testRecoveryTask() throws Exception {
         Recoverer recoverer = new Recoverer();
         ts.scheduleRecovery(recoverer, new Date());
         assertEquals(1, ts.countTasksQueued());
@@ -46,8 +62,42 @@ public class TaskSchedulerTest extends TestCase {
         assertEquals(0, ts.countTasksQueued());
         Thread.sleep(1100);
         assertEquals(0, ts.countTasksQueued());
+    }
 
-        ts.shutdown();
+    public void testTaskOrdering() throws Exception {
+        List<SimpleTask> result = Collections.synchronizedList(new ArrayList<SimpleTask>());
+
+        ts.addTask(new SimpleTask(new Date(MonotonicClock.currentTimeMillis() + 100), ts, 0, result));
+        ts.addTask(new SimpleTask(new Date(MonotonicClock.currentTimeMillis() + 200), ts, 1, result));
+        ts.addTask(new SimpleTask(new Date(MonotonicClock.currentTimeMillis() + 300), ts, 2, result));
+
+        ts.join(1000);
+
+        assertEquals(0, result.get(0).getObject());
+        assertEquals(1, result.get(1).getObject());
+        assertEquals(2, result.get(2).getObject());
+    }
+
+    private static class SimpleTask extends Task {
+
+        private final Object obj;
+        private final List<SimpleTask> result;
+
+        protected SimpleTask(Date executionTime, TaskScheduler scheduler, Object obj, List<SimpleTask> result) {
+            super(executionTime, scheduler);
+            this.obj = obj;
+            this.result = result;
+        }
+
+        @Override
+        public Object getObject() {
+            return obj;
+        }
+
+        @Override
+        public void execute() throws TaskException {
+            result.add(this);
+        }
     }
 
 }
