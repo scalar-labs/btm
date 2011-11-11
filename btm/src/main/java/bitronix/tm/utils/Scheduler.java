@@ -29,7 +29,7 @@ import java.util.*;
  *
  * @author lorban
  */
-public class Scheduler<T> {
+public class Scheduler<T> implements Iterable<T> {
 
     public static final Integer DEFAULT_POSITION = 0;
     public static final Integer ALWAYS_FIRST_POSITION = Integer.MIN_VALUE;

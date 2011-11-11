@@ -20,13 +20,19 @@
  */
 package bitronix.tm.journal;
 
+import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.Encoder;
-import bitronix.tm.utils.*;
-import org.slf4j.LoggerFactory;
+import bitronix.tm.utils.MonotonicClock;
+import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
@@ -199,10 +205,10 @@ public class TransactionLogRecord {
         sb.append("crc32="); sb.append(crc32); sb.append(", ");
         sb.append("gtrid="); sb.append(gtrid.toString()); sb.append(", ");
         sb.append("uniqueNames=");
-        Iterator it = uniqueNames.iterator();
+        Iterator<String> it = uniqueNames.iterator();
         while (it.hasNext()) {
-            Object o = it.next();
-            sb.append(o);
+            String s = it.next();
+            sb.append(s);
             if (it.hasNext())
                 sb.append(',');
         }

@@ -116,14 +116,12 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         if (resourceHolder == null)
             throw new BitronixSystemException("unknown XAResource " + xaResource + ", it does not belong to a registered resource");
 
-        Map statesForGtrid = resourceHolder.getXAResourceHolderStatesForGtrid(resourceManager.getGtrid());
-        Iterator statesForGtridIt = statesForGtrid.values().iterator();
+        Map<Uid, XAResourceHolderState> statesForGtrid = resourceHolder.getXAResourceHolderStatesForGtrid(resourceManager.getGtrid());
 
         boolean result = true;
         List<Exception> exceptions = new ArrayList<Exception>();
         List<XAResourceHolderState> resourceStates = new ArrayList<XAResourceHolderState>();
-        while (statesForGtridIt.hasNext()) {
-            XAResourceHolderState resourceHolderState = (XAResourceHolderState) statesForGtridIt.next();
+        for (XAResourceHolderState resourceHolderState : statesForGtrid.values()) {
             try {
                 result &= delistResource(resourceHolderState, flag);
             } catch (BitronixSystemException ex) {
@@ -323,7 +321,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         setStatus(status, resourceManager.collectUniqueNames());
     }
 
-    public void setStatus(int status, Set uniqueNames) throws BitronixSystemException {
+    public void setStatus(int status, Set<String> uniqueNames) throws BitronixSystemException {
         try {
             boolean force = (resourceManager.size() > 1) && (status == Status.STATUS_COMMITTING);
             if (log.isDebugEnabled()) log.debug("changing transaction status to " + Decoder.decodeStatus(status) + (force ? " (forced)" : ""));
@@ -487,9 +485,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         getResourceManager().clearXAResourceHolderStates();
 
         if (log.isDebugEnabled()) log.debug("after completion, " + synchronizationScheduler.size() + " synchronization(s) to execute");
-        Iterator it = synchronizationScheduler.iterator();
-        while (it.hasNext()) {
-            Synchronization synchronization = (Synchronization) it.next();
+        for (Synchronization synchronization : synchronizationScheduler) {
             try {
                 if (log.isDebugEnabled()) log.debug("executing synchronization " + synchronization + " with status=" + Decoder.decodeStatus(status));
                 synchronization.afterCompletion(status);

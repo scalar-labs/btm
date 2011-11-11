@@ -143,9 +143,7 @@ public class XAResourceManager {
      * @throws XAException if the resource threw an exception during suspend.
      */
     public void suspend() throws XAException {
-        Iterator<XAResourceHolderState> it = resources.iterator();
-        while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = it.next();
+        for (XAResourceHolderState xaResourceHolderState : resources) {
             if (!xaResourceHolderState.isEnded()) {
                 if (log.isDebugEnabled()) log.debug("suspending " + xaResourceHolderState);
                 xaResourceHolderState.end(XAResource.TMSUCCESS);
@@ -163,9 +161,7 @@ public class XAResourceManager {
         // collection's content and confuse the iterator.
         List<XAResourceHolderState> toBeReEnlisted = new ArrayList<XAResourceHolderState>();
 
-        Iterator<XAResourceHolderState> it = resources.iterator();
-        while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = it.next();
+        for (XAResourceHolderState xaResourceHolderState : resources) {
             if (log.isDebugEnabled()) log.debug("resuming " + xaResourceHolderState);
 
             // If a prepared statement is (re-)used after suspend/resume is performed its XAResource needs to be
@@ -193,10 +189,7 @@ public class XAResourceManager {
      * @throws BitronixSystemException if an internal error happens.
      */
     public XAResourceHolderState findXAResourceHolderState(XAResource xaResource) throws BitronixSystemException {
-        Iterator<XAResourceHolderState> it = resources.iterator();
-        while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = it.next();
-
+        for (XAResourceHolderState xaResourceHolderState : resources) {
             if (xaResourceHolderState.getXAResource() == xaResource)
                 return xaResourceHolderState;
         }
@@ -218,14 +211,12 @@ public class XAResourceManager {
             return null;
         }
 
-        Iterator<XAResourceHolderState> it = resources.iterator();
-        while (it.hasNext()) {
-            XAResourceHolderState alreadyEnlistedHolderState = it.next();
-
-            if (log.isDebugEnabled()) log.debug("checking joinability of " + xaResourceHolderState + " with " + alreadyEnlistedHolderState);
-            if ( alreadyEnlistedHolderState.isEnded() &&
-                 !alreadyEnlistedHolderState.isSuspended() &&
-                 xaResourceHolderState.getXAResource().isSameRM(alreadyEnlistedHolderState.getXAResource()) ) {
+        for (XAResourceHolderState alreadyEnlistedHolderState : resources) {
+            if (log.isDebugEnabled())
+                log.debug("checking joinability of " + xaResourceHolderState + " with " + alreadyEnlistedHolderState);
+            if (alreadyEnlistedHolderState.isEnded() &&
+                    !alreadyEnlistedHolderState.isSuspended() &&
+                    xaResourceHolderState.getXAResource().isSameRM(alreadyEnlistedHolderState.getXAResource())) {
                 if (log.isDebugEnabled()) log.debug("resources are joinable");
                 return alreadyEnlistedHolderState;
             }
@@ -264,9 +255,7 @@ public class XAResourceManager {
      */
     public Set<String> collectUniqueNames() {
         Set<String> names = new HashSet<String>(resources.size());
-        Iterator<XAResourceHolderState> it = resources.iterator();
-        while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = it.next();
+        for (XAResourceHolderState xaResourceHolderState : resources) {
             names.add(xaResourceHolderState.getUniqueName());
         }
         return Collections.unmodifiableSet(names);

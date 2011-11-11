@@ -104,7 +104,7 @@ public abstract class AbstractMockJdbcTest extends TestCase {
     private void registerPoolEventListener(XAPool pool) throws Exception {
         ArrayList connections = new ArrayList();
 
-        Iterator iterator = pool.getXAResourceHolders().iterator();
+        Iterator iterator = XAPoolHelper.getXAResourceHolders(pool).iterator();
         while (iterator.hasNext()) {
             XAStatefulHolder holder = (XAStatefulHolder) iterator.next();
             JdbcConnectionHandle connectionHandle = (JdbcConnectionHandle) holder.getConnectionHandle();

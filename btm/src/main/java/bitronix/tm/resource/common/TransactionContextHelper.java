@@ -23,10 +23,10 @@ package bitronix.tm.resource.common;
 import bitronix.tm.BitronixTransaction;
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.utils.Uid;
-import bitronix.tm.utils.Scheduler;
 import bitronix.tm.internal.BitronixSystemException;
 import bitronix.tm.internal.XAResourceHolderState;
+import bitronix.tm.utils.Scheduler;
+import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +34,6 @@ import javax.transaction.RollbackException;
 import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
 import javax.transaction.xa.XAResource;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -96,18 +95,15 @@ public class TransactionContextHelper {
         // End resource as eagerly as possible. This allows to release connections to the pool much earlier
         // with resources fully supporting transaction interleaving.
         if (isInEnlistingGlobalTransactionContext(xaResourceHolder, currentTransaction) && !bean.getDeferConnectionRelease()) {
-            Map statesForGtrid = xaResourceHolder.getXAResourceHolderStatesForGtrid(currentTransaction.getResourceManager().getGtrid());
-            Iterator statesForGtridIt = statesForGtrid.values().iterator();
-            while (statesForGtridIt.hasNext()) {
-                XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) statesForGtridIt.next();
-
+            Map<Uid, XAResourceHolderState> statesForGtrid = xaResourceHolder.getXAResourceHolderStatesForGtrid(currentTransaction.getResourceManager().getGtrid());
+            for (XAResourceHolderState xaResourceHolderState : statesForGtrid.values()) {
                 if (!xaResourceHolderState.isEnded()) {
-                    if (log.isDebugEnabled()) log.debug("delisting resource " + xaResourceHolderState + " from " + currentTransaction);
+                    if (log.isDebugEnabled())
+                        log.debug("delisting resource " + xaResourceHolderState + " from " + currentTransaction);
 
                     // Watch out: the delistResource() call might throw a BitronixRollbackSystemException to indicate a unilateral rollback.
                     currentTransaction.delistResource(xaResourceHolderState.getXAResource(), XAResource.TMSUCCESS);
-                }
-                else if (log.isDebugEnabled()) log.debug("avoiding delistment of not enlisted resource " + xaResourceHolderState);
+                } else if (log.isDebugEnabled()) log.debug("avoiding delistment of not enlisted resource " + xaResourceHolderState);
             }
 
         } // isInEnlistingGlobalTransactionContext
@@ -171,7 +167,7 @@ public class TransactionContextHelper {
     public static void recycle(XAStatefulHolder xaStatefulHolder) {
         BitronixTransaction currentTransaction = currentTransaction();
         if (log.isDebugEnabled()) log.debug("marking " + xaStatefulHolder + " as recycled in " + currentTransaction);
-        Scheduler synchronizationScheduler = currentTransaction.getSynchronizationScheduler();
+        Scheduler<Synchronization> synchronizationScheduler = currentTransaction.getSynchronizationScheduler();
 
         DeferredReleaseSynchronization deferredReleaseSynchronization = findDeferredRelease(xaStatefulHolder, currentTransaction);
         if (deferredReleaseSynchronization != null) {
@@ -190,11 +186,9 @@ public class TransactionContextHelper {
     }
 
     private static DeferredReleaseSynchronization findDeferredRelease(XAStatefulHolder xaStatefulHolder, BitronixTransaction currentTransaction) {
-        Scheduler synchronizationScheduler = currentTransaction.getSynchronizationScheduler();
-        Iterator it = synchronizationScheduler.iterator();
+        Scheduler<Synchronization> synchronizationScheduler = currentTransaction.getSynchronizationScheduler();
 
-        while (it.hasNext()) {
-            Synchronization synchronization = (Synchronization) it.next();
+        for (Synchronization synchronization : synchronizationScheduler) {
             if (synchronization instanceof DeferredReleaseSynchronization) {
                 DeferredReleaseSynchronization deferredReleaseSynchronization = (DeferredReleaseSynchronization) synchronization;
                 if (deferredReleaseSynchronization.getXAStatefulHolder() == xaStatefulHolder) {
@@ -218,12 +212,11 @@ public class TransactionContextHelper {
     }
 
     private static boolean isEnlistedInSomeTransaction(XAStatefulHolder xaStatefulHolder) throws BitronixSystemException {
-        List xaResourceHolders = xaStatefulHolder.getXAResourceHolders();
+        List<XAResourceHolder> xaResourceHolders = xaStatefulHolder.getXAResourceHolders();
         if (xaResourceHolders == null)
             return false;
 
-        for (int i = 0; i < xaResourceHolders.size(); i++) {
-            XAResourceHolder xaResourceHolder = (XAResourceHolder) xaResourceHolders.get(i);
+        for (XAResourceHolder xaResourceHolder : xaResourceHolders) {
             boolean enlisted = isEnlistedInSomeTransaction(xaResourceHolder);
             if (enlisted)
                 return true;
@@ -243,12 +236,11 @@ public class TransactionContextHelper {
     }
 
     private static boolean isInEnlistingGlobalTransactionContext(XAStatefulHolder xaStatefulHolder, BitronixTransaction currentTransaction) {
-        List xaResourceHolders = xaStatefulHolder.getXAResourceHolders();
+        List<XAResourceHolder> xaResourceHolders = xaStatefulHolder.getXAResourceHolders();
         if (xaResourceHolders == null)
             return false;
 
-        for (int i = 0; i < xaResourceHolders.size(); i++) {
-            XAResourceHolder xaResourceHolder = (XAResourceHolder) xaResourceHolders.get(i);
+        for (XAResourceHolder xaResourceHolder : xaResourceHolders) {
             boolean enlisted = isInEnlistingGlobalTransactionContext(xaResourceHolder, currentTransaction);
             if (enlisted)
                 return true;
@@ -260,17 +252,14 @@ public class TransactionContextHelper {
     private static XAResourceHolderState getLatestAlreadyEnlistedXAResourceHolderState(XAResourceHolder xaResourceHolder, BitronixTransaction currentTransaction) {
         if (currentTransaction == null)
             return null;
-        Map statesForGtrid = xaResourceHolder.getXAResourceHolderStatesForGtrid(currentTransaction.getResourceManager().getGtrid());
+        Map<Uid, XAResourceHolderState> statesForGtrid = xaResourceHolder.getXAResourceHolderStatesForGtrid(currentTransaction.getResourceManager().getGtrid());
         if (statesForGtrid == null)
             return null;
-        Iterator statesForGtridIt = statesForGtrid.values().iterator();
 
         XAResourceHolderState result = null;
 
         // iteration order is guraranteed so just take the latest matching one in the iterator
-        while (statesForGtridIt.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) statesForGtridIt.next();
-
+        for (XAResourceHolderState xaResourceHolderState : statesForGtrid.values()) {
             if (xaResourceHolderState != null && xaResourceHolderState.getXid() != null) {
                 BitronixXid bitronixXid = xaResourceHolderState.getXid();
                 Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();

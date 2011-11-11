@@ -31,25 +31,26 @@ import java.util.Properties;
  */
 public abstract class ResourceBean implements Serializable {
 
-    private String className;
-    private String uniqueName;
-    private boolean automaticEnlistingEnabled = true;
-    private boolean useTmJoin = true;
-    private Properties driverProperties = new Properties();
-    private int maxPoolSize = 0;
-    private int minPoolSize = 0;
-    private int maxIdleTime = 60;
-    private int acquireIncrement = 1;
-    private int acquisitionTimeout = 30;
-    private boolean deferConnectionRelease = true;
-    private int acquisitionInterval = 1;
-    private boolean allowLocalTransactions = false;
-    private int twoPcOrderingPosition = 1;
-    private boolean applyTransactionTimeout = false;
-    private boolean shareTransactionConnections = false;
-    private boolean disabled = false;
-    private boolean ignoreRecoveryFailures = false;
-    private transient int createdResourcesCounter;
+    private volatile String className;
+    private volatile String uniqueName;
+    private volatile boolean automaticEnlistingEnabled = true;
+    private volatile boolean useTmJoin = true;
+    private volatile Properties driverProperties = new Properties();
+    private volatile int maxPoolSize = 0;
+    private volatile int minPoolSize = 0;
+    private volatile int maxIdleTime = 60;
+    private volatile int acquireIncrement = 1;
+    private volatile int acquisitionTimeout = 30;
+    private volatile boolean deferConnectionRelease = true;
+    private volatile int acquisitionInterval = 1;
+    private volatile boolean allowLocalTransactions = false;
+    private volatile int twoPcOrderingPosition = 1;
+    private volatile boolean applyTransactionTimeout = false;
+    private volatile boolean shareTransactionConnections = false;
+    private volatile boolean disabled = false;
+    private volatile boolean ignoreRecoveryFailures = false;
+
+    private volatile transient int createdResourcesCounter;
 
     /**
      * Initialize all properties with their default values.

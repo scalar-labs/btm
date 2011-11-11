@@ -20,12 +20,9 @@
  */
 package bitronix.tm.resource.common;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.transaction.xa.XAResource;
-import java.util.List;
 import java.util.Date;
+import java.util.List;
 
 /**
  * {@link XAResourceHolder} created by an {@link bitronix.tm.resource.common.XAResourceProducer} that is
@@ -35,9 +32,7 @@ import java.util.Date;
  */
 public class RecoveryXAResourceHolder extends AbstractXAResourceHolder {
 
-    private final static Logger log = LoggerFactory.getLogger(RecoveryXAResourceHolder.class);
-
-    private XAResourceHolder xaResourceHolder;
+    private final XAResourceHolder xaResourceHolder;
 
     public RecoveryXAResourceHolder(XAResourceHolder xaResourceHolder) {
         this.xaResourceHolder = xaResourceHolder;
@@ -59,7 +54,7 @@ public class RecoveryXAResourceHolder extends AbstractXAResourceHolder {
         return null;
     }
 
-    public List getXAResourceHolders() {
+    public List<XAResourceHolder> getXAResourceHolders() {
         return null;
     }
 

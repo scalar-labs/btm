@@ -409,7 +409,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @return the context.
      */
     private ThreadContext getOrCreateCurrentContext() {
-        ThreadContext threadContext = (ThreadContext) contexts.get(Thread.currentThread());
+        ThreadContext threadContext = contexts.get(Thread.currentThread());
         if (threadContext == null) {
             if (log.isDebugEnabled()) log.debug("creating new thread context");
             threadContext = new ThreadContext();
@@ -430,10 +430,10 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
         public void afterCompletion(int status) {
             synchronized (contexts) {
-                Iterator it = contexts.entrySet().iterator();
+                Iterator<Map.Entry<Thread, ThreadContext>> it = contexts.entrySet().iterator();
                 while (it.hasNext()) {
-                    Map.Entry entry = (Map.Entry) it.next();
-                    ThreadContext context = (ThreadContext) entry.getValue();
+                    Map.Entry<Thread, ThreadContext> entry = it.next();
+                    ThreadContext context = entry.getValue();
                     if (context.getTransaction() == currentTx) {
                         if (log.isDebugEnabled()) log.debug("clearing thread context: " + context);
                         it.remove();
