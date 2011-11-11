@@ -119,7 +119,7 @@ public class TransactionLogCursor {
             randomAccessFile.readFully(gtridArray);
             Uid gtrid = new Uid(gtridArray);
             int uniqueNamesCount = randomAccessFile.readInt();
-            Set uniqueNames = new HashSet();
+            Set<String> uniqueNames = new HashSet<String>();
             int currentReadCount = 4 + 8 + 4 + 4 + 1 + gtridSize + 4;
 
             for (int i=0; i<uniqueNamesCount ;i++) {
