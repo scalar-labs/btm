@@ -22,15 +22,14 @@ package bitronix.tm.resource.jdbc.lrc;
 
 import bitronix.tm.internal.BitronixXAException;
 import bitronix.tm.utils.Decoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.transaction.xa.XAResource;
 import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 import java.sql.Connection;
 import java.sql.SQLException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * XAResource implementation for a non-XA JDBC connection emulating XA with Last Resource Commit.
@@ -70,10 +69,10 @@ public class LrcXAResource implements XAResource {
     public static final int ENDED = 2;
     public static final int PREPARED = 3;
 
-    private Connection connection;
-    private Xid xid;
-    private boolean autocommitActiveBeforeStart;
-    private int state = NO_TX;
+    private final Connection connection;
+    private volatile Xid xid;
+    private volatile boolean autocommitActiveBeforeStart;
+    private volatile int state = NO_TX;
 
     public LrcXAResource(Connection connection) {
         this.connection = connection;

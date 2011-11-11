@@ -20,19 +20,19 @@
  */
 package bitronix.tm.resource.jdbc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.PreparedStatement;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Last Recently Used PreparedStatement cache with eviction listeners 
+ * Last Recently Used PreparedStatement cache with eviction listeners
  * support implementation.
  *
  *
@@ -45,31 +45,31 @@ public class LruStatementCache {
     /**
      * The <i>target</i> maxSize of the cache.  The cache may drift slightly
      * higher in size in the case that every statement in the cache is 
-     * in use and therefore nothing can be evicted.  But eventually 
+     * in use and therefore nothing can be evicted.  But eventually
      * (probably quickly) the cache will return to maxSize.
      */
     private int maxSize;
-    
+
     /**
      * We use a LinkedHashMap with _access order_ specified in the
      * constructor.  According to the LinkedHashMap documentation:
      * <pre>
      *   A special constructor is provided to create a linked hash map
-     *   whose order of iteration is the order in which its entries 
+     *   whose order of iteration is the order in which its entries
      *   were last accessed, from least-recently accessed to most-recently
-     *   (access-order). This kind of map is well-suited to building LRU 
-     *   caches. Invoking the put or get method results in an access to 
-     *   the corresponding entry (assuming it exists after the invocation 
+     *   (access-order). This kind of map is well-suited to building LRU
+     *   caches. Invoking the put or get method results in an access to
+     *   the corresponding entry (assuming it exists after the invocation
      *   completes).
      * </pre>
      */
-    private LinkedHashMap cache;
+    private final LinkedHashMap<JdbcPreparedStatementHandle, StatementTracker> cache;
 
     /**
      * A list of listeners concerned with prepared statement cache
      * evictions.
      */
-    private List evictionListners;
+    private final List<LruEvictionListener> evictionListners;
 
     /**
      * See the LinkedHashMap documentation.  We maintain our own size
@@ -82,8 +82,8 @@ public class LruStatementCache {
 
     public LruStatementCache(int maxSize) {
         this.maxSize = maxSize;
-        cache = new LinkedHashMap(maxSize, 0.75f, true /* access order */);
-        evictionListners = new ArrayList();
+        cache = new LinkedHashMap<JdbcPreparedStatementHandle, StatementTracker>(maxSize, 0.75f, true /* access order */);
+        evictionListners = new CopyOnWriteArrayList<LruEvictionListener>();
     }
 
     /**
@@ -93,7 +93,7 @@ public class LruStatementCache {
      * flag, cursor holdability, etc.  See the equals() method in the
      * JdbcPreparedStatementHandle class.  It is a complete key for a cached
      * statement.
-     * 
+     *
      * If there is a matching cached PreparedStatement, it will be set as the
      * delegate in the provided JdbcPreparedStatementHandle.
      *
@@ -101,18 +101,17 @@ public class LruStatementCache {
      * @return the cached JdbcPreparedStatementHandle statement, or null
      */
     public JdbcPreparedStatementHandle get(JdbcPreparedStatementHandle key) {
-    	synchronized (cache)
-    	{
-	        // See LinkedHashMap documentation.  Getting an entry means it is 
+    	synchronized (cache) {
+            // See LinkedHashMap documentation.  Getting an entry means it is
 	        // updated as the 'youngest' (Most Recently Used) entry.
-	        StatementTracker cached = (StatementTracker) cache.get(key);
+	        StatementTracker cached = cache.get(key);
 	        if (cached != null) {
 	            cached.usageCount++;
 	            key.setDelegate(cached.statement);
 	            if (log.isDebugEnabled()) log.debug("delivered from cache with usage count " + cached.usageCount + " statement <" + key + "> in " + key.getPooledConnection());
 	            return key;
 	        }
-	        
+
 	        return null;
     	}
     }
@@ -127,15 +126,14 @@ public class LruStatementCache {
      * @return a prepared statement
      */
     public JdbcPreparedStatementHandle put(JdbcPreparedStatementHandle key) {
-    	synchronized (cache)
-    	{
-	        if (maxSize < 1) {
+    	synchronized (cache) {
+            if (maxSize < 1) {
 	            return null;
 	        }
-	
-	        // See LinkedHashMap documentation.  Getting an entry means it is 
+
+	        // See LinkedHashMap documentation.  Getting an entry means it is
 	        // updated as the 'youngest' (Most Recently Used) entry.
-	        StatementTracker cached = (StatementTracker) cache.get(key);
+	        StatementTracker cached = cache.get(key);
 	        if (cached == null) {
 	            if (log.isDebugEnabled()) log.debug("adding to cache statement <" + key + "> in " + key.getPooledConnection());
 	            cache.put(key, new StatementTracker(key.getDelegateUnchecked()));
@@ -144,15 +142,15 @@ public class LruStatementCache {
 	            cached.usageCount--;
 	            if (log.isDebugEnabled()) log.debug("returning to cache statement <" + key + "> with usage count " + cached.usageCount + " in " + key.getPooledConnection());
 	        }
-	
-	        // If the size is exceeded, we will _try_ to evict one (or more) 
+
+	        // If the size is exceeded, we will _try_ to evict one (or more)
 	        // statements until the max level is again reached.  However, if
 	        // every statement in the cache is 'in use', the size of the cache
 	        // is not reduced.  Eventually the cache will be reduced, no worries.
 	        if (size > maxSize) {
 	            tryEviction();
 	        }
-	
+
 	        return key;
     	}
     }
@@ -162,9 +160,8 @@ public class LruStatementCache {
      * connection close.
      */
     protected void clear() {
-    	synchronized (cache)
-    	{
-	        Iterator it = cache.entrySet().iterator();
+    	synchronized (cache) {
+            Iterator it = cache.entrySet().iterator();
 	        while (it.hasNext()) {
 	            Map.Entry entry = (Entry) it.next();
 	            StatementTracker tracker = (StatementTracker) entry.getValue();
@@ -182,28 +179,29 @@ public class LruStatementCache {
      * evicted until the cache is reduced to maxSize.
      */
     private void tryEviction() {
-        // Iteration order of the LinkedHashMap is from LRU to MRU
-        Iterator it = cache.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry entry = (Entry) it.next();
-            StatementTracker tracker = (StatementTracker) entry.getValue();
-            if (tracker.usageCount == 0) {
-                it.remove();
-                size--;
-                JdbcPreparedStatementHandle key = (JdbcPreparedStatementHandle) entry.getKey();
-                if (log.isDebugEnabled()) log.debug("evicting from cache statement <" + key + "> " + key.getDelegateUnchecked() + " in " + key.getPooledConnection());
-                fireEvictionEvent(tracker.statement);
-                // We can stop evicting if we're at maxSize...
-                if (size <= maxSize) {
-                    break;
+        synchronized (cache) {
+            // Iteration order of the LinkedHashMap is from LRU to MRU
+            Iterator it = cache.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry entry = (Entry) it.next();
+                StatementTracker tracker = (StatementTracker) entry.getValue();
+                if (tracker.usageCount == 0) {
+                    it.remove();
+                    size--;
+                    JdbcPreparedStatementHandle key = (JdbcPreparedStatementHandle) entry.getKey();
+                    if (log.isDebugEnabled()) log.debug("evicting from cache statement <" + key + "> " + key.getDelegateUnchecked() + " in " + key.getPooledConnection());
+                    fireEvictionEvent(tracker.statement);
+                    // We can stop evicting if we're at maxSize...
+                    if (size <= maxSize) {
+                        break;
+                    }
                 }
             }
         }
     }
 
     private void fireEvictionEvent(Object value) {
-        for (int i = 0; i < evictionListners.size(); i++) {
-            LruEvictionListener listener = (LruEvictionListener) evictionListners.get(i);
+        for (LruEvictionListener listener : evictionListners) {
             listener.onEviction(value);
         }
     }
@@ -216,9 +214,8 @@ public class LruStatementCache {
         evictionListners.remove(listener);
     }
 
-    private final static class StatementTracker
-    {
-        private PreparedStatement statement;
+    private final static class StatementTracker {
+        private final PreparedStatement statement;
         private int usageCount;
 
         private StatementTracker(PreparedStatement stmt) {

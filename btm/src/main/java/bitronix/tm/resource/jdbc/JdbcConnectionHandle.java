@@ -44,8 +44,9 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
 
     private final static Logger log = LoggerFactory.getLogger(JdbcConnectionHandle.class);
 
-    private JdbcPooledConnection jdbcPooledConnection;
-    private Connection delegate;
+    private final JdbcPooledConnection jdbcPooledConnection;
+    private final Connection delegate;
+    private volatile boolean closed = false;
 
     public JdbcConnectionHandle(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
         this.jdbcPooledConnection = jdbcPooledConnection;
@@ -96,11 +97,11 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
         if (log.isDebugEnabled()) log.debug("closing " + this);
 
         // in case the connection has already been closed
-        if (jdbcPooledConnection == null)
+        if (closed)
             return;
 
         jdbcPooledConnection.release();
-        jdbcPooledConnection = null;
+        closed = true;
     }
 
     public void commit() throws SQLException {
@@ -379,19 +380,16 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
 
     /* java.sql.Wrapper implementation */
 
-    public boolean isWrapperFor(Class iface) throws SQLException {
-        if (Connection.class.equals(iface)) {
-            return true;
-        }
-        return false;
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        return Connection.class.equals(iface);
     }
 
-    public Object unwrap(Class iface) throws SQLException {
+    public <T> T unwrap(Class<T> iface) throws SQLException {
         if (Connection.class.equals(iface)) {
-            return delegate;
-        }
-        throw new SQLException(getClass().getName() + " is not a wrapper for interface " + iface.getName());
-    }
+            return (T) delegate;
+	    }
+	    throw new SQLException(getClass().getName() + " is not a wrapper for " + iface);
+	}
 
     /* BaseProxyHandler implementation */
 

@@ -20,15 +20,16 @@
  */
 package bitronix.tm.resource.jdbc;
 
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 public class JdbcUncachedPreparedStatementHandle extends BaseProxyHandlerClass {
 
     // The 'parent' connection. Used to remove this statement delegate
     // from the un-closed statements list when close() is called.
-    private JdbcPooledConnection parentConnection;
+    private final JdbcPooledConnection parentConnection;
 
-    private PreparedStatement delegate;
+    private final PreparedStatement delegate;
 
     public JdbcUncachedPreparedStatementHandle(PreparedStatement delegate, JdbcPooledConnection pooledConnection) {
         this.delegate = delegate;
@@ -41,18 +42,15 @@ public class JdbcUncachedPreparedStatementHandle extends BaseProxyHandlerClass {
 
     /* java.sql.Wrapper implementation */
 
-	public boolean isWrapperFor(Class iface) throws SQLException {
-	    if (PreparedStatement.class.equals(iface)) {
-	        return true;
-	    }
-		return false;
-	}
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        return PreparedStatement.class.equals(iface);
+    }
 
-	public Object unwrap(Class iface) throws SQLException {
+    public <T> T unwrap(Class<T> iface) throws SQLException {
         if (PreparedStatement.class.equals(iface)) {
-            return delegate;
+            return (T) delegate;
 	    }
-	    throw new SQLException(getClass().getName() + " is not a wrapper for interface " + iface.getName());
+	    throw new SQLException(getClass().getName() + " is not a wrapper for " + iface);
 	}
 
     /* Overridden methods of java.sql.PreparedStatement */

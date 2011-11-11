@@ -20,7 +20,9 @@
  */
 package bitronix.tm.resource.jdbc;
 
-import java.sql.*;
+import java.sql.CallableStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * CallableStatement {@link Statement} wrapper.
@@ -38,9 +40,9 @@ public class JdbcCallableStatementHandle extends BaseProxyHandlerClass { // impl
 
     // The 'parent' connection. Used to remove this statement delegate
     // from the un-closed statements list when close() is called.
-    private JdbcPooledConnection parentConnection;
+    private final JdbcPooledConnection parentConnection;
 
-    private CallableStatement delegate;
+    private final CallableStatement delegate;
 
     public JdbcCallableStatementHandle(CallableStatement delegate, JdbcPooledConnection pooledConnection) {
         this.delegate = delegate;

@@ -20,7 +20,9 @@
  */
 package bitronix.tm.resource.jdbc;
 
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Arrays;
 
 /**
@@ -49,7 +51,7 @@ public class JdbcPreparedStatementHandle extends BaseProxyHandlerClass { // impl
     //
     // All of these attributes must match a proposed statement before the
     // statement can be considered "the same" and delivered from the cache.
-    private String sql;
+    private final String sql;
     private int resultSetType = ResultSet.TYPE_FORWARD_ONLY;
     private int resultSetConcurrency = ResultSet.CONCUR_READ_ONLY;
     private Integer resultSetHoldability;

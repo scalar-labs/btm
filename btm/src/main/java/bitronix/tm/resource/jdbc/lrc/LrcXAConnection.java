@@ -20,17 +20,20 @@
  */
 package bitronix.tm.resource.jdbc.lrc;
 
-import java.lang.reflect.*;
-import java.sql.*;
-import java.util.*;
-
-import javax.sql.*;
-import javax.transaction.xa.XAResource;
-
-import bitronix.tm.utils.ClassLoaderUtils;
-import org.slf4j.*;
-
 import bitronix.tm.resource.jdbc.BaseProxyHandlerClass;
+import bitronix.tm.utils.ClassLoaderUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sql.ConnectionEvent;
+import javax.sql.ConnectionEventListener;
+import javax.sql.XAConnection;
+import javax.transaction.xa.XAResource;
+import java.lang.reflect.Proxy;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * XAConnection implementation for a non-XA JDBC resource emulating XA with Last Resource Commit.
@@ -41,9 +44,9 @@ public class LrcXAConnection extends BaseProxyHandlerClass { // implements XACon
 
     private final static Logger log = LoggerFactory.getLogger(LrcXAConnection.class);
 
-    private Connection connection;
-    private LrcXAResource xaResource;
-    private List connectionEventListeners = new ArrayList();
+    private final Connection connection;
+    private final LrcXAResource xaResource;
+    private final List<ConnectionEventListener> connectionEventListeners = new CopyOnWriteArrayList<ConnectionEventListener>();
 
     public LrcXAConnection(Connection connection) {
         this.connection = connection;
@@ -74,9 +77,8 @@ public class LrcXAConnection extends BaseProxyHandlerClass { // implements XACon
 
     private void fireCloseEvent() {
         if (log.isDebugEnabled()) log.debug("notifying " + connectionEventListeners.size() + " connectionEventListeners(s) about closing of " + this);
-        for (int i = 0; i < connectionEventListeners.size(); i++) {
-            ConnectionEventListener connectionEventListener = (ConnectionEventListener) connectionEventListeners.get(i);
-            XAConnection conn = (XAConnection) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { XAConnection.class }, this);
+        for (ConnectionEventListener connectionEventListener : connectionEventListeners) {
+            XAConnection conn = (XAConnection) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[]{XAConnection.class}, this);
             connectionEventListener.connectionClosed(new ConnectionEvent(conn));
         }
     }

@@ -22,7 +22,13 @@ package bitronix.tm.resource.jdbc;
 
 import bitronix.tm.internal.BitronixRollbackSystemException;
 import bitronix.tm.internal.BitronixSystemException;
-import bitronix.tm.resource.common.*;
+import bitronix.tm.resource.common.AbstractXAResourceHolder;
+import bitronix.tm.resource.common.RecoveryXAResourceHolder;
+import bitronix.tm.resource.common.ResourceBean;
+import bitronix.tm.resource.common.StateChangeListener;
+import bitronix.tm.resource.common.TransactionContextHelper;
+import bitronix.tm.resource.common.XAResourceHolder;
+import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.ManagementRegistrar;
@@ -35,9 +41,17 @@ import javax.sql.XAConnection;
 import javax.transaction.SystemException;
 import javax.transaction.xa.XAResource;
 import java.lang.reflect.Method;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Implementation of a JDBC pooled connection wrapping vendor's {@link XAConnection} implementation.
@@ -50,21 +64,21 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     private final static int DETECTION_TIMEOUT = 5; // seconds
 
-    private XAConnection xaConnection;
-    private Connection connection;
-    private XAResource xaResource;
-    private PoolingDataSource poolingDataSource;
-    private LruStatementCache statementsCache;
-    private List uncachedStatements;
-    private int usageCount;
+    private final XAConnection xaConnection;
+    private final Connection connection;
+    private final XAResource xaResource;
+    private final PoolingDataSource poolingDataSource;
+    private final LruStatementCache statementsCache;
+    private final List<Statement> uncachedStatements;
+    private volatile int usageCount;
 
     /* management */
-    private String jmxName;
-    private Date acquisitionDate;
-    private Date lastReleaseDate;
+    private final String jmxName;
+    private volatile Date acquisitionDate;
+    private volatile Date lastReleaseDate;
 
-    private int jdbcVersionDetected;
-    private Method isValidMethod;
+    private volatile int jdbcVersionDetected;
+    private volatile Method isValidMethod;
 
 
     public JdbcPooledConnection(PoolingDataSource poolingDataSource, XAConnection xaConnection) throws SQLException {
@@ -72,7 +86,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         this.xaConnection = xaConnection;
         this.xaResource = xaConnection.getXAResource();
         this.statementsCache = new LruStatementCache(poolingDataSource.getPreparedStatementCacheSize());
-        this.uncachedStatements = Collections.synchronizedList(new ArrayList());
+        this.uncachedStatements = Collections.synchronizedList(new ArrayList<Statement>());
         this.lastReleaseDate = new Date(MonotonicClock.currentTimeMillis());
         statementsCache.addEvictionListener(new LruEvictionListener() {
             public void onEviction(Object value) {
@@ -109,8 +123,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             return;
 
         try {
-            isValidMethod = connection.getClass().getMethod("isValid", new Class[]{Integer.TYPE});
-            isValidMethod.invoke(connection, new Object[] {new Integer(DETECTION_TIMEOUT)}); // test invoke
+            isValidMethod = connection.getClass().getMethod("isValid", Integer.TYPE);
+            isValidMethod.invoke(connection, DETECTION_TIMEOUT); // test invoke
             jdbcVersionDetected = 4;
             if (!poolingDataSource.isEnableJdbc4ConnectionTest()) {
                 if (log.isDebugEnabled()) log.debug("dataSource is JDBC4 or newer and supports isValid(), but enableJdbc4ConnectionTest is not set or is false");
@@ -174,14 +188,14 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             Boolean isValid = null;
             try {
                 if (log.isDebugEnabled()) log.debug("testing with JDBC4 isValid() method, connection of " + this);
-                isValid = (Boolean) isValidMethod.invoke(connection, new Object[]{new Integer(poolingDataSource.getAcquisitionTimeout())});
+                isValid = (Boolean) isValidMethod.invoke(connection, poolingDataSource.getAcquisitionTimeout());
             } catch (Exception e) {
                 log.warn("dysfunctional JDBC4 Connection.isValid() method, or negative acquisition timeout, in call to test connection of " + this + ".  Falling back to test query.");
                 jdbcVersionDetected = 3;
             }
             // if isValid is null, and exception was caught above and we fall through to the query test
             if (isValid != null) {
-                if (isValid.booleanValue()) {
+                if (isValid) {
                     if (log.isDebugEnabled()) log.debug("isValid successfully tested connection of " + this);
                     return;
                 }
@@ -257,10 +271,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         return poolingDataSource;
     }
 
-    public List getXAResourceHolders() {
-        List xaResourceHolders = new ArrayList();
-        xaResourceHolders.add(this);
-        return xaResourceHolders;
+    public List<XAResourceHolder> getXAResourceHolders() {
+        return Arrays.asList((XAResourceHolder) this);
     }
 
     public Object getConnectionHandle() throws Exception {
@@ -323,8 +335,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         if (futureState == STATE_IN_POOL || futureState == STATE_NOT_ACCESSIBLE) {
             // close all uncached statements
             if (log.isDebugEnabled()) log.debug("closing " + uncachedStatements.size() + " dangling uncached statement(s)");
-            for (int i = 0; i < uncachedStatements.size(); i++) {
-                Statement statement = (Statement) uncachedStatements.get(i);
+            for (Statement statement : uncachedStatements) {
                 try {
                     statement.close();
                 } catch (SQLException ex) {
