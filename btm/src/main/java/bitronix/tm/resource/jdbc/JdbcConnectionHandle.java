@@ -58,7 +58,7 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
     }
 
     private Connection getDelegate() throws SQLException {
-        if (jdbcPooledConnection == null)
+        if (closed)
             throw new SQLException("connection is closed");
         return delegate;
     }
@@ -77,7 +77,7 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
      * @throws SQLException thrown when an error occurs during elistment.
      */
     private void enlistResource() throws SQLException {
-        if (jdbcPooledConnection == null)
+        if (closed)
             throw new SQLException("connection handle already closed");
 
         if (jdbcPooledConnection.getPoolingDataSource().getAutomaticEnlistingEnabled()) {
@@ -105,7 +105,7 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
     }
 
     public void commit() throws SQLException {
-        if (jdbcPooledConnection == null)
+        if (closed)
             throw new SQLException("connection handle already closed");
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot commit a resource enlisted in a global transaction");
@@ -114,7 +114,7 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
     }
 
     public void rollback() throws SQLException {
-        if (jdbcPooledConnection == null)
+        if (closed)
             throw new SQLException("connection handle already closed");
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot rollback a resource enlisted in a global transaction");
@@ -123,7 +123,7 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
     }
 
     public void rollback(Savepoint savepoint) throws SQLException {
-        if (jdbcPooledConnection == null)
+        if (closed)
             throw new SQLException("connection handle already closed");
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot rollback a resource enlisted in a global transaction");
@@ -132,7 +132,7 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
     }
 
     public Savepoint setSavepoint() throws SQLException {
-        if (jdbcPooledConnection == null)
+        if (closed)
             throw new SQLException("connection handle already closed");
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot set a savepoint on a resource enlisted in a global transaction");
@@ -141,7 +141,7 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
     }
 
     public Savepoint setSavepoint(String name) throws SQLException {
-        if (jdbcPooledConnection == null)
+        if (closed)
             throw new SQLException("connection handle already closed");
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot set a savepoint on a resource enlisted in a global transaction");
@@ -150,7 +150,7 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
     }
 
     public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-        if (jdbcPooledConnection == null)
+        if (closed)
             throw new SQLException("connection handle already closed");
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
             throw new SQLException("cannot release a savepoint on a resource enlisted in a global transaction");
@@ -159,7 +159,7 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
     }
 
     public boolean getAutoCommit() throws SQLException {
-        if (jdbcPooledConnection == null)
+        if (closed)
             throw new SQLException("connection handle already closed");
 
         if (jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
@@ -169,7 +169,7 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
     }
 
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-        if (jdbcPooledConnection == null)
+        if (closed)
             throw new SQLException("connection handle already closed");
 
         if (!jdbcPooledConnection.isParticipatingInActiveGlobalTransaction())
@@ -179,9 +179,7 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
     }
 
     public boolean isClosed() throws SQLException {
-        if (jdbcPooledConnection == null)
-            return true;
-        return getDelegate().isClosed();
+        return closed || getDelegate().isClosed();
     }
 
     public Statement createStatement() throws SQLException {
