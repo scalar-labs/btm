@@ -20,17 +20,40 @@
  */
 package bitronix.tm;
 
-import bitronix.tm.internal.*;
-import bitronix.tm.utils.*;
+import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.internal.ThreadContext;
+import bitronix.tm.internal.XAResourceManager;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.InitializationException;
+import bitronix.tm.utils.MonotonicClock;
+import bitronix.tm.utils.Scheduler;
+import bitronix.tm.utils.Service;
+import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import javax.naming.*;
-import javax.transaction.*;
+import javax.naming.NamingException;
+import javax.naming.Reference;
+import javax.naming.Referenceable;
+import javax.naming.StringRefAddr;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.InvalidTransactionException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.Synchronization;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
 import javax.transaction.xa.XAException;
 import java.io.IOException;
-import java.util.*;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Implementation of {@link TransactionManager} and {@link UserTransaction}.
@@ -42,8 +65,8 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionManager.class);
     private final static String MDC_GTRID_KEY = "btm-gtrid";
 
-    private final Map<Thread, ThreadContext> contexts = Collections.synchronizedMap(new HashMap<Thread, ThreadContext>());
-    private final Map<Uid, BitronixTransaction> inFlightTransactions = Collections.synchronizedMap(new HashMap<Uid, BitronixTransaction>());
+    private final Map<Thread, ThreadContext> contexts = new ConcurrentHashMap<Thread, ThreadContext>(128, 0.75f, 128);
+    private final Map<Uid, BitronixTransaction> inFlightTransactions = new ConcurrentHashMap<Uid, BitronixTransaction>(128, 0.75f, 128);
 
     private volatile boolean shuttingDown;
 
@@ -224,25 +247,23 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @return the timestamp or Long.MIN_VALUE if there is no in-flight transaction.
      */
     public long getOldestInFlightTransactionTimestamp() {
-        synchronized (inFlightTransactions) {
-            if (inFlightTransactions.size() == 0) {
-                if (log.isDebugEnabled()) log.debug("oldest in-flight transaction's timestamp: " + Long.MIN_VALUE);
-                return Long.MIN_VALUE;
-            }
-
-            long oldestTimestamp = Long.MAX_VALUE;
-
-            for (Map.Entry<Uid, BitronixTransaction> entry : inFlightTransactions.entrySet()) {
-                Uid gtrid = entry.getKey();
-                long currentTimestamp = gtrid.extractTimestamp();
-
-                if (currentTimestamp < oldestTimestamp)
-                    oldestTimestamp = currentTimestamp;
-            }
-
-            if (log.isDebugEnabled()) log.debug("oldest in-flight transaction's timestamp: " + oldestTimestamp);    
-            return oldestTimestamp;
+        if (inFlightTransactions.isEmpty()) {
+            if (log.isDebugEnabled()) log.debug("oldest in-flight transaction's timestamp: " + Long.MIN_VALUE);
+            return Long.MIN_VALUE;
         }
+
+        long oldestTimestamp = Long.MAX_VALUE;
+
+        for (Map.Entry<Uid, BitronixTransaction> entry : inFlightTransactions.entrySet()) {
+            Uid gtrid = entry.getKey();
+            long currentTimestamp = gtrid.extractTimestamp();
+
+            if (currentTimestamp < oldestTimestamp)
+                oldestTimestamp = currentTimestamp;
+        }
+
+        if (log.isDebugEnabled()) log.debug("oldest in-flight transaction's timestamp: " + oldestTimestamp);
+        return oldestTimestamp;
     }
 
     /**
@@ -269,12 +290,10 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     public void dumpTransactionContexts() {
         if (log.isDebugEnabled()) {
             if (log.isDebugEnabled()) log.debug("dumping " + inFlightTransactions.size() + " transaction context(s)");
-            synchronized (inFlightTransactions) {
-                for (Map.Entry<Uid, BitronixTransaction> entry : inFlightTransactions.entrySet()) {
-                    BitronixTransaction tx = entry.getValue();
-                    if (log.isDebugEnabled()) log.debug(tx.toString());
-                }
-            } // synchronized (inFlightTransactions)
+            for (Map.Entry<Uid, BitronixTransaction> entry : inFlightTransactions.entrySet()) {
+                BitronixTransaction tx = entry.getValue();
+                if (log.isDebugEnabled()) log.debug(tx.toString());
+            }
         } // if
     }
 
@@ -429,17 +448,15 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         }
 
         public void afterCompletion(int status) {
-            synchronized (contexts) {
-                Iterator<Map.Entry<Thread, ThreadContext>> it = contexts.entrySet().iterator();
-                while (it.hasNext()) {
-                    Map.Entry<Thread, ThreadContext> entry = it.next();
-                    ThreadContext context = entry.getValue();
-                    if (context.getTransaction() == currentTx) {
-                        if (log.isDebugEnabled()) log.debug("clearing thread context: " + context);
-                        it.remove();
-                        break;
-                    }
-                } // while
+            Iterator<Map.Entry<Thread, ThreadContext>> it = contexts.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<Thread, ThreadContext> entry = it.next();
+                ThreadContext context = entry.getValue();
+                if (context.getTransaction() == currentTx) {
+                    if (log.isDebugEnabled()) log.debug("clearing thread context: " + context);
+                    it.remove();
+                    break;
+                }
             }
             inFlightTransactions.remove(currentTx.getResourceManager().getGtrid());
             MDC.remove(MDC_GTRID_KEY);

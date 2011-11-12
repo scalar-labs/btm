@@ -20,20 +20,50 @@
  */
 package bitronix.tm;
 
-import bitronix.tm.internal.*;
+import bitronix.tm.internal.BitronixMultiSystemException;
+import bitronix.tm.internal.BitronixRollbackException;
+import bitronix.tm.internal.BitronixRollbackSystemException;
+import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.internal.BitronixXAException;
+import bitronix.tm.internal.TransactionStatusChangeListener;
+import bitronix.tm.internal.XAResourceHolderState;
+import bitronix.tm.internal.XAResourceManager;
 import bitronix.tm.journal.Journal;
-import bitronix.tm.twopc.*;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.XAResourceHolder;
-import bitronix.tm.utils.*;
-import org.slf4j.LoggerFactory;
+import bitronix.tm.timer.TaskScheduler;
+import bitronix.tm.twopc.Committer;
+import bitronix.tm.twopc.PhaseException;
+import bitronix.tm.twopc.Preparer;
+import bitronix.tm.twopc.Rollbacker;
+import bitronix.tm.twopc.executor.Executor;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.ManagementRegistrar;
+import bitronix.tm.utils.MonotonicClock;
+import bitronix.tm.utils.Scheduler;
+import bitronix.tm.utils.Uid;
+import bitronix.tm.utils.UidGenerator;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.transaction.*;
+import javax.transaction.HeuristicCommitException;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.Synchronization;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Implementation of {@link Transaction}.
@@ -51,9 +81,13 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     private volatile boolean timeout = false;
     private volatile Date timeoutDate;
 
-    private final Preparer preparer = new Preparer(TransactionManagerServices.getExecutor());
-    private final Committer committer = new Committer(TransactionManagerServices.getExecutor());
-    private final Rollbacker rollbacker = new Rollbacker(TransactionManagerServices.getExecutor());
+    private final Executor executor = TransactionManagerServices.getExecutor();
+    private final TaskScheduler taskScheduler = TransactionManagerServices.getTaskScheduler();
+    private final Journal journal = TransactionManagerServices.getJournal();
+
+    private final Preparer preparer = new Preparer(executor);
+    private final Committer committer = new Committer(executor);
+    private final Rollbacker rollbacker = new Rollbacker(executor);
 
     /* management */
     private volatile String threadName;
@@ -184,7 +218,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         if (isDone())
             throw new IllegalStateException("transaction is done, cannot commit it");
 
-        TransactionManagerServices.getTaskScheduler().cancelTransactionTimeout(this);
+        taskScheduler.cancelTransactionTimeout(this);
 
         // beforeCompletion must be called before the check to STATUS_MARKED_ROLLBACK as the synchronization
         // can still set the status to STATUS_MARKED_ROLLBACK.
@@ -250,7 +284,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         if (isDone())
             throw new IllegalStateException("transaction is done, cannot roll it back");
 
-        TransactionManagerServices.getTaskScheduler().cancelTransactionTimeout(this);
+        taskScheduler.cancelTransactionTimeout(this);
 
         try {
             delistUnclosedResources(XAResource.TMSUCCESS);
@@ -313,7 +347,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         this.startDate = new Date(MonotonicClock.currentTimeMillis());
         this.timeoutDate = new Date(MonotonicClock.currentTimeMillis() + (timeout * 1000L));
 
-        TransactionManagerServices.getTaskScheduler().scheduleTransactionTimeout(this, timeoutDate);
+        taskScheduler.scheduleTransactionTimeout(this, timeoutDate);
     }
 
 
@@ -328,7 +362,6 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
             int oldStatus = this.status;
             this.status = status;
-            Journal journal = TransactionManagerServices.getJournal();
             journal.log(status, resourceManager.getGtrid(), uniqueNames);
             if (force) {
                 journal.force();
