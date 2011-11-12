@@ -21,6 +21,7 @@
 package bitronix.tm.mock;
 
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.journal.Journal;
 import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.resource.MockJournal;
 import bitronix.tm.mock.resource.jms.MockXAConnectionFactory;
@@ -30,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
@@ -63,9 +65,10 @@ public abstract class AbstractMockJmsTest extends TestCase {
         poolingConnectionFactory2.init();
 
         // change disk journal into mock journal
-        Field journalField = TransactionManagerServices.class.getDeclaredField("journal");
-        journalField.setAccessible(true);
-        journalField.set(TransactionManagerServices.class, new MockJournal());
+        Field field = TransactionManagerServices.class.getDeclaredField("journalRef");
+        field.setAccessible(true);
+        AtomicReference<Journal> journalRef = (AtomicReference<Journal>) field.get(TransactionManagerServices.class);
+        journalRef.set(new MockJournal());
 
         // start TM
         TransactionManagerServices.getTransactionManager();

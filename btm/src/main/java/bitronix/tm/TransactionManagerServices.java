@@ -26,11 +26,15 @@ import bitronix.tm.journal.NullJournal;
 import bitronix.tm.recovery.Recoverer;
 import bitronix.tm.resource.ResourceLoader;
 import bitronix.tm.timer.TaskScheduler;
-import bitronix.tm.twopc.executor.*;
-import bitronix.tm.utils.InitializationException;
+import bitronix.tm.twopc.executor.AsyncExecutor;
+import bitronix.tm.twopc.executor.Executor;
+import bitronix.tm.twopc.executor.SyncExecutor;
 import bitronix.tm.utils.ClassLoaderUtils;
+import bitronix.tm.utils.InitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Container for all BTM services.
@@ -45,21 +49,22 @@ public class TransactionManagerServices {
     private final static Logger log = LoggerFactory.getLogger(TransactionManagerServices.class);
 
     private static BitronixTransactionManager transactionManager;
-    private static BitronixTransactionSynchronizationRegistry transactionSynchronizationRegistry;
-    private static Configuration configuration;
-    private static Journal journal;
-    private static TaskScheduler taskScheduler;
+    private static final AtomicReference<BitronixTransactionSynchronizationRegistry> transactionSynchronizationRegistryRef = new AtomicReference<BitronixTransactionSynchronizationRegistry>();
+    private static final AtomicReference<Configuration> configurationRef = new AtomicReference<Configuration>();
+    private static final AtomicReference<Journal> journalRef = new AtomicReference<Journal>();
+    private static final AtomicReference<TaskScheduler> taskSchedulerRef = new AtomicReference<TaskScheduler>();
     private static ResourceLoader resourceLoader;
     private static Recoverer recoverer;
-    private static Executor executor;
+    private static final AtomicReference<Executor> executorRef = new AtomicReference<Executor>();
 
     /**
      * Create an initialized transaction manager.
      * @return the transaction manager.
      */
     public synchronized static BitronixTransactionManager getTransactionManager() {
-        if (transactionManager == null)
+        if (transactionManager == null) {
             transactionManager = new BitronixTransactionManager();
+        }
         return transactionManager;
     }
 
@@ -68,8 +73,13 @@ public class TransactionManagerServices {
      * @return the TransactionSynchronizationRegistry.
      */
     public synchronized static BitronixTransactionSynchronizationRegistry getTransactionSynchronizationRegistry() {
-        if (transactionSynchronizationRegistry == null)
+        BitronixTransactionSynchronizationRegistry transactionSynchronizationRegistry = transactionSynchronizationRegistryRef.get();
+        if (transactionSynchronizationRegistry == null) {
             transactionSynchronizationRegistry = new BitronixTransactionSynchronizationRegistry();
+            if (!transactionSynchronizationRegistryRef.compareAndSet(null, transactionSynchronizationRegistry)) {
+                transactionSynchronizationRegistry = transactionSynchronizationRegistryRef.get();
+            }
+        }
         return transactionSynchronizationRegistry;
     }
 
@@ -77,9 +87,14 @@ public class TransactionManagerServices {
      * Create the configuration of all the components of the transaction manager.
      * @return the global configuration.
      */
-    public synchronized static Configuration getConfiguration() {
-        if (configuration == null)
+    public static Configuration getConfiguration() {
+        Configuration configuration = configurationRef.get();
+        if (configuration == null) {
             configuration = new Configuration();
+            if (!configurationRef.compareAndSet(null, configuration)) {
+                configuration = configurationRef.get();
+            }
+        }
         return configuration;
     }
 
@@ -87,22 +102,27 @@ public class TransactionManagerServices {
      * Create the transactions journal.
      * @return the transactions journal.
      */
-    public synchronized static Journal getJournal() {
+    public static Journal getJournal() {
+        Journal journal = journalRef.get();
         if (journal == null) {
-            String configuredJounal = getConfiguration().getJournal();
-            if ("disk".equals(configuredJounal))
-                journal = new DiskJournal();
-            else if ("null".equals(configuredJounal))
+            String configuredJournal = getConfiguration().getJournal();
+            if ("null".equals(configuredJournal) || null == configuredJournal) {
                 journal = new NullJournal();
-            else {
+            } else if ("disk".equals(configuredJournal)) {
+                journal = new DiskJournal();
+            } else {
                 try {
-                    Class clazz = ClassLoaderUtils.loadClass(configuredJounal);
+                    Class clazz = ClassLoaderUtils.loadClass(configuredJournal);
                     journal = (Journal) clazz.newInstance();
                 } catch (Exception ex) {
-                    throw new InitializationException("invalid journal implementation '" + configuredJounal + "'", ex);
+                    throw new InitializationException("invalid journal implementation '" + configuredJournal + "'", ex);
                 }
             }
-            if (log.isDebugEnabled()) log.debug("using journal " + configuredJounal);
+            if (log.isDebugEnabled()) log.debug("using journal " + configuredJournal);
+
+            if (!journalRef.compareAndSet(null, journal)) {
+                journal = journalRef.get();
+            }
         }
         return journal;
     }
@@ -111,10 +131,15 @@ public class TransactionManagerServices {
      * Create the task scheduler.
      * @return the task scheduler.
      */
-    public synchronized static TaskScheduler getTaskScheduler() {
+    public static TaskScheduler getTaskScheduler() {
+        TaskScheduler taskScheduler = taskSchedulerRef.get();
         if (taskScheduler == null) {
             taskScheduler = new TaskScheduler();
-            taskScheduler.start();
+            if (!taskSchedulerRef.compareAndSet(null, taskScheduler)) {
+                taskScheduler = taskSchedulerRef.get();
+            } else {
+                taskScheduler.start();
+            }
         }
         return taskScheduler;
     }
@@ -145,16 +170,19 @@ public class TransactionManagerServices {
      * Create the 2PC executor.
      * @return the 2PC executor.
      */
-    public synchronized static Executor getExecutor() {
+    public static Executor getExecutor() {
+        Executor executor = executorRef.get();
         if (executor == null) {
-            boolean async = getConfiguration().isAsynchronous2Pc();
-            if (async) {
+            if (getConfiguration().isAsynchronous2Pc()) {
                 if (log.isDebugEnabled()) log.debug("using AsyncExecutor");
                 executor = new AsyncExecutor();
-            }
-            else {
+            } else {
                 if (log.isDebugEnabled()) log.debug("using SyncExecutor");
                 executor = new SyncExecutor();
+            }
+            if (!executorRef.compareAndSet(null, executor)) {
+                executor.shutdown();
+                executor = executorRef.get();
             }
         }
         return executor;
@@ -173,7 +201,7 @@ public class TransactionManagerServices {
      * @return true if the task scheduler has started.
      */
     public synchronized static boolean isTaskSchedulerRunning() {
-        return taskScheduler != null;
+        return taskSchedulerRef.get() != null;
     }
 
     /**
@@ -181,13 +209,13 @@ public class TransactionManagerServices {
      */
     protected static synchronized void clear() {
         transactionManager = null;
-        transactionSynchronizationRegistry = null;
-        configuration = null;
-        journal = null;
-        taskScheduler = null;
+        transactionSynchronizationRegistryRef.set(null);
+        configurationRef.set(null);
+        journalRef.set(null);
+        taskSchedulerRef.set(null);
         resourceLoader = null;
         recoverer = null;
-        executor = null;
+        executorRef.set(null);
     }
 
 }

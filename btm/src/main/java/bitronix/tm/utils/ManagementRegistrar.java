@@ -20,7 +20,6 @@
  */
 package bitronix.tm.utils;
 
-import bitronix.tm.Configuration;
 import bitronix.tm.TransactionManagerServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +36,6 @@ import java.lang.management.ManagementFactory;
 public final class ManagementRegistrar {
 
     private final static Logger log = LoggerFactory.getLogger(ManagementRegistrar.class);
-
-    private final static Configuration configuration = TransactionManagerServices.getConfiguration();
 
 
     private ManagementRegistrar() {
@@ -87,7 +84,7 @@ public final class ManagementRegistrar {
     }
 
     private static MBeanServer getMBeanServer() {
-        if (!configuration.isDisableJmx()) {
+        if (!TransactionManagerServices.getConfiguration().isDisableJmx()) {
             return ManagementFactory.getPlatformMBeanServer();
         } else {
             return null;
