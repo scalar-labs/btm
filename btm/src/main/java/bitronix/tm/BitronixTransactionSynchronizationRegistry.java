@@ -47,9 +47,9 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
 
     private final BitronixTransactionManager transactionManager;
     
-    private final static ThreadLocal resourcesTl = new ThreadLocal() {
-        protected Object initialValue() {
-            return new HashMap();
+    private final static ThreadLocal<Map<Object, Object>> resourcesTl = new ThreadLocal<Map<Object, Object>>() {
+        protected Map<Object, Object> initialValue() {
+            return new HashMap<Object, Object>();
         }
     };
 
@@ -153,8 +153,8 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
         }
     }
 
-    private Map getResources() {
-        return ((Map) resourcesTl.get());
+    private Map<Object, Object> getResources() {
+        return resourcesTl.get();
     }
 
     private BitronixTransaction currentTransaction() {
