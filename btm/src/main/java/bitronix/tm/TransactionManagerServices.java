@@ -72,7 +72,7 @@ public class TransactionManagerServices {
      * Create the JTA 1.1 TransactionSynchronizationRegistry.
      * @return the TransactionSynchronizationRegistry.
      */
-    public synchronized static BitronixTransactionSynchronizationRegistry getTransactionSynchronizationRegistry() {
+    public static BitronixTransactionSynchronizationRegistry getTransactionSynchronizationRegistry() {
         BitronixTransactionSynchronizationRegistry transactionSynchronizationRegistry = transactionSynchronizationRegistryRef.get();
         if (transactionSynchronizationRegistry == null) {
             transactionSynchronizationRegistry = new BitronixTransactionSynchronizationRegistry();
@@ -200,7 +200,7 @@ public class TransactionManagerServices {
      * Check if the task scheduler has started.
      * @return true if the task scheduler has started.
      */
-    public synchronized static boolean isTaskSchedulerRunning() {
+    public static boolean isTaskSchedulerRunning() {
         return taskSchedulerRef.get() != null;
     }
 
