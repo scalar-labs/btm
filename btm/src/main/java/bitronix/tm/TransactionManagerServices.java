@@ -38,9 +38,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Container for all BTM services.
- * <p>The different services available are: {@link BitronixTransactionManager}, {@link Configuration}, {@link Journal},
- * {@link TaskScheduler}, {@link ResourceLoader}, {@link Recoverer} and {@link Executor}. They are used in all places
- * of the TM so they must be globally reachable.</p>
+ * <p>The different services available are: {@link BitronixTransactionManager}, {@link BitronixTransactionSynchronizationRegistry}
+ * {@link Configuration}, {@link Journal}, {@link TaskScheduler}, {@link ResourceLoader}, {@link Recoverer} and {@link Executor}.
+ * They are used in all places of the TM so they must be globally reachable.</p>
  *
  * @author lorban
  */
