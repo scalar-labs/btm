@@ -52,7 +52,9 @@ public class TransactionLogCursor {
     public TransactionLogCursor(File file) throws IOException {
         this.randomAccessFile = new RandomAccessFile(file, "r");
         this.randomAccessFile.seek(TransactionLogHeader.CURRENT_POSITION_HEADER);
-        endPosition = this.randomAccessFile.readLong();
+        synchronized (randomAccessFile) {
+            endPosition = this.randomAccessFile.readLong();
+        }
     }
 
     /**
