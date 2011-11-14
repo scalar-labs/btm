@@ -438,7 +438,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     }
 
     private class ClearContextSynchronization implements Synchronization {
-        private BitronixTransaction currentTx;
+        private final BitronixTransaction currentTx;
 
         public ClearContextSynchronization(BitronixTransaction currentTx) {
             this.currentTx = currentTx;
