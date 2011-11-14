@@ -37,10 +37,10 @@ import javax.naming.NamingException;
 import javax.naming.Reference;
 import javax.naming.StringRefAddr;
 import javax.transaction.xa.XAResource;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * EHCache implementation of BTM's XAResourceProducer.
@@ -51,12 +51,13 @@ import java.util.Map;
  */
 public final class EhCacheXAResourceProducer extends ResourceBean implements XAResourceProducer {
 
-    private static final Logger LOG = LoggerFactory.getLogger(EhCacheXAResourceProducer.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(EhCacheXAResourceProducer.class.getName());
 
-    private static final Map<String, EhCacheXAResourceProducer> producers = new HashMap<String, EhCacheXAResourceProducer>();
+    private static final ConcurrentMap<String, EhCacheXAResourceProducer> producers = new ConcurrentHashMap<String, EhCacheXAResourceProducer>();
 
-    private final List<EhCacheXAResourceHolder> xaResourceHolders = new ArrayList<EhCacheXAResourceHolder>();
-    private RecoveryXAResourceHolder recoveryXAResourceHolder;
+    private final ConcurrentMap<Integer, EhCacheXAResourceHolder> xaResourceHolders = new ConcurrentHashMap<Integer, EhCacheXAResourceHolder>();
+    private final AtomicInteger xaResourceHolderCounter = new AtomicInteger();
+    private volatile RecoveryXAResourceHolder recoveryXAResourceHolder;
 
 
     private EhCacheXAResourceProducer() {
@@ -71,20 +72,16 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
      * @param xaResource the XAResource to be registered
      */
     public static void registerXAResource(String uniqueName, XAResource xaResource) {
-        synchronized (producers) {
-            EhCacheXAResourceProducer xaResourceProducer = producers.get(uniqueName);
+        EhCacheXAResourceProducer xaResourceProducer = new EhCacheXAResourceProducer();
+        xaResourceProducer.setUniqueName(uniqueName);
+        // the initial xaResource must be added before init() can be called
+        xaResourceProducer.addXAResource(xaResource);
 
-            if (xaResourceProducer == null) {
-                xaResourceProducer = new EhCacheXAResourceProducer();
-                xaResourceProducer.setUniqueName(uniqueName);
-                // the initial xaResource must be added before init() is called
-                xaResourceProducer.addXAResource(xaResource);
-                xaResourceProducer.init();
-
-                producers.put(uniqueName, xaResourceProducer);
-            } else {
-                xaResourceProducer.addXAResource(xaResource);
-            }
+        EhCacheXAResourceProducer previous = producers.putIfAbsent(uniqueName, xaResourceProducer);
+        if (previous == null) {
+            xaResourceProducer.init();
+        } else {
+            previous.addXAResource(xaResource);
         }
     }
 
@@ -93,72 +90,64 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
      * @param uniqueName the uniqueName of this XAResourceProducer, usually the cache's name
      * @param xaResource the XAResource to be registered
      */
-    public static synchronized void unregisterXAResource(String uniqueName, XAResource xaResource) {
-        synchronized (producers) {
-            EhCacheXAResourceProducer xaResourceProducer = producers.get(uniqueName);
+    public static void unregisterXAResource(String uniqueName, XAResource xaResource) {
+        EhCacheXAResourceProducer xaResourceProducer = producers.get(uniqueName);
 
-            if (xaResourceProducer != null) {
-                boolean found = xaResourceProducer.removeXAResource(xaResource);
-                if (!found) {
-                    LOG.error("no XAResource " + xaResource + " found in XAResourceProducer with name " + uniqueName);
-                }
-                if (xaResourceProducer.xaResourceHolders.isEmpty()) {
-                    xaResourceProducer.close();
-                    producers.remove(uniqueName);
-                }
-            } else {
-                LOG.error("no XAResourceProducer registered with name " + uniqueName);
+        if (xaResourceProducer != null) {
+            boolean found = xaResourceProducer.removeXAResource(xaResource);
+            if (!found) {
+                log.error("no XAResource " + xaResource + " found in XAResourceProducer with name " + uniqueName);
             }
+            if (xaResourceProducer.xaResourceHolders.isEmpty()) {
+                xaResourceProducer.close();
+                producers.remove(uniqueName);
+            }
+        } else {
+            log.error("no XAResourceProducer registered with name " + uniqueName);
         }
     }
 
 
     private void addXAResource(XAResource xaResource) {
-        synchronized (xaResourceHolders) {
-            EhCacheXAResourceHolder xaResourceHolder = new EhCacheXAResourceHolder(xaResource, this);
+        EhCacheXAResourceHolder xaResourceHolder = new EhCacheXAResourceHolder(xaResource, this);
+        int key = xaResourceHolderCounter.incrementAndGet();
 
-            xaResourceHolders.add(xaResourceHolder);
-        }
+        xaResourceHolders.put(key, xaResourceHolder);
     }
 
     private boolean removeXAResource(XAResource xaResource) {
-        synchronized (xaResourceHolders) {
-            for (int i = 0; i < xaResourceHolders.size(); i++) {
-                EhCacheXAResourceHolder xaResourceHolder = xaResourceHolders.get(i);
-                if (xaResourceHolder.getXAResource() == xaResource) {
-                    xaResourceHolders.remove(i);
-                    return true;
-                }
+        for (Map.Entry<Integer, EhCacheXAResourceHolder> entry : xaResourceHolders.entrySet()) {
+            Integer key = entry.getKey();
+            EhCacheXAResourceHolder xaResourceHolder = entry.getValue();
+            if (xaResourceHolder.getXAResource() == xaResource) {
+                xaResourceHolders.remove(key);
+                return true;
             }
-            return false;
         }
+        return false;
     }
 
     /**
      * {@inheritDoc}
      */
     public XAResourceHolderState startRecovery() throws RecoveryException {
-        synchronized (xaResourceHolders) {
-            if (recoveryXAResourceHolder != null) {
-                throw new RecoveryException("recovery already in progress on " + this);
-            }
-
-            if (xaResourceHolders.isEmpty()) {
-                throw new RecoveryException("no XAResource registered, recovery cannot be done on " + this);
-            }
-
-            recoveryXAResourceHolder = new RecoveryXAResourceHolder(xaResourceHolders.get(0));
-            return new XAResourceHolderState(recoveryXAResourceHolder, this);
+        if (recoveryXAResourceHolder != null) {
+            throw new RecoveryException("recovery already in progress on " + this);
         }
+
+        if (xaResourceHolders.isEmpty()) {
+            throw new RecoveryException("no XAResource registered, recovery cannot be done on " + this);
+        }
+
+        recoveryXAResourceHolder = new RecoveryXAResourceHolder(xaResourceHolders.values().iterator().next());
+        return new XAResourceHolderState(recoveryXAResourceHolder, this);
     }
 
     /**
      * {@inheritDoc}
      */
     public void endRecovery() throws RecoveryException {
-        synchronized (xaResourceHolders) {
-            recoveryXAResourceHolder = null;
-        }
+        recoveryXAResourceHolder = null;
     }
 
     /**
@@ -172,15 +161,13 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
      * {@inheritDoc}
      */
     public XAResourceHolder findXAResourceHolder(XAResource xaResource) {
-        synchronized (xaResourceHolders) {
-            for (EhCacheXAResourceHolder xaResourceHolder : xaResourceHolders) {
-                if (xaResource == xaResourceHolder.getXAResource()) {
-                    return xaResourceHolder;
-                }
+        for (EhCacheXAResourceHolder xaResourceHolder : xaResourceHolders.values()) {
+            if (xaResource == xaResourceHolder.getXAResource()) {
+                return xaResourceHolder;
             }
-
-            return null;
         }
+
+        return null;
     }
 
     /**
@@ -198,10 +185,9 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
      * {@inheritDoc}
      */
     public void close() {
-        synchronized (xaResourceHolders) {
-            xaResourceHolders.clear();
-            ResourceRegistrar.unregister(this);
-        }
+        xaResourceHolders.clear();
+        xaResourceHolderCounter.set(0);
+        ResourceRegistrar.unregister(this);
     }
 
     /**
@@ -220,4 +206,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
                 ResourceObjectFactory.class.getName(), null);
     }
 
+    public String toString() {
+        return "a EhCacheXAResourceProducer with uniqueName " + getUniqueName();
+    }
 }
