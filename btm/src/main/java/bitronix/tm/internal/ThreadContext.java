@@ -25,6 +25,10 @@ import bitronix.tm.TransactionManagerServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Transactional context of a thread. It contains both the active transaction (if any) and all default parameters
  * that a transaction running on a thread must inherit.
@@ -37,6 +41,7 @@ public class ThreadContext {
 
     private volatile BitronixTransaction transaction;
     private volatile int timeout = TransactionManagerServices.getConfiguration().getDefaultTransactionTimeout();
+    private final Map<Object, Object> resources = Collections.synchronizedMap(new HashMap<Object, Object>());
 
     /**
      * Return the transaction linked with this thread context.
@@ -80,6 +85,14 @@ public class ThreadContext {
             if (log.isDebugEnabled()) log.debug("changing default timeout of thread context to " + timeout + "s");
             this.timeout = timeout;
         }
+    }
+
+    /**
+     * Get this context's resources, in the JTA 1.1 TransactionSynchronizationRegistry sense.
+     * @return this context's resources.
+     */
+    public Map<Object, Object> getResources() {
+        return resources;
     }
 
     /**

@@ -424,6 +424,14 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     }
 
     /**
+     * Get the context attached to the current thread. If there is no current context, return null.
+     * @return the context.
+     */
+    ThreadContext currentThreadContext() {
+        return contexts.get(Thread.currentThread());
+    }
+
+    /**
      * Get the context attached to the current thread. If there is no current context, a new one is created.
      * @return the context.
      */
