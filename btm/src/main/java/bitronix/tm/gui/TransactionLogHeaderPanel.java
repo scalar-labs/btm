@@ -83,7 +83,7 @@ public class TransactionLogHeaderPanel extends JPanel {
 
     public void read(File logFile, boolean active) throws IOException {
         RandomAccessFile raf = new RandomAccessFile(logFile, "r");
-        TransactionLogHeader header = new TransactionLogHeader(raf, 0L);
+        TransactionLogHeader header = new TransactionLogHeader(raf.getChannel(), 0L);
         raf.close();
         if (log.isDebugEnabled()) log.debug("read header: " + header);
         setLogFile(logFile);

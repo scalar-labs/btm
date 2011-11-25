@@ -93,8 +93,8 @@ public class DiskJournal implements Journal {
             }
         }
 
+        TransactionLogRecord tlog = new TransactionLogRecord(status, gtrid, uniqueNames);
         synchronized (this) {
-            TransactionLogRecord tlog = new TransactionLogRecord(status, gtrid, uniqueNames);
             boolean written = activeTla.writeLog(tlog);
             if (!written) {
                 // time to swap log files

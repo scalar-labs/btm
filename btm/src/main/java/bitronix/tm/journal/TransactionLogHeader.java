@@ -25,7 +25,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 
 /**
  * Used to control a log file's header.
@@ -74,31 +75,37 @@ public class TransactionLogHeader {
     public final static byte UNCLEAN_LOG_STATE = -1;
 
 
-    private final RandomAccessFile randomAccessFile;
+    private final FileChannel fc;
     private final long maxFileLength;
-    private int formatId;
-    private long timestamp;
-    private byte state;
-    private long position;
+
+    private volatile int formatId;
+    private volatile long timestamp;
+    private volatile byte state;
+    private volatile long position;
 
     /**
      * TransactionLogHeader are used to control headers of the specified RandomAccessFile.
      * All calls to setters are synchronized on the passed-in RandomAccessFile.
-     * @param randomAccessFile the random access file to read from.
+     * @param fc the file channel to read from.
      * @param maxFileLength the max file length.
      * @throws IOException if an I/O error occurs.
      */
-    public TransactionLogHeader(RandomAccessFile randomAccessFile, long maxFileLength) throws IOException {
-        this.randomAccessFile = randomAccessFile;
+    public TransactionLogHeader(FileChannel fc, long maxFileLength) throws IOException {
+        this.fc = fc;
         this.maxFileLength = maxFileLength;
 
-        synchronized (this.randomAccessFile) {
-            randomAccessFile.seek(FORMAT_ID_HEADER);
-            formatId = randomAccessFile.readInt();
-            timestamp = randomAccessFile.readLong();
-            state = randomAccessFile.readByte();
-            position = randomAccessFile.readLong();
-            randomAccessFile.seek(position);
+        synchronized (this.fc) {
+            fc.position(FORMAT_ID_HEADER);
+            ByteBuffer buf = ByteBuffer.allocate(4 + 8 + 1 + 8);
+            while (buf.hasRemaining()) {
+                this.fc.read(buf);
+            }
+            buf.flip();
+            formatId = buf.getInt();
+            timestamp = buf.getLong();
+            state = buf.get();
+            position = buf.getLong();
+            fc.position(position);
         }
 
         if (log.isDebugEnabled()) log.debug("read header " + this);
@@ -110,9 +117,7 @@ public class TransactionLogHeader {
      * @return the FORMAT_ID_HEADER value.
      */
     public int getFormatId() {
-        synchronized (randomAccessFile) {
-            return formatId;
-        }
+        return formatId;
     }
 
     /**
@@ -121,9 +126,7 @@ public class TransactionLogHeader {
      * @return the TIMESTAMP_HEADER value.
      */
     public long getTimestamp() {
-        synchronized (randomAccessFile) {
-            return timestamp;
-        }
+        return timestamp;
     }
 
     /**
@@ -132,9 +135,7 @@ public class TransactionLogHeader {
      * @return the STATE_HEADER value.
      */
     public byte getState() {
-        synchronized (randomAccessFile) {
-            return state;
-        }
+        return state;
     }
 
     /**
@@ -143,9 +144,7 @@ public class TransactionLogHeader {
      * @return the CURRENT_POSITION_HEADER value.
      */
     public long getPosition() {
-        synchronized (randomAccessFile) {
-            return position;
-        }
+        return position;
     }
 
     /**
@@ -155,11 +154,16 @@ public class TransactionLogHeader {
      * @throws IOException if an I/O error occurs.
      */
     public void setFormatId(int formatId) throws IOException {
-        synchronized (randomAccessFile) {
-            long currentPos = randomAccessFile.getFilePointer();
-            randomAccessFile.seek(FORMAT_ID_HEADER);
-            randomAccessFile.writeInt(formatId);
-            randomAccessFile.seek(currentPos);
+        ByteBuffer buf = ByteBuffer.allocate(8);
+        buf.putInt(formatId);
+        buf.flip();
+        synchronized (fc) {
+            long currentPos = fc.position();
+            fc.position(FORMAT_ID_HEADER);
+            while (buf.hasRemaining()) {
+                this.fc.write(buf);
+            }
+            fc.position(currentPos);
             this.formatId = formatId;
         }
     }
@@ -171,11 +175,16 @@ public class TransactionLogHeader {
      * @throws IOException if an I/O error occurs.
      */
     public void setTimestamp(long timestamp) throws IOException {
-        synchronized (randomAccessFile) {
-            long currentPos = randomAccessFile.getFilePointer();
-            randomAccessFile.seek(TIMESTAMP_HEADER);
-            randomAccessFile.writeLong(timestamp);
-            randomAccessFile.seek(currentPos);
+        ByteBuffer buf = ByteBuffer.allocate(8);
+        buf.putLong(position);
+        buf.flip();
+        synchronized (fc) {
+            long currentPos = fc.position();
+            fc.position(TIMESTAMP_HEADER);
+            while (buf.hasRemaining()) {
+                this.fc.write(buf);
+            }
+            fc.position(currentPos);
             this.timestamp = timestamp;
         }
     }
@@ -187,11 +196,16 @@ public class TransactionLogHeader {
      * @throws IOException if an I/O error occurs.
      */
     public void setState(byte state) throws IOException {
-        synchronized (randomAccessFile) {
-            long currentPos = randomAccessFile.getFilePointer();
-            randomAccessFile.seek(STATE_HEADER);
-            randomAccessFile.writeByte(state);
-            randomAccessFile.seek(currentPos);
+        ByteBuffer buf = ByteBuffer.allocate(1);
+        buf.put(state);
+        buf.flip();
+        synchronized (fc) {
+            long currentPos = fc.position();
+            fc.position(STATE_HEADER);
+            while (buf.hasRemaining()) {
+                this.fc.write(buf);
+            }
+            fc.position(currentPos);
             this.state = state;
         }
     }
@@ -208,10 +222,15 @@ public class TransactionLogHeader {
         if (position >= maxFileLength)
             throw new IOException("invalid position " + position + " (too high)");
 
-        synchronized (randomAccessFile) {
-            randomAccessFile.seek(CURRENT_POSITION_HEADER);
-            randomAccessFile.writeLong(position);
-            randomAccessFile.seek(position);
+        ByteBuffer buf = ByteBuffer.allocate(8);
+        buf.putLong(position);
+        buf.flip();
+        synchronized (fc) {
+            fc.position(CURRENT_POSITION_HEADER);
+            while (buf.hasRemaining()) {
+                this.fc.write(buf);
+            }
+            fc.position(position);
             this.position = position;
         }
     }

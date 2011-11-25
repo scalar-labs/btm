@@ -28,7 +28,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.util.Set;
 
 /**
  * Used to write {@link TransactionLogRecord} objects to a log file.
@@ -47,7 +49,7 @@ public class TransactionLogAppender {
     public static final int END_RECORD = 0x786e7442;
 
     private final File file;
-    private final RandomAccessFile randomAccessFile;
+    private final FileChannel fc;
     private final FileLock lock;
     private final TransactionLogHeader header;
     private final long maxFileLength;
@@ -64,9 +66,9 @@ public class TransactionLogAppender {
     public TransactionLogAppender(File file, long maxFileLength) throws IOException {
         this.maxFileLength = maxFileLength;
         this.file = file;
-        this.randomAccessFile = new RandomAccessFile(file, "rw");
-        this.header = new TransactionLogHeader(randomAccessFile, maxFileLength);
-        this.lock = randomAccessFile.getChannel().tryLock(0, TransactionLogHeader.TIMESTAMP_HEADER, false);
+        this.fc = new RandomAccessFile(file, "rw").getChannel();
+        this.header = new TransactionLogHeader(fc, maxFileLength);
+        this.lock = fc.tryLock(0, TransactionLogHeader.TIMESTAMP_HEADER, false);
         if (this.lock == null)
             throw new IOException("transaction log file " + file.getName() + " is locked. Is another instance already running?");
 
@@ -88,33 +90,36 @@ public class TransactionLogAppender {
      * @throws IOException if an I/O error occurs.
      */
     public boolean writeLog(TransactionLogRecord tlog) throws IOException {
-        synchronized (randomAccessFile) {
-            long futureFilePosition = getHeader().getPosition() + tlog.calculateTotalRecordSize();
+        synchronized (fc) {
+            int recordSize = tlog.calculateTotalRecordSize();
+            long futureFilePosition = getHeader().getPosition() + recordSize;
             if (futureFilePosition >= maxFileLength) { // see TransactionLogHeader.setPosition() as it double-checks this
-                if (log.isDebugEnabled())
-                    log.debug("log file is full (size would be: " + futureFilePosition + ", max allowed: " + maxFileLength + ")");
+                if (log.isDebugEnabled()) log.debug("log file is full (size would be: " + futureFilePosition + ", max allowed: " + maxFileLength + ")");
                 return false;
             }
             if (log.isDebugEnabled()) log.debug("between " + getHeader().getPosition() + " and " + futureFilePosition + ", writing " + tlog);
 
-            ByteBuffer byteBuffer = ByteBuffer.allocate(tlog.calculateTotalRecordSize());
-            byteBuffer.putInt(tlog.getStatus());
-            byteBuffer.putInt(tlog.getRecordLength());
-            byteBuffer.putInt(tlog.getHeaderLength());
-            byteBuffer.putLong(tlog.getTime());
-            byteBuffer.putInt(tlog.getSequenceNumber());
-            byteBuffer.putInt(tlog.getCrc32());
-            byteBuffer.put((byte) tlog.getGtrid().getArray().length);
-            byteBuffer.put(tlog.getGtrid().getArray());
-            byteBuffer.putInt(tlog.getUniqueNames().size());
-            for (String uniqueName : tlog.getUniqueNames()) {
-                byteBuffer.putShort((short) uniqueName.length());
-                byteBuffer.put(uniqueName.getBytes());
+            ByteBuffer buf = ByteBuffer.allocate(recordSize);
+            buf.putInt(tlog.getStatus());
+            buf.putInt(tlog.getRecordLength());
+            buf.putInt(tlog.getHeaderLength());
+            buf.putLong(tlog.getTime());
+            buf.putInt(tlog.getSequenceNumber());
+            buf.putInt(tlog.getCrc32());
+            buf.put((byte) tlog.getGtrid().getArray().length);
+            buf.put(tlog.getGtrid().getArray());
+            Set<String> uniqueNames = tlog.getUniqueNames();
+            buf.putInt(uniqueNames.size());
+            for (String uniqueName : uniqueNames) {
+                buf.putShort((short) uniqueName.length());
+                buf.put(uniqueName.getBytes());
             }
-            byteBuffer.putInt(tlog.getEndRecord());
-            byteBuffer.flip();
-            randomAccessFile.getChannel().write(byteBuffer);
+            buf.putInt(tlog.getEndRecord());
 
+            buf.flip();
+            while (buf.hasRemaining()) {
+                this.fc.write(buf);
+            }
             getHeader().goAhead(tlog.calculateTotalRecordSize());
             if (log.isDebugEnabled()) log.debug("disk journal appender now at position " + getHeader().getPosition());
 
@@ -127,13 +132,13 @@ public class TransactionLogAppender {
      * @throws IOException if an I/O error occurs.
      */
     public void close() throws IOException {
-        synchronized (randomAccessFile) {
+        synchronized (fc) {
             shutdownBatcherThread();
 
             getHeader().setState(TransactionLogHeader.CLEAN_LOG_STATE);
-            randomAccessFile.getFD().sync();
+            fc.force(false);
             lock.release();
-            randomAccessFile.close();
+            fc.close();
         }
     }
 
@@ -173,15 +178,15 @@ public class TransactionLogAppender {
 
 
     protected void doForce() throws IOException {
-        synchronized (randomAccessFile) {
+        synchronized (fc) {
             if (log.isDebugEnabled()) log.debug("forcing log writing");
-            randomAccessFile.getFD().sync();
+            fc.force(false);
             if (log.isDebugEnabled()) log.debug("done forcing log");
         }
     }
 
     private void spawnBatcherThread() {
-        synchronized (getClass()) {
+        synchronized (TransactionLogAppender.class) {
             if (diskForceBatcherThread != null)
                 return;
 
@@ -200,7 +205,7 @@ public class TransactionLogAppender {
     }
 
     private void shutdownBatcherThread() {
-        synchronized (getClass()) {
+        synchronized (TransactionLogAppender.class) {
             if (diskForceBatcherThread == null)
                 return;
 
