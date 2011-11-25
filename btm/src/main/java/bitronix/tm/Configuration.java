@@ -622,6 +622,7 @@ public class Configuration implements Service {
     }
 
     public void shutdown() {
+        serverIdArray = null;
     }
 
     public String toString() {

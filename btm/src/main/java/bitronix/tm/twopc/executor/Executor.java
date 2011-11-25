@@ -20,7 +20,6 @@
  */
 package bitronix.tm.twopc.executor;
 
-import bitronix.tm.internal.BitronixRuntimeException;
 import bitronix.tm.utils.Service;
 
 /**
