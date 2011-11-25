@@ -38,13 +38,13 @@ import java.util.Set;
  */
 public class MockJournal implements Journal {
 
-    private Map danglingRecords = new HashMap();
+    private Map<Uid, TransactionLogRecord> danglingRecords;
 
     private EventRecorder getEventRecorder() {
         return EventRecorder.getEventRecorder(this);
     }
 
-    public void log(int status, Uid gtrid, Set uniqueNames) throws IOException {
+    public void log(int status, Uid gtrid, Set<String> uniqueNames) throws IOException {
         TransactionLogRecord record = new TransactionLogRecord(status, gtrid, uniqueNames);
         if (status == Status.STATUS_COMMITTING) {
             danglingRecords.put(gtrid, record);
@@ -56,17 +56,17 @@ public class MockJournal implements Journal {
     }
 
     public void open() throws IOException {
-        danglingRecords = new HashMap();
+        danglingRecords = new HashMap<Uid, TransactionLogRecord>();
     }
 
     public void close() throws IOException {
-        danglingRecords = new HashMap();
+        danglingRecords = null;
     }
 
     public void force() throws IOException {
     }
 
-    public Map collectDanglingRecords() throws IOException {
+    public Map<Uid, TransactionLogRecord> collectDanglingRecords() throws IOException {
         return danglingRecords;
     }
 

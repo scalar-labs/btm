@@ -23,8 +23,9 @@ package bitronix.tm.resource.jdbc;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Base class for Proxy InvocationHandlers.  Maintains a method cache
@@ -36,19 +37,18 @@ import java.util.Map;
  * @author brettw
  */
 public abstract class BaseProxyHandlerClass implements InvocationHandler {
-
-    private final static Map classMethodCache = new HashMap();
-    private final Map methodCache;
+    private static final ConcurrentMap<Class, Map<Method, Method>> classMethodCache = new ConcurrentHashMap<Class, Map<Method, Method>>();
+    private final Map<Method, Method> methodCache;
 
     public BaseProxyHandlerClass() {
-        synchronized (classMethodCache) {
-            Map methodCache = (Map) classMethodCache.get(this.getClass());
-            if (methodCache == null) {
-                methodCache = new HashMap();
-                classMethodCache.put(this.getClass(), methodCache);
-            }
-            this.methodCache = methodCache;
+        Map<Method, Method> methodCache = classMethodCache.get(this.getClass());
+        if (methodCache == null) {
+            methodCache = new ConcurrentHashMap<Method, Method>();
+            Map<Method, Method> previous = classMethodCache.putIfAbsent(this.getClass(), methodCache);
+            if (previous != null)
+                methodCache = previous;
         }
+        this.methodCache = methodCache;
     }
 
     /**
@@ -61,7 +61,7 @@ public abstract class BaseProxyHandlerClass implements InvocationHandler {
             // If the method is directly overridden by "this" (i.e. sub-class)
             // class call "this" class' Method with "this" object, otherwise
             // call the non-overridden Method with the proxied object
-            Method delegatedMethod = (Method) getDelegatedMethod(method);
+            Method delegatedMethod = getDelegatedMethod(method);
             return delegatedMethod.invoke(isOurMethod(delegatedMethod) ? this : getProxiedDelegate(), args);
         } catch (InvocationTargetException ite) {
             // the InvocationTargetException's target actually is the exception thrown by the delegate
@@ -84,7 +84,7 @@ public abstract class BaseProxyHandlerClass implements InvocationHandler {
      *         (overridden) or the underlying proxied object
      */
     private synchronized Method getDelegatedMethod(Method method) {
-        Method delegated = (Method) methodCache.get(method);
+        Method delegated = methodCache.get(method);
         if (delegated != null) {
             return delegated;
         }

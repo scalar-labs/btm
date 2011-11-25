@@ -24,30 +24,19 @@ import bitronix.tm.TransactionManagerServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.management.ManagementFactory;
-
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import java.lang.management.ManagementFactory;
 
 /**
- * Simple JMX facade. In case there is no JMX implementation available, calling methods of this class have no effect.
+ * Simple JMX facade. In case JMX is disabled, calling methods of this class have no effect.
  *
  * @author lorban
  */
 public final class ManagementRegistrar {
 
     private final static Logger log = LoggerFactory.getLogger(ManagementRegistrar.class);
-    private final static MBeanServer mbeanServer;
 
-    static {
-        boolean enableJmx = !TransactionManagerServices.getConfiguration().isDisableJmx();
-
-        if (enableJmx) {
-            mbeanServer = ManagementFactory.getPlatformMBeanServer();
-        } else {
-            mbeanServer = null;
-        }
-    }
 
     private ManagementRegistrar() {
     }
@@ -67,6 +56,7 @@ public final class ManagementRegistrar {
      * @param obj the management object.
      */
     public static void register(String name, Object obj) {
+        MBeanServer mbeanServer = getMBeanServer();
         if (mbeanServer == null)
             return;
 
@@ -82,6 +72,7 @@ public final class ManagementRegistrar {
      * @param name the name of the object.
      */
     public static void unregister(String name) {
+        MBeanServer mbeanServer = getMBeanServer();
         if (mbeanServer == null)
             return;
 
@@ -89,6 +80,14 @@ public final class ManagementRegistrar {
             mbeanServer.unregisterMBean(new ObjectName(name));
         } catch (Exception ex) {
             log.warn("cannot unregister object with name " + name, ex);
+        }
+    }
+
+    private static MBeanServer getMBeanServer() {
+        if (!TransactionManagerServices.getConfiguration().isDisableJmx()) {
+            return ManagementFactory.getPlatformMBeanServer();
+        } else {
+            return null;
         }
     }
 

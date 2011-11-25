@@ -43,8 +43,8 @@ public class BitronixContext implements Context {
     private final static Logger log = LoggerFactory.getLogger(BitronixContext.class);
     
     private boolean closed = false;
-    private String userTransactionName;
-    private String synchronizationRegistryName;
+    private final String userTransactionName;
+    private final String synchronizationRegistryName;
 
     public BitronixContext() {
         userTransactionName = TransactionManagerServices.getConfiguration().getJndiUserTransactionName();
@@ -120,19 +120,19 @@ public class BitronixContext implements Context {
         throw new OperationNotSupportedException();
     }
 
-    public NamingEnumeration list(Name name) throws NamingException {
+    public NamingEnumeration<NameClassPair> list(Name name) throws NamingException {
         throw new OperationNotSupportedException();
     }
 
-    public NamingEnumeration list(String s) throws NamingException {
+    public NamingEnumeration<NameClassPair> list(String s) throws NamingException {
         throw new OperationNotSupportedException();
     }
 
-    public NamingEnumeration listBindings(Name name) throws NamingException {
+    public NamingEnumeration<Binding> listBindings(Name name) throws NamingException {
         throw new OperationNotSupportedException();
     }
 
-    public NamingEnumeration listBindings(String s) throws NamingException {
+    public NamingEnumeration<Binding> listBindings(String s) throws NamingException {
         throw new OperationNotSupportedException();
     }
 
@@ -161,11 +161,11 @@ public class BitronixContext implements Context {
     }
 
     public NameParser getNameParser(Name name) throws NamingException {
-        throw new OperationNotSupportedException();
+        return BitronixNameParser.INSTANCE;
     }
 
     public NameParser getNameParser(String s) throws NamingException {
-        throw new OperationNotSupportedException();
+        return BitronixNameParser.INSTANCE;
     }
 
     public Name composeName(Name name, Name name1) throws NamingException {
@@ -184,11 +184,20 @@ public class BitronixContext implements Context {
         throw new OperationNotSupportedException();
     }
 
-    public Hashtable getEnvironment() throws NamingException {
+    public Hashtable<?, ?> getEnvironment() throws NamingException {
         throw new OperationNotSupportedException();
     }
 
     public String getNameInNamespace() throws NamingException {
         throw new OperationNotSupportedException();
     }
+
+    private final static class BitronixNameParser implements NameParser {
+        private static final BitronixNameParser INSTANCE = new BitronixNameParser();
+
+        public Name parse(final String name) throws NamingException {
+            return new CompositeName(name);
+        }
+    }
+
 }

@@ -20,8 +20,8 @@
  */
 package bitronix.tm.resource.jdbc;
 
-import javax.sql.XADataSource;
-import java.sql.*;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * Statement {@link Statement} wrapper.
@@ -41,7 +41,7 @@ public class JdbcStatementHandle extends BaseProxyHandlerClass { // implements S
     // from the un-closed statements list when close() is called.
     private final JdbcPooledConnection parentConnection;
 
-    private Statement delegate;
+    private final Statement delegate;
 
     public JdbcStatementHandle(Statement delegate, JdbcPooledConnection pooledConnection) {
         this.delegate = delegate;
@@ -50,18 +50,16 @@ public class JdbcStatementHandle extends BaseProxyHandlerClass { // implements S
 
     /* java.sql.Wrapper implementation */
 
-	public boolean isWrapperFor(Class iface) throws SQLException {
-	    if (Statement.class.equals(iface)) {
-	        return true;
-	    }
-		return false;
-	}
 
-	public Object unwrap(Class iface) throws SQLException {
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        return Statement.class.equals(iface);
+    }
+
+    public <T> T unwrap(Class<T> iface) throws SQLException {
         if (Statement.class.equals(iface)) {
-            return delegate;
+            return (T) delegate;
 	    }
-	    throw new SQLException(getClass().getName() + " is not a wrapper for interface " + iface.getName());
+	    throw new SQLException(getClass().getName() + " is not a wrapper for " + iface);
 	}
 
     /* Internal methods */

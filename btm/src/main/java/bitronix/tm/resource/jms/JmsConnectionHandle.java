@@ -20,7 +20,16 @@
  */
 package bitronix.tm.resource.jms;
 
-import javax.jms.*;
+import javax.jms.Connection;
+import javax.jms.ConnectionConsumer;
+import javax.jms.ConnectionMetaData;
+import javax.jms.Destination;
+import javax.jms.ExceptionListener;
+import javax.jms.JMSException;
+import javax.jms.ServerSessionPool;
+import javax.jms.Session;
+import javax.jms.Topic;
+import javax.jms.XAConnection;
 
 /**
  * Disposable Connection handle.
@@ -29,8 +38,9 @@ import javax.jms.*;
  */
 public class JmsConnectionHandle implements Connection {
 
-    private volatile XAConnection xaConnection;
+    private final XAConnection xaConnection;
     private final JmsPooledConnection pooledConnection;
+    private volatile boolean closed = false;
 
     public JmsConnectionHandle(JmsPooledConnection pooledConnection, XAConnection xaConnection) {
         this.pooledConnection = pooledConnection;
@@ -52,10 +62,10 @@ public class JmsConnectionHandle implements Connection {
     }
 
     public void close() throws JMSException {
-        if (xaConnection == null)
+        if (closed)
             return;
 
-        xaConnection = null;
+        closed = true;
         pooledConnection.release();
     }
 

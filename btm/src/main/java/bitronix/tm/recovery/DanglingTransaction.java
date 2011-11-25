@@ -27,10 +27,10 @@ import javax.transaction.xa.Xid;
  *
  * @author lorban
  */
-public class DanglingTransaction {
+public final class DanglingTransaction {
 
-    private String uniqueName;
-    private Xid xid;
+    private final String uniqueName;
+    private final Xid xid;
 
     public DanglingTransaction(String uniqueName, Xid xid) {
         if (uniqueName == null)

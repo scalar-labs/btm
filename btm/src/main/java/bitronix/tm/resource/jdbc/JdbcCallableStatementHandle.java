@@ -20,7 +20,9 @@
  */
 package bitronix.tm.resource.jdbc;
 
-import java.sql.*;
+import java.sql.CallableStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * CallableStatement {@link Statement} wrapper.

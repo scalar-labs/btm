@@ -22,15 +22,14 @@ package bitronix.tm.resource.jms.lrc;
 
 import bitronix.tm.internal.BitronixXAException;
 import bitronix.tm.utils.Decoder;
-
-import javax.transaction.xa.XAResource;
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.Xid;
-import javax.jms.Session;
-import javax.jms.JMSException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.jms.JMSException;
+import javax.jms.Session;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
 
 /**
  * XAResource implementation for a non-XA JMS connection emulating XA with Last Resource Commit.

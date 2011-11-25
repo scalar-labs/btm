@@ -20,14 +20,16 @@
  */
 package bitronix.tm.resource.jdbc.lrc;
 
+import bitronix.tm.utils.ClassLoaderUtils;
+
+import javax.sql.XAConnection;
+import javax.sql.XADataSource;
 import java.io.PrintWriter;
 import java.lang.reflect.Proxy;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.SQLException;
 import java.util.Properties;
-
-import javax.sql.*;
-
-import bitronix.tm.utils.ClassLoaderUtils;
 
 /**
  * XADataSource implementation for a non-XA JDBC resource emulating XA with Last Resource Commit.

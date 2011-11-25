@@ -20,10 +20,9 @@
  */
 package bitronix.tm.resource.common;
 
+import javax.transaction.xa.XAResource;
 import java.util.Date;
 import java.util.List;
-
-import javax.transaction.xa.XAResource;
 
 /**
  * {@link XAResourceHolder} created by an {@link bitronix.tm.resource.common.XAResourceProducer} that is
@@ -55,7 +54,7 @@ public class RecoveryXAResourceHolder extends AbstractXAResourceHolder {
         return null;
     }
 
-    public List getXAResourceHolders() {
+    public List<XAResourceHolder> getXAResourceHolders() {
         return null;
     }
 

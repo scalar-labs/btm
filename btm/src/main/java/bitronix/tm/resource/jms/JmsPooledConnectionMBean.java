@@ -32,6 +32,6 @@ public interface JmsPooledConnectionMBean {
 
     String getStateDescription();
     Date getAcquisitionDate();
-    Collection getTransactionGtridsCurrentlyHoldingThis();
+    Collection<String> getTransactionGtridsCurrentlyHoldingThis();
 
 }

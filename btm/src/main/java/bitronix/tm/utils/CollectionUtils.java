@@ -37,10 +37,8 @@ public class CollectionUtils {
      * @param toBeFound the object to search for.
      * @return true if the collection contains the object, false otherwise.
      */
-    public static boolean containsByIdentity(Collection collection, Object toBeFound) {
-        Iterator it = collection.iterator();
-        while (it.hasNext()) {
-            Object o =  it.next();
+    public static boolean containsByIdentity(Collection<?> collection, Object toBeFound) {
+        for (Object o : collection) {
             if (o == toBeFound)
                 return true;
         }

@@ -27,12 +27,8 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author lorban
  */
-public final class MonotonicClock {
-
+public class MonotonicClock {
     private static final AtomicLong lastTime = new AtomicLong();
-
-    private MonotonicClock() {
-    }
 
     /**
      * Return the current time in milliseconds, guaranteeing monotonic time increment.

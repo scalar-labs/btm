@@ -36,7 +36,7 @@ public class TransactionTimeoutTask extends Task {
 
     private final static Logger log = LoggerFactory.getLogger(TransactionTimeoutTask.class);
 
-    private BitronixTransaction transaction;
+    private final BitronixTransaction transaction;
 
     public TransactionTimeoutTask(BitronixTransaction transaction, Date executionTime, TaskScheduler scheduler) {
         super(executionTime, scheduler);

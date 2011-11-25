@@ -20,7 +20,17 @@
  */
 package bitronix.tm.resource.jms.lrc;
 
-import javax.jms.*;
+import javax.jms.Connection;
+import javax.jms.ConnectionConsumer;
+import javax.jms.ConnectionMetaData;
+import javax.jms.Destination;
+import javax.jms.ExceptionListener;
+import javax.jms.JMSException;
+import javax.jms.ServerSessionPool;
+import javax.jms.Session;
+import javax.jms.Topic;
+import javax.jms.XAConnection;
+import javax.jms.XASession;
 
 /**
  * XAConnection implementation for a non-XA JMS resource emulating XA with Last Resource Commit.

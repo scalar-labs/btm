@@ -626,7 +626,7 @@ public class Configuration implements Service {
     }
 
     public String toString() {
-        StringBuffer sb = new StringBuffer(512);
+        StringBuilder sb = new StringBuilder(512);
         sb.append("a Configuration with [");
 
         try {
@@ -660,7 +660,7 @@ public class Configuration implements Service {
     }
 
     static boolean getBoolean(Properties properties, String key, boolean defaultValue) {
-        return Boolean.valueOf(getString(properties, key, "" + defaultValue)).booleanValue();
+        return Boolean.valueOf(getString(properties, key, "" + defaultValue));
     }
 
     static int getInt(Properties properties, String key, int defaultValue) {

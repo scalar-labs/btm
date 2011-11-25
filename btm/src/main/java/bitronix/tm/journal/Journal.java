@@ -43,7 +43,7 @@ public interface Journal extends Service {
      * @param uniqueNames unique names of the RecoverableXAResourceProducers participating in the transaction.
      * @throws IOException if an I/O error occurs.
      */
-    public void log(int status, Uid gtrid, Set uniqueNames) throws IOException;
+    public void log(int status, Uid gtrid, Set<String> uniqueNames) throws IOException;
 
     /**
      * Open the journal. Integrity should be checked and an exception should be thrown in case the journal is corrupt.
@@ -68,6 +68,6 @@ public interface Journal extends Service {
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
      * @throws IOException if an I/O error occurs.
      */
-    public Map collectDanglingRecords() throws IOException;
+    public Map<Uid, TransactionLogRecord> collectDanglingRecords() throws IOException;
 
 }

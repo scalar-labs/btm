@@ -44,7 +44,7 @@ public class XAResourceManager {
     private final static Logger log = LoggerFactory.getLogger(XAResourceManager.class);
 
     private final Uid gtrid;
-    private final Scheduler resources = new Scheduler();
+    private final Scheduler<XAResourceHolderState> resources = new Scheduler<XAResourceHolderState>();
 
     /**
      * Create a resource manager for the specified GTRID.
@@ -80,7 +80,7 @@ public class XAResourceManager {
 
         XAResourceHolderState toBeJoinedHolderState = null;
         if (alreadyEnlistedHolder != null) {
-            if (log.isDebugEnabled()) { log.debug("resource already enlisted but has been ended eligible for join: " + alreadyEnlistedHolder); }
+            if (log.isDebugEnabled()) log.debug("resource already enlisted but has been ended eligible for join: " + alreadyEnlistedHolder);
             toBeJoinedHolderState = getManagedResourceWithSameRM(xaResourceHolderState);
         }
 
@@ -88,13 +88,13 @@ public class XAResourceManager {
         int flag;
 
         if (toBeJoinedHolderState != null) {
-            if (log.isDebugEnabled()) { log.debug("joining " + xaResourceHolderState + " with " + toBeJoinedHolderState); }
+            if (log.isDebugEnabled()) log.debug("joining " + xaResourceHolderState + " with " + toBeJoinedHolderState);
             xid = toBeJoinedHolderState.getXid();
             flag = XAResource.TMJOIN;
         }
         else {
             xid = UidGenerator.generateXid(gtrid);
-            if (log.isDebugEnabled()) { log.debug("creating new branch with " + xid); }
+            if (log.isDebugEnabled()) log.debug("creating new branch with " + xid);
             flag = XAResource.TMNOFLAGS;
         }
 
@@ -102,7 +102,7 @@ public class XAResourceManager {
         // unless this is explicitly allowed in the config
         if (flag != XAResource.TMJOIN && xaResourceHolderState.getTwoPcOrderingPosition() == Scheduler.ALWAYS_LAST_POSITION &&
                 !TransactionManagerServices.getConfiguration().isAllowMultipleLrc()) {
-            List alwaysLastResources = resources.getByNaturalOrderForPosition(Scheduler.ALWAYS_LAST_POSITION_KEY);
+            List<XAResourceHolderState> alwaysLastResources = resources.getByNaturalOrderForPosition(Scheduler.ALWAYS_LAST_POSITION);
             if (alwaysLastResources != null && !alwaysLastResources.isEmpty())
                 throw new BitronixSystemException("cannot enlist more than one non-XA resource, tried enlisting " + xaResourceHolderState + ", already enlisted: " + alwaysLastResources.get(0));
         }
@@ -129,7 +129,7 @@ public class XAResourceManager {
      */
     public boolean delist(XAResourceHolderState xaResourceHolderState, int flag) throws XAException, BitronixSystemException {
         if (findXAResourceHolderState(xaResourceHolderState.getXAResource()) != null) {
-            if (log.isDebugEnabled()) { log.debug("delisting resource " + xaResourceHolderState); }
+            if (log.isDebugEnabled()) log.debug("delisting resource " + xaResourceHolderState);
             xaResourceHolderState.end(flag);
             return true;
         }
@@ -143,11 +143,9 @@ public class XAResourceManager {
      * @throws XAException if the resource threw an exception during suspend.
      */
     public void suspend() throws XAException {
-        Iterator it = resources.iterator();
-        while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
+        for (XAResourceHolderState xaResourceHolderState : resources) {
             if (!xaResourceHolderState.isEnded()) {
-                if (log.isDebugEnabled()) { log.debug("suspending " + xaResourceHolderState); }
+                if (log.isDebugEnabled()) log.debug("suspending " + xaResourceHolderState);
                 xaResourceHolderState.end(XAResource.TMSUCCESS);
             }
         } // while
@@ -159,25 +157,21 @@ public class XAResourceManager {
      */
     public void resume() throws XAException {
         // all XAResource needs to be re-enlisted but this must happen
-        // outside the Schduler's iteration as enlist() can change the
+        // outside the Scheduler's iteration as enlist() can change the
         // collection's content and confuse the iterator.
-        List toBeReEnlisted = new ArrayList();
+        List<XAResourceHolderState> toBeReEnlisted = new ArrayList<XAResourceHolderState>();
 
-        Iterator it = resources.iterator();
-        while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
-            if (log.isDebugEnabled()) { log.debug("resuming " + xaResourceHolderState); }
+        for (XAResourceHolderState xaResourceHolderState : resources) {
+            if (log.isDebugEnabled()) log.debug("resuming " + xaResourceHolderState);
 
             // If a prepared statement is (re-)used after suspend/resume is performed its XAResource needs to be
             // re-enlisted. This must be done outside this loop or that will confuse the iterator!
             toBeReEnlisted.add(new XAResourceHolderState(xaResourceHolderState));
         }
 
-        if (toBeReEnlisted.size() > 0 && log.isDebugEnabled()) { log.debug("re-enlisting " + toBeReEnlisted.size() + " resource(s)"); }
-        for (int i = 0; i < toBeReEnlisted.size(); i++) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) toBeReEnlisted.get(i);
-
-            if (log.isDebugEnabled()) { log.debug("re-enlisting resource " + xaResourceHolderState); }
+        if (toBeReEnlisted.size() > 0 && log.isDebugEnabled()) log.debug("re-enlisting " + toBeReEnlisted.size() + " resource(s)");
+        for (XAResourceHolderState xaResourceHolderState : toBeReEnlisted) {
+            if (log.isDebugEnabled()) log.debug("re-enlisting resource " + xaResourceHolderState);
             try {
                 enlist(xaResourceHolderState);
                 xaResourceHolderState.getXAResourceHolder().putXAResourceHolderState(xaResourceHolderState.getXid(), xaResourceHolderState);
@@ -195,10 +189,7 @@ public class XAResourceManager {
      * @throws BitronixSystemException if an internal error happens.
      */
     public XAResourceHolderState findXAResourceHolderState(XAResource xaResource) throws BitronixSystemException {
-        Iterator it = resources.iterator();
-        while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
-
+        for (XAResourceHolderState xaResourceHolderState : resources) {
             if (xaResourceHolderState.getXAResource() == xaResource)
                 return xaResourceHolderState;
         }
@@ -216,25 +207,23 @@ public class XAResourceManager {
      */
     private XAResourceHolderState getManagedResourceWithSameRM(XAResourceHolderState xaResourceHolderState) throws XAException {
         if (!xaResourceHolderState.getUseTmJoin()) {
-            if (log.isDebugEnabled()) { log.debug("join disabled on resource " + xaResourceHolderState); }
+            if (log.isDebugEnabled()) log.debug("join disabled on resource " + xaResourceHolderState);
             return null;
         }
 
-        Iterator it = resources.iterator();
-        while (it.hasNext()) {
-            XAResourceHolderState alreadyEnlistedHolderState = (XAResourceHolderState) it.next();
-
-            if (log.isDebugEnabled()) { log.debug("checking joinability of " + xaResourceHolderState + " with " + alreadyEnlistedHolderState); }
-            if ( alreadyEnlistedHolderState.isEnded() &&
-                 !alreadyEnlistedHolderState.isSuspended() &&
-                 xaResourceHolderState.getXAResource().isSameRM(alreadyEnlistedHolderState.getXAResource()) ) {
-                if (log.isDebugEnabled()) { log.debug("resources are joinable"); }
+        for (XAResourceHolderState alreadyEnlistedHolderState : resources) {
+            if (log.isDebugEnabled())
+                log.debug("checking joinability of " + xaResourceHolderState + " with " + alreadyEnlistedHolderState);
+            if (alreadyEnlistedHolderState.isEnded() &&
+                    !alreadyEnlistedHolderState.isSuspended() &&
+                    xaResourceHolderState.getXAResource().isSameRM(alreadyEnlistedHolderState.getXAResource())) {
+                if (log.isDebugEnabled()) log.debug("resources are joinable");
                 return alreadyEnlistedHolderState;
             }
-            if (log.isDebugEnabled()) { log.debug("resources are not joinable"); }
+            if (log.isDebugEnabled()) log.debug("resources are not joinable");
         }
         
-        if (log.isDebugEnabled()) { log.debug("no joinable resource found for " + xaResourceHolderState); }
+        if (log.isDebugEnabled()) log.debug("no joinable resource found for " + xaResourceHolderState);
         return null;
     }
 
@@ -243,10 +232,10 @@ public class XAResourceManager {
      * {@link bitronix.tm.resource.common.XAResourceHolder}s.
      */
     public void clearXAResourceHolderStates() {
-        if (log.isDebugEnabled()) { log.debug("clearing XAResourceHolder states on " + resources.size() + " resource(s)"); }
-        Iterator it = resources.iterator();
+        if (log.isDebugEnabled()) log.debug("clearing XAResourceHolder states on " + resources.size() + " resource(s)");
+        Iterator<XAResourceHolderState> it = resources.iterator();
         while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
+            XAResourceHolderState xaResourceHolderState = it.next();
             XAResourceHolder resourceHolder = xaResourceHolderState.getXAResourceHolder();
 
             // clear out the current state
@@ -254,7 +243,7 @@ public class XAResourceManager {
 
             Map statesForGtrid = resourceHolder.getXAResourceHolderStatesForGtrid(gtrid);
             if (statesForGtrid != null) log.warn("resource " + resourceHolder + " did not clean up " + statesForGtrid.size() + "transaction states for GTRID [" + gtrid + "]");
-            else if (log.isDebugEnabled()) { log.debug("resource " + resourceHolder + " cleaned up all transaction states for GTRID [" + gtrid + "]"); }
+            else if (log.isDebugEnabled()) log.debug("resource " + resourceHolder + " cleaned up all transaction states for GTRID [" + gtrid + "]");
 
             it.remove();
         }
@@ -264,40 +253,36 @@ public class XAResourceManager {
      * Get a {@link Set} of unique names of all the enlisted {@link XAResourceHolderState}s.
      * @return a {@link Set} of unique names of all the enlisted {@link XAResourceHolderState}s.
      */
-    public Set collectUniqueNames() {
-        Set names = new HashSet();
-        Iterator it = resources.iterator();
-        while (it.hasNext()) {
-            XAResourceHolderState xaResourceHolderState = (XAResourceHolderState) it.next();
+    public Set<String> collectUniqueNames() {
+        Set<String> names = new HashSet<String>(resources.size());
+        for (XAResourceHolderState xaResourceHolderState : resources) {
             names.add(xaResourceHolderState.getUniqueName());
         }
-        return names;
+        return Collections.unmodifiableSet(names);
     }
 
-    public SortedSet getNaturalOrderPositions() {
-        return resources.getNaturalOrderPositions();
+    public SortedSet<Integer> getNaturalOrderPositions() {
+        return Collections.unmodifiableSortedSet(resources.getNaturalOrderPositions());
     }
 
-    public SortedSet getReverseOrderPositions() {
-        return resources.getReverseOrderPositions();
+    public SortedSet<Integer> getReverseOrderPositions() {
+        return Collections.unmodifiableSortedSet(resources.getReverseOrderPositions());
     }
 
-    public List getNaturalOrderResourcesForPosition(Object positionKey) {
-        return resources.getByNaturalOrderForPosition(positionKey);
+    public List<XAResourceHolderState> getNaturalOrderResourcesForPosition(Integer position) {
+        return Collections.unmodifiableList(resources.getByNaturalOrderForPosition(position));
     }
 
-    public List getReverseOrderResourcesForPosition(Object positionKey) {
-        return resources.getByReverseOrderForPosition(positionKey);
+    public List<XAResourceHolderState> getReverseOrderResourcesForPosition(Integer position) {
+        return Collections.unmodifiableList(resources.getByReverseOrderForPosition(position));
     }
 
-    public List getAllResources() {
-        List result = new ArrayList();
-        Iterator it = resources.getNaturalOrderPositions().iterator();
-        while (it.hasNext()) {
-            Object positionKey = it.next();
+    public List<XAResourceHolderState> getAllResources() {
+        List<XAResourceHolderState> result = new ArrayList<XAResourceHolderState>(resources.size());
+        for (Integer positionKey : resources.getNaturalOrderPositions()) {
             result.addAll(resources.getByNaturalOrderForPosition(positionKey));
         }
-        return result;
+        return Collections.unmodifiableList(result);
     }
 
     /**

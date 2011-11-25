@@ -20,9 +20,11 @@
  */
 package bitronix.tm.resource.jdbc.lrc;
 
-import java.sql.*;
-
 import bitronix.tm.resource.jdbc.BaseProxyHandlerClass;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Savepoint;
 
 /**
  * Connection handle implementation for a non-XA JDBC resource emulating XA with Last Resource Commit.
@@ -31,8 +33,9 @@ import bitronix.tm.resource.jdbc.BaseProxyHandlerClass;
  */
 public class LrcConnectionHandle extends BaseProxyHandlerClass { // implements Connection
 
-    private volatile Connection delegate;
+    private final Connection delegate;
     private final LrcXAResource xaResource;
+    private volatile boolean closed = false;
 
     public LrcConnectionHandle(LrcXAResource xaResource, Connection delegate) {
         this.delegate = delegate;
@@ -52,11 +55,11 @@ public class LrcConnectionHandle extends BaseProxyHandlerClass { // implements C
     /* wrapped Connection methods that have special XA semantics */
 
     public void close() throws SQLException {
-        delegate = null;
+        closed = true;
     }
 
     public boolean isClosed() throws SQLException {
-        return delegate == null;
+        return closed;
     }
 
     public void setAutoCommit(boolean autoCommit) throws SQLException {

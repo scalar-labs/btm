@@ -36,7 +36,7 @@ public class RecoveryTask extends Task {
 
     private final static Logger log = LoggerFactory.getLogger(RecoveryTask.class);
 
-    private Recoverer recoverer;
+    private final Recoverer recoverer;
 
     public RecoveryTask(Recoverer recoverer, Date executionTime, TaskScheduler scheduler) {
         super(executionTime, scheduler);

@@ -22,7 +22,9 @@ package bitronix.tm.mock;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
+import bitronix.tm.journal.Journal;
 import junit.framework.TestCase;
 
 import org.slf4j.*;
@@ -76,9 +78,10 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         poolingDataSource2.init();
 
         // change disk journal into mock journal
-        Field journalField = TransactionManagerServices.class.getDeclaredField("journal");
-        journalField.setAccessible(true);
-        journalField.set(TransactionManagerServices.class, new MockJournal());
+        Field field = TransactionManagerServices.class.getDeclaredField("journalRef");
+        field.setAccessible(true);
+        AtomicReference<Journal> journalRef = (AtomicReference<Journal>) field.get(TransactionManagerServices.class);
+        journalRef.set(new MockJournal());
 
         // change connection pools into mock pools
         XAPool p1 = getPool(this.poolingDataSource1);
@@ -104,7 +107,7 @@ public abstract class AbstractMockJdbcTest extends TestCase {
     private void registerPoolEventListener(XAPool pool) throws Exception {
         ArrayList connections = new ArrayList();
 
-        Iterator iterator = pool.getXAResourceHolders().iterator();
+        Iterator iterator = XAPoolHelper.getXAResourceHolders(pool).iterator();
         while (iterator.hasNext()) {
             XAStatefulHolder holder = (XAStatefulHolder) iterator.next();
             JdbcConnectionHandle connectionHandle = (JdbcConnectionHandle) holder.getConnectionHandle();

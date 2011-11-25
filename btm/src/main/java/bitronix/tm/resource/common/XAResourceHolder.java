@@ -48,7 +48,7 @@ public interface XAResourceHolder extends XAStatefulHolder {
      * @param gtrid the GTRID of the transaction state to add.
      * @return the {@link XAResourceHolderState}.
      */
-    public Map getXAResourceHolderStatesForGtrid(Uid gtrid);
+    public Map<Uid, XAResourceHolderState> getXAResourceHolderStatesForGtrid(Uid gtrid);
 
     /**
      * Add a {@link XAResourceHolderState} of this wrapped resource.

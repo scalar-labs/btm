@@ -22,15 +22,14 @@ package bitronix.tm.resource.jdbc.lrc;
 
 import bitronix.tm.internal.BitronixXAException;
 import bitronix.tm.utils.Decoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.transaction.xa.XAResource;
 import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 import java.sql.Connection;
 import java.sql.SQLException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * XAResource implementation for a non-XA JDBC connection emulating XA with Last Resource Commit.

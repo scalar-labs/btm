@@ -20,17 +20,39 @@
  */
 package bitronix.tm;
 
-import bitronix.tm.internal.*;
-import bitronix.tm.utils.*;
+import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.internal.ThreadContext;
+import bitronix.tm.internal.XAResourceManager;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.InitializationException;
+import bitronix.tm.utils.MonotonicClock;
+import bitronix.tm.utils.Scheduler;
+import bitronix.tm.utils.Service;
+import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import javax.naming.*;
-import javax.transaction.*;
+import javax.naming.NamingException;
+import javax.naming.Reference;
+import javax.naming.Referenceable;
+import javax.naming.StringRefAddr;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.InvalidTransactionException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.Synchronization;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
 import javax.transaction.xa.XAException;
 import java.io.IOException;
-import java.util.*;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -43,8 +65,8 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionManager.class);
     private final static String MDC_GTRID_KEY = "btm-gtrid";
 
-    private final Map contexts = new ConcurrentHashMap();
-    private final Map inFlightTransactions = new ConcurrentHashMap();
+    private final Map<Thread, ThreadContext> contexts = new ConcurrentHashMap<Thread, ThreadContext>(128, 0.75f, 128);
+    private final Map<Uid, BitronixTransaction> inFlightTransactions = new ConcurrentHashMap<Uid, BitronixTransaction>(128, 0.75f, 128);
 
     private volatile boolean shuttingDown;
 
@@ -59,7 +81,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             Configuration configuration = TransactionManagerServices.getConfiguration();
             configuration.buildServerIdArray(); // first call will initialize the ServerId
 
-            if (log.isDebugEnabled()) { log.debug("starting BitronixTransactionManager using " + configuration); }
+            if (log.isDebugEnabled()) log.debug("starting BitronixTransactionManager using " + configuration);
             TransactionManagerServices.getJournal().open();
             TransactionManagerServices.getResourceLoader().init();
             TransactionManagerServices.getRecoverer().run();
@@ -69,7 +91,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
                 throw new InitializationException("invalid configuration value for backgroundRecoveryIntervalSeconds, found '" + backgroundRecoveryInterval + "' but it must be greater than 0");
             }
 
-            if (log.isDebugEnabled()) { log.debug("recovery will run in the background every " + backgroundRecoveryInterval + " second(s)"); }
+            if (log.isDebugEnabled()) log.debug("recovery will run in the background every " + backgroundRecoveryInterval + " second(s)");
             Date nextExecutionDate = new Date(MonotonicClock.currentTimeMillis() + (backgroundRecoveryInterval * 1000L));
             TransactionManagerServices.getTaskScheduler().scheduleRecovery(TransactionManagerServices.getRecoverer(), nextExecutionDate);
         } catch (IOException ex) {
@@ -87,7 +109,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @throws SystemException if the transaction manager is shutting down.
      */
     public void begin() throws NotSupportedException, SystemException {
-        if (log.isDebugEnabled()) { log.debug("beginning a new transaction"); }
+        if (log.isDebugEnabled()) log.debug("beginning a new transaction");
         if (isShuttingDown())
             throw new BitronixSystemException("cannot start a new transaction, transaction manager is shutting down");
 
@@ -102,7 +124,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         try {
             currentTx.getSynchronizationScheduler().add(clearContextSynchronization, Scheduler.ALWAYS_LAST_POSITION -1);
             currentTx.setActive(getOrCreateCurrentContext().getTimeout());
-            if (log.isDebugEnabled()) { log.debug("begun new transaction at " + new Date(currentTx.getResourceManager().getGtrid().extractTimestamp())); }
+            if (log.isDebugEnabled()) log.debug("begun new transaction at " + new Date(currentTx.getResourceManager().getGtrid().extractTimestamp()));
         } catch (RuntimeException ex) {
             clearContextSynchronization.afterCompletion(Status.STATUS_NO_TRANSACTION);
             throw ex;
@@ -114,7 +136,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
     public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, IllegalStateException, SystemException {
         BitronixTransaction currentTx = getCurrentTransaction();
-        if (log.isDebugEnabled()) { log.debug("committing transaction " + currentTx); }
+        if (log.isDebugEnabled()) log.debug("committing transaction " + currentTx);
         if (currentTx == null)
             throw new IllegalStateException("no transaction started on this thread");
 
@@ -123,7 +145,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
     public void rollback() throws IllegalStateException, SecurityException, SystemException {
         BitronixTransaction currentTx = getCurrentTransaction();
-        if (log.isDebugEnabled()) { log.debug("rolling back transaction " + currentTx); }
+        if (log.isDebugEnabled()) log.debug("rolling back transaction " + currentTx);
         if (currentTx == null)
             throw new IllegalStateException("no transaction started on this thread");
 
@@ -144,7 +166,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
     public void setRollbackOnly() throws IllegalStateException, SystemException {
         BitronixTransaction currentTx = getCurrentTransaction();
-        if (log.isDebugEnabled()) { log.debug("marking transaction as rollback only: " + currentTx); }
+        if (log.isDebugEnabled()) log.debug("marking transaction as rollback only: " + currentTx);
         if (currentTx == null)
             throw new IllegalStateException("no transaction started on this thread");
 
@@ -159,7 +181,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
     public Transaction suspend() throws SystemException {
         BitronixTransaction currentTx = getCurrentTransaction();
-        if (log.isDebugEnabled()) { log.debug("suspending transaction " + currentTx); }
+        if (log.isDebugEnabled()) log.debug("suspending transaction " + currentTx);
         if (currentTx == null)
             return null;
 
@@ -173,7 +195,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     }
 
     public void resume(Transaction transaction) throws InvalidTransactionException, IllegalStateException, SystemException {
-        if (log.isDebugEnabled()) { log.debug("resuming " + transaction); }
+        if (log.isDebugEnabled()) log.debug("resuming " + transaction);
         if (transaction == null)
             throw new InvalidTransactionException("resumed transaction cannot be null");
         if (!(transaction instanceof BitronixTransaction))
@@ -217,7 +239,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @return a map of {@link BitronixTransaction} objects using {@link Uid} as key and {@link BitronixTransaction} as value.
      */
     public Map getInFlightTransactions() {
-        return Collections.unmodifiableMap(inFlightTransactions);
+        return inFlightTransactions;
     }
 
     /**
@@ -226,23 +248,21 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      */
     public long getOldestInFlightTransactionTimestamp() {
         if (inFlightTransactions.isEmpty()) {
-            if (log.isDebugEnabled()) { log.debug("oldest in-flight transaction's timestamp: " + Long.MIN_VALUE); }
+            if (log.isDebugEnabled()) log.debug("oldest in-flight transaction's timestamp: " + Long.MIN_VALUE);
             return Long.MIN_VALUE;
         }
 
         long oldestTimestamp = Long.MAX_VALUE;
 
-        Iterator it = inFlightTransactions.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            Uid gtrid = (Uid) entry.getKey();
+        for (Map.Entry<Uid, BitronixTransaction> entry : inFlightTransactions.entrySet()) {
+            Uid gtrid = entry.getKey();
             long currentTimestamp = gtrid.extractTimestamp();
 
             if (currentTimestamp < oldestTimestamp)
                 oldestTimestamp = currentTimestamp;
         }
 
-        if (log.isDebugEnabled()) { log.debug("oldest in-flight transaction's timestamp: " + oldestTimestamp); }
+        if (log.isDebugEnabled()) log.debug("oldest in-flight transaction's timestamp: " + oldestTimestamp);
         return oldestTimestamp;
     }
 
@@ -269,14 +289,12 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      */
     public void dumpTransactionContexts() {
         if (log.isDebugEnabled()) {
-            log.debug("dumping " + inFlightTransactions.size() + " transaction context(s)");
-            Iterator it = inFlightTransactions.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry entry = (Map.Entry) it.next();
-                BitronixTransaction tx = (BitronixTransaction) entry.getValue();
-                log.debug(tx.toString());
+            if (log.isDebugEnabled()) log.debug("dumping " + inFlightTransactions.size() + " transaction context(s)");
+            for (Map.Entry<Uid, BitronixTransaction> entry : inFlightTransactions.entrySet()) {
+                BitronixTransaction tx = entry.getValue();
+                if (log.isDebugEnabled()) log.debug(tx.toString());
             }
-        }
+        } // if
     }
 
     /**
@@ -291,35 +309,35 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      */
     public synchronized void shutdown() {
         if (isShuttingDown()) {
-            if (log.isDebugEnabled()) { log.debug("Transaction Manager has already shut down"); }
+            if (log.isDebugEnabled()) log.debug("Transaction Manager has already shut down");
             return;
         }
 
         log.info("shutting down Bitronix Transaction Manager");
         internalShutdown();
 
-        if (log.isDebugEnabled()) { log.debug("shutting down resource loader"); }
+        if (log.isDebugEnabled()) log.debug("shutting down resource loader");
         TransactionManagerServices.getResourceLoader().shutdown();
 
-        if (log.isDebugEnabled()) { log.debug("shutting down executor"); }
+        if (log.isDebugEnabled()) log.debug("shutting down executor");
         TransactionManagerServices.getExecutor().shutdown();
 
-        if (log.isDebugEnabled()) { log.debug("shutting down task scheduler"); }
+        if (log.isDebugEnabled()) log.debug("shutting down task scheduler");
         TransactionManagerServices.getTaskScheduler().shutdown();
 
-        if (log.isDebugEnabled()) { log.debug("shutting down journal"); }
+        if (log.isDebugEnabled()) log.debug("shutting down journal");
         TransactionManagerServices.getJournal().shutdown();
 
-        if (log.isDebugEnabled()) { log.debug("shutting down recoverer"); }
+        if (log.isDebugEnabled()) log.debug("shutting down recoverer");
         TransactionManagerServices.getRecoverer().shutdown();
 
-        if (log.isDebugEnabled()) { log.debug("shutting down configuration"); }
+        if (log.isDebugEnabled()) log.debug("shutting down configuration");
         TransactionManagerServices.getConfiguration().shutdown();
 
         // clear references
         TransactionManagerServices.clear();
 
-        if (log.isDebugEnabled()) { log.debug("shutdown ran successfully"); }
+        if (log.isDebugEnabled()) log.debug("shutdown ran successfully");
     }
 
     private void internalShutdown() {
@@ -331,7 +349,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         try {
             txCount = inFlightTransactions.size();
             while (seconds > 0  &&  txCount > 0) {
-                if (log.isDebugEnabled()) { log.debug("still " + txCount + " in-flight transactions, waiting... (" + seconds + " second(s) left)"); }
+                if (log.isDebugEnabled()) log.debug("still " + txCount + " in-flight transactions, waiting... (" + seconds + " second(s) left)");
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException ex) {
@@ -345,11 +363,11 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         }
 
         if (txCount > 0) {
-            if (log.isDebugEnabled()) { log.debug("still " + txCount + " in-flight transactions, shutting down anyway"); }
+            if (log.isDebugEnabled()) log.debug("still " + txCount + " in-flight transactions, shutting down anyway");
             dumpTransactionContexts();
         }
         else {
-            if (log.isDebugEnabled()) { log.debug("all transactions finished, resuming shutdown"); }
+            if (log.isDebugEnabled()) log.debug("all transactions finished, resuming shutdown");
         }
     }
 
@@ -366,7 +384,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      */
     private void logVersion() {
         log.info("Bitronix Transaction Manager version " + Version.getVersion());
-        if (log.isDebugEnabled()) { log.debug("JVM version " + System.getProperty("java.version")); }
+        if (log.isDebugEnabled()) log.debug("JVM version " + System.getProperty("java.version"));
     }
 
     /**
@@ -385,9 +403,9 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * Unlink the transaction from the current thread's context.
      */
     private void clearCurrentContextForSuspension() {
-        if (log.isDebugEnabled()) { log.debug("clearing current thread context: " + getOrCreateCurrentContext()); }
+        if (log.isDebugEnabled()) log.debug("clearing current thread context: " + getOrCreateCurrentContext());
         contexts.remove(Thread.currentThread());
-        if (log.isDebugEnabled()) { log.debug("cleared current thread context: " + getOrCreateCurrentContext()); }
+        if (log.isDebugEnabled()) log.debug("cleared current thread context: " + getOrCreateCurrentContext());
         MDC.remove(MDC_GTRID_KEY);
     }
 
@@ -396,7 +414,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @param context the context to bind.
      */
     private void setCurrentContext(ThreadContext context) {
-        if (log.isDebugEnabled()) { log.debug("changing current thread context to " + context); }
+        if (log.isDebugEnabled()) log.debug("changing current thread context to " + context);
         if (context == null)
             throw new IllegalArgumentException("setCurrentContext() should not be called with a null context, clearCurrentContextForSuspension() should be used instead");
         contexts.put(Thread.currentThread(), context);
@@ -406,20 +424,28 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
     }
 
     /**
+     * Get the context attached to the current thread. If there is no current context, return null.
+     * @return the context.
+     */
+    ThreadContext currentThreadContext() {
+        return contexts.get(Thread.currentThread());
+    }
+
+    /**
      * Get the context attached to the current thread. If there is no current context, a new one is created.
      * @return the context.
      */
     private ThreadContext getOrCreateCurrentContext() {
-        ThreadContext threadContext = (ThreadContext) contexts.get(Thread.currentThread());
+        ThreadContext threadContext = contexts.get(Thread.currentThread());
         if (threadContext == null) {
-            if (log.isDebugEnabled()) { log.debug("creating new thread context"); }
+            if (log.isDebugEnabled()) log.debug("creating new thread context");
             threadContext = new ThreadContext();
             setCurrentContext(threadContext);
         }
         return threadContext;
     }
 
-    private final class ClearContextSynchronization implements Synchronization {
+    private class ClearContextSynchronization implements Synchronization {
         private final BitronixTransaction currentTx;
 
         public ClearContextSynchronization(BitronixTransaction currentTx) {
@@ -430,17 +456,16 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         }
 
         public void afterCompletion(int status) {
-            Iterator it = contexts.entrySet().iterator();
+            Iterator<Map.Entry<Thread, ThreadContext>> it = contexts.entrySet().iterator();
             while (it.hasNext()) {
-                Map.Entry entry = (Map.Entry) it.next();
-                ThreadContext context = (ThreadContext) entry.getValue();
+                Map.Entry<Thread, ThreadContext> entry = it.next();
+                ThreadContext context = entry.getValue();
                 if (context.getTransaction() == currentTx) {
-                    if (log.isDebugEnabled()) { log.debug("clearing thread context: " + context); }
+                    if (log.isDebugEnabled()) log.debug("clearing thread context: " + context);
                     it.remove();
                     break;
                 }
             }
-
             inFlightTransactions.remove(currentTx.getResourceManager().getGtrid());
             MDC.remove(MDC_GTRID_KEY);
         }

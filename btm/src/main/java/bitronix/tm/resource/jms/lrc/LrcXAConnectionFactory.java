@@ -23,10 +23,10 @@ package bitronix.tm.resource.jms.lrc;
 import bitronix.tm.utils.ClassLoaderUtils;
 import bitronix.tm.utils.PropertyUtils;
 
-import javax.jms.XAConnectionFactory;
-import javax.jms.XAConnection;
-import javax.jms.JMSException;
 import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
+import javax.jms.XAConnection;
+import javax.jms.XAConnectionFactory;
 import java.util.Properties;
 
 /**

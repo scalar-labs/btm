@@ -29,43 +29,38 @@ import java.util.*;
  *
  * @author lorban
  */
-public class Scheduler {
+public class Scheduler<T> implements Iterable<T> {
 
-    public static final int DEFAULT_POSITION = 0;
-    public static final int ALWAYS_FIRST_POSITION = Integer.MIN_VALUE;
-    public static final int ALWAYS_LAST_POSITION = Integer.MAX_VALUE;
+    public static final Integer DEFAULT_POSITION = 0;
+    public static final Integer ALWAYS_FIRST_POSITION = Integer.MIN_VALUE;
+    public static final Integer ALWAYS_LAST_POSITION = Integer.MAX_VALUE;
 
-    public static final Object DEFAULT_POSITION_KEY = new Integer(DEFAULT_POSITION);
-    public static final Object ALWAYS_FIRST_POSITION_KEY = new Integer(ALWAYS_FIRST_POSITION);
-    public static final Object ALWAYS_LAST_POSITION_KEY = new Integer(ALWAYS_LAST_POSITION);
-
-    private List keys = new ArrayList();
-    private Map objects = new TreeMap();
+    private List<Integer> keys = new ArrayList<Integer>();
+    private Map<Integer, List<T>> objects = new TreeMap<Integer, List<T>>();
     private int size = 0;
 
 
     public Scheduler() {
     }
 
-    public synchronized void add(Object obj, int position) {
-        Integer key = new Integer(position);
-        List synchronizationsList = (List) objects.get(key);
-        if (synchronizationsList == null) {
-            if (!keys.contains(key)) {
-                keys.add(key);
+    public synchronized void add(T obj, Integer position) {
+        List<T> list = objects.get(position);
+        if (list == null) {
+            if (!keys.contains(position)) {
+                keys.add(position);
                 Collections.sort(keys);
             }
-            synchronizationsList = new ArrayList();
-            objects.put(key, synchronizationsList);
+            list = new ArrayList<T>();
+            objects.put(position, list);
         }
-        synchronizationsList.add(obj);
+        list.add(obj);
         size++;
     }
 
-    public synchronized void remove(Object obj) {
-        Iterator it = iterator();
+    public synchronized void remove(T obj) {
+        Iterator<T> it = iterator();
         while (it.hasNext()) {
-            Object o = it.next();
+            T o = it.next();
             if (o == obj) {
                 it.remove();
                 return;
@@ -74,22 +69,22 @@ public class Scheduler {
         throw new NoSuchElementException("no such element: " + obj);
     }
 
-    public synchronized SortedSet getNaturalOrderPositions() {
-        return new TreeSet(objects.keySet());
+    public synchronized SortedSet<Integer> getNaturalOrderPositions() {
+        return new TreeSet<Integer>(objects.keySet());
     }
 
-    public synchronized SortedSet getReverseOrderPositions() {
-        TreeSet result = new TreeSet(Collections.reverseOrder());
+    public synchronized SortedSet<Integer> getReverseOrderPositions() {
+        TreeSet<Integer> result = new TreeSet<Integer>(Collections.reverseOrder());
         result.addAll(getNaturalOrderPositions());
         return result;
     }
 
-    public synchronized List getByNaturalOrderForPosition(Object positionKey) {
-        return (List) objects.get(positionKey);
+    public synchronized List<T> getByNaturalOrderForPosition(Integer position) {
+        return objects.get(position);
     }
 
-    public synchronized List getByReverseOrderForPosition(Object positionKey) {
-        List result = new ArrayList(getByNaturalOrderForPosition(positionKey));
+    public synchronized List<T> getByReverseOrderForPosition(Integer position) {
+        List<T> result = new ArrayList<T>(getByNaturalOrderForPosition(position));
         Collections.reverse(result);
         return result;
     }
@@ -98,11 +93,11 @@ public class Scheduler {
         return size;
     }
 
-    public Iterator iterator() {
+    public Iterator<T> iterator() {
         return new SchedulerNaturalOrderIterator();
     }
 
-    public Iterator reverseIterator() {
+    public Iterator<T> reverseIterator() {
         return new SchedulerReverseOrderIterator();
     }
 
@@ -113,9 +108,9 @@ public class Scheduler {
     /**
      * This iterator supports in-flight updates of the iterated object.
      */
-    private final class SchedulerNaturalOrderIterator implements Iterator {
+    private final class SchedulerNaturalOrderIterator implements Iterator<T> {
         private int nextKeyIndex;
-        private List objectsOfCurrentKey;
+        private List<T> objectsOfCurrentKey;
         private int objectsOfCurrentKeyIndex;
 
         private SchedulerNaturalOrderIterator() {
@@ -132,7 +127,7 @@ public class Scheduler {
                 if (objectsOfCurrentKey.size() == 0) {
                     // there are no more objects in the current position's list -> remove it
                     nextKeyIndex--;
-                    Object key = Scheduler.this.keys.get(nextKeyIndex);
+                    Integer key = Scheduler.this.keys.get(nextKeyIndex);
                     Scheduler.this.keys.remove(nextKeyIndex);
                     Scheduler.this.objects.remove(key);
                     objectsOfCurrentKey = null;
@@ -148,8 +143,8 @@ public class Scheduler {
 
                     if (nextKeyIndex < Scheduler.this.keys.size()) {
                         // there is another position after this one
-                        Integer currentKey = (Integer) Scheduler.this.keys.get(nextKeyIndex++);
-                        objectsOfCurrentKey = (List) Scheduler.this.objects.get(currentKey);
+                        Integer currentKey = Scheduler.this.keys.get(nextKeyIndex++);
+                        objectsOfCurrentKey = Scheduler.this.objects.get(currentKey);
                         objectsOfCurrentKeyIndex = 0;
                         return true;
                     } else {
@@ -163,7 +158,7 @@ public class Scheduler {
             }
         }
 
-        public Object next() {
+        public T next() {
             synchronized (Scheduler.this) {
                 if (!hasNext())
                     throw new NoSuchElementException("iterator bounds reached");
@@ -175,9 +170,9 @@ public class Scheduler {
     /**
      * This iterator supports in-flight updates of the iterated object.
      */
-    private final class SchedulerReverseOrderIterator implements Iterator {
+    private final class SchedulerReverseOrderIterator implements Iterator<T> {
         private int nextKeyIndex;
-        private List objectsOfCurrentKey;
+        private List<T> objectsOfCurrentKey;
         private int objectsOfCurrentKeyIndex;
 
         private SchedulerReverseOrderIterator() {
@@ -193,7 +188,7 @@ public class Scheduler {
                 objectsOfCurrentKey.remove(objectsOfCurrentKeyIndex);
                 if (objectsOfCurrentKey.size() == 0) {
                     // there are no more objects in the current position's list -> remove it
-                    Object key = Scheduler.this.keys.get(nextKeyIndex+1);
+                    Integer key = Scheduler.this.keys.get(nextKeyIndex+1);
                     Scheduler.this.keys.remove(nextKeyIndex+1);
                     Scheduler.this.objects.remove(key);
                     objectsOfCurrentKey = null;
@@ -209,8 +204,8 @@ public class Scheduler {
 
                     if (nextKeyIndex >= 0) {
                         // there is another position after this one
-                        Integer currentKey = (Integer) Scheduler.this.keys.get(nextKeyIndex--);
-                        objectsOfCurrentKey = (List) Scheduler.this.objects.get(currentKey);
+                        Integer currentKey = Scheduler.this.keys.get(nextKeyIndex--);
+                        objectsOfCurrentKey = Scheduler.this.objects.get(currentKey);
                         objectsOfCurrentKeyIndex = 0;
                         return true;
                     } else {
@@ -224,7 +219,7 @@ public class Scheduler {
             }
         }
 
-        public Object next() {
+        public T next() {
             synchronized (Scheduler.this) {
                 if (!hasNext())
                     throw new NoSuchElementException("iterator bounds reached");

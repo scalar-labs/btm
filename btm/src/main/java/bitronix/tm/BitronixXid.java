@@ -103,7 +103,7 @@ public class BitronixXid implements Xid {
      * @return a human-readable string representation.
      */
     public String toString() {
-        StringBuffer sb = new StringBuffer(288);
+        StringBuilder sb = new StringBuilder(288);
         sb.append("a Bitronix XID [");
         sb.append(globalTransactionId.toString());
         sb.append(" : ");

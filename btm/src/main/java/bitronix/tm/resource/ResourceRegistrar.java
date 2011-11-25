@@ -41,7 +41,7 @@ public class ResourceRegistrar {
 
     private final static Logger log = LoggerFactory.getLogger(ResourceRegistrar.class);
 
-    private final static Map resources = new HashMap();
+    private final static Map<String, XAResourceProducer> resources = new HashMap<String, XAResourceProducer>();
 
     /**
      * Get a registered {@link XAResourceProducer}.
@@ -49,15 +49,15 @@ public class ResourceRegistrar {
      * @return the {@link XAResourceProducer} or null if there was none registered under that name.
      */
     public synchronized static XAResourceProducer get(String uniqueName) {
-        return (XAResourceProducer) resources.get(uniqueName);
+        return resources.get(uniqueName);
     }
 
     /**
      * Get all {@link XAResourceProducer}s unique names.
      * @return a Set containing all {@link bitronix.tm.resource.common.XAResourceProducer}s unique names.
      */
-    public synchronized static Set getResourcesUniqueNames() {
-        return new HashSet(resources.keySet());
+    public synchronized static Set<String> getResourcesUniqueNames() {
+        return Collections.unmodifiableSet(new HashSet<String>(resources.keySet()));
     }
 
     /**
@@ -74,7 +74,7 @@ public class ResourceRegistrar {
             throw new IllegalArgumentException("resource with uniqueName '" + producer.getUniqueName() + "' has already been registered");
 
         if (TransactionManagerServices.isTransactionManagerRunning()) {
-            if (log.isDebugEnabled()) { log.debug("transaction manager is running, recovering resource " + uniqueName); }
+            if (log.isDebugEnabled()) log.debug("transaction manager is running, recovering resource " + uniqueName);
             IncrementalRecoverer.recover(producer);
         }
 
@@ -90,7 +90,7 @@ public class ResourceRegistrar {
         if (producer.getUniqueName() == null)
             throw new IllegalArgumentException("invalid resource with null uniqueName");
         if (!resources.containsKey(uniqueName)) {
-            if (log.isDebugEnabled()) { log.debug("resource with uniqueName '" + producer.getUniqueName() + "' has not been registered"); }
+            if (log.isDebugEnabled()) log.debug("resource with uniqueName '" + producer.getUniqueName() + "' has not been registered");
             return;
         }
         resources.remove(uniqueName);
@@ -102,17 +102,15 @@ public class ResourceRegistrar {
      * @return the associated {@link XAResourceHolder} or null if it cannot be found.
      */
     public synchronized static XAResourceHolder findXAResourceHolder(XAResource xaResource) {
-        Iterator it = resources.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            XAResourceProducer producer = (XAResourceProducer) entry.getValue();
+        for (Map.Entry<String, XAResourceProducer> entry : resources.entrySet()) {
+            XAResourceProducer producer = entry.getValue();
 
             XAResourceHolder resourceHolder = producer.findXAResourceHolder(xaResource);
             if (resourceHolder != null) {
-                if (log.isDebugEnabled()) { log.debug("XAResource " + xaResource + " belongs to " + resourceHolder + " that itself belongs to " + producer); }
+                if (log.isDebugEnabled()) log.debug("XAResource " + xaResource + " belongs to " + resourceHolder + " that itself belongs to " + producer);
                 return resourceHolder;
             }
-            if (log.isDebugEnabled()) { log.debug("XAResource " + xaResource + " does not belong to any resource of " + producer); }
+            if (log.isDebugEnabled()) log.debug("XAResource " + xaResource + " does not belong to any resource of " + producer);
         }
         return null;
     }

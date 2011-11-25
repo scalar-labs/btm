@@ -31,7 +31,7 @@ import java.util.Date;
  */
 public class PoolShrinkingTask extends Task {
 
-    private XAPool xaPool;
+    private final XAPool xaPool;
 
     public PoolShrinkingTask(XAPool xaPool, Date executionTime, TaskScheduler scheduler) {
         super(executionTime, scheduler);
