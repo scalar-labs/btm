@@ -381,11 +381,11 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     /* java.sql.Wrapper implementation */
 
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        return XADataSource.class.equals(iface);
+        return iface.isAssignableFrom(xaDataSource.getClass());
     }
 
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        if (XADataSource.class.equals(iface)) {
+        if (iface.isAssignableFrom(xaDataSource.getClass())) {
             return (T) xaDataSource;
 	    }
 	    throw new SQLException(getClass().getName() + " is not a wrapper for " + iface);

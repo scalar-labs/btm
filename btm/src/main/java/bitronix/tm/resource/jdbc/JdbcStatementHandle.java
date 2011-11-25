@@ -52,11 +52,11 @@ public class JdbcStatementHandle extends BaseProxyHandlerClass { // implements S
 
 
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        return Statement.class.equals(iface);
+        return iface.isAssignableFrom(delegate.getClass());
     }
 
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        if (Statement.class.equals(iface)) {
+        if (iface.isAssignableFrom(delegate.getClass())) {
             return (T) delegate;
 	    }
 	    throw new SQLException(getClass().getName() + " is not a wrapper for " + iface);
