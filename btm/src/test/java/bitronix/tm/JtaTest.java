@@ -44,6 +44,7 @@ public class JtaTest extends TestCase {
     private BitronixTransactionManager btm;
 
     protected void setUp() throws Exception {
+        TransactionManagerServices.getConfiguration().setGracefulShutdownInterval(1);
         btm = TransactionManagerServices.getTransactionManager();
     }
 
@@ -200,10 +201,13 @@ public class JtaTest extends TestCase {
         try {
             btm.commit();
             fail("expected runtime exception");
-        } catch (RuntimeException ex) {
-            assertEquals("beforeCompletion failure", ex.getMessage());
-            btm.rollback();
+        } catch (RollbackException ex) {
+            assertEquals(RuntimeException.class, ex.getCause().getClass());
+            assertEquals("beforeCompletion failure", ex.getCause().getMessage());
         }
+
+        btm.begin();
+        btm.commit();
      }
 
     private class SynchronizationRegisteringSynchronization implements Synchronization {

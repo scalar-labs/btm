@@ -222,7 +222,15 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
         // beforeCompletion must be called before the check to STATUS_MARKED_ROLLBACK as the synchronization
         // can still set the status to STATUS_MARKED_ROLLBACK.
-        fireBeforeCompletionEvent();
+        try {
+            fireBeforeCompletionEvent();
+        } catch (BitronixSystemException ex) {
+            rollback();
+            throw new BitronixRollbackException("SystemException thrown during beforeCompletion cycle caused transaction rollback", ex);
+        } catch (RuntimeException ex) {
+            rollback();
+            throw new BitronixRollbackException("RuntimeException thrown during beforeCompletion cycle caused transaction rollback", ex);
+        }
 
         // The following if statements and try/catch block must not be included in the prepare try-catch block as
         // they call rollback().
