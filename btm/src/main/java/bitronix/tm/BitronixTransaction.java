@@ -126,12 +126,15 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         try {
             resourceManager.enlist(resourceHolderState);
         } catch (XAException ex) {
+            String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
             if (BitronixXAException.isUnilateralRollback(ex)) {
                 // if the resource unilaterally rolled back, the transaction will never be able to commit -> mark it as rollback only
                 setStatus(Status.STATUS_MARKED_ROLLBACK);
-                throw new BitronixRollbackException("resource " + resourceHolderState + " unilaterally rolled back, error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+                throw new BitronixRollbackException("resource " + resourceHolderState + " unilaterally rolled back, error=" +
+                        Decoder.decodeXAExceptionErrorCode(ex) + (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
             }
-            throw new BitronixSystemException("cannot enlist " + resourceHolderState + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+            throw new BitronixSystemException("cannot enlist " + resourceHolderState + ", error=" +
+                    Decoder.decodeXAExceptionErrorCode(ex) + (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
         }
 
         resourceHolder.putXAResourceHolderState(resourceHolderState.getXid(), resourceHolderState);

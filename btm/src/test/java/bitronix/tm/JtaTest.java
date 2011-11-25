@@ -20,6 +20,7 @@
  */
 package bitronix.tm;
 
+import bitronix.tm.utils.DefaultExceptionAnalyzer;
 import junit.framework.TestCase;
 
 import javax.transaction.*;
@@ -45,6 +46,7 @@ public class JtaTest extends TestCase {
 
     protected void setUp() throws Exception {
         TransactionManagerServices.getConfiguration().setGracefulShutdownInterval(1);
+        TransactionManagerServices.getConfiguration().setExceptionAnalyzer(DefaultExceptionAnalyzer.class.getName());
         btm = TransactionManagerServices.getTransactionManager();
     }
 

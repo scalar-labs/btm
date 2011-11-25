@@ -30,6 +30,8 @@ import bitronix.tm.twopc.executor.AsyncExecutor;
 import bitronix.tm.twopc.executor.Executor;
 import bitronix.tm.twopc.executor.SyncExecutor;
 import bitronix.tm.utils.ClassLoaderUtils;
+import bitronix.tm.utils.DefaultExceptionAnalyzer;
+import bitronix.tm.utils.ExceptionAnalyzer;
 import bitronix.tm.utils.InitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +58,7 @@ public class TransactionManagerServices {
     private static ResourceLoader resourceLoader;
     private static Recoverer recoverer;
     private static final AtomicReference<Executor> executorRef = new AtomicReference<Executor>();
+    private static final AtomicReference<ExceptionAnalyzer> exceptionAnalyzerRef = new AtomicReference<ExceptionAnalyzer>();
 
     /**
      * Create an initialized transaction manager.
@@ -186,6 +189,28 @@ public class TransactionManagerServices {
             }
         }
         return executor;
+    }
+
+    public static ExceptionAnalyzer getExceptionAnalyzer() {
+        ExceptionAnalyzer analyzer = exceptionAnalyzerRef.get();
+        if (analyzer == null) {
+            String exceptionAnalyzerName = getConfiguration().getExceptionAnalyzer();
+            if (exceptionAnalyzerName == null) {
+                analyzer = new DefaultExceptionAnalyzer();
+            } else {
+                try {
+                    analyzer = (ExceptionAnalyzer) ClassLoaderUtils.loadClass(exceptionAnalyzerName).newInstance();
+                } catch (Exception ex) {
+                    throw new InitializationException("invalid exception analyzer implementation '" + exceptionAnalyzerName + "'", ex);
+
+                }
+            }
+            if (!exceptionAnalyzerRef.compareAndSet(null, analyzer)) {
+                analyzer.shutdown();
+                analyzer = exceptionAnalyzerRef.get();
+            }
+        }
+        return analyzer;
     }
 
     /**
