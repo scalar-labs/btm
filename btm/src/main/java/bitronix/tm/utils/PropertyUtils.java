@@ -30,10 +30,7 @@ import java.util.*;
  *
  * @author lorban
  */
-public final class PropertyUtils {
-
-    private PropertyUtils() {
-    }
+public class PropertyUtils {
 
     /**
      * Set a direct or indirect property (dotted property: prop1.prop2.prop3) on the target object. This method tries

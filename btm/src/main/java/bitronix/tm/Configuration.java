@@ -79,17 +79,17 @@ public class Configuration implements Service {
             try {
                 String configurationFilename = System.getProperty("bitronix.tm.configuration");
                 if (configurationFilename != null) {
-                    if (log.isDebugEnabled()) { log.debug("loading configuration file " + configurationFilename); }
+                    if (log.isDebugEnabled()) log.debug("loading configuration file " + configurationFilename);
                     in = new FileInputStream(configurationFilename);
                 } else {
-                    if (log.isDebugEnabled()) { log.debug("loading default configuration"); }
+                    if (log.isDebugEnabled()) log.debug("loading default configuration");
                     in = ClassLoaderUtils.getResourceAsStream("bitronix-default-config.properties");
                 }
                 properties = new Properties();
                 if (in != null)
                     properties.load(in);
                 else
-                     if (log.isDebugEnabled()) { log.debug("no configuration file found, using default settings"); }
+                     if (log.isDebugEnabled()) log.debug("no configuration file found, using default settings");
             } finally {
                 if (in != null) in.close();
             }
@@ -591,7 +591,7 @@ public class Configuration implements Service {
      * the duration of the JVM lifespan.
      * @return the server ID.
      */
-    public synchronized byte[] buildServerIdArray() {
+    public byte[] buildServerIdArray() {
         if (serverIdArray == null) {
             try {
                 serverIdArray = serverId.substring(0, Math.min(serverId.length(), MAX_SERVER_ID_LENGTH)).getBytes("US-ASCII");
@@ -633,7 +633,7 @@ public class Configuration implements Service {
             sb.append(PropertyUtils.propertiesToString(this));
         } catch (PropertyException ex) {
             sb.append("???");
-            if (log.isDebugEnabled()) { log.debug("error accessing properties of Configuration object", ex); }
+            if (log.isDebugEnabled()) log.debug("error accessing properties of Configuration object", ex);
         }
 
         sb.append("]");
