@@ -72,16 +72,21 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
      * @param xaResource the XAResource to be registered
      */
     public static void registerXAResource(String uniqueName, XAResource xaResource) {
-        EhCacheXAResourceProducer xaResourceProducer = new EhCacheXAResourceProducer();
-        xaResourceProducer.setUniqueName(uniqueName);
-        // the initial xaResource must be added before init() can be called
-        xaResourceProducer.addXAResource(xaResource);
+        EhCacheXAResourceProducer xaResourceProducer = producers.get(uniqueName);
+        if (xaResourceProducer == null) {
+            xaResourceProducer = new EhCacheXAResourceProducer();
+            xaResourceProducer.setUniqueName(uniqueName);
+            // the initial xaResource must be added before init() can be called
+            xaResourceProducer.addXAResource(xaResource);
 
-        EhCacheXAResourceProducer previous = producers.putIfAbsent(uniqueName, xaResourceProducer);
-        if (previous == null) {
-            xaResourceProducer.init();
+            EhCacheXAResourceProducer previous = producers.putIfAbsent(uniqueName, xaResourceProducer);
+            if (previous == null) {
+                xaResourceProducer.init();
+            } else {
+                previous.addXAResource(xaResource);
+            }
         } else {
-            previous.addXAResource(xaResource);
+            xaResourceProducer.addXAResource(xaResource);
         }
     }
 
