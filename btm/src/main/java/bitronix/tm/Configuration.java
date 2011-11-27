@@ -67,6 +67,7 @@ public class Configuration implements Service {
     private volatile String jndiUserTransactionName;
     private volatile String jndiTransactionSynchronizationRegistryName;
     private volatile String journal;
+    private volatile String exceptionAnalyzer;
     private volatile boolean currentNodeOnlyRecovery;
     private volatile boolean allowMultipleLrc;
     private volatile String resourceConfigurationFilename;
@@ -111,6 +112,7 @@ public class Configuration implements Service {
             jndiUserTransactionName = getString(properties, "bitronix.tm.jndi.userTransactionName", "java:comp/UserTransaction");
             jndiTransactionSynchronizationRegistryName = getString(properties, "bitronix.tm.jndi.transactionSynchronizationRegistryName", "java:comp/TransactionSynchronizationRegistry");
             journal = getString(properties, "bitronix.tm.journal", "disk");
+            exceptionAnalyzer = getString(properties, "bitronix.tm.exceptionAnalyzer", null);
             currentNodeOnlyRecovery = getBoolean(properties, "bitronix.tm.currentNodeOnlyRecovery", true);
             allowMultipleLrc = getBoolean(properties, "bitronix.tm.allowMultipleLrc", false);
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
@@ -518,6 +520,26 @@ public class Configuration implements Service {
     public Configuration setJournal(String journal) {
         checkNotStarted();
         this.journal = journal;
+        return this;
+    }
+
+    /**
+     * Get the exception analyzer implementation. Can be <code>null</code> for the default one or a class name.
+     * @return the exception analyzer name.
+     */
+    public String getExceptionAnalyzer() {
+        return exceptionAnalyzer;
+    }
+
+    /**
+     * Set the exception analyzer implementation. Can be <code>null</code> for the default one or a class name.
+     * @see #getExceptionAnalyzer()
+     * @param exceptionAnalyzer the exception analyzer name.
+     * @return this.
+     */
+    public Configuration setExceptionAnalyzer(String exceptionAnalyzer) {
+        checkNotStarted();
+        this.exceptionAnalyzer = exceptionAnalyzer;
         return this;
     }
 

@@ -296,10 +296,10 @@ public class XAPool implements StateChangeListener {
 
         for (Map.Entry<Object, Object> entry : bean.getDriverProperties().entrySet()) {
             String name = (String) entry.getKey();
-            String value = (String) entry.getValue();
+            Object value = entry.getValue();
 
             if (name.endsWith(PASSWORD_PROPERTY_NAME)) {
-                value = decrypt(value);
+                value = decrypt((String) value);
             }
 
             if (log.isDebugEnabled()) log.debug("setting vendor property '" + name + "' to '" + value + "'");

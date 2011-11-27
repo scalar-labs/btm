@@ -379,11 +379,11 @@ public class JdbcConnectionHandle extends BaseProxyHandlerClass { // implements 
     /* java.sql.Wrapper implementation */
 
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        return Connection.class.equals(iface);
+        return iface.isAssignableFrom(delegate.getClass());
     }
 
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        if (Connection.class.equals(iface)) {
+        if (iface.isAssignableFrom(delegate.getClass())) {
             return (T) delegate;
 	    }
 	    throw new SQLException(getClass().getName() + " is not a wrapper for " + iface);

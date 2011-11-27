@@ -50,6 +50,8 @@ public class BitronixXid implements Xid {
 
     private final Uid globalTransactionId;
     private final Uid branchQualifier;
+    private final int hashCodeValue;
+    private final String toStringValue;
 
     /**
      * Create a new XID using the specified GTRID and BQUAL.
@@ -59,11 +61,15 @@ public class BitronixXid implements Xid {
     public BitronixXid(Uid globalTransactionId, Uid branchQualifier) {
         this.globalTransactionId = globalTransactionId;
         this.branchQualifier = branchQualifier;
+        this.toStringValue = precalculateToString();
+        this.hashCodeValue = precalculateHashCode();
     }
 
     public BitronixXid(Xid xid) {
         this.globalTransactionId = new Uid(xid.getGlobalTransactionId());
         this.branchQualifier = new Uid(xid.getBranchQualifier());
+        this.toStringValue = precalculateToString();
+        this.hashCodeValue = precalculateHashCode();
     }
 
     /**
@@ -103,6 +109,10 @@ public class BitronixXid implements Xid {
      * @return a human-readable string representation.
      */
     public String toString() {
+        return toStringValue;
+    }
+
+    private String precalculateToString() {
         StringBuilder sb = new StringBuilder(288);
         sb.append("a Bitronix XID [");
         sb.append(globalTransactionId.toString());
@@ -132,6 +142,10 @@ public class BitronixXid implements Xid {
      * @return a constant hash value.
      */
     public int hashCode() {
+        return hashCodeValue;
+    }
+
+    private int precalculateHashCode() {
         int hashCode = FORMAT_ID;
         if (globalTransactionId != null)
             hashCode += globalTransactionId.hashCode();

@@ -23,7 +23,6 @@ package bitronix.tm.resource.jdbc;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -37,14 +36,14 @@ import java.util.concurrent.ConcurrentMap;
  * @author brettw
  */
 public abstract class BaseProxyHandlerClass implements InvocationHandler {
-    private static final ConcurrentMap<Class, Map<Method, Method>> classMethodCache = new ConcurrentHashMap<Class, Map<Method, Method>>();
-    private final Map<Method, Method> methodCache;
+    private static final ConcurrentMap<Class, ConcurrentMap<Method, Method>> classMethodCache = new ConcurrentHashMap<Class, ConcurrentMap<Method, Method>>();
+    private final ConcurrentMap<Method, Method> methodCache;
 
     public BaseProxyHandlerClass() {
-        Map<Method, Method> methodCache = classMethodCache.get(this.getClass());
+        ConcurrentMap<Method, Method> methodCache = classMethodCache.get(this.getClass());
         if (methodCache == null) {
             methodCache = new ConcurrentHashMap<Method, Method>();
-            Map<Method, Method> previous = classMethodCache.putIfAbsent(this.getClass(), methodCache);
+            ConcurrentMap<Method, Method> previous = classMethodCache.putIfAbsent(this.getClass(), methodCache);
             if (previous != null)
                 methodCache = previous;
         }
@@ -83,7 +82,7 @@ public abstract class BaseProxyHandlerClass implements InvocationHandler {
      * @return the Method object that should be invoked, either ours
      *         (overridden) or the underlying proxied object
      */
-    private synchronized Method getDelegatedMethod(Method method) {
+    private Method getDelegatedMethod(Method method) {
         Method delegated = methodCache.get(method);
         if (delegated != null) {
             return delegated;
@@ -92,10 +91,15 @@ public abstract class BaseProxyHandlerClass implements InvocationHandler {
         try {
             Class[] parameterTypes = method.getParameterTypes();
             delegated = this.getClass().getMethod(method.getName(), parameterTypes);
-        } catch (Exception e) {
+        } catch (Exception ex) {
             delegated = method;
         }
-        methodCache.put(method, delegated);
+
+        Method previous = methodCache.putIfAbsent(method, delegated);
+        if (previous != null) {
+            delegated = previous;
+        }
+
         return delegated;
     }
 

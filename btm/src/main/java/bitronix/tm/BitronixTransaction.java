@@ -126,12 +126,15 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         try {
             resourceManager.enlist(resourceHolderState);
         } catch (XAException ex) {
+            String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
             if (BitronixXAException.isUnilateralRollback(ex)) {
                 // if the resource unilaterally rolled back, the transaction will never be able to commit -> mark it as rollback only
                 setStatus(Status.STATUS_MARKED_ROLLBACK);
-                throw new BitronixRollbackException("resource " + resourceHolderState + " unilaterally rolled back, error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+                throw new BitronixRollbackException("resource " + resourceHolderState + " unilaterally rolled back, error=" +
+                        Decoder.decodeXAExceptionErrorCode(ex) + (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
             }
-            throw new BitronixSystemException("cannot enlist " + resourceHolderState + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+            throw new BitronixSystemException("cannot enlist " + resourceHolderState + ", error=" +
+                    Decoder.decodeXAExceptionErrorCode(ex) + (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
         }
 
         resourceHolder.putXAResourceHolderState(resourceHolderState.getXid(), resourceHolderState);
@@ -222,7 +225,15 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
         // beforeCompletion must be called before the check to STATUS_MARKED_ROLLBACK as the synchronization
         // can still set the status to STATUS_MARKED_ROLLBACK.
-        fireBeforeCompletionEvent();
+        try {
+            fireBeforeCompletionEvent();
+        } catch (BitronixSystemException ex) {
+            rollback();
+            throw new BitronixRollbackException("SystemException thrown during beforeCompletion cycle caused transaction rollback", ex);
+        } catch (RuntimeException ex) {
+            rollback();
+            throw new BitronixRollbackException("RuntimeException thrown during beforeCompletion cycle caused transaction rollback", ex);
+        }
 
         // The following if statements and try/catch block must not be included in the prepare try-catch block as
         // they call rollback().

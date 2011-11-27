@@ -55,16 +55,13 @@ public class JdbcCallableStatementHandle extends BaseProxyHandlerClass { // impl
 
     /* java.sql.Wrapper implementation */
 
-	public boolean isWrapperFor(Class iface) throws SQLException {
-	    if (CallableStatement.class.equals(iface)) {
-	        return true;
-	    }
-		return false;
-	}
+	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        return iface.isAssignableFrom(delegate.getClass());
+    }
 
-	public Object unwrap(Class iface) throws SQLException {
-        if (CallableStatement.class.equals(iface)) {
-            return delegate;
+	public <T> T unwrap(Class<T> iface) throws SQLException {
+        if (iface.isAssignableFrom(delegate.getClass())) {
+            return (T) delegate;
 	    }
 	    throw new SQLException(getClass().getName() + " is not a wrapper for interface " + iface.getName());
 	}
