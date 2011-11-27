@@ -1,0 +1,44 @@
+<configuration>
+
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <encoder>
+            <pattern>%d [%t] {%X{btm-gtrid}} [%p,%c{1}] %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="file" class="ch.qos.logback.core.FileAppender">
+        <file>target/tests.log</file>
+        <encoder>
+            <pattern>%d [%-25.25t] {%-50X{btm-gtrid}} [%-5p] %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="sift" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator>
+            <key>btm-gtrid</key>
+            <defaultValue>N/A</defaultValue>
+        </discriminator>
+        <sift>
+            <appender name="file-${btm-gtrid}" class="ch.qos.logback.core.FileAppender">
+                <file>target/tests-${btm-gtrid}.log</file>
+                <append>false</append>
+                <encoder>
+                    <pattern>%d [%-25.25t] [%-5p] %m%n</pattern>
+                </encoder>
+            </appender>
+        </sift>
+    </appender>
+
+
+    <logger name="bitronix.tm" level="DEBUG">
+        <appender-ref ref="file"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="console"/>
+    </root>
+
+</configuration>
