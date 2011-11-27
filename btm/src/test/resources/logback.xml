@@ -2,7 +2,7 @@
 
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
+            <level>OFF</level>
         </filter>
         <encoder>
             <pattern>%d [%t] {%X{btm-gtrid}} [%p,%c{1}] %m%n</pattern>
