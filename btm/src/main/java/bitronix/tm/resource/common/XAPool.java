@@ -164,7 +164,7 @@ public class XAPool implements StateChangeListener {
 
                 if (log.isDebugEnabled()) { log.debug("waiting " + bean.getAcquisitionInterval() + "s before trying to acquire a connection again from " + this); }
                 try {
-                    wait(bean.getAcquisitionInterval() * 1000L);
+                    Thread.sleep(bean.getAcquisitionInterval() * 1000L);
                 } catch (InterruptedException ex2) {
                     // ignore
                 }
