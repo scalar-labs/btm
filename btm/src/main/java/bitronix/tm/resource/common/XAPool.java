@@ -441,7 +441,6 @@ public class XAPool implements StateChangeListener {
 
         if (log.isDebugEnabled()) { log.debug("getting IN_POOL connection, waiting if necessary, current size is " + inPoolSize()); }
 
-        stateTransitionLock.readLock().lock();
         try {
         	XAStatefulHolder xaStatefulHolder = availablePool.poll(bean.getAcquisitionTimeout(), TimeUnit.SECONDS);
         	if (xaStatefulHolder != null) {
@@ -451,9 +450,6 @@ public class XAPool implements StateChangeListener {
 		} catch (InterruptedException e) {
 			throw new BitronixRuntimeException("Interrupted while waiting for IN_POOL connection.");
 		}
-        finally {
-            stateTransitionLock.readLock().unlock();
-        }
     }
 
     private synchronized void grow() throws Exception {
