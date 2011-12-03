@@ -49,6 +49,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     private static final int LOOPS = 2;
 
     public void testSimpleWorkingCase() throws Exception {
+        Thread.currentThread().setName("testSimpleWorkingCase");
         if (log.isDebugEnabled()) log.debug("*** getting TM");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         if (log.isDebugEnabled()) log.debug("*** before begin");
@@ -104,6 +105,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testOrderedCommitResources() throws Exception {
+        Thread.currentThread().setName("testOrderedCommitResources");
         poolingDataSource1.setTwoPcOrderingPosition(200);
         poolingDataSource2.setTwoPcOrderingPosition(-1);
 
@@ -168,6 +170,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testReversePhase2Order() throws Exception {
+        Thread.currentThread().setName("testReversePhase2Order");
+
         poolingDataSource1.setTwoPcOrderingPosition(1);
         poolingDataSource2.setTwoPcOrderingPosition(1);
 
@@ -232,6 +236,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testLrc() throws Exception {
+        Thread.currentThread().setName("testLrc");
+
         PoolingDataSource poolingDataSource2 = new PoolingDataSource();
         poolingDataSource2.setClassName(LrcXADataSource.class.getName());
         poolingDataSource2.setUniqueName(DATASOURCE2_NAME + "_lrc");
@@ -296,6 +302,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testStatementTimeout() throws Exception {
+        Thread.currentThread().setName("testStatementTimeout");
         if (log.isDebugEnabled()) log.debug("*** getting TM");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         if (log.isDebugEnabled()) log.debug("*** before begin");
@@ -343,6 +350,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testCommitTimeout() throws Exception {
+        Thread.currentThread().setName("testCommitTimeout");
         if (log.isDebugEnabled()) log.debug("*** getting TM");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         if (log.isDebugEnabled()) log.debug("*** before begin");
@@ -387,6 +395,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testGlobalAfterLocal() throws Exception {
+        Thread.currentThread().setName("testGlobalAfterLocal");
+
         if (log.isDebugEnabled()) log.debug("*** getting TM");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 
@@ -454,6 +464,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
 
 
     public void testDeferredReleaseAfterMarkedRollback() throws Exception {
+        Thread.currentThread().setName("testDeferredReleaseAfterMarkedRollback");
         if (log.isDebugEnabled()) log.debug("*** getting TM");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         if (log.isDebugEnabled()) log.debug("*** before begin");
@@ -493,6 +504,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
 
 
     public void testRollingBackSynchronization() throws Exception {
+        Thread.currentThread().setName("testRollingBackSynchronization");
         if (log.isDebugEnabled()) log.debug("*** getting TM");
         final BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         if (log.isDebugEnabled()) log.debug("*** before begin");
@@ -557,8 +569,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
     }
 
-
     public void testSuspendResume() throws Exception {
+        Thread.currentThread().setName("testSuspendResume");
         if (log.isDebugEnabled()) log.debug("*** getting TM");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         if (log.isDebugEnabled()) log.debug("*** before begin");
@@ -618,6 +630,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testLooseWorkingCaseOutsideOutside() throws Exception {
+        Thread.currentThread().setName("testLooseWorkingCaseOutsideOutside");
         if (log.isDebugEnabled()) log.debug("*** getting TM");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 
@@ -667,6 +680,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testLooseWorkingCaseOutsideInside() throws Exception {
+        Thread.currentThread().setName("testLooseWorkingCaseOutsideInside");
         if (log.isDebugEnabled()) log.debug("*** getting TM");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 
@@ -716,6 +730,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testLooseWorkingCaseInsideOutside() throws Exception {
+        Thread.currentThread().setName("testLooseWorkingCaseInsideOutside");
         if (log.isDebugEnabled()) log.debug("*** getting TM");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 
@@ -765,6 +780,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testHeuristicCommitWorkingCase() throws Exception {
+        Thread.currentThread().setName("testHeuristicCommitWorkingCase");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         tm.begin();
 
@@ -824,6 +840,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testHeuristicRollbackWorkingCase() throws Exception {
+        Thread.currentThread().setName("testHeuristicRollbackWorkingCase");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         tm.begin();
 
@@ -877,6 +894,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
 
 
     public void testNonXaPool() throws Exception {
+        Thread.currentThread().setName("testNonXaPool");
         for (int i=0; i<LOOPS ;i++) {
             TransactionManagerServices.getTransactionManager().begin();
             assertEquals(1, TransactionManagerServices.getTransactionManager().getInFlightTransactionCount());
@@ -940,6 +958,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
 
 
     public void testDuplicateClose() throws Exception {
+        Thread.currentThread().setName("testDuplicateClose");
         Field poolField = poolingDataSource1.getClass().getDeclaredField("pool");
         poolField.setAccessible(true);
         XAPool pool = (XAPool) poolField.get(poolingDataSource1);
@@ -976,6 +995,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testPoolBoundsWithLooseEnlistment() throws Exception {
+        Thread.currentThread().setName("testPoolBoundsWithLooseEnlistment");
         ArrayList list = new ArrayList();
 
         for (int i=0; i<LOOPS ;i++) {
@@ -1063,6 +1083,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testNonEnlistingMethodInTxContext() throws Exception {
+        Thread.currentThread().setName("testNonEnlistingMethodInTxContext");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 
         tm.begin();
@@ -1077,6 +1098,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testAutoCommitFalseWhenEnlisted() throws Exception {
+        Thread.currentThread().setName("testAutoCommitFalseWhenEnlisted");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 
         tm.begin();
@@ -1092,6 +1114,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testAutoCommitTrueWhenEnlistedButSuspended() throws Exception {
+        Thread.currentThread().setName("testAutoCommitTrueWhenEnlistedButSuspended");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 
         tm.begin();
@@ -1113,6 +1136,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testSerialization() throws Exception {
+        Thread.currentThread().setName("testSerialization");
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
         oos.writeObject(poolingDataSource1);
