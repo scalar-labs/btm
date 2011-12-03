@@ -20,38 +20,19 @@
  */
 package bitronix.tm.resource.common;
 
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.transaction.Synchronization;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 
-import bitronix.tm.BitronixTransaction;
-import bitronix.tm.BitronixXid;
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.internal.BitronixRuntimeException;
-import bitronix.tm.internal.XAResourceHolderState;
-import bitronix.tm.recovery.IncrementalRecoverer;
-import bitronix.tm.recovery.RecoveryException;
-import bitronix.tm.utils.ClassLoaderUtils;
-import bitronix.tm.utils.CryptoEngine;
-import bitronix.tm.utils.Decoder;
-import bitronix.tm.utils.MonotonicClock;
-import bitronix.tm.utils.PropertyUtils;
-import bitronix.tm.utils.Uid;
+import bitronix.tm.*;
+import bitronix.tm.internal.*;
+import bitronix.tm.recovery.*;
+import bitronix.tm.utils.*;
 
 /**
  * Generic XA pool. {@link XAStatefulHolder} instances are created by the {@link XAPool} out of a
@@ -69,7 +50,6 @@ public class XAPool implements StateChangeListener {
     private final BlockingQueue<XAStatefulHolder> availablePool = new LinkedBlockingQueue<XAStatefulHolder>();
     private final Queue<XAStatefulHolder> accessiblePool = new ConcurrentLinkedQueue<XAStatefulHolder>();
     private final Queue<XAStatefulHolder> inaccessiblePool = new ConcurrentLinkedQueue<XAStatefulHolder>();
-    private final Queue<WeakReference<XAStatefulHolder>> closedPool = new ConcurrentLinkedQueue<WeakReference<XAStatefulHolder>>();
 
     private final ReentrantReadWriteLock stateTransitionLock = new ReentrantReadWriteLock();
 
@@ -217,7 +197,6 @@ public class XAPool implements StateChangeListener {
         availablePool.clear();
         accessiblePool.clear();
         inaccessiblePool.clear();
-        closedPool.clear();
         failed.set(false);
     }
 
@@ -278,6 +257,7 @@ public class XAPool implements StateChangeListener {
         } // for
 
         if (log.isDebugEnabled()) { log.debug("closed " + closed + (forceClose ? " " : " idle ") + "connection(s)"); }
+
         growUntilMinPoolSize();
     }
 
@@ -302,8 +282,6 @@ public class XAPool implements StateChangeListener {
         		inaccessiblePool.add(source);
         		break;
         	case XAStatefulHolder.STATE_CLOSED:
-        		if (log.isDebugEnabled()) { log.debug("added " + source + " to the closed pool"); }
-        		closedPool.add(new WeakReference<XAStatefulHolder>(source));
         		break;
         	}
         }
@@ -327,7 +305,6 @@ public class XAPool implements StateChangeListener {
     		inaccessiblePool.remove(source);
     		break;
     	case XAStatefulHolder.STATE_CLOSED:
-    	    closedPool.remove(source);
     		break;
     	}
     }
