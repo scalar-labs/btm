@@ -20,32 +20,25 @@
  */
 package bitronix.tm.mock;
 
-import bitronix.tm.BitronixTransactionManager;
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.internal.BitronixXAException;
-import bitronix.tm.mock.events.EventRecorder;
-import bitronix.tm.mock.events.JournalLogEvent;
-import bitronix.tm.mock.events.XAResourceEndEvent;
-import bitronix.tm.mock.events.XAResourceRollbackEvent;
-import bitronix.tm.mock.events.XAResourceStartEvent;
-import bitronix.tm.mock.resource.MockJournal;
-import bitronix.tm.mock.resource.MockXAResource;
-import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
-import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
-import bitronix.tm.resource.jdbc.PoolingDataSource;
-import junit.framework.TestCase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.util.*;
 
 import javax.sql.XAConnection;
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
-import java.lang.reflect.Field;
-import java.lang.reflect.Proxy;
-import java.sql.Connection;
-import java.util.List;
+import javax.transaction.*;
+import javax.transaction.xa.*;
+
+import junit.framework.TestCase;
+
+import org.slf4j.*;
+
+import bitronix.tm.*;
+import bitronix.tm.internal.BitronixXAException;
+import bitronix.tm.mock.events.*;
+import bitronix.tm.mock.resource.*;
+import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
+import bitronix.tm.resource.ResourceRegistrar;
+import bitronix.tm.resource.jdbc.*;
 
 
 public class DelistmentTest extends TestCase {
@@ -58,6 +51,12 @@ public class DelistmentTest extends TestCase {
 
     protected void setUp() throws Exception {
         EventRecorder.clear();
+
+        Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+        while (it.hasNext()) {
+            String name = (String) it.next();
+            ResourceRegistrar.unregister(ResourceRegistrar.get(name));
+        }
 
         // change disk journal into mock journal
         Field field = TransactionManagerServices.class.getDeclaredField("journal");
@@ -79,6 +78,8 @@ public class DelistmentTest extends TestCase {
         poolingDataSource2.setMaxPoolSize(5);
         poolingDataSource2.setAutomaticEnlistingEnabled(true);
         poolingDataSource2.init();
+
+        TransactionManagerServices.getConfiguration().setGracefulShutdownInterval(3);
 
         btm = TransactionManagerServices.getTransactionManager();
     }
