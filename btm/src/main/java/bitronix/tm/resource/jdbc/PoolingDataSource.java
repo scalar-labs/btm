@@ -288,6 +288,8 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         if (log.isDebugEnabled()) { log.debug("closing " + this); }
         pool.close();
         pool = null;
+        
+        xaResourceHolderMap.clear();
 
         ManagementRegistrar.unregister(jmxName);
         jmxName = null;
