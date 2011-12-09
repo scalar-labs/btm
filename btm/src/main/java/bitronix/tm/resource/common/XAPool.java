@@ -51,6 +51,15 @@ public class XAPool implements StateChangeListener {
     private final Queue<XAStatefulHolder> accessiblePool = new ConcurrentLinkedQueue<XAStatefulHolder>();
     private final Queue<XAStatefulHolder> inaccessiblePool = new ConcurrentLinkedQueue<XAStatefulHolder>();
 
+    /**
+     * The stateTransitionLock makes sure that transitions of XAStatefulHolders from one state to another
+     * are atomic.  A ReentrantReadWriteLock allows any number of readers to access and iterate the 
+     * accessiblePool and inaccessiblePool without blocking.  Readers are blocked only for the instant
+     * when a connection is moving between pools.  We use a lock, in addition to the collections being 
+     * concurrent, because concurrent collections only guarantee atomic reads and writes, but not consistent
+     * iteration. Iterating over a concurrent collection while it is modified can lead to the same element
+     * being seen twice or some elements never being seen at all.
+     */
     private final ReentrantReadWriteLock stateTransitionLock = new ReentrantReadWriteLock();
 
     private final ResourceBean bean;
@@ -73,37 +82,50 @@ public class XAPool implements StateChangeListener {
             log.warn("resource '" + bean.getUniqueName() + "' is configured to ignore recovery failures, make sure this setting is not enabled on a production system!");
     }
 
-    private void init() throws Exception {
-        growUntilMinPoolSize();
-
-        if (bean.getMaxIdleTime() > 0) {
-            TransactionManagerServices.getTaskScheduler().schedulePoolShrinking(this);
-        }
-    }
-
-    private synchronized void growUntilMinPoolSize() throws Exception {
-        if (log.isDebugEnabled()) { log.debug("growing " + this + " to minimum pool size " + bean.getMinPoolSize()); }
-        for (int i = (int)totalPoolSize(); i < bean.getMinPoolSize() ;i++) {
-            createPooledObject(xaFactory);
-        }
-    }
-
+    /**
+     * Get the XAFactory (XADataSource) that produces objects for this pool.
+     *
+     * @return the factory (XADataSource) object
+     */
     public Object getXAFactory() {
         return xaFactory;
     }
 
+    /**
+     * Sets this XAPool as failed or unfailed, requiring recovery.
+     *
+     * @param failed true if this XAPool has failed and requires recovery, false if it is ok
+     */
     public void setFailed(boolean failed) {
         this.failed.set(failed);
     }
 
+    /**
+     * Is the XAPool in a failed state?
+     *
+     * @return true if this XAPool has failed, false otherwise
+     */
     public boolean isFailed() {
         return failed.get();
     }
 
+    /**
+     * Get a connection handle from this pool.
+     *
+     * @return a connection handle
+     * @throws Exception throw in the pool is unrecoverable or a timeout occurs getting a connection
+     */
     public Object getConnectionHandle() throws Exception {
         return getConnectionHandle(true);
     }
     
+    /**
+     * Get a connection handle from this pool.
+     * 
+     * @param recycle true if we should try to get a connection in the NON_ACCESSIBLE pool in the same transaction
+     * @return a connection handle
+     * @throws Exception throw in the pool is unrecoverable or a timeout occurs getting a connection
+     */
     public Object getConnectionHandle(boolean recycle) throws Exception {
         if (isFailed()) {
             synchronized (this) {
@@ -125,6 +147,7 @@ public class XAPool implements StateChangeListener {
         }
 
         long before = MonotonicClock.currentTimeMillis();
+        long remainingTimeMs = bean.getAcquisitionTimeout() * 1000L;
         while (true) {
             XAStatefulHolder xaStatefulHolder = null;
             if (recycle) {
@@ -135,13 +158,14 @@ public class XAPool implements StateChangeListener {
                     xaStatefulHolder = getNotAccessible();
                 }
             }
+
             if (xaStatefulHolder == null) {
-                xaStatefulHolder = getInPool();
+                xaStatefulHolder = getInPool(remainingTimeMs);
             }
             if (log.isDebugEnabled()) { log.debug("found " + Decoder.decodeXAStatefulHolderState(xaStatefulHolder.getState()) + " connection " + xaStatefulHolder + " from " + this); }
 
             try {
-                // getConnection() here could throw an exception, if it doesn't the connection is
+                // getConnectionHandle() here could throw an exception, if it doesn't the connection is
                 // still alive and we can share it (if sharing is enabled)
                 Object connectionHandle = xaStatefulHolder.getConnectionHandle();
                 if (bean.getShareTransactionConnections()) {
@@ -149,8 +173,8 @@ public class XAPool implements StateChangeListener {
                 }                
                 return connectionHandle;
             } catch (Exception ex) {
-                if (log.isDebugEnabled()) { log.debug("connection is invalid, trying to close it", ex); }
                 try {
+                    if (log.isDebugEnabled()) { log.debug("connection is invalid, trying to close it", ex); }
                     xaStatefulHolder.close();
                 } catch (Exception ex2) {
                     if (log.isDebugEnabled()) { log.debug("exception while trying to close invalid connection, ignoring it", ex2); }
@@ -162,24 +186,22 @@ public class XAPool implements StateChangeListener {
                     if (log.isDebugEnabled()) { log.debug("removed invalid connection " + xaStatefulHolder + " from " + this); }
                 }
 
-                if (log.isDebugEnabled()) { log.debug("waiting " + bean.getAcquisitionInterval() + "s before trying to acquire a connection again from " + this); }
-                try {
-                    Thread.sleep(bean.getAcquisitionInterval() * 1000L);
-                } catch (InterruptedException ex2) {
-                    // ignore
-                }
-
                 // check for timeout
                 long now = MonotonicClock.currentTimeMillis();
-                long remainingTime = bean.getAcquisitionTimeout() * 1000L;
-                remainingTime -= (now - before);
-                if (remainingTime <= 0) {
+                remainingTimeMs -= (now - before);
+                before = now;
+                if (remainingTimeMs <= 0) {
                     throw new BitronixRuntimeException("cannot get valid connection from " + this + " after trying for " + bean.getAcquisitionTimeout() + "s", ex);
                 }
+
+                Thread.sleep(bean.getAcquisitionInterval() * 1000L);
             }
         } // while true
     }
 
+    /**
+     * Close down and cleanup this XAPool instance.
+     */
     public synchronized void close() {
         if (log.isDebugEnabled()) { log.debug("closing all connections of " + this); }
         
@@ -200,6 +222,11 @@ public class XAPool implements StateChangeListener {
         failed.set(false);
     }
 
+    /**
+     * Get the total size of this pool. 
+     *
+     * @return the total size of this pool
+     */
     public long totalPoolSize() {
         return availablePool.size() + accessiblePool.size() + inaccessiblePool.size();
     }
@@ -218,6 +245,26 @@ public class XAPool implements StateChangeListener {
 
     public Date getNextShrinkDate() {
         return new Date(MonotonicClock.currentTimeMillis() + bean.getMaxIdleTime() * 1000);
+    }
+
+    /**
+     * This method is called to initialize the pool.
+     *
+     * @throws Exception
+     */
+    private void init() throws Exception {
+        growUntilMinPoolSize();
+
+        if (bean.getMaxIdleTime() > 0) {
+            TransactionManagerServices.getTaskScheduler().schedulePoolShrinking(this);
+        }
+    }
+
+    private synchronized void growUntilMinPoolSize() throws Exception {
+        if (log.isDebugEnabled()) { log.debug("growing " + this + " to minimum pool size " + bean.getMinPoolSize()); }
+        for (int i = (int)totalPoolSize(); i < bean.getMinPoolSize() ;i++) {
+            createPooledObject(xaFactory);
+        }
     }
 
     public void shrink() throws Exception {
@@ -282,6 +329,7 @@ public class XAPool implements StateChangeListener {
         		inaccessiblePool.add(source);
         		break;
         	case XAStatefulHolder.STATE_CLOSED:
+                source.removeStateChangeEventListener(this);
         		break;
         	}
         }
@@ -305,13 +353,13 @@ public class XAPool implements StateChangeListener {
     		inaccessiblePool.remove(source);
     		break;
     	case XAStatefulHolder.STATE_CLOSED:
+    	    source.removeStateChangeEventListener(this);
     		break;
     	}
     }
 
     public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
     }
-
 
     public String toString() {
         return "an XAPool of resource " + bean.getUniqueName() + " with " + totalPoolSize() + " connection(s) (" + inPoolSize() + " still available)" + (isFailed() ? " -failed-" : "");
@@ -356,6 +404,11 @@ public class XAPool implements StateChangeListener {
         return CryptoEngine.decrypt(cipher, resourcePassword.substring(endIdx + 1));
     }
 
+    /**
+     * Get a XAStatefulHolder (connection) from the NOT_ACCESSIBLE pool.
+     *
+     * @return a connection, or null if there are no connections in the inaccessible pool for the current transaction
+     */
     private XAStatefulHolder getNotAccessible() {
         if (log.isDebugEnabled()) { log.debug("trying to recycle a NOT_ACCESSIBLE connection of " + this); }
         BitronixTransaction transaction = TransactionContextHelper.currentTransaction();
@@ -408,7 +461,16 @@ public class XAPool implements StateChangeListener {
         return false;
     }
 
-    private XAStatefulHolder getInPool() throws Exception {
+    /**
+     * Get an IN_POOL connection.  This method blocks for up to remainingTimeMs milliseconds
+     * for someone to return or create a connection in the available pool.  If remainingTimeMs
+     * expires, an exception is thrown.
+     *
+     * @param remainingTimeMs the maximum time to wait for a connection
+     * @return a connection from the available (IN_POOL) pool
+     * @throws Exception thrown in no connection is available before the remainingTimeMs time expires
+     */
+    private XAStatefulHolder getInPool(long remainingTimeMs) throws Exception {
         if (log.isDebugEnabled()) { log.debug("getting a IN_POOL connection from " + this); }
 
         if (inPoolSize() == 0) {
@@ -419,7 +481,7 @@ public class XAPool implements StateChangeListener {
         if (log.isDebugEnabled()) { log.debug("getting IN_POOL connection, waiting if necessary, current size is " + inPoolSize()); }
 
         try {
-        	XAStatefulHolder xaStatefulHolder = availablePool.poll(bean.getAcquisitionTimeout(), TimeUnit.SECONDS);
+        	XAStatefulHolder xaStatefulHolder = availablePool.poll(remainingTimeMs, TimeUnit.MILLISECONDS);
         	if (xaStatefulHolder != null) {
         		return xaStatefulHolder;
         	}
@@ -429,6 +491,11 @@ public class XAPool implements StateChangeListener {
 		}
     }
 
+    /**
+     * Grow the pool by "acquire increment" amount up to the max pool size.
+     *
+     * @throws Exception thrown if creating a pooled objects fails
+     */
     private synchronized void grow() throws Exception {
         if (totalPoolSize() < bean.getMaxPoolSize()) {
             long increment = bean.getAcquireIncrement();
