@@ -20,24 +20,10 @@
  */
 package bitronix.tm.resource.jdbc4;
 
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.CallableStatement;
-import java.sql.Clob;
-import java.sql.Connection;
-import java.sql.NClob;
-import java.sql.SQLClientInfoException;
-import java.sql.SQLException;
-import java.sql.SQLXML;
-import java.sql.Statement;
-import java.sql.Struct;
+import java.sql.*;
 import java.util.Properties;
 
-import bitronix.tm.resource.jdbc.JdbcCallableStatementHandle;
-import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
-import bitronix.tm.resource.jdbc.JdbcPooledConnection;
-import bitronix.tm.resource.jdbc.JdbcPreparedStatementHandle;
-import bitronix.tm.resource.jdbc.JdbcStatementHandle;
+import bitronix.tm.resource.jdbc.*;
 
 /**
  * Disposable Connection handle.
@@ -88,6 +74,10 @@ public class Jdbc4ConnectionHandle extends JdbcConnectionHandle {
     @Override
     protected JdbcPreparedStatementHandle getJdbcPreparedStatementHandle(String sql, String[] columnNames) {
     	return new Jdbc4PreparedStatementHandle(sql, columnNames);
+    }
+
+    protected JdbcUncachedPreparedStatementHandle getJdbcUncachedPreparedStatementHandle(PreparedStatement statement, JdbcPooledConnection pooledConnection) {
+        return new Jdbc4UncachedPreparedStatementHandle(statement, pooledConnection);
     }
 
     /* java.sql.Wrapper implementation */
