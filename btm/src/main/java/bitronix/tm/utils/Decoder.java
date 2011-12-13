@@ -132,13 +132,13 @@ public class Decoder {
      * @param resources a list of {@link bitronix.tm.resource.common.XAResourceHolder}s.
      * @return a String representation of the list.
      */
-    public static String collectResourcesNames(Collection resources) {
-        StringBuffer sb = new StringBuffer();
+    public static String collectResourcesNames(Collection<XAResourceHolderState> resources) {
+        StringBuilder sb = new StringBuilder();
         sb.append("[");
 
-        Iterator it = resources.iterator();
+        Iterator<XAResourceHolderState> it = resources.iterator();
         while (it.hasNext()) {
-            XAResourceHolderState resourceHolderState = (XAResourceHolderState) it.next();
+            XAResourceHolderState resourceHolderState = it.next();
             sb.append(resourceHolderState.getUniqueName());
 
             if (it.hasNext())
