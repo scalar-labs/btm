@@ -21,8 +21,9 @@
 package bitronix.tm;
 
 import bitronix.tm.internal.BitronixRuntimeException;
-import bitronix.tm.internal.ThreadContext;
 import bitronix.tm.utils.Scheduler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.naming.NamingException;
 import javax.naming.Reference;
@@ -32,6 +33,7 @@ import javax.transaction.Status;
 import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionSynchronizationRegistry;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -41,7 +43,16 @@ import java.util.Map;
  */
 public class BitronixTransactionSynchronizationRegistry implements TransactionSynchronizationRegistry, Referenceable {
 
+    private final static Logger log = LoggerFactory.getLogger(BitronixTransactionSynchronizationRegistry.class);
+
     private final BitronixTransactionManager transactionManager;
+    
+    private final static ThreadLocal resourcesTl = new ThreadLocal() {
+        protected Object initialValue() {
+            return new HashMap();
+        }
+    };
+
 
     public BitronixTransactionSynchronizationRegistry() {
         transactionManager = TransactionManagerServices.getTransactionManager();
@@ -100,7 +111,13 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
             if (currentTransaction() == null || currentTransaction().getStatus() == Status.STATUS_NO_TRANSACTION)
                 throw new IllegalStateException("no transaction started on current thread");
 
-            getResources().put(key, value);
+            Object oldValue = getResources().put(key, value);
+
+            if (oldValue == null && getResources().size() == 1) {
+                if (log.isDebugEnabled()) { log.debug("first resource put in synchronization registry, registering a ClearRegistryResourcesSynchronization"); }
+                Synchronization synchronization = new ClearRegistryResourcesSynchronization();
+                currentTransaction().getSynchronizationScheduler().add(synchronization, Scheduler.ALWAYS_LAST_POSITION);
+            }
         } catch (SystemException ex) {
             throw new BitronixRuntimeException("cannot get current transaction status", ex);
         }
@@ -136,12 +153,8 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
         }
     }
 
-    private Map<Object, Object> getResources() {
-        ThreadContext currentContext = transactionManager.currentThreadContext();
-        if (currentContext == null) {
-            return null;
-        }
-        return currentContext.getResources();
+    private Map getResources() {
+        return ((Map) resourcesTl.get());
     }
 
     private BitronixTransaction currentTransaction() {
@@ -155,6 +168,16 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
                 BitronixTransactionSynchronizationRegistryObjectFactory.class.getName(),
                 null
         );
+    }
+
+    private final class ClearRegistryResourcesSynchronization implements Synchronization {
+        public void beforeCompletion() {
+        }
+
+        public void afterCompletion(int status) {
+            if (log.isDebugEnabled()) { log.debug("clearing resources"); }
+            getResources().clear();
+        }
     }
 
 }

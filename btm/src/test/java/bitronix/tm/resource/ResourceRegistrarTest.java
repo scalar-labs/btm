@@ -27,9 +27,7 @@ import bitronix.tm.recovery.RecoveryException;
 import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.resource.common.XAResourceProducer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -44,6 +42,7 @@ import static org.mockito.Mockito.*;
  *
  * @author Juergen_Kellerer, 2011-08-24
  */
+@Ignore
 public class ResourceRegistrarTest {
 
     ExecutorService executorService;

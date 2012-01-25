@@ -32,6 +32,7 @@ import bitronix.tm.mock.events.XAResourceStartEvent;
 import bitronix.tm.mock.resource.MockJournal;
 import bitronix.tm.mock.resource.MockXAResource;
 import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
+import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import junit.framework.TestCase;
@@ -44,9 +45,8 @@ import javax.transaction.Status;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import java.lang.reflect.Field;
-import java.lang.reflect.Proxy;
 import java.sql.Connection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -61,9 +61,9 @@ public class DelistmentTest extends TestCase {
     protected void setUp() throws Exception {
         EventRecorder.clear();
 
-        Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+        Iterator<String> it = ResourceRegistrar.getResourcesUniqueNames().iterator();
         while (it.hasNext()) {
-            String name = (String) it.next();
+            String name = it.next();
             ResourceRegistrar.unregister(ResourceRegistrar.get(name));
         }
 

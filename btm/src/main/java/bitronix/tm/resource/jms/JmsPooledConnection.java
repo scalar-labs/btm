@@ -45,7 +45,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
 
     private final static Logger log = LoggerFactory.getLogger(JmsPooledConnection.class);
 
-    private final XAConnection xaConnection;
+    private volatile XAConnection xaConnection;
     private final PoolingConnectionFactory poolingConnectionFactory;
     private final Set<DualSessionWrapper> sessions = Collections.synchronizedSet(new HashSet<DualSessionWrapper>());
 

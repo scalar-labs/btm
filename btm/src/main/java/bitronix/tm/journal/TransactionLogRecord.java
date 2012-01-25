@@ -28,11 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
@@ -69,11 +65,11 @@ public class TransactionLogRecord implements JournalRecord {
     private final static AtomicInteger sequenceGenerator = new AtomicInteger();
 
     private final int status;
-    private final int recordLength;
-    private final int headerLength;
+    private int recordLength;
+    private int headerLength;
     private final long time;
     private final int sequenceNumber;
-    private final int crc32;
+    private int crc32;
     private final Uid gtrid;
     private final SortedSet<String> uniqueNames;
     private final int endRecord;
@@ -157,7 +153,7 @@ public class TransactionLogRecord implements JournalRecord {
     }
 
 
-    public void removeUniqueNames(Collection namesToRemove) {
+    public void removeUniqueNames(Collection<String> namesToRemove) {
         uniqueNames.removeAll(namesToRemove);
         refresh();
     }

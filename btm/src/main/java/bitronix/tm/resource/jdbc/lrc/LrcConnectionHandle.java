@@ -37,7 +37,7 @@ import java.util.Map;
  */
 public class LrcConnectionHandle implements Connection {
 
-    private final Connection delegate;
+    private volatile Connection delegate;
     private final LrcXAResource xaResource;
 
     public LrcConnectionHandle(LrcXAResource xaResource, Connection delegate) {

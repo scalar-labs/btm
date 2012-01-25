@@ -54,7 +54,7 @@ public class JdbcPoolTest extends TestCase {
     private PoolingDataSource pds;
 
     protected void setUp() throws Exception {
-        TransactionManagerServices.getConfiguration().setJournal("null").setGracefulShutdownInterval(0);
+        TransactionManagerServices.getConfiguration().setJournal("null").setGracefulShutdownInterval(2);
         TransactionManagerServices.getTransactionManager();
 
         MockitoXADataSource.setStaticCloseXAConnectionException(null);

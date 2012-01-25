@@ -20,7 +20,6 @@
  */
 package bitronix.tm.mock;
 
-import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.util.List;
 

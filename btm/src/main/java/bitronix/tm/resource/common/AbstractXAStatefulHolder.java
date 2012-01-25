@@ -21,6 +21,7 @@
 package bitronix.tm.resource.common;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.slf4j.*;
 
@@ -36,7 +37,7 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
     private final static Logger log = LoggerFactory.getLogger(AbstractXAStatefulHolder.class);
 
     private volatile int state = STATE_IN_POOL;
-    private final List<StateChangeListener> stateChangeEventListeners = new ArrayList<StateChangeListener>();
+    private final List<StateChangeListener> stateChangeEventListeners = new CopyOnWriteArrayList<StateChangeListener>();
 
     public int getState() {
         return state;

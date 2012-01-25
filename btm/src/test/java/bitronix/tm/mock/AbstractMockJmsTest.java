@@ -70,6 +70,8 @@ public abstract class AbstractMockJmsTest extends TestCase {
         AtomicReference<Journal> journalRef = (AtomicReference<Journal>) field.get(TransactionManagerServices.class);
         journalRef.set(new MockJournal());
 
+        TransactionManagerServices.getConfiguration().setGracefulShutdownInterval(2);
+
         // start TM
         TransactionManagerServices.getTransactionManager();
 

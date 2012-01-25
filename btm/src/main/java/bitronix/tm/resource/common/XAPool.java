@@ -312,10 +312,6 @@ public class XAPool implements StateChangeListener {
     public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
         stateTransitionLock.writeLock().lock();
         try {
-        	// remove from the former pool...
-        	removeFromPoolByState(source, oldState);
-    
-        	// ...and add to the new pool
         	switch (newState) {
         	case XAStatefulHolder.STATE_IN_POOL:
         		if (log.isDebugEnabled()) { log.debug("added " + source + " to the available pool"); }
@@ -339,27 +335,30 @@ public class XAPool implements StateChangeListener {
         }
     }
 
-    private void removeFromPoolByState(XAStatefulHolder source, int state) {
-    	switch (state) {
-    	case XAStatefulHolder.STATE_IN_POOL:
-    		if (log.isDebugEnabled()) { log.debug("removed " + source + " from the available pool"); }
-    		availablePool.remove(source);
-    		break;
-    	case XAStatefulHolder.STATE_ACCESSIBLE:
-    		if (log.isDebugEnabled()) { log.debug("removed " + source + " from the accessible pool"); }
-    		accessiblePool.remove(source);
-    		break;
-    	case XAStatefulHolder.STATE_NOT_ACCESSIBLE:
-    		if (log.isDebugEnabled()) { log.debug("removed " + source + " from the inaccessible pool"); }
-    		inaccessiblePool.remove(source);
-    		break;
-    	case XAStatefulHolder.STATE_CLOSED:
-    	    source.removeStateChangeEventListener(this);
-    		break;
-    	}
-    }
-
     public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
+        stateTransitionLock.writeLock().lock();
+        try {
+            switch (currentState) {
+            case XAStatefulHolder.STATE_IN_POOL:
+                if (log.isDebugEnabled()) { log.debug("removed " + source + " from the available pool"); }
+                availablePool.remove(source);
+                break;
+            case XAStatefulHolder.STATE_ACCESSIBLE:
+                if (log.isDebugEnabled()) { log.debug("removed " + source + " from the accessible pool"); }
+                accessiblePool.remove(source);
+                break;
+            case XAStatefulHolder.STATE_NOT_ACCESSIBLE:
+                if (log.isDebugEnabled()) { log.debug("removed " + source + " from the inaccessible pool"); }
+                inaccessiblePool.remove(source);
+                break;
+            case XAStatefulHolder.STATE_CLOSED:
+                source.removeStateChangeEventListener(this);
+                break;
+            }
+        }
+        finally {
+            stateTransitionLock.writeLock().unlock();
+        }
     }
 
     public String toString() {
@@ -381,10 +380,10 @@ public class XAPool implements StateChangeListener {
 
         for (Map.Entry<Object, Object> entry : bean.getDriverProperties().entrySet()) {
             String name = (String) entry.getKey();
-            String value = (String) entry.getValue();
+            Object value = entry.getValue();
 
             if (name.endsWith(PASSWORD_PROPERTY_NAME)) {
-                value = decrypt(value);
+                value = decrypt(value.toString());
             }
 
             if (log.isDebugEnabled()) { log.debug("setting vendor property '" + name + "' to '" + value + "'"); }

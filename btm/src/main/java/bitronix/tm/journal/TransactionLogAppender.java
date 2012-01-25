@@ -48,8 +48,6 @@ public class TransactionLogAppender {
      */
     public static final int END_RECORD = 0x786e7442;
 
-    private static final Charset NAME_CHARSET = Charset.forName("US-ASCII");
-
     private final File file;
     private final FileChannel fc;
     private final FileLock lock;

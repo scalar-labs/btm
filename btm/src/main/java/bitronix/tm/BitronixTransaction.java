@@ -20,50 +20,25 @@
  */
 package bitronix.tm;
 
-import bitronix.tm.internal.BitronixMultiSystemException;
-import bitronix.tm.internal.BitronixRollbackException;
-import bitronix.tm.internal.BitronixRollbackSystemException;
-import bitronix.tm.internal.BitronixSystemException;
-import bitronix.tm.internal.BitronixXAException;
-import bitronix.tm.internal.TransactionStatusChangeListener;
-import bitronix.tm.internal.XAResourceHolderState;
-import bitronix.tm.internal.XAResourceManager;
+import bitronix.tm.internal.*;
 import bitronix.tm.journal.Journal;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.XAResourceHolder;
+import bitronix.tm.resource.common.XAResourceHolderStateVisitor;
 import bitronix.tm.timer.TaskScheduler;
-import bitronix.tm.twopc.Committer;
-import bitronix.tm.twopc.PhaseException;
-import bitronix.tm.twopc.Preparer;
-import bitronix.tm.twopc.Rollbacker;
+import bitronix.tm.twopc.*;
 import bitronix.tm.twopc.executor.Executor;
-import bitronix.tm.utils.Decoder;
-import bitronix.tm.utils.ManagementRegistrar;
-import bitronix.tm.utils.MonotonicClock;
-import bitronix.tm.utils.Scheduler;
-import bitronix.tm.utils.Uid;
-import bitronix.tm.utils.UidGenerator;
+import bitronix.tm.utils.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.transaction.HeuristicCommitException;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.Synchronization;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
+import javax.transaction.*;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
+
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Implementation of {@link Transaction}.
@@ -84,7 +59,6 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
     private final Executor executor = TransactionManagerServices.getExecutor();
     private final TaskScheduler taskScheduler = TransactionManagerServices.getTaskScheduler();
-    private final Journal journal = TransactionManagerServices.getJournal();
 
     private final Preparer preparer = new Preparer(executor);
     private final Committer committer = new Committer(executor);
@@ -97,7 +71,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
     public BitronixTransaction() {
         Uid gtrid = UidGenerator.generateUid();
-        if (log.isDebugEnabled()) { log.debug("creating new transaction with GTRID [" + gtrid + "]"); }
+        if (log.isDebugEnabled()) log.debug("creating new transaction with GTRID [" + gtrid + "]");
         this.resourceManager = new XAResourceManager(gtrid);
 
         this.threadName = Thread.currentThread().getName();
@@ -162,7 +136,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
                 try {
                     result &= delistResource(xaResourceHolderState, flag);
                 } catch (BitronixSystemException ex) {
-                    if (log.isDebugEnabled()) { log.debug("failed to delist resource state " + xaResourceHolderState); }
+                    if (log.isDebugEnabled()) log.debug("failed to delist resource state " + xaResourceHolderState);
                     exceptions.add(ex);
                     resourceStates.add(xaResourceHolderState);
                 }
@@ -177,7 +151,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             if (!multiSystemException.isUnilateralRollback())
                 throw multiSystemException;
             else
-                if (log.isDebugEnabled()) { log.debug("unilateral rollback of resource " + resourceHolder, multiSystemException); }
+                if (log.isDebugEnabled()) log.debug("unilateral rollback of resource " + resourceHolder, multiSystemException);
         }
 
         return xaResourceHolderStateVisitor.result;
@@ -212,7 +186,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         if (isDone())
             throw new IllegalStateException("transaction is done, cannot register any more synchronization");
 
-        if (log.isDebugEnabled()) { log.debug("registering synchronization " + synchronization); }
+        if (log.isDebugEnabled()) log.debug("registering synchronization " + synchronization);
         synchronizationScheduler.add(synchronization, Scheduler.DEFAULT_POSITION);
     }
 
@@ -244,7 +218,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         // they call rollback().
         // Doing so would call fireAfterCompletionEvent() twice in case one of those conditions are true.
         if (timedOut()) {
-            if (log.isDebugEnabled()) { log.debug("transaction timed out"); }
+            if (log.isDebugEnabled()) log.debug("transaction timed out");
             rollback();
             throw new BitronixRollbackException("transaction timed out and has been rolled back");
         }
@@ -252,14 +226,14 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         try {
             delistUnclosedResources(XAResource.TMSUCCESS);
         } catch (BitronixRollbackException ex) {
-            if (log.isDebugEnabled()) { log.debug("delistment error causing transaction rollback", ex); }
+            if (log.isDebugEnabled()) log.debug("delistment error causing transaction rollback", ex);
             rollback();
             // the caught BitronixRollbackException's message is pre-formatted to be appended to this message
             throw new BitronixRollbackException("delistment error caused transaction rollback" + ex.getMessage());
         }
 
         if (status == Status.STATUS_MARKED_ROLLBACK) {
-            if (log.isDebugEnabled()) { log.debug("transaction marked as rollback only"); }
+            if (log.isDebugEnabled()) log.debug("transaction marked as rollback only");
             rollback();
             throw new BitronixRollbackException("transaction was marked as rollback only and has been rolled back");
         }
@@ -269,12 +243,12 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
             // prepare phase
             try {
-                if (log.isDebugEnabled()) { log.debug("committing, " + resourceManager.size() + " enlisted resource(s)"); }
+                if (log.isDebugEnabled()) log.debug("committing, " + resourceManager.size() + " enlisted resource(s)");
 
                 interestedResources = preparer.prepare(this);
             }
             catch (RollbackException ex) {
-                if (log.isDebugEnabled()) { log.debug("caught rollback exception during prepare, trying to rollback"); }
+                if (log.isDebugEnabled()) log.debug("caught rollback exception during prepare, trying to rollback");
 
                 // rollbackPrepareFailure might throw a SystemException that will 'swallow' the RollbackException which is
                 // what we want in that case as the transaction has not been rolled back and some resources are now left in-doubt.
@@ -283,11 +257,11 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             }
 
             // commit phase
-            if (log.isDebugEnabled()) { log.debug(interestedResources.size() + " interested resource(s)"); }
+            if (log.isDebugEnabled()) log.debug(interestedResources.size() + " interested resource(s)");
 
             committer.commit(this, interestedResources);
 
-            if (log.isDebugEnabled()) { log.debug("successfully committed " + this); }
+            if (log.isDebugEnabled()) log.debug("successfully committed " + this);
         }
         finally {
             fireAfterCompletionEvent();
@@ -305,12 +279,12 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         try {
             delistUnclosedResources(XAResource.TMSUCCESS);
         } catch (BitronixRollbackException ex) {
-            if (log.isDebugEnabled()) { log.debug("some resource(s) failed delistment", ex); }
+            if (log.isDebugEnabled()) log.debug("some resource(s) failed delistment", ex);
         }
 
         try {
             try {
-                if (log.isDebugEnabled()) { log.debug("rolling back, " + resourceManager.size() + " enlisted resource(s)"); }
+                if (log.isDebugEnabled()) log.debug("rolling back, " + resourceManager.size() + " enlisted resource(s)");
 
                 List<XAResourceHolderState> resourcesToRollback = new ArrayList<XAResourceHolderState>();
                 List<XAResourceHolderState> allResources = resourceManager.getAllResources();
@@ -321,7 +295,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
                 rollbacker.rollback(this, resourcesToRollback);
 
-                if (log.isDebugEnabled()) { log.debug("successfully rolled back " + this); }
+                if (log.isDebugEnabled()) log.debug("successfully rolled back " + this);
             } catch (HeuristicMixedException ex) {
                 throw new BitronixSystemException("transaction partly committed and partly rolled back. Resources are now inconsistent !", ex);
             } catch (HeuristicCommitException ex) {
@@ -374,7 +348,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     public void setStatus(int status, Set<String> uniqueNames) throws BitronixSystemException {
         try {
             boolean force = (resourceManager.size() > 1) && (status == Status.STATUS_COMMITTING);
-            if (log.isDebugEnabled()) { log.debug("changing transaction status to " + Decoder.decodeStatus(status) + (force ? " (forced)" : "")); }
+            if (log.isDebugEnabled()) log.debug("changing transaction status to " + Decoder.decodeStatus(status) + (force ? " (forced)" : ""));
 
             int oldStatus = this.status;
             this.status = status;
@@ -399,9 +373,9 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
                 Decoder.decodeStatus(newStatus) + " - executing " + transactionStatusListeners.size() + " listener(s)");
         
         for (TransactionStatusChangeListener listener : transactionStatusListeners) {
-            if (log.isDebugEnabled()) { log.debug("executing TransactionStatusChangeListener " + listener); }
+            if (log.isDebugEnabled()) log.debug("executing TransactionStatusChangeListener " + listener);
             listener.statusChanged(oldStatus, newStatus);
-            if (log.isDebugEnabled()) { log.debug("executed TransactionStatusChangeListener " + listener); }
+            if (log.isDebugEnabled()) log.debug("executed TransactionStatusChangeListener " + listener);
         }
     }
 
@@ -449,8 +423,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
                     delistResource(resource, flag);
                 } catch (BitronixRollbackSystemException ex) {
                     rolledBackResources.add(resource);
-                    if (log.isDebugEnabled())
-                        log.debug("resource unilaterally rolled back: " + resource, ex);
+                    if (log.isDebugEnabled()) log.debug("resource unilaterally rolled back: " + resource, ex);
                 } catch (SystemException ex) {
                     failedResources.add(resource);
                     log.warn("error delisting resource, assuming unilateral rollback: " + resource, ex);
@@ -490,7 +463,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         List<XAResourceHolderState> interestedResources = resourceManager.getAllResources();
         try {
             rollbacker.rollback(this, interestedResources);
-            if (log.isDebugEnabled()) { log.debug("rollback after prepare failure succeeded"); }
+            if (log.isDebugEnabled()) log.debug("rollback after prepare failure succeeded");
         } catch (Exception ex) {
             // let's merge both exceptions' PhaseException to report a complete error message
             PhaseException preparePhaseEx = (PhaseException) rbEx.getCause();
@@ -515,15 +488,15 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
      *         exception fails.
      */
     private void fireBeforeCompletionEvent() throws BitronixSystemException {
-        if (log.isDebugEnabled()) { log.debug("before completion, " + synchronizationScheduler.size() + " synchronization(s) to execute"); }
+        if (log.isDebugEnabled()) log.debug("before completion, " + synchronizationScheduler.size() + " synchronization(s) to execute");
         Iterator<Synchronization> it = synchronizationScheduler.reverseIterator();
         while (it.hasNext()) {
             Synchronization synchronization = it.next();
             try {
-                if (log.isDebugEnabled()) { log.debug("executing synchronization " + synchronization); }
+                if (log.isDebugEnabled()) log.debug("executing synchronization " + synchronization);
                 synchronization.beforeCompletion();
             } catch (RuntimeException ex) {
-                if (log.isDebugEnabled()) { log.debug("Synchronization.beforeCompletion() call failed for " + synchronization + ", marking transaction as rollback only - " + ex); }
+                if (log.isDebugEnabled()) log.debug("Synchronization.beforeCompletion() call failed for " + synchronization + ", marking transaction as rollback only - " + ex);
                 setStatus(Status.STATUS_MARKED_ROLLBACK);
                 throw ex;
             }
@@ -537,7 +510,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         if (log.isDebugEnabled()) log.debug("after completion, " + synchronizationScheduler.size() + " synchronization(s) to execute");
         for (Synchronization synchronization : synchronizationScheduler) {
             try {
-                if (log.isDebugEnabled()) { log.debug("executing synchronization " + synchronization + " with status=" + Decoder.decodeStatus(status)); }
+                if (log.isDebugEnabled()) log.debug("executing synchronization " + synchronization + " with status=" + Decoder.decodeStatus(status));
                 synchronization.afterCompletion(status);
             } catch (Exception ex) {
                 log.warn("Synchronization.afterCompletion() call failed for " + synchronization, ex);

@@ -39,6 +39,8 @@ public class MockXAConnectionFactory implements XAConnectionFactory {
     private static JMSException staticCloseXAConnectionException;
     private static JMSException staticCreateXAConnectionException;
 
+    private String endPoint;
+
     public XAConnection createXAConnection() throws JMSException {
         if (staticCreateXAConnectionException != null)
             throw staticCreateXAConnectionException;
@@ -91,5 +93,15 @@ public class MockXAConnectionFactory implements XAConnectionFactory {
 
     public static void setStaticCreateXAConnectionException(JMSException e) {
         staticCreateXAConnectionException = e;
+    }
+
+    public String getEndpoint()
+    {
+        return endPoint;
+    }
+
+    public void setEndpoint(String endPoint)
+    {
+        this.endPoint = endPoint;
     }
 }

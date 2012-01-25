@@ -126,7 +126,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             long oldestTransactionTimestamp = Long.MAX_VALUE;
 
             // Collect dangling records from journal, must run before oldestTransactionTimestamp is calculated
-            Map<Uid, TransactionLogRecord> danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
+            Map<Uid, ? extends JournalRecord> danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
 
             // Query resources from ResourceRegistrar
             synchronized (ResourceRegistrar.class) {
@@ -271,11 +271,11 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * @throws java.io.IOException if there is an I/O error reading the journal.
      * @throws RecoveryException if an error preventing recovery happened.
      */
-    private Set<Uid> commitDanglingTransactions(long oldestTransactionTimestamp, Map<Uid, TransactionLogRecord> danglingRecords) throws IOException, RecoveryException {
+    private Set<Uid> commitDanglingTransactions(long oldestTransactionTimestamp, Map<Uid, ? extends JournalRecord> danglingRecords) throws IOException, RecoveryException {
         Set<Uid> committedGtrids = new HashSet<Uid>();
 
         if (log.isDebugEnabled()) { log.debug("found " + danglingRecords.size() + " dangling record(s) in journal"); }
-        Iterator it = danglingRecords.entrySet().iterator();
+        Iterator<?> it = danglingRecords.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry entry = (Map.Entry) it.next();
             Uid gtrid = (Uid) entry.getKey();

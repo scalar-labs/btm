@@ -29,9 +29,9 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Savepoint;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.sql.ConnectionEvent;
 import javax.sql.ConnectionEventListener;
@@ -42,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import bitronix.tm.resource.jdbc.*;
+import bitronix.tm.utils.ClassLoaderUtils;
 
 /**
  * XAConnection implementation for a non-XA JDBC resource emulating XA with Last Resource Commit.
@@ -81,7 +82,7 @@ public class LrcXAConnection implements XAConnection {
 
         // JDBC 4.0
         try {
-            Class<?> handle = LrcXAConnection.class.forName("bitronix.tm.resource.jdbc4.lrc.LrcJdbc4ConnectionHandle");
+            Class<?> handle = ClassLoaderUtils.loadClass("bitronix.tm.resource.jdbc4.lrc.LrcJdbc4ConnectionHandle");
             Constructor<?> constructor = handle.getConstructor( new Class[] {LrcXAResource.class, Connection.class} );
             return (Connection) constructor.newInstance( new Object[] {xaResource, connection} );
         } catch (Exception e) {

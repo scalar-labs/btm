@@ -43,7 +43,7 @@ public class JmsPoolTest extends TestCase {
     private PoolingConnectionFactory pcf;
 
     protected void setUp() throws Exception {
-        TransactionManagerServices.getConfiguration().setJournal("null").setGracefulShutdownInterval(0);
+        TransactionManagerServices.getConfiguration().setJournal("null").setGracefulShutdownInterval(2);
         TransactionManagerServices.getTransactionManager();
 
         MockXAConnectionFactory.setStaticCloseXAConnectionException(null);

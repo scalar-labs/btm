@@ -23,8 +23,8 @@ package bitronix.tm.resource.jdbc;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.concurrent.*;
 
 import javax.naming.NamingException;
 import javax.naming.Reference;
