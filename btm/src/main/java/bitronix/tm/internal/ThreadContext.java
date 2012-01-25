@@ -22,7 +22,9 @@ package bitronix.tm.internal;
 
 import bitronix.tm.BitronixTransaction;
 import bitronix.tm.TransactionManagerServices;
-import org.slf4j.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Transactional context of a thread. It contains both the active transaction (if any) and all default parameters

@@ -20,8 +20,8 @@
  */
 package bitronix.tm.journal;
 
-import bitronix.tm.utils.Service;
 import bitronix.tm.utils.Uid;
+import bitronix.tm.utils.Service;
 
 import java.io.IOException;
 import java.util.Map;
@@ -39,8 +39,8 @@ public interface Journal extends Service {
      * Log a new transaction status to journal. Note that the journal will not check the flow of the transactions.
      * If you call this method with erroneous data, it will be added to the journal as-is.
      *
-     * @param status      transaction status to log.
-     * @param gtrid       GTRID of the transaction.
+     * @param status transaction status to log.
+     * @param gtrid GTRID of the transaction.
      * @param uniqueNames unique names of the RecoverableXAResourceProducers participating in the transaction.
      * @throws IOException if an I/O error occurs.
      */
@@ -58,7 +58,7 @@ public interface Journal extends Service {
      *
      * @throws IOException if an I/O error occurs.
      */
-    public void close() throws IOException;
+     public void close() throws IOException;
 
     /**
      * Force journal to synchronize with permanent storage.

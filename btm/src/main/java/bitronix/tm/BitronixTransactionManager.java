@@ -20,6 +20,11 @@
  */
 package bitronix.tm;
 
+import bitronix.tm.internal.*;
+import bitronix.tm.utils.*;
+
+import org.slf4j.*;
+
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -28,11 +33,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.naming.*;
 import javax.transaction.*;
 import javax.transaction.xa.XAException;
-
-import org.slf4j.*;
-
-import bitronix.tm.internal.*;
-import bitronix.tm.utils.*;
 
 /**
  * Implementation of {@link TransactionManager} and {@link UserTransaction}.

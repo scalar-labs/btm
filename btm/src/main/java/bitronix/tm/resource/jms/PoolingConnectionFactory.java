@@ -20,22 +20,20 @@
  */
 package bitronix.tm.resource.jms;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import javax.jms.*;
-import javax.naming.*;
-import javax.transaction.xa.XAResource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.recovery.RecoveryException;
 import bitronix.tm.resource.*;
 import bitronix.tm.resource.common.*;
 import bitronix.tm.utils.ManagementRegistrar;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.jms.*;
+import javax.naming.*;
+import javax.transaction.xa.XAResource;
+
+import java.util.*;
 
 /**
  * Implementation of a JMS {@link ConnectionFactory} wrapping vendor's {@link XAConnectionFactory} implementation.

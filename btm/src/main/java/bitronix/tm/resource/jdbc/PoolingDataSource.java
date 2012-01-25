@@ -20,34 +20,26 @@
  */
 package bitronix.tm.resource.jdbc;
 
-import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.*;
-
-import javax.naming.NamingException;
-import javax.naming.Reference;
-import javax.naming.StringRefAddr;
-import javax.sql.DataSource;
-import javax.sql.XADataSource;
-import javax.transaction.xa.XAResource;
+import bitronix.tm.internal.XAResourceHolderState;
+import bitronix.tm.recovery.RecoveryException;
+import bitronix.tm.resource.*;
+import bitronix.tm.resource.common.*;
+import bitronix.tm.utils.ManagementRegistrar;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import bitronix.tm.internal.XAResourceHolderState;
-import bitronix.tm.recovery.RecoveryException;
-import bitronix.tm.resource.ResourceConfigurationException;
-import bitronix.tm.resource.ResourceObjectFactory;
-import bitronix.tm.resource.ResourceRegistrar;
-import bitronix.tm.resource.common.RecoveryXAResourceHolder;
-import bitronix.tm.resource.common.ResourceBean;
-import bitronix.tm.resource.common.XAPool;
-import bitronix.tm.resource.common.XAResourceHolder;
-import bitronix.tm.resource.common.XAResourceProducer;
-import bitronix.tm.resource.common.XAStatefulHolder;
-import bitronix.tm.utils.ManagementRegistrar;
+import javax.naming.*;
+import javax.sql.DataSource;
+import javax.sql.XADataSource;
+import javax.transaction.xa.XAResource;
+
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Implementation of a JDBC {@link DataSource} wrapping vendor's {@link XADataSource} implementation.

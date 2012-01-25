@@ -21,10 +21,10 @@
 package bitronix.tm.resource.jms;
 
 import bitronix.tm.BitronixTransaction;
-import bitronix.tm.internal.BitronixSystemException;
 import bitronix.tm.internal.BitronixRollbackSystemException;
-import bitronix.tm.utils.Decoder;
+import bitronix.tm.internal.BitronixSystemException;
 import bitronix.tm.resource.common.*;
+import bitronix.tm.utils.Decoder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +34,7 @@ import javax.jms.IllegalStateException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.xa.XAResource;
+
 import java.io.Serializable;
 import java.util.*;
 

@@ -77,10 +77,10 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * Log a new transaction status to journal. Note that the DiskJournal will not check the flow of the transaction.
      * If you call this method with erroneous data, it will be added to the journal anyway.
      *
-     * @param status      transaction status to log. See {@link javax.transaction.Status} constants.
-     * @param gtrid       raw GTRID of the transaction.
+     * @param status transaction status to log. See {@link javax.transaction.Status} constants.
+     * @param gtrid raw GTRID of the transaction.
      * @param uniqueNames unique names of the {@link bitronix.tm.resource.common.ResourceBean}s participating in
-     *                    this transaction.
+     * this transaction.
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
     public void log(int status, Uid gtrid, Set<String> uniqueNames) throws IOException {
@@ -242,8 +242,8 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
     }
 
     /*
-    * Internal impl.
-    */
+     * Internal impl.
+     */
 
     /**
      * Create a fresh log file on disk. If the specified file already exists it will be deleted then recreated.
@@ -362,7 +362,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * Copy all records that have status COMMITTING and no corresponding COMMITTED record from the fromTla to the toTla.
      *
      * @param fromTla the source where to search for COMMITTING records with no corresponding COMMITTED record
-     * @param toTla   the destination where the COMMITTING records will be copied to
+     * @param toTla the destination where the COMMITTING records will be copied to
      * @throws java.io.IOException in case of disk IO failure.
      */
     private static void copyDanglingRecords(TransactionLogAppender fromTla, TransactionLogAppender toTla) throws IOException {

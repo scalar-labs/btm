@@ -22,17 +22,15 @@ package bitronix.tm.utils;
 
 import bitronix.tm.Configuration;
 import bitronix.tm.TransactionManagerServices;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
+import javax.management.*;
+
 import java.lang.management.ManagementFactory;
 import java.lang.ref.WeakReference;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 
 /**

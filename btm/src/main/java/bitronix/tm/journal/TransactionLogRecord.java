@@ -77,15 +77,15 @@ public class TransactionLogRecord implements JournalRecord {
     /**
      * Use this constructor when restoring a log from the disk.
      *
-     * @param status         record type
-     * @param recordLength   record length excluding status and recordLength
-     * @param headerLength   length of all fields except gtrid, uniqueNames and endRecord
-     * @param time           current time in milliseconds
+     * @param status record type
+     * @param recordLength record length excluding status and recordLength
+     * @param headerLength length of all fields except gtrid, uniqueNames and endRecord
+     * @param time current time in milliseconds
      * @param sequenceNumber atomically generated sequence number during a JVM's lifespan
-     * @param crc32          checksum of the full record
-     * @param gtrid          global transaction id
-     * @param uniqueNames    unique names of XA data sources used in this transaction
-     * @param endRecord      end of record marker
+     * @param crc32 checksum of the full record
+     * @param gtrid global transaction id
+     * @param uniqueNames unique names of XA data sources used in this transaction
+     * @param endRecord end of record marker
      */
     public TransactionLogRecord(int status, int recordLength, int headerLength, long time, int sequenceNumber, int crc32, Uid gtrid, Set<String> uniqueNames, int endRecord) {
         this.status = status;
@@ -286,4 +286,6 @@ public class TransactionLogRecord implements JournalRecord {
     private int getRecordHeaderLength() {
         return 4 + 4 + 4 + 8 + 4 + 4; // status + record length + record header length + current time + sequence number + checksum
     }
+
+
 }

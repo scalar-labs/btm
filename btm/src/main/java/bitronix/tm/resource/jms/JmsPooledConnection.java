@@ -21,12 +21,10 @@
 package bitronix.tm.resource.jms;
 
 import bitronix.tm.internal.BitronixSystemException;
-import bitronix.tm.utils.Decoder;
-import bitronix.tm.utils.ManagementRegistrar;
-import bitronix.tm.utils.MonotonicClock;
-import bitronix.tm.utils.Scheduler;
 import bitronix.tm.resource.common.*;
 import bitronix.tm.resource.jms.lrc.LrcXAConnectionFactory;
+import bitronix.tm.utils.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
