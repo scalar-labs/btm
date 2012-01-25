@@ -71,6 +71,7 @@ public class Configuration implements Service {
     private volatile String jndiUserTransactionName;
     private volatile String jndiTransactionSynchronizationRegistryName;
     private volatile String journal;
+    private volatile String exceptionAnalyzer;
     private volatile boolean currentNodeOnlyRecovery;
     private volatile boolean allowMultipleLrc;
     private volatile String resourceConfigurationFilename;
@@ -116,6 +117,7 @@ public class Configuration implements Service {
             jndiUserTransactionName = getString(properties, "bitronix.tm.jndi.userTransactionName", "java:comp/UserTransaction");
             jndiTransactionSynchronizationRegistryName = getString(properties, "bitronix.tm.jndi.transactionSynchronizationRegistryName", "java:comp/TransactionSynchronizationRegistry");
             journal = getString(properties, "bitronix.tm.journal", "disk");
+            exceptionAnalyzer = getString(properties, "bitronix.tm.exceptionAnalyzer", null);
             currentNodeOnlyRecovery = getBoolean(properties, "bitronix.tm.currentNodeOnlyRecovery", true);
             allowMultipleLrc = getBoolean(properties, "bitronix.tm.allowMultipleLrc", false);
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
@@ -551,6 +553,26 @@ public class Configuration implements Service {
     }
 
     /**
+     * Get the exception analyzer implementation. Can be <code>null</code> for the default one or a class name.
+     * @return the exception analyzer name.
+     */
+    public String getExceptionAnalyzer() {
+        return exceptionAnalyzer;
+    }
+
+    /**
+     * Set the exception analyzer implementation. Can be <code>null</code> for the default one or a class name.
+     * @see #getExceptionAnalyzer()
+     * @param exceptionAnalyzer the exception analyzer name.
+     * @return this.
+     */
+    public Configuration setExceptionAnalyzer(String exceptionAnalyzer) {
+        checkNotStarted();
+        this.exceptionAnalyzer = exceptionAnalyzer;
+        return this;
+    }
+
+    /**
      * Should the recovery process <b>not</b> recover XIDs generated with another JVM unique ID? Setting this property to true
      * is useful in clustered environments where multiple instances of BTM are running on different nodes.
      * @see #getServerId() contains the value used as the JVM unique ID.
@@ -677,7 +699,7 @@ public class Configuration implements Service {
     }
 
     public String toString() {
-        StringBuffer sb = new StringBuffer(512);
+        StringBuilder sb = new StringBuilder(512);
         sb.append("a Configuration with [");
 
         try {
@@ -711,7 +733,7 @@ public class Configuration implements Service {
     }
 
     static boolean getBoolean(Properties properties, String key, boolean defaultValue) {
-        return Boolean.valueOf(getString(properties, key, "" + defaultValue)).booleanValue();
+        return Boolean.valueOf(getString(properties, key, "" + defaultValue));
     }
 
     static int getInt(Properties properties, String key, int defaultValue) {

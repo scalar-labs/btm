@@ -20,13 +20,19 @@
  */
 package bitronix.tm.journal;
 
+import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.Encoder;
-import bitronix.tm.utils.*;
+import bitronix.tm.utils.MonotonicClock;
+import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
@@ -62,15 +68,15 @@ public class TransactionLogRecord implements JournalRecord {
 
     private final static AtomicInteger sequenceGenerator = new AtomicInteger();
 
-    private int status;
-    private int recordLength;
-    private int headerLength;
-    private long time;
-    private int sequenceNumber;
-    private int crc32;
-    private Uid gtrid;
-    private SortedSet uniqueNames;
-    private int endRecord;
+    private final int status;
+    private final int recordLength;
+    private final int headerLength;
+    private final long time;
+    private final int sequenceNumber;
+    private final int crc32;
+    private final Uid gtrid;
+    private final SortedSet<String> uniqueNames;
+    private final int endRecord;
 
     /**
      * Use this constructor when restoring a log from the disk.
@@ -85,8 +91,7 @@ public class TransactionLogRecord implements JournalRecord {
      * @param uniqueNames    unique names of XA data sources used in this transaction
      * @param endRecord      end of record marker
      */
-    public TransactionLogRecord(int status, int recordLength, int headerLength, long time, int sequenceNumber,
-                                int crc32, Uid gtrid, Set uniqueNames, int endRecord) {
+    public TransactionLogRecord(int status, int recordLength, int headerLength, long time, int sequenceNumber, int crc32, Uid gtrid, Set<String> uniqueNames, int endRecord) {
         this.status = status;
         this.recordLength = recordLength;
         this.headerLength = headerLength;
@@ -94,24 +99,23 @@ public class TransactionLogRecord implements JournalRecord {
         this.sequenceNumber = sequenceNumber;
         this.crc32 = crc32;
         this.gtrid = gtrid;
-        this.uniqueNames = new TreeSet(uniqueNames);
+        this.uniqueNames = new TreeSet<String>(uniqueNames);
         this.endRecord = endRecord;
     }
 
     /**
      * Create a new transaction log ready to be stored.
-     *
-     * @param status      record type
-     * @param gtrid       global transaction id
+     * @param status record type
+     * @param gtrid global transaction id
      * @param uniqueNames unique names of XA data sources used in this transaction
      */
-    public TransactionLogRecord(int status, Uid gtrid, Set uniqueNames) {
+    public TransactionLogRecord(int status, Uid gtrid, Set<String> uniqueNames) {
         this.status = status;
-        time = MonotonicClock.currentTimeMillis();
-        sequenceNumber = sequenceGenerator.incrementAndGet();
+        this.time = MonotonicClock.currentTimeMillis();
+        this.sequenceNumber = sequenceGenerator.incrementAndGet();
         this.gtrid = gtrid;
-        this.uniqueNames = new TreeSet(uniqueNames);
-        endRecord = TransactionLogAppender.END_RECORD;
+        this.uniqueNames = new TreeSet<String>(uniqueNames);
+        this.endRecord = TransactionLogAppender.END_RECORD;
 
         refresh();
     }
@@ -144,7 +148,7 @@ public class TransactionLogRecord implements JournalRecord {
         return gtrid;
     }
 
-    public Set getUniqueNames() {
+    public Set<String> getUniqueNames() {
         return Collections.unmodifiableSortedSet(uniqueNames);
     }
 
@@ -170,7 +174,6 @@ public class TransactionLogRecord implements JournalRecord {
 
     /**
      * Recalculate the CRC32 value of this record (using {@link #calculateCrc32()}) and compare it with the stored value.
-     *
      * @return true if the recalculated value equals the stored one, false otherwise.
      */
     public boolean isCrc32Correct() {
@@ -198,7 +201,6 @@ public class TransactionLogRecord implements JournalRecord {
 
     /**
      * Calculate the CRC32 value of this record.
-     *
      * @return the CRC32 value of this record.
      */
     public int calculateCrc32() {
@@ -211,9 +213,7 @@ public class TransactionLogRecord implements JournalRecord {
         crc32.update(gtrid.getArray());
         crc32.update(Encoder.intToBytes(uniqueNames.size()));
 
-        Iterator it = uniqueNames.iterator();
-        while (it.hasNext()) {
-            String name = (String) it.next();
+        for (String name : uniqueNames) {
             crc32.update(Encoder.shortToBytes((short) name.length()));
             try {
                 crc32.update(name.getBytes("US-ASCII"));
@@ -227,7 +227,7 @@ public class TransactionLogRecord implements JournalRecord {
     }
 
     public String toString() {
-        StringBuffer sb = new StringBuffer(128);
+        StringBuilder sb = new StringBuilder(128);
 
         sb.append("a Bitronix TransactionLogRecord with ");
         sb.append("status="); sb.append(Decoder.decodeStatus(status)); sb.append(", ");
@@ -238,10 +238,10 @@ public class TransactionLogRecord implements JournalRecord {
         sb.append("crc32="); sb.append(crc32); sb.append(", ");
         sb.append("gtrid="); sb.append(gtrid.toString()); sb.append(", ");
         sb.append("uniqueNames=");
-        Iterator it = uniqueNames.iterator();
+        Iterator<String> it = uniqueNames.iterator();
         while (it.hasNext()) {
-            Object o = it.next();
-            sb.append(o);
+            String s = it.next();
+            sb.append(s);
             if (it.hasNext())
                 sb.append(',');
         }
@@ -252,7 +252,6 @@ public class TransactionLogRecord implements JournalRecord {
 
     /**
      * this is the total size on disk of a TransactionLog.
-     *
      * @return recordLength
      */
     int calculateTotalRecordSize() {
@@ -261,16 +260,13 @@ public class TransactionLogRecord implements JournalRecord {
 
     /**
      * this is the value needed by field recordLength in the TransactionLog.
-     *
      * @param uniqueNames the unique names ofthe record.
      * @return recordLength
      */
-    private int calculateRecordLength(Set uniqueNames) {
+    private int calculateRecordLength(Set<String> uniqueNames) {
         int totalSize = 0;
 
-        Iterator it = uniqueNames.iterator();
-        while (it.hasNext()) {
-            String uniqueName = (String) it.next();
+        for (String uniqueName : uniqueNames) {
             totalSize += 2 + uniqueName.length(); // 2 bytes for storing the unique name length + unique name length
         }
 
@@ -281,7 +277,6 @@ public class TransactionLogRecord implements JournalRecord {
 
     /**
      * Length of all the fixed size fields part of the record length header except status and record length.
-     *
      * @return fixedRecordLength
      */
     private int getFixedRecordLength() {
@@ -290,7 +285,6 @@ public class TransactionLogRecord implements JournalRecord {
 
     /**
      * Value needed by field headerLength in the TransactionLog.
-     *
      * @return headerLength
      */
     private int getRecordHeaderLength() {

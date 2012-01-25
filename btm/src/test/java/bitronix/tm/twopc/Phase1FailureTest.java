@@ -23,11 +23,13 @@ package bitronix.tm.twopc;
 import java.lang.reflect.*;
 import java.sql.Connection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.sql.XAConnection;
 import javax.transaction.*;
 import javax.transaction.xa.XAException;
 
+import bitronix.tm.journal.Journal;
 import junit.framework.TestCase;
 import bitronix.tm.*;
 import bitronix.tm.mock.AbstractMockJdbcTest;
@@ -280,9 +282,10 @@ public class Phase1FailureTest extends TestCase {
         EventRecorder.clear();
 
         // change disk journal into mock journal
-        Field field = TransactionManagerServices.class.getDeclaredField("journal");
+        Field field = TransactionManagerServices.class.getDeclaredField("journalRef");
         field.setAccessible(true);
-        field.set(TransactionManagerServices.class, new MockJournal());
+        AtomicReference<Journal> journalRef = (AtomicReference<Journal>) field.get(TransactionManagerServices.class);
+        journalRef.set(new MockJournal());
 
         poolingDataSource1 = new PoolingDataSource();
         poolingDataSource1.setClassName(MockitoXADataSource.class.getName());

@@ -95,10 +95,12 @@ public class ConfigurationTest extends TestCase {
     }
 
     public void testToString() {
-        final String expectation = "a Configuration with [allowMultipleLrc=false, asynchronous2Pc=false, backgroundRecoveryInterval=1," +
-                " backgroundRecoveryIntervalSeconds=60, currentNodeOnlyRecovery=true, defaultTransactionTimeout=60," +
-                " disableJmx=false, filterLogStatus=false, forceBatchingEnabled=true, forcedWriteEnabled=true, gracefulShutdownInterval=10," +
-                " jndiTransactionSynchronizationRegistryName=java:comp/TransactionSynchronizationRegistry, jndiUserTransactionName=java:comp/UserTransaction, journal=disk," +
+        final String expectation = "a Configuration with [allowMultipleLrc=false, asynchronous2Pc=false," +
+                " backgroundRecoveryInterval=1, backgroundRecoveryIntervalSeconds=60, currentNodeOnlyRecovery=true," +
+                " defaultTransactionTimeout=60, disableJmx=false, exceptionAnalyzer=null, filterLogStatus=false," +
+                " forceBatchingEnabled=true, forcedWriteEnabled=true, gracefulShutdownInterval=10," +
+                " jndiTransactionSynchronizationRegistryName=java:comp/TransactionSynchronizationRegistry," +
+                " jndiUserTransactionName=java:comp/UserTransaction, journal=disk," +
                 " logPart1Filename=target/btm1.tlog, logPart2Filename=target/btm2.tlog, maxLogSizeInMb=2," +
                 " resourceConfigurationFilename=null, serverId=null, skipCorruptedLogs=false, synchronousJmxRegistration=false," +
                 " warnAboutZeroResourceTransaction=true]";

@@ -49,6 +49,7 @@ public abstract class ResourceBean implements Serializable {
     private volatile boolean shareTransactionConnections = false;
     private volatile boolean disabled = false;
     private volatile boolean ignoreRecoveryFailures = false;
+
     private volatile transient int createdResourcesCounter;
 
     /**

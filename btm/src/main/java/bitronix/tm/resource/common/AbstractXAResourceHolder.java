@@ -134,7 +134,7 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
                 return;
             }
 
-            Object removed = statesForGtrid.remove(bqual);
+            XAResourceHolderState removed = statesForGtrid.remove(bqual);
             if (removed == null) {
                 log.warn("tried to remove unknown BQUAL [" + bqual + "] from " + this + " - Bug?");
                 return;

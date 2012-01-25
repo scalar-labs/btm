@@ -38,7 +38,7 @@ import java.sql.Statement;
  *
  * @author brettw
  */
-public class JdbcStatementHandle implements Statement {
+public class JdbcStatementHandle extends BaseProxyHandlerClass { // implements Statement
 
     // The 'parent' connection. Used to remove this statement delegate
     // from the un-closed statements list when close() is called.

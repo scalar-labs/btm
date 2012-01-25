@@ -20,10 +20,9 @@
  */
 package bitronix.tm.resource.common;
 
+import javax.transaction.xa.XAResource;
 import java.util.Date;
 import java.util.List;
-
-import javax.transaction.xa.XAResource;
 
 /**
  * {@link XAResourceHolder} created by an {@link bitronix.tm.resource.common.XAResourceProducer} that is

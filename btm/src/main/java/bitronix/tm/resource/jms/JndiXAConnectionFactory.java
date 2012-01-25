@@ -20,9 +20,9 @@
  */
 package bitronix.tm.resource.jms;
 
-import javax.jms.XAConnectionFactory;
-import javax.jms.XAConnection;
 import javax.jms.JMSException;
+import javax.jms.XAConnection;
+import javax.jms.XAConnectionFactory;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -192,7 +192,7 @@ public class JndiXAConnectionFactory implements XAConnectionFactory {
 
         Context ctx;
         if (!isEmpty(initialContextFactory)) {
-            Hashtable env = new Hashtable();
+            Hashtable<Object, Object> env = new Hashtable<Object, Object>();
             env.put(Context.INITIAL_CONTEXT_FACTORY, initialContextFactory);
             if (!isEmpty(providerUrl))
                 env.put(Context.PROVIDER_URL, providerUrl);

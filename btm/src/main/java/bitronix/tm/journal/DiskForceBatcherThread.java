@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Thread that executes disk force batches.
@@ -33,10 +34,9 @@ import java.io.IOException;
 public final class DiskForceBatcherThread extends Thread {
 
     private final static Logger log = LoggerFactory.getLogger(DiskForceBatcherThread.class);
-    private static DiskForceBatcherThread instance;
+    private static volatile DiskForceBatcherThread instance;
 
-    // both variables must be volatile to prevent race conditions with JDK 1.5+ memory model
-    private volatile boolean alive = true;
+    private final AtomicBoolean alive = new AtomicBoolean();
     private volatile DiskForceWaitQueue waitQueue = new DiskForceWaitQueue();
 
     /**
@@ -52,17 +52,19 @@ public final class DiskForceBatcherThread extends Thread {
 
     private DiskForceBatcherThread() {
         setName("bitronix-disk-force-batcher");
-        setPriority(Thread.NORM_PRIORITY -1);
+        setPriority(Thread.NORM_PRIORITY - 1);
         setDaemon(true);
+        alive.set(true);
         start();
     }
 
     /**
      * Thread will run for as long as this flag is not false.
      * @param alive The new flag value.
+     * @return the old flag value.
      */
-    public void setAlive(boolean alive) {
-        this.alive = alive;
+    public boolean setAlive(boolean alive) {
+        return this.alive.getAndSet(alive);
     }
 
     /**
@@ -72,44 +74,44 @@ public final class DiskForceBatcherThread extends Thread {
     public void enqueue(TransactionLogAppender tla) {
         DiskForceWaitQueue currrentWaitQueue = waitQueue;
         while (!currrentWaitQueue.enqueue(tla)) {
-            if (log.isDebugEnabled()) { log.debug("current DiskForceWaitQueue [" + currrentWaitQueue + "] is cleared, trying next one: [" + waitQueue + "]"); }
+            if (log.isDebugEnabled()) log.debug("current DiskForceWaitQueue [" + currrentWaitQueue + "] is cleared, trying next one: [" + waitQueue + "]");
             currrentWaitQueue = waitQueue;
         }
-        if (log.isDebugEnabled()) { log.debug("batching disk force, there are " + currrentWaitQueue.size() + " TransactionLogAppender(s) in the wait queue"); }
+        if (log.isDebugEnabled()) log.debug("batching disk force, there are " + currrentWaitQueue.size() + " TransactionLogAppender(s) in the wait queue");
         try {
             currrentWaitQueue.waitUntilNotContains(tla);
         } catch (InterruptedException ex) {
-            if (log.isDebugEnabled()) { log.debug("interrupted while waiting for journal log to be forced, ignored as disk force will happen anyway"); }
+            if (log.isDebugEnabled()) log.debug("interrupted while waiting for journal log to be forced, ignored as disk force will happen anyway");
         }
-        if (log.isDebugEnabled()) { log.debug("wait queue got emptied, disk force is done"); }
+        if (log.isDebugEnabled()) log.debug("wait queue got emptied, disk force is done");
     }
 
     private void runForceBatch() throws IOException {
-        if (log.isDebugEnabled()) { log.debug("waiting for the wait queue to fill up"); }
-        while(alive && waitQueue.isEmpty()) {
+        if (log.isDebugEnabled()) log.debug("waiting for the wait queue to fill up");
+        while(alive.get() && waitQueue.isEmpty()) {
             try {
                 waitQueue.waitUntilNotEmpty();
             } catch (InterruptedException ex) {
                 // ignore
             }
-        } // while
-        if (!alive) {
-            if (log.isDebugEnabled()) { log.debug("interrupted while waiting for the queue to fill up"); }
+        }
+        if (!alive.get()) {
+            if (log.isDebugEnabled()) log.debug("interrupted while waiting for the queue to fill up");
             return;
         }
 
-        if (log.isDebugEnabled()) { log.debug("wait queue is not empty anymore (" + waitQueue.size() + " in queue)"); }
+        if (log.isDebugEnabled()) log.debug("wait queue is not empty anymore (" + waitQueue.size() + " in queue)");
         DiskForceWaitQueue oldWaitQueue = waitQueue;
         waitQueue = new DiskForceWaitQueue();
 
-        if (log.isDebugEnabled()) { log.debug("forcing..."); }
+        if (log.isDebugEnabled()) log.debug("forcing...");
         oldWaitQueue.head().doForce();
         oldWaitQueue.clear(); // notify threads waiting in this wait queue that the disk force is done
     }
 
     public void run() {
-        if (log.isDebugEnabled()) { log.debug("disk force thread is up and running"); }
-        while (alive) {
+        if (log.isDebugEnabled()) log.debug("disk force thread is up and running");
+        while (alive.get()) {
             try {
                 runForceBatch();
             } catch (Exception ex) {
@@ -118,7 +120,7 @@ public final class DiskForceBatcherThread extends Thread {
         } // while
 
         instance = null;
-        if (log.isDebugEnabled()) { log.debug("disk force thread has terminated"); }
+        if (log.isDebugEnabled()) log.debug("disk force thread has terminated");
     }
 
     public String toString() {

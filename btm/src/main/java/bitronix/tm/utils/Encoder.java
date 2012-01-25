@@ -25,10 +25,7 @@ package bitronix.tm.utils;
  *
  * @author lorban
  */
-public final class Encoder {
-
-    private Encoder() {
-    }
+public class Encoder {
 
     public static byte[] longToBytes(long aLong) {
         byte[] array = new byte[8];

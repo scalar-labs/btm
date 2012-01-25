@@ -33,6 +33,7 @@ import bitronix.tm.*;
 import bitronix.tm.internal.*;
 import bitronix.tm.recovery.*;
 import bitronix.tm.utils.*;
+import bitronix.tm.utils.CryptoEngine;
 
 /**
  * Generic XA pool. {@link XAStatefulHolder} instances are created by the {@link XAPool} out of a

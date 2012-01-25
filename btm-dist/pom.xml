@@ -109,6 +109,7 @@
                         <descriptor>${basedir}/src/main/assembly/distribution.xml</descriptor>
                     </descriptors>
                     <tarLongFileMode>gnu</tarLongFileMode>
+                    <finalName>btm-dist-${project.version}</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
             </plugin>

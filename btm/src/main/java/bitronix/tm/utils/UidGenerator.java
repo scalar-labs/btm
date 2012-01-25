@@ -35,12 +35,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author lorban
  */
-public final class UidGenerator {
+public class UidGenerator {
 
     private final static AtomicInteger sequenceGenerator = new AtomicInteger();
-
-    private UidGenerator() {
-    }
 
     /**
      * Generate a UID, globally unique. This method relies on the configured serverId for network uniqueness.

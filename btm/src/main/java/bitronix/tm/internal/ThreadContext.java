@@ -79,7 +79,7 @@ public class ThreadContext {
     public void setTransaction(BitronixTransaction transaction) {
         if (transaction == null)
             throw new IllegalArgumentException("transaction parameter cannot be null");
-        if (log.isDebugEnabled()) { log.debug("assigning <" + transaction + "> to <" + this + ">"); }
+        if (log.isDebugEnabled()) log.debug("assigning <" + transaction + "> to <" + this + ">");
         this.transaction = transaction;
     }
 
@@ -109,11 +109,11 @@ public class ThreadContext {
     public void setTimeout(int timeout) {
         if (timeout == 0) {
             int defaultValue = TransactionManagerServices.getConfiguration().getDefaultTransactionTimeout();
-            if (log.isDebugEnabled()) { log.debug("resetting default timeout of thread context to default value of " + defaultValue + "s"); }
+            if (log.isDebugEnabled()) log.debug("resetting default timeout of thread context to default value of " + defaultValue + "s");
             this.timeout = defaultValue;
         }
-        else {
-            if (log.isDebugEnabled()) { log.debug("changing default timeout of thread context to " + timeout + "s"); }
+        else {    
+            if (log.isDebugEnabled()) log.debug("changing default timeout of thread context to " + timeout + "s");
             this.timeout = timeout;
         }
     }

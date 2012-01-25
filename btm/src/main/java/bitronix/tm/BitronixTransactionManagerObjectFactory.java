@@ -44,7 +44,7 @@ public class BitronixTransactionManagerObjectFactory implements ObjectFactory {
      * @return the unique transaction manager instance.
      */
     public Object getObjectInstance(Object obj, Name name, Context nameCtx, Hashtable environment) throws Exception {
-        if (log.isDebugEnabled()) { log.debug("returning the unique transaction manager instance"); }
+        if (log.isDebugEnabled()) log.debug("returning the unique transaction manager instance");
         return TransactionManagerServices.getTransactionManager();
     }
 

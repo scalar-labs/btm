@@ -46,6 +46,17 @@ public class JndiTest extends TestCase {
         transactionManager.shutdown();
     }
 
+    public void testNameParser() throws Exception {
+        BitronixContext bitronixContext = new BitronixContext();
+        Name name = bitronixContext.getNameParser("").parse("java:comp/UserTransaction");
+        assertEquals("java:comp/UserTransaction", name.toString());
+        assertSame(BitronixTransactionManager.class, bitronixContext.lookup(name).getClass());
+
+        name = bitronixContext.getNameParser(new CompositeName()).parse("java:comp/UserTransaction");
+        assertEquals("java:comp/UserTransaction", name.toString());
+        assertSame(BitronixTransactionManager.class, bitronixContext.lookup(name).getClass());
+    }
+
     public void testDefaultUserTransactionAndResources() throws Exception {
         PoolingDataSource pds = new PoolingDataSource();
         pds.setMaxPoolSize(1);

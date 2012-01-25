@@ -21,7 +21,6 @@
 package bitronix.tm.resource.common;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.*;
 
@@ -36,27 +35,27 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
 
     private final static Logger log = LoggerFactory.getLogger(AbstractXAStatefulHolder.class);
 
-    private AtomicInteger state = new AtomicInteger(STATE_IN_POOL);
+    private volatile int state = STATE_IN_POOL;
     private final List<StateChangeListener> stateChangeEventListeners = new ArrayList<StateChangeListener>();
 
     public int getState() {
-        return state.get();
+        return state;
     }
 
-    public void setState(int newState) {
-        int oldState = state.get();
-        fireStateChanging(oldState, newState);
+    public void setState(int state) {
+        int oldState = this.state;
+        fireStateChanging(oldState, state);
 
-        if (oldState == newState)
+        if (oldState == state)
             throw new IllegalArgumentException("cannot switch state from " + Decoder.decodeXAStatefulHolderState(oldState) +
-                    " to " + Decoder.decodeXAStatefulHolderState(newState));
+                    " to " + Decoder.decodeXAStatefulHolderState(state));
 
         if (log.isDebugEnabled()) log.debug("state changing from " + Decoder.decodeXAStatefulHolderState(oldState) +
-                " to " + Decoder.decodeXAStatefulHolderState(newState) + " in " + this);
+                " to " + Decoder.decodeXAStatefulHolderState(state) + " in " + this);
 
-        state.set(newState);
+        this.state = state;
 
-        fireStateChanged(oldState, newState);
+        fireStateChanged(oldState, state);
     }
 
     public void addStateChangeEventListener(StateChangeListener listener) {

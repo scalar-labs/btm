@@ -23,6 +23,7 @@ package bitronix.tm.mock;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.recovery.RecoveryException;
+import bitronix.tm.resource.ResourceConfigurationException;
 import bitronix.tm.resource.common.XAPool;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import junit.framework.TestCase;
@@ -77,6 +78,18 @@ public class JdbcPoolTest extends TestCase {
         TransactionManagerServices.getTransactionManager().shutdown();        
     }
 
+    public void testObjectProperties() throws Exception {
+        pds.close();
+
+        pds = new PoolingDataSource();
+        pds.setUniqueName("pds");
+        pds.setClassName(MockitoXADataSource.class.getName());
+        pds.setMinPoolSize(1);
+        pds.setMaxPoolSize(1);
+        pds.getDriverProperties().put("uselessThing", new Object());
+        pds.init();
+    }
+
     public void testInitFailure() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** Starting testInitFailure"); }
         pds.close();
@@ -95,8 +108,11 @@ public class JdbcPoolTest extends TestCase {
         MockitoXADataSource.setStaticGetXAConnectionException(new SQLException("not yet started"));
         try {
             pds.init();
-        } catch (Exception e) {
-            
+            fail("expected ResourceConfigurationException");
+        } catch (ResourceConfigurationException ex) {
+            Throwable rootCause = ex.getCause().getCause();
+            assertEquals(SQLException.class, rootCause.getClass());
+            assertEquals("not yet started", rootCause.getMessage());
         }
 
         MockitoXADataSource.setStaticGetXAConnectionException(null);

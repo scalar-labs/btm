@@ -24,8 +24,8 @@ import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.utils.Decoder;
 
 import javax.transaction.xa.XAException;
+import java.util.Collections;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * Thrown when a phase exection has thrown one or more exception(s).  
@@ -34,24 +34,24 @@ import java.util.ArrayList;
  */
 public class PhaseException extends Exception {
 
-    private List exceptions = new ArrayList();
-    private List resourceStates = new ArrayList();
+    private final List<Exception> exceptions;
+    private final List<XAResourceHolderState> resourceStates;
 
-    public PhaseException(List exceptions, List resourceStates) {
-        this.exceptions = exceptions;
-        this.resourceStates = resourceStates;
+    public PhaseException(List<Exception> exceptions, List<XAResourceHolderState> resourceStates) {
+        this.exceptions = Collections.unmodifiableList(exceptions);
+        this.resourceStates = Collections.unmodifiableList(resourceStates);
     }
 
     public String getMessage() {
-        StringBuffer errorMessage = new StringBuffer();
+        StringBuilder errorMessage = new StringBuilder();
         errorMessage.append("collected ");
         errorMessage.append(exceptions.size());
         errorMessage.append(" exception(s):");
         for (int i = 0; i < exceptions.size(); i++) {
             errorMessage.append(System.getProperty("line.separator"));
-            Throwable throwable = (Throwable) exceptions.get(i);
+            Throwable throwable = exceptions.get(i);
             String message = throwable.getMessage();
-            XAResourceHolderState holderState = (XAResourceHolderState) resourceStates.get(i);
+            XAResourceHolderState holderState = resourceStates.get(i);
 
             if (holderState != null) {
                 errorMessage.append(" [");
@@ -77,7 +77,7 @@ public class PhaseException extends Exception {
      * Get the list of exceptions that have been thrown during a phase execution.
      * @return the list of exceptions that have been thrown during a phase execution.
      */
-    public List getExceptions() {
+    public List<Exception> getExceptions() {
         return exceptions;
     }
 
@@ -87,7 +87,7 @@ public class PhaseException extends Exception {
      * Indices of both list always match a resource against the exception it threw.
      * @return the list of resource which threw an exception during a phase execution.
      */
-    public List getResourceStates() {
+    public List<XAResourceHolderState> getResourceStates() {
         return resourceStates;
     }
 }

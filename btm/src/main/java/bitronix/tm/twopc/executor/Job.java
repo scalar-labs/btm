@@ -31,9 +31,9 @@ import javax.transaction.xa.XAException;
  * @author lorban
  */
 public abstract class Job implements Runnable {
-    private volatile Object future;
     private final XAResourceHolderState resourceHolder;
 
+    private volatile Object future;
     protected volatile XAException xaException;
     protected volatile RuntimeException runtimeException;
 

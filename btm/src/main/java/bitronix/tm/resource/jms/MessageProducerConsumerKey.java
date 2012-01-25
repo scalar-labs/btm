@@ -23,9 +23,9 @@ package bitronix.tm.resource.jms;
 import bitronix.tm.internal.BitronixRuntimeException;
 
 import javax.jms.Destination;
+import javax.jms.JMSException;
 import javax.jms.Queue;
 import javax.jms.Topic;
-import javax.jms.JMSException;
 
 /**
  * JMS destination wrapper optimized for use with hashed collections where it is the key and a
@@ -54,7 +54,7 @@ public class MessageProducerConsumerKey {
     public MessageProducerConsumerKey(Destination destination, String messageSelector, boolean noLocal) {
         this.destination = destination;
         this.messageSelector = messageSelector;
-        this.noLocal = Boolean.valueOf(noLocal);
+        this.noLocal = noLocal;
     }
 
     public boolean equals(Object obj) {

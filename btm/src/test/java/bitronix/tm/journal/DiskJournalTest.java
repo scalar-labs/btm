@@ -182,14 +182,6 @@ public class DiskJournalTest extends TestCase {
 
         tlr = new TransactionLogRecord(Status.STATUS_COMMITTED, 116, 28, 1220609394845L, 38266, -1380478121, uid, names, TransactionLogAppender.END_RECORD);
         assertTrue(tlr.isCrc32Correct());
-        
-        // test that removing unique names refreshes CRC32, see BTM-44
-        Set namesToRemove = new HashSet();
-        namesToRemove.add("ActiveMQ");
-
-        tlr.removeUniqueNames(namesToRemove);
-
-        assertTrue(tlr.isCrc32Correct());
     }
 
     private SortedSet csvToSet(String s) {

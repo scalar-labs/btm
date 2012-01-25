@@ -76,7 +76,6 @@ public final class ResourceRegistrar {
 
     /**
      * Get all {@link XAResourceProducer}s unique names.
-     *
      * @return a Set containing all {@link bitronix.tm.resource.common.XAResourceProducer}s unique names.
      */
     public static Set<String> getResourcesUniqueNames() {
@@ -93,7 +92,6 @@ public final class ResourceRegistrar {
     /**
      * Register a {@link XAResourceProducer}. If registration happens after the transaction manager started, incremental
      * recovery is run on that resource.
-     *
      * @param producer the {@link XAResourceProducer}.
      * @throws RecoveryException When an error happens during recovery.
      */
@@ -125,7 +123,6 @@ public final class ResourceRegistrar {
 
     /**
      * Unregister a previously registered {@link XAResourceProducer}.
-     *
      * @param producer the {@link XAResourceProducer}.
      */
     public static void unregister(XAResourceProducer producer) {

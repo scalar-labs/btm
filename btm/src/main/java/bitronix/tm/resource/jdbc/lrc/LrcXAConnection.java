@@ -54,7 +54,7 @@ public class LrcXAConnection implements XAConnection {
 
     private final Connection connection;
     private final LrcXAResource xaResource;
-    private final List<ConnectionEventListener> connectionEventListeners = new ArrayList<ConnectionEventListener>();
+    private final List<ConnectionEventListener> connectionEventListeners = new CopyOnWriteArrayList<ConnectionEventListener>();
 
     private volatile int jdbcVersionDetected;
 

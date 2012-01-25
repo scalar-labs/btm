@@ -22,15 +22,14 @@ package bitronix.tm.resource.jms.lrc;
 
 import bitronix.tm.internal.BitronixXAException;
 import bitronix.tm.utils.Decoder;
-
-import javax.transaction.xa.XAResource;
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.Xid;
-import javax.jms.Session;
-import javax.jms.JMSException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.jms.JMSException;
+import javax.jms.Session;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
 
 /**
  * XAResource implementation for a non-XA JMS connection emulating XA with Last Resource Commit.
@@ -125,7 +124,7 @@ public class LrcXAResource implements XAResource {
                 if (flag == XAResource.TMJOIN)
                     throw new BitronixXAException("resource not yet started", XAException.XAER_PROTO);
                 else {
-                    if (log.isDebugEnabled()) { log.debug("OK to start, old state=" + xlatedState() + ", XID=" + xid + ", flag=" + Decoder.decodeXAResourceFlag(flag)); }
+                    if (log.isDebugEnabled()) log.debug("OK to start, old state=" + xlatedState() + ", XID=" + xid + ", flag=" + Decoder.decodeXAResourceFlag(flag));
                     this.xid = xid;
                 }
             }
@@ -138,7 +137,7 @@ public class LrcXAResource implements XAResource {
                 throw new BitronixXAException("resource already registered XID " + this.xid, XAException.XAER_DUPID);
             else {
                 if (xid.equals(this.xid)) {
-                    if (log.isDebugEnabled()) { log.debug("OK to join, old state=" + xlatedState() + ", XID=" + xid + ", flag=" + Decoder.decodeXAResourceFlag(flag)); }
+                    if (log.isDebugEnabled()) log.debug("OK to join, old state=" + xlatedState() + ", XID=" + xid + ", flag=" + Decoder.decodeXAResourceFlag(flag));
                 }
                 else
                     throw new BitronixXAException("resource already started on XID " + this.xid + " - cannot start it on more than one XID at a time", XAException.XAER_RMERR);
@@ -162,7 +161,7 @@ public class LrcXAResource implements XAResource {
         }
         else if (state == STARTED) {
             if (this.xid.equals(xid)) {
-                if (log.isDebugEnabled()) { log.debug("OK to end, old state=" + xlatedState() + ", XID=" + xid + ", flag=" + Decoder.decodeXAResourceFlag(flag)); }
+                if (log.isDebugEnabled()) log.debug("OK to end, old state=" + xlatedState() + ", XID=" + xid + ", flag=" + Decoder.decodeXAResourceFlag(flag));
             }
             else
                 throw new BitronixXAException("resource already started on XID " + this.xid + " - cannot end it on another XID " + xid, XAException.XAER_PROTO);
@@ -200,7 +199,7 @@ public class LrcXAResource implements XAResource {
         }
         else if (state == ENDED) {
             if (this.xid.equals(xid)) {
-                if (log.isDebugEnabled()) { log.debug("OK to prepare, old state=" + xlatedState() + ", XID=" + xid); }
+                if (log.isDebugEnabled()) log.debug("OK to prepare, old state=" + xlatedState() + ", XID=" + xid);
             }
             else
                 throw new BitronixXAException("resource already started on XID " + this.xid + " - cannot prepare it on another XID " + xid, XAException.XAER_PROTO);
@@ -230,7 +229,7 @@ public class LrcXAResource implements XAResource {
         }
         else if (state == ENDED) {
             if (onePhase) {
-                if (log.isDebugEnabled()) { log.debug("OK to commit with 1PC, old state=" + xlatedState() + ", XID=" + xid); }
+                if (log.isDebugEnabled()) log.debug("OK to commit with 1PC, old state=" + xlatedState() + ", XID=" + xid);
                 try {
                     session.commit();
                 } catch (JMSException ex) {
@@ -243,7 +242,7 @@ public class LrcXAResource implements XAResource {
         else if (state == PREPARED) {
             if (!onePhase) {
                 if (this.xid.equals(xid)) {
-                    if (log.isDebugEnabled()) { log.debug("OK to commit, old state=" + xlatedState() + ", XID=" + xid); }
+                    if (log.isDebugEnabled()) log.debug("OK to commit, old state=" + xlatedState() + ", XID=" + xid);
                 }
                 else
                     throw new BitronixXAException("resource already started on XID " + this.xid + " - cannot commit it on another XID " + xid, XAException.XAER_PROTO);
@@ -268,7 +267,7 @@ public class LrcXAResource implements XAResource {
         }
         else if (state == ENDED) {
             if (this.xid.equals(xid)) {
-                if (log.isDebugEnabled()) { log.debug("OK to rollback, old state=" + xlatedState() + ", XID=" + xid); }
+                if (log.isDebugEnabled()) log.debug("OK to rollback, old state=" + xlatedState() + ", XID=" + xid);
             }
             else
                 throw new BitronixXAException("resource already started on XID " + this.xid + " - cannot roll it back on another XID " + xid, XAException.XAER_PROTO);

@@ -36,7 +36,7 @@ public class TransactionTimeoutTask extends Task {
 
     private final static Logger log = LoggerFactory.getLogger(TransactionTimeoutTask.class);
 
-    private BitronixTransaction transaction;
+    private final BitronixTransaction transaction;
 
     public TransactionTimeoutTask(BitronixTransaction transaction, Date executionTime, TaskScheduler scheduler) {
         super(executionTime, scheduler);
@@ -49,7 +49,7 @@ public class TransactionTimeoutTask extends Task {
 
     public void execute() throws TaskException {
         try {
-            if (log.isDebugEnabled()) { log.debug("marking " + transaction + " as timed out"); }
+            if (log.isDebugEnabled()) log.debug("marking " + transaction + " as timed out");
             transaction.timeout();
         } catch (BitronixSystemException ex) {
             throw new TaskException("failed to timeout " + transaction, ex);

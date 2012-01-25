@@ -20,7 +20,6 @@
  */
 package bitronix.tm.mock.resource.jdbc;
 
-import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
 import java.io.PrintWriter;
@@ -46,6 +45,7 @@ public class MockitoXADataSource implements XADataSource {
     private String userName;
     private String password;
     private String database;
+    private Object uselessThing;
     private List inDoubtXids = new ArrayList();
     private SQLException getXAConnectionException;
     private static SQLException staticGetXAConnectionException;
@@ -209,5 +209,13 @@ public class MockitoXADataSource implements XADataSource {
         }).doThrow(new SQLException("Transaction already rolledback")).when(mockConnection).rollback();
 
         return mockConnection;
+    }
+
+    public Object getUselessThing() {
+        return uselessThing;
+    }
+
+    public void setUselessThing(Object uselessThing) {
+        this.uselessThing = uselessThing;
     }
 }

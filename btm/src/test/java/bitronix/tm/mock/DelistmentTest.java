@@ -20,25 +20,34 @@
  */
 package bitronix.tm.mock;
 
-import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.util.*;
+import bitronix.tm.BitronixTransactionManager;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.internal.BitronixXAException;
+import bitronix.tm.journal.Journal;
+import bitronix.tm.mock.events.EventRecorder;
+import bitronix.tm.mock.events.JournalLogEvent;
+import bitronix.tm.mock.events.XAResourceEndEvent;
+import bitronix.tm.mock.events.XAResourceRollbackEvent;
+import bitronix.tm.mock.events.XAResourceStartEvent;
+import bitronix.tm.mock.resource.MockJournal;
+import bitronix.tm.mock.resource.MockXAResource;
+import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
+import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+import junit.framework.TestCase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.XAConnection;
-import javax.transaction.*;
-import javax.transaction.xa.*;
-
-import junit.framework.TestCase;
-
-import org.slf4j.*;
-
-import bitronix.tm.*;
-import bitronix.tm.internal.BitronixXAException;
-import bitronix.tm.mock.events.*;
-import bitronix.tm.mock.resource.*;
-import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
-import bitronix.tm.resource.ResourceRegistrar;
-import bitronix.tm.resource.jdbc.*;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+import java.lang.reflect.Field;
+import java.lang.reflect.Proxy;
+import java.sql.Connection;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 public class DelistmentTest extends TestCase {
@@ -59,9 +68,10 @@ public class DelistmentTest extends TestCase {
         }
 
         // change disk journal into mock journal
-        Field field = TransactionManagerServices.class.getDeclaredField("journal");
+        Field field = TransactionManagerServices.class.getDeclaredField("journalRef");
         field.setAccessible(true);
-        field.set(TransactionManagerServices.class, new MockJournal());
+        AtomicReference<Journal> journalRef = (AtomicReference<Journal>) field.get(TransactionManagerServices.class);
+        journalRef.set(new MockJournal());
 
         poolingDataSource1 = new PoolingDataSource();
         poolingDataSource1.setClassName(MockitoXADataSource.class.getName());

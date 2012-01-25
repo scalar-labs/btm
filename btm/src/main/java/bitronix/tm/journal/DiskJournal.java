@@ -83,19 +83,19 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      *                    this transaction.
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
-    public void log(int status, Uid gtrid, Set uniqueNames) throws IOException {
+    public void log(int status, Uid gtrid, Set<String> uniqueNames) throws IOException {
         if (activeTla == null)
             throw new IOException("cannot write log, disk logger is not open");
 
         if (TransactionManagerServices.getConfiguration().isFilterLogStatus()) {
             if (status != Status.STATUS_COMMITTING && status != Status.STATUS_COMMITTED && status != Status.STATUS_UNKNOWN) {
-                if (log.isDebugEnabled()) { log.debug("filtered out write to log for status " + Decoder.decodeStatus(status)); }
+                if (log.isDebugEnabled()) log.debug("filtered out write to log for status " + Decoder.decodeStatus(status));
                 return;
             }
         }
 
+        TransactionLogRecord tlog = new TransactionLogRecord(status, gtrid, uniqueNames);
         synchronized (this) {
-            TransactionLogRecord tlog = new TransactionLogRecord(status, gtrid, uniqueNames);
             boolean written = activeTla.writeLog(tlog);
             if (!written) {
                 // time to swap log files
@@ -136,10 +136,15 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         File file2 = new File(TransactionManagerServices.getConfiguration().getLogPart2Filename());
 
         if (!file1.exists() && !file2.exists()) {
-            { log.debug("creation of log files"); }
+            log.debug("creation of log files");
             createLogfile(file2, TransactionManagerServices.getConfiguration().getMaxLogSizeInMb());
-            // let the clock run a little before creating the 2nd log file to make the timestamp headers not the same
-            try { Thread.sleep(50); } catch (InterruptedException ex) { /* ignore */ }
+
+            // make the clock run a little before creating the 2nd log file to ensure the timestamp headers are not the same
+            long before = MonotonicClock.currentTimeMillis();
+            while (MonotonicClock.currentTimeMillis() < before + 100L) {
+                try { Thread.sleep(100); } catch (InterruptedException ex) { /* ignore */ }
+            }
+
             createLogfile(file1, TransactionManagerServices.getConfiguration().getMaxLogSizeInMb());
         }
 
@@ -150,7 +155,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         }
 
         long maxFileLength = Math.max(file1.length(), file2.length());
-        if (log.isDebugEnabled()) { log.debug("disk journal files max length: " + maxFileLength); }
+        if (log.isDebugEnabled()) log.debug("disk journal files max length: " + maxFileLength);
 
         tla1 = new TransactionLogAppender(file1, maxFileLength);
         tla2 = new TransactionLogAppender(file2, maxFileLength);
@@ -160,7 +165,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
             log.warn("active log file is unclean, did you call BitronixTransactionManager.shutdown() at the end of the last run?");
         }
 
-        if (log.isDebugEnabled()) { log.debug("disk journal opened"); }
+        if (log.isDebugEnabled()) log.debug("disk journal opened");
     }
 
     /**
@@ -187,7 +192,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         tla2 = null;
         activeTla = null;
 
-        { log.debug("disk journal closed"); }
+        if (log.isDebugEnabled()) log.debug("disk journal closed");
     }
 
     public void shutdown() {
@@ -204,7 +209,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
-    public synchronized Map collectDanglingRecords() throws IOException {
+    public Map<Uid, TransactionLogRecord> collectDanglingRecords() throws IOException {
         if (activeTla == null)
             throw new IOException("cannot collect dangling records, disk logger is not open");
         return collectDanglingRecords(activeTla);
@@ -270,7 +275,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
 
             byte[] buffer = new byte[4096];
             int length = (maxLogSizeInMb *1024 *1024) /4096;
-            for(int i=0; i<length ;i++) {
+            for (int i = 0; i < length; i++) {
                 raf.write(buffer);
             }
         } finally {
@@ -288,19 +293,19 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @throws java.io.IOException in case of disk IO failure.
      * @see TransactionLogHeader
      */
-    private byte pickActiveJournalFile(TransactionLogAppender tla1, TransactionLogAppender tla2) throws IOException {
+    private synchronized byte pickActiveJournalFile(TransactionLogAppender tla1, TransactionLogAppender tla2) throws IOException {
         if (tla1.getHeader().getTimestamp() > tla2.getHeader().getTimestamp()) {
             activeTla = tla1;
-            if (log.isDebugEnabled()) { log.debug("logging to file 1: " + activeTla); }
+            if (log.isDebugEnabled()) log.debug("logging to file 1: " + activeTla);
         }
         else {
             activeTla = tla2;
-            if (log.isDebugEnabled()) { log.debug("logging to file 2: " + activeTla); }
+            if (log.isDebugEnabled()) log.debug("logging to file 2: " + activeTla);
         }
 
         byte cleanState = activeTla.getHeader().getState();
         activeTla.getHeader().setState(TransactionLogHeader.UNCLEAN_LOG_STATE);
-        if (log.isDebugEnabled()) { log.debug("log file activated, forcing file state to disk"); }
+        if (log.isDebugEnabled()) log.debug("log file activated, forcing file state to disk");
         activeTla.force();
         return cleanState;
     }
@@ -320,7 +325,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @throws java.io.IOException in case of disk IO failure.
      */
     private synchronized void swapJournalFiles() throws IOException {
-        if (log.isDebugEnabled()) { log.debug("swapping journal log file to " + getPassiveTransactionLogAppender()); }
+        if (log.isDebugEnabled()) log.debug("swapping journal log file to " + getPassiveTransactionLogAppender());
 
         //step 1
         TransactionLogAppender passiveTla = getPassiveTransactionLogAppender();
@@ -341,7 +346,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
             activeTla = tla1;
         }
 
-        if (log.isDebugEnabled()) { log.debug("journal log files swapped"); }
+        if (log.isDebugEnabled()) log.debug("journal log files swapped");
     }
 
     /**
@@ -361,16 +366,14 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @throws java.io.IOException in case of disk IO failure.
      */
     private static void copyDanglingRecords(TransactionLogAppender fromTla, TransactionLogAppender toTla) throws IOException {
-        if (log.isDebugEnabled()) { log.debug("starting copy of dangling records"); }
+        if (log.isDebugEnabled()) log.debug("starting copy of dangling records");
 
-        Map danglingRecords = collectDanglingRecords(fromTla);
-
-        for (Iterator iterator = danglingRecords.values().iterator(); iterator.hasNext();) {
-            TransactionLogRecord tlog = (TransactionLogRecord) iterator.next();
+        Map<Uid, TransactionLogRecord> danglingRecords = collectDanglingRecords(fromTla);
+        for (TransactionLogRecord tlog : danglingRecords.values()) {
             toTla.writeLog(tlog);
         }
 
-        if (log.isDebugEnabled()) { log.debug(danglingRecords.size() + " dangling record(s) copied to passive log file"); }
+        if (log.isDebugEnabled()) log.debug(danglingRecords.size() + " dangling record(s) copied to passive log file");
     }
 
     /**
@@ -381,8 +384,8 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
      * @throws java.io.IOException in case of disk IO failure.
      */
-    private static Map collectDanglingRecords(TransactionLogAppender tla) throws IOException {
-        Map danglingRecords = new HashMap(64);
+    private static Map<Uid, TransactionLogRecord> collectDanglingRecords(TransactionLogAppender tla) throws IOException {
+        Map<Uid, TransactionLogRecord> danglingRecords = new HashMap<Uid, TransactionLogRecord>(64);
         TransactionLogCursor tlc = tla.getCursor();
 
         try {
@@ -410,18 +413,21 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
                     committing++;
                 }
                 if (status == Status.STATUS_COMMITTED || status == Status.STATUS_UNKNOWN) {
-                    TransactionLogRecord rec = (TransactionLogRecord) danglingRecords.get(tlog.getGtrid());
+                    TransactionLogRecord rec = danglingRecords.get(tlog.getGtrid());
                     if (rec != null) {
-                        rec.removeUniqueNames(tlog.getUniqueNames());
-                        if (rec.getUniqueNames().isEmpty()) {
+                        Set<String> recUniqueNames = new HashSet<String>(rec.getUniqueNames());
+                        recUniqueNames.removeAll(tlog.getUniqueNames());
+                        if (recUniqueNames.isEmpty()) {
                             danglingRecords.remove(tlog.getGtrid());
                             committed++;
+                        } else {
+                            danglingRecords.put(tlog.getGtrid(), new TransactionLogRecord(rec.getStatus(), rec.getGtrid(), recUniqueNames));
                         }
                     }
                 }
             }
 
-            if (log.isDebugEnabled()) { log.debug("collected dangling records of " + tla + ", committing: " + committing + ", committed: " + committed + ", delta: " + danglingRecords.size()); }
+            if (log.isDebugEnabled()) log.debug("collected dangling records of " + tla + ", committing: " + committing + ", committed: " + committed + ", delta: " + danglingRecords.size());
         }
         finally {
             tlc.close();

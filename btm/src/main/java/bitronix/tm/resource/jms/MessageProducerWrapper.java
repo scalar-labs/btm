@@ -37,14 +37,13 @@ import javax.transaction.SystemException;
 public class MessageProducerWrapper implements MessageProducer {
 
     private final MessageProducer messageProducer;
-    private final PoolingConnectionFactory poolingConnectionFactory;
-
     protected final DualSessionWrapper session;
+    private final PoolingConnectionFactory poolingConnectionFactory;
 
     public MessageProducerWrapper(MessageProducer messageProducer, DualSessionWrapper session, PoolingConnectionFactory poolingConnectionFactory) {
         this.messageProducer = messageProducer;
-        this.poolingConnectionFactory = poolingConnectionFactory;
         this.session = session;
+        this.poolingConnectionFactory = poolingConnectionFactory;
     }
 
     public MessageProducer getMessageProducer() {

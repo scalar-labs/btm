@@ -1,7 +1,7 @@
 /*
  * Bitronix Transaction Manager
  *
- * Copyright (c) 2010, Bitronix Software.
+ * Copyright (c) 2011, Bitronix Software.
  *
  * This copyrighted material is made available to anyone wishing to use, modify,
  * copy, or redistribute it subject to the terms and conditions of the GNU
@@ -18,19 +18,22 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA 02110-1301 USA
  */
-package bitronix.tm.internal;
+package bitronix.tm.utils;
+
+import javax.transaction.xa.XAException;
 
 /**
- * Thrown when a transaction times out.
+ * Exception analyzers are used to extract non-standard information from vendor exceptions.
  *
  * @author lorban
  */
-public class TransactionTimeoutException extends Exception {
-    public TransactionTimeoutException(String message) {
-        super(message);
-    }
+public interface ExceptionAnalyzer extends Service {
 
-    public TransactionTimeoutException(String message, Throwable cause) {
-        super(message, cause);
-    }
+    /**
+     * Extract information from a vendor's XAException that isn't available through standard APIs.
+     * @param ex the {@link XAException} to analyze.
+     * @return extra error details as a human-readable string, or null if nothing extra was found.
+     */
+    public String extractExtraXAExceptionDetails(XAException ex);
+
 }

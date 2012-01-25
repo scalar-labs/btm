@@ -26,11 +26,12 @@ import bitronix.tm.resource.common.XAResourceHolder;
 
 import javax.transaction.xa.XAResource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
 /**
- * EHCache implementation of BTM's XAResourceHolder.
+ * Ehcache implementation of BTM's XAResourceHolder.
  * <p>
  *   Copyright 2003-2010 Terracotta, Inc.
  * </p>

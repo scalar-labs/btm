@@ -1,7 +1,7 @@
 /*
  * Bitronix Transaction Manager
  *
- * Copyright (c) 2010, Bitronix Software.
+ * Copyright (c) 2011, Bitronix Software.
  *
  * This copyrighted material is made available to anyone wishing to use, modify,
  * copy, or redistribute it subject to the terms and conditions of the GNU
@@ -18,20 +18,29 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA 02110-1301 USA
  */
-package bitronix.tm.resource.jms;
+package bitronix.tm.utils;
 
-import java.util.Collection;
-import java.util.Date;
+import javax.transaction.xa.XAException;
 
 /**
- * {@link JmsPooledConnection} Management interface.
+ * Default implementation of {@link ExceptionAnalyzer}.
  *
  * @author lorban
  */
-public interface JmsPooledConnectionMBean {
+public class DefaultExceptionAnalyzer implements ExceptionAnalyzer {
 
-    String getStateDescription();
-    Date getAcquisitionDate();
-    Collection<String> getTransactionGtridsCurrentlyHoldingThis();
+    public String extractExtraXAExceptionDetails(XAException ex) {
+        if (ex.getClass().getName().equals("oracle.jdbc.xa.OracleXAException")) {
+            try {
+                return "ORA-" + PropertyUtils.getProperty(ex, "oracleError");
+            } catch (PropertyException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    public void shutdown() {
+    }
 
 }

@@ -37,13 +37,10 @@ import java.security.spec.InvalidKeySpecException;
  *
  * @author lorban
  */
-public final class CryptoEngine {
+public class CryptoEngine {
 
     private static final int LONG_SIZE_IN_BYTES = 8;
     private static final String CRYPTO_PASSWORD = "B1tr0n!+";
-
-    private CryptoEngine() {
-    }
 
     /**
      * Crypt the given data using the given cipher.

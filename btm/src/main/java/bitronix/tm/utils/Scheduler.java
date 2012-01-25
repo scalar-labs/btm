@@ -29,15 +29,11 @@ import java.util.*;
  *
  * @author lorban
  */
-public class Scheduler<T> {
+public class Scheduler<T> implements Iterable<T> {
 
-    public static final int DEFAULT_POSITION = 0;
-    public static final int ALWAYS_FIRST_POSITION = Integer.MIN_VALUE;
-    public static final int ALWAYS_LAST_POSITION = Integer.MAX_VALUE;
-
-    public static final Object DEFAULT_POSITION_KEY = new Integer(DEFAULT_POSITION);
-    public static final Object ALWAYS_FIRST_POSITION_KEY = new Integer(ALWAYS_FIRST_POSITION);
-    public static final Object ALWAYS_LAST_POSITION_KEY = new Integer(ALWAYS_LAST_POSITION);
+    public static final Integer DEFAULT_POSITION = 0;
+    public static final Integer ALWAYS_FIRST_POSITION = Integer.MIN_VALUE;
+    public static final Integer ALWAYS_LAST_POSITION = Integer.MAX_VALUE;
 
     private List<Integer> keys = new ArrayList<Integer>();
     private Map<Integer, List<T>> objects = new TreeMap<Integer, List<T>>();
@@ -47,17 +43,17 @@ public class Scheduler<T> {
     public Scheduler() {
     }
 
-    public synchronized void add(T obj, int position) {
-        List<T> synchronizationsList = objects.get(position);
-        if (synchronizationsList == null) {
+    public synchronized void add(T obj, Integer position) {
+        List<T> list = objects.get(position);
+        if (list == null) {
             if (!keys.contains(position)) {
                 keys.add(position);
                 Collections.sort(keys);
             }
-            synchronizationsList = new ArrayList<T>();
-            objects.put(position, synchronizationsList);
+            list = new ArrayList<T>();
+            objects.put(position, list);
         }
-        synchronizationsList.add(obj);
+        list.add(obj);
         size++;
     }
 
@@ -78,17 +74,17 @@ public class Scheduler<T> {
     }
 
     public synchronized SortedSet<Integer> getReverseOrderPositions() {
-        TreeSet result = new TreeSet<Integer>(Collections.reverseOrder());
+        TreeSet<Integer> result = new TreeSet<Integer>(Collections.reverseOrder());
         result.addAll(getNaturalOrderPositions());
         return result;
     }
 
-    public synchronized List<T> getByNaturalOrderForPosition(Object positionKey) {
-        return objects.get(positionKey);
+    public synchronized List<T> getByNaturalOrderForPosition(Integer position) {
+        return objects.get(position);
     }
 
-    public synchronized List<T> getByReverseOrderForPosition(Object positionKey) {
-        List<T> result = new ArrayList<T>(getByNaturalOrderForPosition(positionKey));
+    public synchronized List<T> getByReverseOrderForPosition(Integer position) {
+        List<T> result = new ArrayList<T>(getByNaturalOrderForPosition(position));
         Collections.reverse(result);
         return result;
     }

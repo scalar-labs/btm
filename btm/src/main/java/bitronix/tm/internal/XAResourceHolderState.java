@@ -90,7 +90,7 @@ public class XAResourceHolderState {
     }
 
     public void setXid(BitronixXid xid) throws BitronixSystemException {
-        if (log.isDebugEnabled()) { log.debug("assigning <" + xid + "> to <" + this + ">"); }
+        if (log.isDebugEnabled()) log.debug("assigning <" + xid + "> to <" + this + ">");
         if (this.xid != null && !xid.equals(this.xid))
             throw new BitronixSystemException("a XID has already been assigned to " + this);
         this.xid = xid;
@@ -150,7 +150,7 @@ public class XAResourceHolderState {
         boolean suspended = this.suspended;
 
         if (this.ended && (flags == XAResource.TMSUSPEND)) {
-            if (log.isDebugEnabled()) { log.debug("resource already ended, changing state to suspended: " + this); }
+            if (log.isDebugEnabled()) log.debug("resource already ended, changing state to suspended: " + this);
             this.suspended = true;
             return;
         }
@@ -164,17 +164,17 @@ public class XAResourceHolderState {
             if (this.suspended)
                 throw new BitronixXAException("resource already suspended: " + this, XAException.XAER_PROTO);
 
-            if (log.isDebugEnabled()) { log.debug("suspending " + this + " with " + Decoder.decodeXAResourceFlag(flags)); }
+            if (log.isDebugEnabled()) log.debug("suspending " + this + " with " + Decoder.decodeXAResourceFlag(flags));
             suspended = true;
         }
         else {
-            if (log.isDebugEnabled()) { log.debug("ending " + this + " with " + Decoder.decodeXAResourceFlag(flags)); }
+            if (log.isDebugEnabled()) log.debug("ending " + this + " with " + Decoder.decodeXAResourceFlag(flags));
             ended = true;
         }
 
         try {
             getXAResource().end(xid, flags);
-            if (log.isDebugEnabled()) { log.debug("ended " + this + " with " + Decoder.decodeXAResourceFlag(flags)); }
+            if (log.isDebugEnabled()) log.debug("ended " + this + " with " + Decoder.decodeXAResourceFlag(flags));
         } catch(XAException ex) {
             // could mean failed or unilaterally rolled back
             failed = true;
@@ -191,7 +191,7 @@ public class XAResourceHolderState {
         boolean started = this.started;
 
         if (this.ended && (flags == XAResource.TMRESUME)) {
-            if (log.isDebugEnabled()) { log.debug("resource already ended, changing state to resumed: " + this); }
+            if (log.isDebugEnabled()) log.debug("resource already ended, changing state to resumed: " + this);
             this.suspended = false;
             return;
         }
@@ -202,21 +202,21 @@ public class XAResourceHolderState {
             if (!this.started)
                 throw new BitronixXAException("resource hasn't been started, cannot resume it: " + this, XAException.XAER_PROTO);
 
-            if (log.isDebugEnabled()) { log.debug("resuming " + this + " with " + Decoder.decodeXAResourceFlag(flags)); }
+            if (log.isDebugEnabled()) log.debug("resuming " + this + " with " + Decoder.decodeXAResourceFlag(flags));
             suspended = false;
         }
         else {
             if (this.started)
                 throw new BitronixXAException("resource already started: " + this, XAException.XAER_PROTO);
 
-            if (log.isDebugEnabled()) { log.debug("starting " + this + " with " + Decoder.decodeXAResourceFlag(flags)); }
+            if (log.isDebugEnabled()) log.debug("starting " + this + " with " + Decoder.decodeXAResourceFlag(flags));
             started = true;
         }
 
         if (!isTimeoutAlreadySet && transactionTimeoutDate != null && bean.getApplyTransactionTimeout()) {
             int timeoutInSeconds = (int) ((transactionTimeoutDate.getTime() - MonotonicClock.currentTimeMillis() + 999L) / 1000L);
             timeoutInSeconds = Math.max(1, timeoutInSeconds); // setting a timeout of 0 means resetting -> set it to at least 1
-            if (log.isDebugEnabled()) { log.debug("applying resource timeout of " + timeoutInSeconds + "s on " + this); }
+            if (log.isDebugEnabled()) log.debug("applying resource timeout of " + timeoutInSeconds + "s on " + this);
             getXAResource().setTransactionTimeout(timeoutInSeconds);
             isTimeoutAlreadySet = true;
         }
@@ -225,7 +225,7 @@ public class XAResourceHolderState {
         this.suspended = suspended;
         this.started = started;
         this.ended = false;
-        if (log.isDebugEnabled()) { log.debug("started " + this + " with " + Decoder.decodeXAResourceFlag(flags)); }
+        if (log.isDebugEnabled()) log.debug("started " + this + " with " + Decoder.decodeXAResourceFlag(flags));
     }
 
     public int hashCode() {
