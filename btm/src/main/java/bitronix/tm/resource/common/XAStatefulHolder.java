@@ -110,4 +110,9 @@ public interface XAStatefulHolder {
      */
     public Date getLastReleaseDate();
 
+    /**
+     * Get the date at which this object was created in the pool.
+     * @return the date at which this object was created in the pool.
+     */
+    public Date getCreationDate();
 }
