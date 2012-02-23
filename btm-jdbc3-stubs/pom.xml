@@ -32,4 +32,32 @@
 	<groupId>org.codehaus.btm</groupId>
 	<artifactId>btm-jdbc3-stubs</artifactId>
 	<name>Bitronix Transaction Manager :: JDBC3 Stubs</name>
+
+    <build>
+        <plugins>
+            <!-- Suppress JAR generation -->
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <executions>
+                   <execution>
+                      <id>default-jar</id>
+                      <phase>none</phase>
+                  </execution>
+               </executions>
+            </plugin>
+
+            <!-- Suppress local repository install -->
+            <plugin>
+                <artifactId>maven-install-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <executions>
+                   <execution>
+                      <id>default-install</id>
+                      <phase>none</phase>
+                  </execution>
+               </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

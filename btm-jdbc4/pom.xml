@@ -40,8 +40,27 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-test-sources</id>
+                        <goals>
+                            <goal>test-jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Suppress local repository install -->
+            <plugin>
+                <artifactId>maven-install-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <executions>
+                   <execution>
+                      <id>default-install</id>
+                      <phase>none</phase>
+                  </execution>
+               </executions>
             </plugin>
         </plugins>
     </build>
-
 </project>
