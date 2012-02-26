@@ -187,15 +187,18 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
             if (status != Status.STATUS_MARKED_ROLLBACK)
                 setStatus(Status.STATUS_MARKED_ROLLBACK);
 
+            String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
             if (BitronixXAException.isUnilateralRollback(ex)) {
                 // The resource unilaterally rolled back here. We have to throw an exception to indicate this but
                 // The signature of this method is inherited from javax.transaction.Transaction. Thereof, we have choice
                 // between creating a sub-exception of SystemException or using a RuntimeException. Is that the best way
                 // forward as this 'hidden' exception can be left throw out at unexpected locations where SystemException
                 // should be rethrown but the exception thrown here should be catched & handled... ?
-                throw new BitronixRollbackSystemException("resource " + resourceHolderState + " unilaterally rolled back, error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+                throw new BitronixRollbackSystemException("resource " + resourceHolderState + " unilaterally rolled back, error=" +
+                        Decoder.decodeXAExceptionErrorCode(ex) + (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
             }
-            throw new BitronixSystemException("cannot delist " + resourceHolderState + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+            throw new BitronixSystemException("cannot delist " + resourceHolderState + ", error=" + Decoder.decodeXAExceptionErrorCode(ex) +
+                    (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
         }
     }
 

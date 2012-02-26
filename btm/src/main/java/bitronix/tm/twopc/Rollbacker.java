@@ -20,6 +20,7 @@
  */
 package bitronix.tm.twopc;
 
+import bitronix.tm.TransactionManagerServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import bitronix.tm.BitronixTransaction;
@@ -206,7 +207,9 @@ public final class Rollbacker extends AbstractPhaseEngine {
                 resourceHolder.getXAResource().forget(resourceHolder.getXid());
                 if (log.isDebugEnabled()) log.debug("forgotten heuristically rolled back resource " + resourceHolder.getXAResource());
             } catch (XAException ex) {
-                log.error("cannot forget " + resourceHolder.getXid() + " assigned to " + resourceHolder.getXAResource() + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+                String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
+                log.error("cannot forget " + resourceHolder.getXid() + " assigned to " + resourceHolder.getXAResource() +
+                        ", error=" + Decoder.decodeXAExceptionErrorCode(ex) + (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
             }
         }
 

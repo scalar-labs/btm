@@ -20,6 +20,7 @@
  */
 package bitronix.tm.twopc;
 
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.internal.XAResourceManager;
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.twopc.executor.Job;
@@ -133,7 +134,9 @@ public abstract class AbstractPhaseEngine {
             RuntimeException runtimeException = job.getRuntimeException();
 
             if (xaException != null) {
-                if (log.isDebugEnabled()) log.debug("error executing " + job + ", errorCode=" + Decoder.decodeXAExceptionErrorCode(xaException));
+                String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(xaException);
+                if (log.isDebugEnabled()) log.debug("error executing " + job + ", errorCode=" + Decoder.decodeXAExceptionErrorCode(xaException) +
+                        (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails));
                 exceptions.add(xaException);
                 errorResources.add(job.getResource());
             } else if (runtimeException != null) {

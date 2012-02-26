@@ -20,6 +20,7 @@
  */
 package bitronix.tm.twopc;
 
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.utils.Decoder;
 
@@ -63,6 +64,8 @@ public class PhaseException extends Exception {
                 XAException xaEx = (XAException) throwable;
                 errorMessage.append("(");
                 errorMessage.append(Decoder.decodeXAExceptionErrorCode(xaEx));
+                String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(xaEx);
+                if (extraErrorDetails != null) errorMessage.append(" - ").append(extraErrorDetails);
                 errorMessage.append(")");
             }
             errorMessage.append(" - ");

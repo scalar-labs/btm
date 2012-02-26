@@ -190,7 +190,9 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             clearCurrentContextForSuspension();
             return currentTx;
         } catch (XAException ex) {
-            throw new BitronixSystemException("cannot suspend " + currentTx + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+            String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
+            throw new BitronixSystemException("cannot suspend " + currentTx + ", error=" + Decoder.decodeXAExceptionErrorCode(ex) +
+                    (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
         }
     }
 
@@ -213,7 +215,9 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             ctx.setTransaction(tx);
             setCurrentContext(ctx);
         } catch (XAException ex) {
-            throw new BitronixSystemException("cannot resume " + tx + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+            String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
+            throw new BitronixSystemException("cannot resume " + tx + ", error=" + Decoder.decodeXAExceptionErrorCode(ex) +
+                    (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
         }
     }
 
