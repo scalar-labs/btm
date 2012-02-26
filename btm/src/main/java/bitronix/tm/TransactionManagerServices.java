@@ -37,6 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Container for all BTM services.
@@ -50,13 +52,15 @@ public class TransactionManagerServices {
 
     private final static Logger log = LoggerFactory.getLogger(TransactionManagerServices.class);
 
-    private static BitronixTransactionManager transactionManager;
+    private static final Lock transactionManagerLock = new ReentrantLock();
+    private static volatile BitronixTransactionManager transactionManager;
+
     private static final AtomicReference<BitronixTransactionSynchronizationRegistry> transactionSynchronizationRegistryRef = new AtomicReference<BitronixTransactionSynchronizationRegistry>();
     private static final AtomicReference<Configuration> configurationRef = new AtomicReference<Configuration>();
     private static final AtomicReference<Journal> journalRef = new AtomicReference<Journal>();
     private static final AtomicReference<TaskScheduler> taskSchedulerRef = new AtomicReference<TaskScheduler>();
-    private static ResourceLoader resourceLoader;
-    private static Recoverer recoverer;
+    private static final AtomicReference<ResourceLoader> resourceLoaderRef = new AtomicReference<ResourceLoader>();
+    private static final AtomicReference<Recoverer> recovererRef = new AtomicReference<Recoverer>();
     private static final AtomicReference<Executor> executorRef = new AtomicReference<Executor>();
     private static final AtomicReference<ExceptionAnalyzer> exceptionAnalyzerRef = new AtomicReference<ExceptionAnalyzer>();
 
@@ -64,11 +68,16 @@ public class TransactionManagerServices {
      * Create an initialized transaction manager.
      * @return the transaction manager.
      */
-    public synchronized static BitronixTransactionManager getTransactionManager() {
-        if (transactionManager == null) {
-            transactionManager = new BitronixTransactionManager();
+    public static BitronixTransactionManager getTransactionManager() {
+        transactionManagerLock.lock();
+        try {
+            if (transactionManager == null) {
+                transactionManager = new BitronixTransactionManager();
+            }
+            return transactionManager;
+        } finally {
+            transactionManagerLock.unlock();
         }
-        return transactionManager;
     }
 
     /**
@@ -151,10 +160,14 @@ public class TransactionManagerServices {
      * Create the resource loader.
      * @return the resource loader.
      */
-    public synchronized static ResourceLoader getResourceLoader() {
+    public static ResourceLoader getResourceLoader() {
+        ResourceLoader resourceLoader = resourceLoaderRef.get();
         if (resourceLoader == null) {
             resourceLoader = new ResourceLoader();
-        }
+            if (!resourceLoaderRef.compareAndSet(null, resourceLoader)) {
+                resourceLoader = resourceLoaderRef.get();
+            }
+        }        
         return resourceLoader;
     }
 
@@ -162,9 +175,13 @@ public class TransactionManagerServices {
      * Create the transaction recoverer.
      * @return the transaction recoverer.
      */
-    public synchronized static Recoverer getRecoverer() {
+    public static Recoverer getRecoverer() {
+        Recoverer recoverer = recovererRef.get();
         if (recoverer == null) {
             recoverer = new Recoverer();
+            if (!recovererRef.compareAndSet(null, recoverer)) {
+                recoverer = recovererRef.get();
+            }
         }
         return recoverer;
     }
@@ -191,6 +208,10 @@ public class TransactionManagerServices {
         return executor;
     }
 
+    /**
+     * Create the exception analyzer.
+     * @return the exception analyzer.
+     */
     public static ExceptionAnalyzer getExceptionAnalyzer() {
         ExceptionAnalyzer analyzer = exceptionAnalyzerRef.get();
         if (analyzer == null) {
@@ -217,7 +238,7 @@ public class TransactionManagerServices {
      * Check if the transaction manager has started.
      * @return true if the transaction manager has started.
      */
-    public synchronized static boolean isTransactionManagerRunning() {
+    public static boolean isTransactionManagerRunning() {
         return transactionManager != null;
     }
 
@@ -234,12 +255,13 @@ public class TransactionManagerServices {
      */
     protected static synchronized void clear() {
         transactionManager = null;
+
         transactionSynchronizationRegistryRef.set(null);
         configurationRef.set(null);
         journalRef.set(null);
         taskSchedulerRef.set(null);
-        resourceLoader = null;
-        recoverer = null;
+        resourceLoaderRef.set(null);
+        recovererRef.set(null);
         executorRef.set(null);
     }
 

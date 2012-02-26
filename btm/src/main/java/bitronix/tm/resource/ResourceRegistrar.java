@@ -20,16 +20,22 @@
  */
 package bitronix.tm.resource;
 
-import bitronix.tm.resource.common.XAResourceHolder;
-import bitronix.tm.resource.common.XAResourceProducer;
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.recovery.IncrementalRecoverer;
 import bitronix.tm.recovery.RecoveryException;
-import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.resource.common.XAResourceHolder;
+import bitronix.tm.resource.common.XAResourceProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.transaction.xa.XAResource;
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Collection of initialized {@link XAResourceProducer}s. All resources must be registered in the {@link ResourceRegistrar}
@@ -41,14 +47,15 @@ public class ResourceRegistrar {
 
     private final static Logger log = LoggerFactory.getLogger(ResourceRegistrar.class);
 
-    private final static Map<String, XAResourceProducer> resources = new HashMap<String, XAResourceProducer>();
+    private static final Lock registrationLock = new ReentrantLock();
+    private static final ConcurrentMap<String, XAResourceProducer> resources = new ConcurrentHashMap<String, XAResourceProducer>();
 
     /**
      * Get a registered {@link XAResourceProducer}.
      * @param uniqueName the name of the recoverable resource producer.
      * @return the {@link XAResourceProducer} or null if there was none registered under that name.
      */
-    public synchronized static XAResourceProducer get(String uniqueName) {
+    public static XAResourceProducer get(String uniqueName) {
         return resources.get(uniqueName);
     }
 
@@ -56,8 +63,8 @@ public class ResourceRegistrar {
      * Get all {@link XAResourceProducer}s unique names.
      * @return a Set containing all {@link bitronix.tm.resource.common.XAResourceProducer}s unique names.
      */
-    public synchronized static Set<String> getResourcesUniqueNames() {
-        return Collections.unmodifiableSet(new HashSet<String>(resources.keySet()));
+    public static Set<String> getResourcesUniqueNames() {
+        return Collections.unmodifiableSet(resources.keySet());
     }
 
     /**
@@ -66,34 +73,43 @@ public class ResourceRegistrar {
      * @param producer the {@link XAResourceProducer}.
      * @throws bitronix.tm.recovery.RecoveryException when an error happens during recovery.
      */
-    public synchronized static void register(XAResourceProducer producer) throws RecoveryException {
-        String uniqueName = producer.getUniqueName();
-        if (producer.getUniqueName() == null)
-            throw new IllegalArgumentException("invalid resource with null uniqueName");
-        if (resources.containsKey(uniqueName))
-            throw new IllegalArgumentException("resource with uniqueName '" + producer.getUniqueName() + "' has already been registered");
+    public static void register(XAResourceProducer producer) throws RecoveryException {
+        registrationLock.lock();
+        try {
+            String uniqueName = producer.getUniqueName();
+            if (producer.getUniqueName() == null)
+                throw new IllegalArgumentException("invalid resource with null uniqueName");
+            if (resources.containsKey(uniqueName))
+                throw new IllegalArgumentException("resource with uniqueName '" + producer.getUniqueName() + "' has already been registered");
 
-        if (TransactionManagerServices.isTransactionManagerRunning()) {
-            if (log.isDebugEnabled()) log.debug("transaction manager is running, recovering resource " + uniqueName);
-            IncrementalRecoverer.recover(producer);
+            if (TransactionManagerServices.isTransactionManagerRunning()) {
+                if (log.isDebugEnabled()) log.debug("transaction manager is running, recovering resource " + uniqueName);
+                IncrementalRecoverer.recover(producer);
+            }
+            resources.put(uniqueName, producer);
+        } finally {
+            registrationLock.unlock();
         }
-
-        resources.put(uniqueName, producer);
     }
 
     /**
      * Unregister a previously registered {@link XAResourceProducer}.
      * @param producer the {@link XAResourceProducer}.
      */
-    public synchronized static void unregister(XAResourceProducer producer) {
-        String uniqueName = producer.getUniqueName();
-        if (producer.getUniqueName() == null)
-            throw new IllegalArgumentException("invalid resource with null uniqueName");
-        if (!resources.containsKey(uniqueName)) {
-            if (log.isDebugEnabled()) log.debug("resource with uniqueName '" + producer.getUniqueName() + "' has not been registered");
-            return;
+    public static void unregister(XAResourceProducer producer) {
+        registrationLock.lock();
+        try {
+            String uniqueName = producer.getUniqueName();
+            if (producer.getUniqueName() == null)
+                throw new IllegalArgumentException("invalid resource with null uniqueName");
+            if (!resources.containsKey(uniqueName)) {
+                if (log.isDebugEnabled()) log.debug("resource with uniqueName '" + producer.getUniqueName() + "' has not been registered");
+                return;
+            }
+            resources.remove(uniqueName);
+        } finally {
+            registrationLock.unlock();
         }
-        resources.remove(uniqueName);
     }
 
     /**
@@ -101,7 +117,7 @@ public class ResourceRegistrar {
      * @param xaResource the {@link XAResource} to look for
      * @return the associated {@link XAResourceHolder} or null if it cannot be found.
      */
-    public synchronized static XAResourceHolder findXAResourceHolder(XAResource xaResource) {
+    public static XAResourceHolder findXAResourceHolder(XAResource xaResource) {
         for (Map.Entry<String, XAResourceProducer> entry : resources.entrySet()) {
             XAResourceProducer producer = entry.getValue();
 
