@@ -65,8 +65,9 @@ public final class Committer extends AbstractPhaseEngine {
      * @throws HeuristicRollbackException when all resources committed instead.
      * @throws HeuristicMixedException when some resources committed and some rolled back.
      * @throws bitronix.tm.internal.BitronixSystemException when an internal error occured.
+     * @throws bitronix.tm.internal.BitronixRollbackException during 1PC when resource fails to commit
      */
-    public void commit(BitronixTransaction transaction, List<XAResourceHolderState> interestedResources) throws HeuristicMixedException, HeuristicRollbackException, BitronixSystemException {
+    public void commit(BitronixTransaction transaction, List<XAResourceHolderState> interestedResources) throws HeuristicMixedException, HeuristicRollbackException, BitronixSystemException, BitronixRollbackException {
         XAResourceManager resourceManager = transaction.getResourceManager();
         if (resourceManager.size() == 0) {
             transaction.setStatus(Status.STATUS_COMMITTING); //TODO: there is a disk force here that could be avoided
@@ -85,8 +86,13 @@ public final class Committer extends AbstractPhaseEngine {
             executePhase(resourceManager, true);
         } catch (PhaseException ex) {
             logFailedResources(ex);
-            transaction.setStatus(Status.STATUS_UNKNOWN);
-            throwException("transaction failed during commit of " + transaction, ex, interestedResources.size());
+            if (onePhase) {
+                transaction.setStatus(Status.STATUS_ROLLEDBACK);
+                throw new BitronixRollbackException("transaction failed during 1PC commit of " + transaction, ex);
+            } else {
+                transaction.setStatus(Status.STATUS_UNKNOWN);
+                throwException("transaction failed during commit of " + transaction, ex, interestedResources.size());
+            }
         }
 
         if (log.isDebugEnabled()) log.debug("phase 2 commit executed on resources " + Decoder.collectResourcesNames(committedResources));
@@ -197,11 +203,11 @@ public final class Committer extends AbstractPhaseEngine {
                 committedResources.add(resourceHolder);
                 if (log.isDebugEnabled()) log.debug("committed resource " + resourceHolder);
             } catch (XAException ex) {
-               handleXAException(resourceHolder, ex);
+               handleXAException(resourceHolder, ex, onePhase);
             }
         }
 
-        private void handleXAException(XAResourceHolderState failedResourceHolder, XAException xaException) throws XAException {
+        private void handleXAException(XAResourceHolderState failedResourceHolder, XAException xaException, boolean onePhase) throws XAException {
             switch (xaException.errorCode) {
                 case XAException.XA_HEURCOM:
                     forgetHeuristicCommit(failedResourceHolder);
@@ -225,6 +231,10 @@ public final class Committer extends AbstractPhaseEngine {
                     throw xaException;
 
                 default:
+                    if (onePhase) {
+                        if (log.isDebugEnabled()) log.debug("XAException thrown in commit phase of 1PC optimization, rethrowing it");
+                        throw xaException;
+                    }
                     String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(xaException);
                     log.warn("resource '" + failedResourceHolder.getUniqueName() + "' reported " + Decoder.decodeXAExceptionErrorCode(xaException) +
                             (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails) + " when asked to commit transaction branch." +
