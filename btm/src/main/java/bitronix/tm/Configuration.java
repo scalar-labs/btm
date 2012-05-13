@@ -60,6 +60,7 @@ public class Configuration implements Service {
     private volatile boolean skipCorruptedLogs;
     private volatile boolean asynchronous2Pc;
     private volatile boolean warnAboutZeroResourceTransaction;
+    private volatile boolean debugZeroResourceTransaction;
     private volatile int defaultTransactionTimeout;
     private volatile int gracefulShutdownInterval;
     private volatile int backgroundRecoveryIntervalSeconds;
@@ -105,6 +106,7 @@ public class Configuration implements Service {
             skipCorruptedLogs = getBoolean(properties, "bitronix.tm.journal.disk.skipCorruptedLogs", false);
             asynchronous2Pc = getBoolean(properties, "bitronix.tm.2pc.async", false);
             warnAboutZeroResourceTransaction = getBoolean(properties, "bitronix.tm.2pc.warnAboutZeroResourceTransactions", true);
+            debugZeroResourceTransaction = getBoolean(properties, "bitronix.tm.2pc.debugZeroResourceTransactions", false);
             defaultTransactionTimeout = getInt(properties, "bitronix.tm.timer.defaultTransactionTimeout", 60);
             gracefulShutdownInterval = getInt(properties, "bitronix.tm.timer.gracefulShutdownInterval", 60);
             backgroundRecoveryIntervalSeconds = getInt(properties, "bitronix.tm.timer.backgroundRecoveryIntervalSeconds", 60);
@@ -344,6 +346,32 @@ public class Configuration implements Service {
     public Configuration setWarnAboutZeroResourceTransaction(boolean warnAboutZeroResourceTransaction) {
         checkNotStarted();
         this.warnAboutZeroResourceTransaction = warnAboutZeroResourceTransaction;
+        return this;
+    }
+
+    /**
+     * Should creation and commit call stacks of transactions executed without a single enlisted tracked and logged
+     * or not?
+     * <p>Property name:<br/><b>bitronix.tm.2pc.debugZeroResourceTransactions -</b> <i>(defaults to false)</i></p>
+     * @return true if creation and commit call stacks of transactions executed without a single enlisted resource
+     *         should be tracked and logged.
+     */
+    public boolean isDebugZeroResourceTransaction() {
+        return debugZeroResourceTransaction;
+    }
+
+    /**
+     * Set if creation and commit call stacks of transactions executed without a single enlisted resource should be
+     * tracked and logged.
+     * @see #isDebugZeroResourceTransaction()
+     * @see #isWarnAboutZeroResourceTransaction()
+     * @param debugZeroResourceTransaction true if the creation and commit call stacks of transaction executed without
+     *        a single enlisted resource should be tracked and logged.
+     * @return this.
+     */
+    public Configuration setDebugZeroResourceTransaction(boolean debugZeroResourceTransaction) {
+        checkNotStarted();
+        this.debugZeroResourceTransaction = debugZeroResourceTransaction;
         return this;
     }
 

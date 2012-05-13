@@ -38,9 +38,11 @@ import bitronix.tm.twopc.Preparer;
 import bitronix.tm.twopc.Rollbacker;
 import bitronix.tm.twopc.executor.Executor;
 import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.ExceptionUtils;
 import bitronix.tm.utils.ManagementRegistrar;
 import bitronix.tm.utils.MonotonicClock;
 import bitronix.tm.utils.Scheduler;
+import bitronix.tm.utils.StackTrace;
 import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.UidGenerator;
 import org.slf4j.Logger;
@@ -74,6 +76,8 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
     private final static Logger log = LoggerFactory.getLogger(BitronixTransaction.class);
 
+    private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+
     private final XAResourceManager resourceManager;
     private final Scheduler<Synchronization> synchronizationScheduler = new Scheduler<Synchronization>();
     private final List<TransactionStatusChangeListener> transactionStatusListeners = new ArrayList<TransactionStatusChangeListener>();
@@ -92,6 +96,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     /* management */
     private volatile String threadName;
     private volatile Date startDate;
+    private volatile StackTrace activationStackTrace;
 
 
     public BitronixTransaction() {
@@ -285,6 +290,10 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
             committer.commit(this, interestedResources);
 
+            if (resourceManager.size() == 0 && TransactionManagerServices.getConfiguration().isWarnAboutZeroResourceTransaction()) {
+                log.warn(buildZeroTransactionDebugMessage(activationStackTrace, new StackTrace()));
+            }
+
             if (log.isDebugEnabled()) log.debug("successfully committed " + this);
         }
         finally {
@@ -360,6 +369,9 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         setStatus(Status.STATUS_ACTIVE);
         this.startDate = new Date(MonotonicClock.currentTimeMillis());
         this.timeoutDate = new Date(MonotonicClock.currentTimeMillis() + (timeout * 1000L));
+        if (TransactionManagerServices.getConfiguration().isDebugZeroResourceTransaction()) {
+            this.activationStackTrace = new StackTrace();
+        }
 
         taskScheduler.scheduleTransactionTimeout(this, timeoutDate);
     }
@@ -459,14 +471,14 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         if (!rolledBackResources.isEmpty() || !failedResources.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             if (!rolledBackResources.isEmpty()) {
-                sb.append(System.getProperty("line.separator"));
+                sb.append(LINE_SEPARATOR);
                 sb.append("  resource(s) ");
                 sb.append(Decoder.collectResourcesNames(rolledBackResources));
                 sb.append(" unilaterally rolled back");
 
             }
             if (!failedResources.isEmpty()) {
-                sb.append(System.getProperty("line.separator"));
+                sb.append(LINE_SEPARATOR);
                 sb.append("  resource(s) ");
                 sb.append(Decoder.collectResourcesNames(failedResources));
                 sb.append(" could not be delisted");
@@ -544,6 +556,16 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         ManagementRegistrar.unregister("bitronix.tm:type=Transaction,Gtrid=" + resourceManager.getGtrid());
     }
 
+    static String buildZeroTransactionDebugMessage(StackTrace activationStackTrace, StackTrace commitStackTrace) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("committed transaction with 0 enlisted resource").append(LINE_SEPARATOR);
+        sb.append("==================== Began at ====================").append(LINE_SEPARATOR);
+        sb.append(ExceptionUtils.getStackTrace(activationStackTrace)).append(LINE_SEPARATOR);
+        sb.append("==================== Committed at ====================").append(LINE_SEPARATOR);
+        sb.append(ExceptionUtils.getStackTrace(commitStackTrace)).append(LINE_SEPARATOR);
+        return sb.toString();
+    }
+
     private boolean isDone() {
         switch (status) {
             case Status.STATUS_PREPARING:
@@ -588,5 +610,14 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
     public Date getStartDate() {
         return startDate;
+    }
+
+    /**
+     * Returns the activation {@link StackTrace} if it is available.
+     *
+     * @return the call stack of where the transaction began
+     */
+    StackTrace getActivationStackTrace() {
+        return activationStackTrace;
     }
 }

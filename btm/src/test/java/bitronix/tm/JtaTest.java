@@ -56,7 +56,7 @@ public class JtaTest extends TestCase {
 
     public void testTransactionManagerGetTransaction() throws Exception {
         assertNull(btm.getTransaction());
-        
+
         btm.begin();
         assertNotNull(btm.getTransaction());
 
@@ -160,7 +160,7 @@ public class JtaTest extends TestCase {
 
         btm.begin();
         assertEquals(Status.STATUS_ACTIVE, btm.getStatus());
-        
+
         final Transaction tx = btm.getTransaction();
 
         // commit on a different thread
@@ -183,9 +183,27 @@ public class JtaTest extends TestCase {
 
     public void testBeforeCompletionAddsExtraSynchronizationInDifferentPriority() throws Exception {
         btm.begin();
-        
+
         btm.getCurrentTransaction().getSynchronizationScheduler().add(new SynchronizationRegisteringSynchronization(btm.getCurrentTransaction()), 5);
 
+        btm.commit();
+    }
+
+    public void testDebugZeroResourceTransactionDisabled() throws Exception {
+        btm.begin();
+        assertNull("Activation stack trace must not be available by default.",
+                ((BitronixTransaction) btm.getTransaction()).getActivationStackTrace());
+        btm.commit();
+    }
+
+    public void testDebugZeroResourceTransaction() throws Exception {
+        btm.shutdown(); // necessary to change the configuration
+        TransactionManagerServices.getConfiguration().setDebugZeroResourceTransaction(true);
+        btm = TransactionManagerServices.getTransactionManager();
+
+        btm.begin();
+        assertNotNull("Activation stack trace must be available.",
+                ((BitronixTransaction) btm.getTransaction()).getActivationStackTrace());
         btm.commit();
     }
 
