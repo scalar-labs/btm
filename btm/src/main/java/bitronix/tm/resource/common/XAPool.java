@@ -75,12 +75,6 @@ public class XAPool implements StateChangeListener {
         }
     }
 
-    private synchronized void growUntilMinPoolSize() throws Exception {
-        for (int i = (int)totalPoolSize(); i < bean.getMinPoolSize() ;i++) {
-            createPooledObject(xaFactory);
-        }
-    }
-
     public Object getXAFactory() {
         return xaFactory;
     }
@@ -136,7 +130,8 @@ public class XAPool implements StateChangeListener {
                 Object connectionHandle = xaStatefulHolder.getConnectionHandle();
                 if (bean.getShareTransactionConnections()) {
                     putSharedXAStatefulHolder(xaStatefulHolder);
-                }                
+                }
+                growUntilMinPoolSize();
                 return connectionHandle;
             } catch (Exception ex) {
                 if (log.isDebugEnabled()) log.debug("connection is invalid, trying to close it", ex);
@@ -149,10 +144,13 @@ public class XAPool implements StateChangeListener {
                 if (log.isDebugEnabled()) log.debug("removed invalid connection " + xaStatefulHolder + " from " + this);
 
                 if (log.isDebugEnabled()) log.debug("waiting " + bean.getAcquisitionInterval() + "s before trying to acquire a connection again from " + this);
-                try {
-                    wait(bean.getAcquisitionInterval() * 1000L);
-                } catch (InterruptedException ex2) {
-                    // ignore
+                long waitTime = bean.getAcquisitionInterval() * 1000L;
+                if (waitTime > 0) {
+                    try {
+                        wait(waitTime);
+                    } catch (InterruptedException ex2) {
+                        // ignore
+                    }
                 }
 
                 // check for timeout
@@ -392,9 +390,14 @@ public class XAPool implements StateChangeListener {
             for (int i=0; i < increment ;i++) {
                 createPooledObject(xaFactory);
             }
-        }
-        else {
+        } else {
             if (log.isDebugEnabled()) log.debug("pool " + bean.getUniqueName() + " already at max size of " + totalPoolSize() + " connection(s), not growing it");
+        }
+    }
+
+    private synchronized void growUntilMinPoolSize() throws Exception {
+        for (int i = (int)totalPoolSize(); i < bean.getMinPoolSize() ;i++) {
+            createPooledObject(xaFactory);
         }
     }
 
