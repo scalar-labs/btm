@@ -191,8 +191,7 @@ public class JtaTest extends TestCase {
 
     public void testDebugZeroResourceTransactionDisabled() throws Exception {
         btm.begin();
-        assertNull("Activation stack trace must not be available by default.",
-                ((BitronixTransaction) btm.getTransaction()).getActivationStackTrace());
+        assertNull("Activation stack trace must not be available by default.", btm.getCurrentTransaction().getActivationStackTrace());
         btm.commit();
     }
 
@@ -202,8 +201,7 @@ public class JtaTest extends TestCase {
         btm = TransactionManagerServices.getTransactionManager();
 
         btm.begin();
-        assertNotNull("Activation stack trace must be available.",
-                ((BitronixTransaction) btm.getTransaction()).getActivationStackTrace());
+        assertNotNull("Activation stack trace must be available.", btm.getCurrentTransaction().getActivationStackTrace());
         btm.commit();
     }
 
