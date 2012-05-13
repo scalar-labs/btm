@@ -212,18 +212,16 @@ public class TransactionManagerServices {
      * Create the exception analyzer.
      * @return the exception analyzer.
      */
-    public static ExceptionAnalyzer getExceptionAnalyzer() {
+   public static ExceptionAnalyzer getExceptionAnalyzer() {
         ExceptionAnalyzer analyzer = exceptionAnalyzerRef.get();
         if (analyzer == null) {
             String exceptionAnalyzerName = getConfiguration().getExceptionAnalyzer();
-            if (exceptionAnalyzerName == null) {
-                analyzer = new DefaultExceptionAnalyzer();
-            } else {
+            analyzer = new DefaultExceptionAnalyzer();
+            if (exceptionAnalyzerName != null) {
                 try {
                     analyzer = (ExceptionAnalyzer) ClassLoaderUtils.loadClass(exceptionAnalyzerName).newInstance();
                 } catch (Exception ex) {
-                    throw new InitializationException("invalid exception analyzer implementation '" + exceptionAnalyzerName + "'", ex);
-
+                    log.warn("failed to initialize custom exception analyzer, using default one instead", ex);
                 }
             }
             if (!exceptionAnalyzerRef.compareAndSet(null, analyzer)) {
@@ -263,6 +261,7 @@ public class TransactionManagerServices {
         resourceLoaderRef.set(null);
         recovererRef.set(null);
         executorRef.set(null);
+        exceptionAnalyzerRef.set(null);
     }
 
 }
