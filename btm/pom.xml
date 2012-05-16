@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.codehaus.btm</groupId>
         <artifactId>btm-parent</artifactId>
-        <version>2.2.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
     <groupId>org.codehaus.btm</groupId>
     <artifactId>btm</artifactId>
@@ -27,7 +27,17 @@
             <artifactId>slf4j-api</artifactId>
             <scope>provided</scope>
         </dependency>
-	     <dependency>
+        <dependency>
+            <groupId>cglib</groupId>
+            <artifactId>cglib</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javassist</groupId>
+            <artifactId>javassist</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.8.2</version>
@@ -62,7 +72,6 @@
                 <configuration>
                     <source>1.5</source>
                     <target>1.5</target>
-                    <compilerArgument>-Xbootclasspath/p:${project.basedir}/lib/jdbc-3.0.jar</compilerArgument>
                 </configuration>
             </plugin>
 
@@ -76,18 +85,19 @@
                         </goals>
                         <phase>generate-sources</phase>
                         <configuration>
-                            <tasks>
-                                <mkdir dir="${basedir}/target/generated-sources/btm/bitronix/tm" />
+                            <target>
+                                <mkdir dir="${basedir}/target/generated-sources/btm/bitronix/tm"/>
                                 <echo file="${basedir}/target/generated-sources/btm/bitronix/tm/Version.java">
-                                    package bitronix.tm;
+/* This is generated code, do not modify */
+package bitronix.tm;
 
-                                    public final class Version {
-                                        public static String getVersion() {
-                                            return "${project.version}";
-                                        }
-                                    }
+public final class Version {
+    public static String getVersion() {
+        return "${project.version}";
+    }
+}
                                 </echo>
-                            </tasks>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>
@@ -148,14 +158,6 @@
                             <mainClass>bitronix.tm.utils.CryptoEngine</mainClass>
                         </manifest>
                     </archive>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <argLine>"-Xbootclasspath/p:${project.basedir}/lib/jdbc-3.0.jar"</argLine>
                 </configuration>
             </plugin>
         </plugins>
