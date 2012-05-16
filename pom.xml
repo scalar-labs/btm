@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.codehaus</groupId>
         <artifactId>codehaus-parent</artifactId>
-        <version>3</version>
+        <version>4</version>
     </parent>
     <groupId>org.codehaus.btm</groupId>
     <artifactId>btm-parent</artifactId>
@@ -220,6 +220,7 @@
                     <version>2.1</version>
                     <configuration>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
+                        <arguments>-Pcodehaus-release,dist</arguments>
                     </configuration>
                 </plugin>
             </plugins>
