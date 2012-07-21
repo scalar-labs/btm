@@ -170,22 +170,27 @@ public class RecoveryHelper {
         try {
             xaResourceHolderState.getXAResource().commit(xid, false);
         } catch (XAException ex) {
+            String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
             if (ex.errorCode == XAException.XAER_NOTA) {
-                log.error("unable to commit in-doubt branch on resource " + uniqueName + " - error=XAER_NOTA. Forgotten heuristic?", ex);
+                log.error("unable to commit in-doubt branch on resource " + uniqueName + " - error=XAER_NOTA" +
+                        (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails) + ". Forgotten heuristic?", ex);
             }
             else if (ex.errorCode == XAException.XA_HEURCOM) {
                 log.info("unable to commit in-doubt branch on resource " + uniqueName + " - error=" +
-                        Decoder.decodeXAExceptionErrorCode(ex) + ". Heuristic decision compatible with the global state of this transaction.");
+                        Decoder.decodeXAExceptionErrorCode(ex) + (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails) +
+                        ". Heuristic decision compatible with the global state of this transaction.");
                 forget = true;
             }
             else if (ex.errorCode == XAException.XA_HEURHAZ || ex.errorCode == XAException.XA_HEURMIX || ex.errorCode == XAException.XA_HEURRB) {
                 log.error("unable to commit in-doubt branch on resource " + uniqueName + " - error=" +
-                        Decoder.decodeXAExceptionErrorCode(ex) + ". Heuristic decision incompatible with the global state of this transaction!");
+                        Decoder.decodeXAExceptionErrorCode(ex) + (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails) +
+                        ". Heuristic decision incompatible with the global state of this transaction!");
                 forget = true;
                 success = false;
             }
             else {
-                log.error("unable to commit in-doubt branch on resource " + uniqueName + " - error=" + Decoder.decodeXAExceptionErrorCode(ex) + ".", ex);
+                log.error("unable to commit in-doubt branch on resource " + uniqueName +
+                        " - error=" + Decoder.decodeXAExceptionErrorCode(ex) + (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails) + ".", ex);
                 success = false;
             }
         }
@@ -194,7 +199,9 @@ public class RecoveryHelper {
                 if (log.isDebugEnabled()) log.debug("forgetting XID " + xid + " on resource " + uniqueName);
                 xaResourceHolderState.getXAResource().forget(xid);
             } catch (XAException ex) {
-                log.error("unable to forget XID " + xid + " on resource " + uniqueName + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+                String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
+                log.error("unable to forget XID " + xid + " on resource " + uniqueName + ", error=" + Decoder.decodeXAExceptionErrorCode(ex) +
+                        (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
             }
         }
         return success;
@@ -213,23 +220,27 @@ public class RecoveryHelper {
         try {
             xaResourceHolderState.getXAResource().rollback(xid);
         } catch (XAException ex) {
+            String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
             if (ex.errorCode == XAException.XAER_NOTA) {
-                log.error("unable to rollback aborted in-doubt branch on resource " + uniqueName + " - error=XAER_NOTA. Forgotten heuristic?", ex);
+                log.error("unable to rollback aborted in-doubt branch on resource " + uniqueName + " - error=XAER_NOTA" +
+                        (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails) + ". Forgotten heuristic?", ex);
             }
             else if (ex.errorCode == XAException.XA_HEURRB) {
                 log.info("unable to rollback aborted in-doubt branch on resource " + uniqueName + " - error=" +
-                        Decoder.decodeXAExceptionErrorCode(ex) + ". Heuristic decision compatible with the global state of this transaction.");
+                        Decoder.decodeXAExceptionErrorCode(ex) + (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails) +
+                        ". Heuristic decision compatible with the global state of this transaction.");
                 forget = true;
             }
             else if (ex.errorCode == XAException.XA_HEURHAZ || ex.errorCode == XAException.XA_HEURMIX || ex.errorCode == XAException.XA_HEURCOM) {
                 log.error("unable to rollback aborted in-doubt branch on resource " + uniqueName + " - error=" +
-                        Decoder.decodeXAExceptionErrorCode(ex) + ". Heuristic decision incompatible with the global state of this transaction!");
+                        Decoder.decodeXAExceptionErrorCode(ex) + (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails) +
+                        ". Heuristic decision incompatible with the global state of this transaction!");
                 forget = true;
                 success = false;
             }
             else {
                 log.error("unable to rollback aborted in-doubt branch on resource " + uniqueName + " - error=" +
-                        Decoder.decodeXAExceptionErrorCode(ex) + ".", ex);
+                        Decoder.decodeXAExceptionErrorCode(ex) + (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails) + ".", ex);
                 success = false;
             }
         }
@@ -238,7 +249,9 @@ public class RecoveryHelper {
                 if (log.isDebugEnabled()) log.debug("forgetting XID " + xid + " on resource " + uniqueName);
                 xaResourceHolderState.getXAResource().forget(xid);
             } catch (XAException ex) {
-                log.error("unable to forget XID " + xid + " on resource " + uniqueName + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+                String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
+                log.error("unable to forget XID " + xid + " on resource " + uniqueName + ", error=" + Decoder.decodeXAExceptionErrorCode(ex) +
+                        (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
             }
         }
         return success;

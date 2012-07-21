@@ -20,6 +20,7 @@
  */
 package bitronix.tm.internal;
 
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.utils.Decoder;
 
 import javax.transaction.xa.XAException;
@@ -63,6 +64,8 @@ public class BitronixMultiSystemException extends BitronixSystemException {
                 XAException xaEx = (XAException) throwable;
                 errorMessage.append("(");
                 errorMessage.append(Decoder.decodeXAExceptionErrorCode(xaEx));
+                String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(xaEx);
+                if (extraErrorDetails != null) errorMessage.append(" - ").append(extraErrorDetails);
                 errorMessage.append(")");
             }
             errorMessage.append(" - ");

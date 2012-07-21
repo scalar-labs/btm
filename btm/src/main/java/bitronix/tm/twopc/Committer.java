@@ -20,6 +20,7 @@
  */
 package bitronix.tm.twopc;
 
+import bitronix.tm.TransactionManagerServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import bitronix.tm.BitronixTransaction;
@@ -224,8 +225,10 @@ public final class Committer extends AbstractPhaseEngine {
                     throw xaException;
 
                 default:
+                    String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(xaException);
                     log.warn("resource '" + failedResourceHolder.getUniqueName() + "' reported " + Decoder.decodeXAExceptionErrorCode(xaException) +
-                            " when asked to commit transaction branch. Transaction is prepared and will commit via recovery service when resource availability allows.", xaException);
+                            (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails) + " when asked to commit transaction branch." +
+                            " Transaction is prepared and will commit via recovery service when resource availability allows.", xaException);
             }
         }
 
@@ -235,7 +238,9 @@ public final class Committer extends AbstractPhaseEngine {
                 resourceHolder.getXAResource().forget(resourceHolder.getXid());
                 if (log.isDebugEnabled()) log.debug("forgotten heuristically committed resource " + resourceHolder.getXAResource());
             } catch (XAException ex) {
-                log.error("cannot forget " + resourceHolder.getXid() + " assigned to " + resourceHolder.getXAResource() + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+                String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
+                log.error("cannot forget " + resourceHolder.getXid() + " assigned to " + resourceHolder.getXAResource() +
+                        ", error=" + Decoder.decodeXAExceptionErrorCode(ex) + (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
             }
         }
 

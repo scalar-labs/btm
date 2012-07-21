@@ -231,7 +231,9 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             } catch (XAException ex) {
                 producer.setFailed(true);
                 registeredResources.remove(uniqueName);
-                log.warn("error running recovery on resource '" + uniqueName + "', resource marked as failed (background recoverer will retry recovery) (error=" + Decoder.decodeXAExceptionErrorCode(ex) + ")", ex);
+                String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
+                log.warn("error running recovery on resource '" + uniqueName + "', resource marked as failed (background recoverer will retry recovery)" +
+                        " (error=" + Decoder.decodeXAExceptionErrorCode(ex) + ")" + (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
             } catch (Exception ex) {
                 producer.setFailed(true);
                 registeredResources.remove(uniqueName);

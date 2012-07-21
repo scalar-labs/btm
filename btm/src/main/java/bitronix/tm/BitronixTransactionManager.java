@@ -209,7 +209,9 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             MDC.remove(MDC_GTRID_KEY);
             return currentTx;
         } catch (XAException ex) {
-            throw new BitronixSystemException("cannot suspend " + currentTx + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+            String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
+            throw new BitronixSystemException("cannot suspend " + currentTx + ", error=" + Decoder.decodeXAExceptionErrorCode(ex) +
+                    (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
         }
     }
 
@@ -232,7 +234,9 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
             inFlightTransactions.get(tx).setThreadContext(threadContext);
             MDC.put(MDC_GTRID_KEY, tx.getGtrid());
         } catch (XAException ex) {
-            throw new BitronixSystemException("cannot resume " + tx + ", error=" + Decoder.decodeXAExceptionErrorCode(ex), ex);
+            String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
+            throw new BitronixSystemException("cannot resume " + tx + ", error=" + Decoder.decodeXAExceptionErrorCode(ex) +
+                    (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
         }
     }
 
