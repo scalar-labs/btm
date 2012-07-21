@@ -48,8 +48,6 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
     private final static Logger log = LoggerFactory.getLogger(BitronixTransaction.class);
 
-    private static final String LINE_SEPARATOR = System.getProperty("line.separator");
-
     private final XAResourceManager resourceManager;
     private final Scheduler<Synchronization> synchronizationScheduler = new Scheduler<Synchronization>();
     private final List<TransactionStatusChangeListener> transactionStatusListeners = new ArrayList<TransactionStatusChangeListener>();
@@ -445,16 +443,17 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         } // for
 
         if (!rolledBackResources.isEmpty() || !failedResources.isEmpty()) {
+            String lineSeparator = System.getProperty("line.separator");
             StringBuilder sb = new StringBuilder();
             if (!rolledBackResources.isEmpty()) {
-                sb.append(LINE_SEPARATOR);
+                sb.append(lineSeparator);
                 sb.append("  resource(s) ");
                 sb.append(Decoder.collectResourcesNames(rolledBackResources));
                 sb.append(" unilaterally rolled back");
 
             }
             if (!failedResources.isEmpty()) {
-                sb.append(LINE_SEPARATOR);
+                sb.append(lineSeparator);
                 sb.append("  resource(s) ");
                 sb.append(Decoder.collectResourcesNames(failedResources));
                 sb.append(" could not be delisted");
@@ -533,12 +532,13 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     }
 
     static String buildZeroTransactionDebugMessage(StackTrace activationStackTrace, StackTrace commitStackTrace) {
+        String lineSeparator = System.getProperty("line.separator");
         final StringBuilder sb = new StringBuilder();
-        sb.append("committed transaction with 0 enlisted resource").append(LINE_SEPARATOR);
-        sb.append("==================== Began at ====================").append(LINE_SEPARATOR);
-        sb.append(ExceptionUtils.getStackTrace(activationStackTrace)).append(LINE_SEPARATOR);
-        sb.append("==================== Committed at ====================").append(LINE_SEPARATOR);
-        sb.append(ExceptionUtils.getStackTrace(commitStackTrace)).append(LINE_SEPARATOR);
+        sb.append("committed transaction with 0 enlisted resource").append(lineSeparator);
+        sb.append("==================== Began at ====================").append(lineSeparator);
+        sb.append(ExceptionUtils.getStackTrace(activationStackTrace)).append(lineSeparator);
+        sb.append("==================== Committed at ====================").append(lineSeparator);
+        sb.append(ExceptionUtils.getStackTrace(commitStackTrace)).append(lineSeparator);
         return sb.toString();
     }
 
