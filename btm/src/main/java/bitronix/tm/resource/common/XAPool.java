@@ -171,7 +171,8 @@ public class XAPool implements StateChangeListener {
                 Object connectionHandle = xaStatefulHolder.getConnectionHandle();
                 if (bean.getShareTransactionConnections()) {
                     putSharedXAStatefulHolder(xaStatefulHolder);
-                }                
+                }
+                growUntilMinPoolSize();
                 return connectionHandle;
             } catch (Exception ex) {
                 try {
@@ -184,7 +185,18 @@ public class XAPool implements StateChangeListener {
                     if (xaStatefulHolder.getState() != XAStatefulHolder.STATE_CLOSED) {
                         stateChanged(xaStatefulHolder, xaStatefulHolder.getState(), XAStatefulHolder.STATE_CLOSED);
                     }
+
                     if (log.isDebugEnabled()) { log.debug("removed invalid connection " + xaStatefulHolder + " from " + this); }
+
+                    if (log.isDebugEnabled()) log.debug("waiting " + bean.getAcquisitionInterval() + "s before trying to acquire a connection again from " + this);
+                    long waitTime = bean.getAcquisitionInterval() * 1000L;
+                    if (waitTime > 0) {
+                        try {
+                            wait(waitTime);
+                        } catch (InterruptedException ex2) {
+                            // ignore
+                        }
+                    }
                 }
 
                 // check for timeout
@@ -258,13 +270,6 @@ public class XAPool implements StateChangeListener {
 
         if (bean.getMaxIdleTime() > 0) {
             TransactionManagerServices.getTaskScheduler().schedulePoolShrinking(this);
-        }
-    }
-
-    private synchronized void growUntilMinPoolSize() throws Exception {
-        if (log.isDebugEnabled()) { log.debug("growing " + this + " to minimum pool size " + bean.getMinPoolSize()); }
-        for (int i = (int)totalPoolSize(); i < bean.getMinPoolSize() ;i++) {
-            createPooledObject(xaFactory);
         }
     }
 
@@ -517,6 +522,37 @@ public class XAPool implements StateChangeListener {
         else {
             if (log.isDebugEnabled()) { log.debug("pool " + bean.getUniqueName() + " already at max size of " + totalPoolSize() + " connection(s), not growing it"); }
         }
+    }
+
+    private synchronized void growUntilMinPoolSize() throws Exception {
+        if (log.isDebugEnabled()) { log.debug("growing " + this + " to minimum pool size " + bean.getMinPoolSize()); }
+        for (int i = (int)totalPoolSize(); i < bean.getMinPoolSize() ;i++) {
+            createPooledObject(xaFactory);
+        }
+    }
+
+    private synchronized void waitForConnectionInPool() {
+        long remainingTime = bean.getAcquisitionTimeout() * 1000L;
+        if (log.isDebugEnabled()) log.debug("waiting for IN_POOL connections count to be > 0, currently is " + inPoolSize());
+        while (inPoolSize() == 0) {
+            long before = MonotonicClock.currentTimeMillis();
+            try {
+                if (log.isDebugEnabled()) log.debug("waiting " + remainingTime + "ms");
+                wait(remainingTime);
+                if (log.isDebugEnabled()) log.debug("waiting over, IN_POOL connections count is now " + inPoolSize());
+            } catch (InterruptedException ex) {
+                // ignore
+            }
+
+            long now = MonotonicClock.currentTimeMillis();
+            remainingTime -= (now - before);
+            if (remainingTime <= 0 && inPoolSize() == 0) {
+                if (log.isDebugEnabled()) log.debug("connection pool dequeue timed out");
+                if (TransactionManagerServices.isTransactionManagerRunning())
+                    TransactionManagerServices.getTransactionManager().dumpTransactionContexts();
+                throw new BitronixRuntimeException("XA pool of resource " + bean.getUniqueName() + " still empty after " + bean.getAcquisitionTimeout() + "s wait time");
+            }
+        } // while
     }
 
     /**
