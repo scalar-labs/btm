@@ -264,7 +264,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
             committer.commit(this, interestedResources);
 
-            if (resourceManager.size() == 0 && TransactionManagerServices.getConfiguration().isWarnAboutZeroResourceTransaction()) {
+            if (resourceManager.size() == 0 && TransactionManagerServices.getConfiguration().isDebugZeroResourceTransaction()) {
                 log.warn(buildZeroTransactionDebugMessage(activationStackTrace, new StackTrace()));
             }
 
