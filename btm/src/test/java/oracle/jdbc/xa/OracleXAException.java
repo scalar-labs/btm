@@ -6,6 +6,11 @@ public class OracleXAException extends XAException {
     
     private int oracleError;
 
+    public OracleXAException(String msg, int oracleError) {
+        super(msg);
+        this.oracleError = oracleError;
+    }
+
     public OracleXAException(int oracleError) {
         this.oracleError = oracleError;
     }

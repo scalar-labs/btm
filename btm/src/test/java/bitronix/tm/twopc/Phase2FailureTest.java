@@ -80,7 +80,7 @@ public class Phase2FailureTest extends TestCase {
         connection1.createStatement();
 
         Connection connection2 = poolingDataSource2.getConnection();
-        JdbcConnectionHandle handle = (JdbcConnectionHandle) connection1;
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) connection2;
         XAConnection xaConnection2 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle.getPooledConnection());
         connection2.createStatement();
 

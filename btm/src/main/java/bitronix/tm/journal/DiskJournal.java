@@ -412,7 +412,11 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
                     danglingRecords.put(tlog.getGtrid(), tlog);
                     committing++;
                 }
-                if (status == Status.STATUS_COMMITTED || status == Status.STATUS_UNKNOWN) {
+
+                // COMMITTED is when there was no problem in the transaction
+                // UNKNOWN is when a 2PC transaction heuristically terminated
+                // ROLLEDBACK is when a 1PC transaction rolled back during commit
+                if (status == Status.STATUS_COMMITTED || status == Status.STATUS_UNKNOWN || status == Status.STATUS_ROLLEDBACK) {
                     TransactionLogRecord rec = danglingRecords.get(tlog.getGtrid());
                     if (rec != null) {
                         Set<String> recUniqueNames = new HashSet<String>(rec.getUniqueNames());
