@@ -39,6 +39,7 @@ public abstract class ResourceBean implements Serializable {
     private volatile int maxPoolSize = 0;
     private volatile int minPoolSize = 0;
     private volatile int maxIdleTime = 60;
+    private volatile int maxLifeTime = 0;
     private volatile int acquireIncrement = 1;
     private volatile int acquisitionTimeout = 30;
     private volatile boolean deferConnectionRelease = true;
@@ -185,6 +186,21 @@ public abstract class ResourceBean implements Serializable {
      */
     public void setMaxIdleTime(int maxIdleTime) {
         this.maxIdleTime = maxIdleTime;
+    }
+
+    /**
+     * @return the maximum lifetime (in seconds) that a connection can stay in the pool before getting closed.
+     */
+    public int getMaxLifeTime() {
+        return maxLifeTime;
+    }
+
+    /**
+     * Define the maximum lifetime (in seconds) that a connection can stay in the pool before getting closed.
+     * @param maxLifeTime the maximum lifetime (in seconds) that a connection can stay in the pool before getting closed.
+     */
+    public void setMaxLifeTime(int maxLifeTime) {
+        this.maxLifeTime = maxLifeTime;
     }
 
     /**

@@ -13,14 +13,10 @@
         <dependencySet>
             <outputDirectory/>
             <includes>
-                <include>org.codehaus.btm:btm:jar</include>
+                <include>org.codehaus.btm:btm-dist:jar</include>
             </includes>
-            <excludes>
-                <exclude>org.codehaus.btm:btm:jar:sources</exclude>
-                <exclude>org.codehaus.btm:btm:jar:test-sources</exclude>
-                <exclude>org.codehaus.btm:btm:jar:javadoc</exclude>
-            </excludes>
-            <useProjectArtifact>false</useProjectArtifact>
+            <useProjectArtifact>true</useProjectArtifact>
+            <outputFileNameMapping>btm-${artifact.version}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
         </dependencySet>
         <!-- integration jars -->
         <dependencySet>
@@ -43,6 +39,7 @@
             </unpackOptions>
             <includes>
                 <include>org.codehaus.btm:btm:jar:sources</include>
+                <include>org.codehaus.btm:btm-jdbc4:jar:sources</include>
             </includes>
             <useProjectArtifact>false</useProjectArtifact>
         </dependencySet>

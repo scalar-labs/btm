@@ -291,6 +291,12 @@ public class XAPool implements StateChangeListener {
             }
 
             long expirationTime = (xaStatefulHolder.getLastReleaseDate().getTime() + (bean.getMaxIdleTime() * 1000));
+            if (bean.getMaxLifeTime() > 0)
+            {
+                long endOfLife = xaStatefulHolder.getCreationDate().getTime() + (bean.getMaxLifeTime() * 1000);
+                expirationTime = Math.min(expirationTime, endOfLife);
+            }
+
             if (!forceClose && log.isDebugEnabled()) { log.debug("checking if connection can be closed: " + xaStatefulHolder + " - closing time: " + expirationTime + ", now time: " + now); }
             if (expirationTime <= now || forceClose) {
                 try {

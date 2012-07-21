@@ -38,6 +38,11 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
 
     private volatile int state = STATE_IN_POOL;
     private final List<StateChangeListener> stateChangeEventListeners = new CopyOnWriteArrayList<StateChangeListener>();
+    private final Date creationDate = new Date();
+
+    public Date getCreationDate() {
+        return creationDate;
+    }
 
     public int getState() {
         return state;
