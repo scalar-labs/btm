@@ -196,8 +196,10 @@ public final class Rollbacker extends AbstractPhaseEngine {
                     throw xaException;
 
                 default:
+                    String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(xaException);
                     log.warn("resource '" + failedResourceHolder.getUniqueName() + "' reported " + Decoder.decodeXAExceptionErrorCode(xaException) +
-                            " when asked to rollback transaction branch. Transaction is prepared and will rollback via recovery service when resource availability allows.", xaException);
+                            " when asked to rollback transaction branch. Transaction is prepared and will rollback via recovery service when resource availability allows."
+                            + (extraErrorDetails == null ? "" : " Extra error=" + extraErrorDetails), xaException);
             }
         }
 
