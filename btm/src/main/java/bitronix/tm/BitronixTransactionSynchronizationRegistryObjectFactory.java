@@ -43,7 +43,7 @@ public class BitronixTransactionSynchronizationRegistryObjectFactory implements 
      * @see bitronix.tm.BitronixTransactionSynchronizationRegistry
      * @return the unique synchronization registry instance.
      */
-    public Object getObjectInstance(Object obj, Name name, Context nameCtx, Hashtable environment) throws Exception {
+    public Object getObjectInstance(Object obj, Name name, Context nameCtx, Hashtable<?,?> environment) throws Exception {
         if (log.isDebugEnabled()) log.debug("returning the unique synchronization registry instance");
         return TransactionManagerServices.getTransactionSynchronizationRegistry();
     }

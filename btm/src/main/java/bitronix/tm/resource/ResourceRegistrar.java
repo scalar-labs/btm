@@ -32,8 +32,7 @@ import org.slf4j.LoggerFactory;
 import javax.transaction.xa.XAResource;
 
 import java.io.UnsupportedEncodingException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
@@ -87,7 +86,7 @@ public final class ResourceRegistrar {
             names.add(holder.getUniqueName());
         }
 
-        return names;
+        return Collections.unmodifiableSet(names);
     }
 
     /**
