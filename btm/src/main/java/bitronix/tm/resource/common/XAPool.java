@@ -147,9 +147,9 @@ public class XAPool implements StateChangeListener {
             }
         }
 
-        long before = MonotonicClock.currentTimeMillis();
         long remainingTimeMs = bean.getAcquisitionTimeout() * 1000L;
         while (true) {
+            long before = MonotonicClock.currentTimeMillis();
             XAStatefulHolder xaStatefulHolder = null;
             if (recycle) {
                 if (bean.getShareTransactionConnections()) {
