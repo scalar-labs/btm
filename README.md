@@ -27,10 +27,18 @@ Whether you need bitronix-hp will depend largely on your workload.  Only you can
 
 Installation
 ------------
-Bitronix-HP is intended to be 100% compatible with Bitronix.  Install Bitronix first, and work out all of the kinks in your configuration -- Spring, JPA/Hibernate, whatever.  Only after everything is working, trying dropping in Bitronix-HP and then test your performance.
+Bitronix-HP is intended to be 100% compatible with Bitronix.  We regularly merge changes from the Bitronix mainline.
+
+Install Bitronix first, and work out all of the kinks in your configuration -- Spring, JPA/Hibernate, whatever.  Only after everything is working, trying dropping in Bitronix-HP and then test your performance.
 
 In the download area you will find a jar:
 
 [btm-2.2.0-SNAPSHOT.jar](https://github.com/downloads/brettwooldridge/bitronix-hp/btm-2.2.0-SNAPSHOT.jar)
 
 Replace your Bitronix 2.1.x jar file with the btm-2.2.0-SNAPSHOT.jar.  Bitronix-HP is not available in a maven repository at this time.
+
+If you ever encounter an issue with the Bitronix-HP fork, I recommend dropping back to the standard Bitronix distribution to see if the problem also occurs there.
+
+Forking
+-------
+Basically, I would prefer if you did not fork this project.  Why?  Because I think all meaningful and significant changes should be contributed to the core Bitronix project.  Only if there is an improvement that is specific to the Bitronix-HP code would I recommend that you fork this project.  Of course, if you do fork it, I welcome Pull Requests.
