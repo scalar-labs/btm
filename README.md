@@ -31,6 +31,6 @@ Bitronix-HP is intended to be 100% compatible with Bitronix.  Install Bitronix f
 
 In the download area you will find a jar:
 
-btm-2.2.0-SNAPSHOT.jar
+[btm-2.2.0-SNAPSHOT.jar](https://github.com/downloads/brettwooldridge/bitronix-hp/btm-2.2.0-SNAPSHOT.jar)
 
 Replace your Bitronix 2.1.x jar file with the btm-2.2.0-SNAPSHOT.jar.  Bitronix-HP is not available in a maven repository at this time.
