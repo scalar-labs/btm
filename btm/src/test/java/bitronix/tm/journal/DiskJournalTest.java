@@ -81,7 +81,6 @@ public class DiskJournalTest extends TestCase {
         journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet("name1"));
         assertEquals(0, journal.collectDanglingRecords().size());
 
-
         journal.close();
     }
 
@@ -182,6 +181,60 @@ public class DiskJournalTest extends TestCase {
 
         tlr = new TransactionLogRecord(Status.STATUS_COMMITTED, 116, 28, 1220609394845L, 38266, -1380478121, uid, names, TransactionLogAppender.END_RECORD);
         assertTrue(tlr.isCrc32Correct());
+    }
+
+    public void testRollover() throws Exception {
+    	TransactionManagerServices.getConfiguration().setMaxLogSizeInMb(1);
+        DiskJournal journal = new DiskJournal();
+        journal.open();
+
+        List<Uid> uncommitted = new ArrayList<Uid>();
+        for (int i = 1; i < 4000; i++) {
+	        Uid gtrid = UidGenerator.generateUid();
+	        journal.log(Status.STATUS_COMMITTING, gtrid, csvToSet("name1,name2,name3"));
+
+	        if (i < 3600)
+	        {
+		        journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet("name1"));
+		        journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet("name2"));
+		        journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet("name3"));
+	        }
+	        else
+	        {
+	        	uncommitted.add(gtrid);
+	        }
+        }
+
+        Map<Uid, TransactionLogRecord> danglingRecords = journal.collectDanglingRecords();
+        assertEquals(400, danglingRecords.size());
+
+        for (Uid gtrid : uncommitted)
+        {
+	        journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet("name1"));
+	        journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet("name2"));
+	        journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet("name3"));
+        }
+
+        assertEquals(0, journal.collectDanglingRecords().size());
+
+        journal.shutdown();
+    }
+
+    public void testLargeRollover() throws IOException {
+        TransactionManagerServices.getConfiguration().setMaxLogSizeInMb(4);
+        DiskJournal journal = new DiskJournal();
+        journal.open();
+
+        for (int i = 1; i < 40000; i++) {
+            Uid gtrid = UidGenerator.generateUid();
+            journal.log(Status.STATUS_COMMITTING, gtrid, csvToSet("name1,name2,name3"));
+
+            journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet("name1"));
+            journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet("name2"));
+            journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet("name3"));
+        }
+
+        journal.shutdown();
     }
 
     private SortedSet csvToSet(String s) {

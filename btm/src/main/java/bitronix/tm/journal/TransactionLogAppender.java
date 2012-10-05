@@ -20,10 +20,6 @@
  */
 package bitronix.tm.journal;
 
-import bitronix.tm.TransactionManagerServices;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -31,6 +27,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import bitronix.tm.TransactionManagerServices;
 
 /**
  * Used to write {@link TransactionLogRecord} objects to a log file.
@@ -52,7 +53,7 @@ public class TransactionLogAppender {
     private final FileChannel fc;
     private final FileLock lock;
     private final TransactionLogHeader header;
-    private final long maxFileLength;
+	private long maxFileLength;
 
     private static volatile DiskForceBatcherThread diskForceBatcherThread;
 
@@ -64,10 +65,10 @@ public class TransactionLogAppender {
      * @throws IOException if an I/O error occurs.
      */
     public TransactionLogAppender(File file, long maxFileLength) throws IOException {
-        this.maxFileLength = maxFileLength;
         this.file = file;
         this.fc = new RandomAccessFile(file, "rw").getChannel();
         this.header = new TransactionLogHeader(fc, maxFileLength);
+        this.maxFileLength = maxFileLength;
         this.lock = fc.tryLock(0, TransactionLogHeader.TIMESTAMP_HEADER, false);
         if (this.lock == null)
             throw new IOException("transaction log file " + file.getName() + " is locked. Is another instance already running?");
@@ -78,9 +79,53 @@ public class TransactionLogAppender {
     /**
      * Return a {@link TransactionLogHeader} that allows reading and controlling the log file's header.
      * @return this log file's TransactionLogHeader
+     * @throws IOException if an I/O error occurs
      */
-    public TransactionLogHeader getHeader() {
-        return header;
+    void rewind() throws IOException {
+        header.rewind();
+    }
+
+    long getTimestamp() {
+    	return header.getTimestamp();
+    }
+
+    /**
+     * @param timestamp the timestamp to set in the log
+     * @throws IOException if an I/O error occurs
+     */
+    void setTimestamp(long timestamp) throws IOException {
+    	header.setTimestamp(timestamp);
+    }
+
+    /**
+     * Get STATE_HEADER.
+     * @return the STATE_HEADER value.
+     */
+    public byte getState() {
+        return header.getState();
+    }
+
+    /**
+     * Set STATE_HEADER.
+     * @param state the STATE_HEADER value.
+     * @throws IOException if an I/O error occurs.
+     */
+    public void setState(byte state) throws IOException {
+    	header.setState(state);
+    }
+
+    public long getPosition() {
+    	return header.getPosition();
+    }
+
+    public long getPositionAndAdvance(int recordSize) throws IOException {
+    	long position = header.getPosition();
+    	if (position + recordSize > maxFileLength) {
+    		return -1;
+    	}
+
+    	header.goAhead(recordSize);
+    	return position;
     }
 
     /**
@@ -89,41 +134,32 @@ public class TransactionLogAppender {
      * @return true if there was room in the log file and the log was written, false otherwise.
      * @throws IOException if an I/O error occurs.
      */
-    public boolean writeLog(TransactionLogRecord tlog) throws IOException {
-        synchronized (fc) {
-            int recordSize = tlog.calculateTotalRecordSize();
-            long futureFilePosition = getHeader().getPosition() + recordSize;
-            if (futureFilePosition >= maxFileLength) { // see TransactionLogHeader.setPosition() as it double-checks this
-                if (log.isDebugEnabled()) log.debug("log file is full (size would be: " + futureFilePosition + ", max allowed: " + maxFileLength + ")");
-                return false;
-            }
-            if (log.isDebugEnabled()) log.debug("between " + getHeader().getPosition() + " and " + futureFilePosition + ", writing " + tlog);
+    public void writeLog(TransactionLogRecord tlog) throws IOException {
+    	int recordSize = tlog.calculateTotalRecordSize();
+        ByteBuffer buf = ByteBuffer.allocate(recordSize);
+        buf.putInt(tlog.getStatus());
+        buf.putInt(tlog.getRecordLength());
+        buf.putInt(tlog.getHeaderLength());
+        buf.putLong(tlog.getTime());
+        buf.putInt(tlog.getSequenceNumber());
+        buf.putInt(tlog.getCrc32());
+        buf.put((byte) tlog.getGtrid().getArray().length);
+        buf.put(tlog.getGtrid().getArray());
+        Set<String> uniqueNames = tlog.getUniqueNames();
+        buf.putInt(uniqueNames.size());
+        for (String uniqueName : uniqueNames) {
+            buf.putShort((short) uniqueName.length());
+            buf.put(uniqueName.getBytes());
+        }
+        buf.putInt(tlog.getEndRecord());
+        buf.flip();
 
-            ByteBuffer buf = ByteBuffer.allocate(recordSize);
-            buf.putInt(tlog.getStatus());
-            buf.putInt(tlog.getRecordLength());
-            buf.putInt(tlog.getHeaderLength());
-            buf.putLong(tlog.getTime());
-            buf.putInt(tlog.getSequenceNumber());
-            buf.putInt(tlog.getCrc32());
-            buf.put((byte) tlog.getGtrid().getArray().length);
-            buf.put(tlog.getGtrid().getArray());
-            Set<String> uniqueNames = tlog.getUniqueNames();
-            buf.putInt(uniqueNames.size());
-            for (String uniqueName : uniqueNames) {
-                buf.putShort((short) uniqueName.length());
-                buf.put(uniqueName.getBytes());
-            }
-            buf.putInt(tlog.getEndRecord());
+        if (log.isDebugEnabled()) log.debug("between " + tlog.getWritePosition() + " and " + tlog.getWritePosition() + tlog.calculateTotalRecordSize() + ", writing " + tlog);
 
-            buf.flip();
-            while (buf.hasRemaining()) {
-                this.fc.write(buf);
-            }
-            getHeader().goAhead(tlog.calculateTotalRecordSize());
-            if (log.isDebugEnabled()) log.debug("disk journal appender now at position " + getHeader().getPosition());
-
-            return true;
+        final long writePosition = tlog.getWritePosition();
+        while (buf.hasRemaining())
+        {
+        	fc.write(buf, writePosition + buf.position());
         }
     }
 
@@ -135,9 +171,10 @@ public class TransactionLogAppender {
         synchronized (fc) {
             shutdownBatcherThread();
 
-            getHeader().setState(TransactionLogHeader.CLEAN_LOG_STATE);
+            header.setState(TransactionLogHeader.CLEAN_LOG_STATE);
             fc.force(false);
-            lock.release();
+            if (lock != null)
+            	lock.release();
             fc.close();
         }
     }
@@ -178,11 +215,9 @@ public class TransactionLogAppender {
 
 
     protected void doForce() throws IOException {
-        synchronized (fc) {
-            if (log.isDebugEnabled()) log.debug("forcing log writing");
-            fc.force(false);
-            if (log.isDebugEnabled()) log.debug("done forcing log");
-        }
+        if (log.isDebugEnabled()) log.debug("forcing log writing");
+        fc.force(false);
+        if (log.isDebugEnabled()) log.debug("done forcing log");
     }
 
     private void spawnBatcherThread() {

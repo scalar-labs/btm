@@ -33,6 +33,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Simple implementation of a journal that writes on a two-files disk log.
@@ -66,6 +69,13 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      */
     private TransactionLogAppender tla2;
 
+    private AtomicBoolean usingTla1 = new AtomicBoolean(true);
+
+	private long maxFileLength;
+
+	private boolean conservativeJournaling;
+	
+	private Lock journalLock = new ReentrantLock();
 
     /**
      * Create an uninitialized disk journal. You must call open() prior you can use it.
@@ -95,17 +105,33 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         }
 
         TransactionLogRecord tlog = new TransactionLogRecord(status, gtrid, uniqueNames);
-        synchronized (this) {
-            boolean written = activeTla.writeLog(tlog);
-            if (!written) {
-                // time to swap log files
-                swapJournalFiles();
+        int tlogSize = tlog.calculateTotalRecordSize();
 
-                written = activeTla.writeLog(tlog);
-                if (!written)
-                    throw new IOException("no room to write log to journal even after swap, circular collision avoided");
-            }
-        } //synchronized
+        try {
+        	if (conservativeJournaling) {
+        		journalLock.lock();
+        	}
+
+	        long writePosition;
+	        synchronized (this) {
+	        	writePosition = activeTla.getPositionAndAdvance(tlogSize);
+	            if (writePosition < 0) {
+	                if (log.isDebugEnabled()) log.debug("log file is full (size would be: " + writePosition + tlogSize + ", max allowed: " + maxFileLength + ")");
+	                // time to swap log files
+	                swapJournalFiles();
+	                writePosition = activeTla.getPositionAndAdvance(tlogSize);
+	            }
+	        }
+
+	        tlog.setWritePosition(writePosition);
+
+	        activeTla.writeLog(tlog);
+        }
+        finally {
+        	if (conservativeJournaling) {
+        		journalLock.unlock();
+        	}
+        }
     }
 
     /**
@@ -132,6 +158,8 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
             return;
         }
 
+        conservativeJournaling = TransactionManagerServices.getConfiguration().isConservativeJournaling();
+
         File file1 = new File(TransactionManagerServices.getConfiguration().getLogPart1Filename());
         File file2 = new File(TransactionManagerServices.getConfiguration().getLogPart2Filename());
 
@@ -154,7 +182,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
             log.error("transaction log files are not of the same length: corrupted files?");
         }
 
-        long maxFileLength = Math.max(file1.length(), file2.length());
+        maxFileLength = Math.max(file1.length(), file2.length());
         if (log.isDebugEnabled()) log.debug("disk journal files max length: " + maxFileLength);
 
         tla1 = new TransactionLogAppender(file1, maxFileLength);
@@ -294,17 +322,19 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @see TransactionLogHeader
      */
     private synchronized byte pickActiveJournalFile(TransactionLogAppender tla1, TransactionLogAppender tla2) throws IOException {
-        if (tla1.getHeader().getTimestamp() > tla2.getHeader().getTimestamp()) {
+        if (tla1.getTimestamp() > tla2.getTimestamp()) {
             activeTla = tla1;
+            usingTla1.set(true);
             if (log.isDebugEnabled()) log.debug("logging to file 1: " + activeTla);
         }
         else {
             activeTla = tla2;
+            usingTla1.set(false);
             if (log.isDebugEnabled()) log.debug("logging to file 2: " + activeTla);
         }
 
-        byte cleanState = activeTla.getHeader().getState();
-        activeTla.getHeader().setState(TransactionLogHeader.UNCLEAN_LOG_STATE);
+        byte cleanState = activeTla.getState();
+        activeTla.setState(TransactionLogHeader.UNCLEAN_LOG_STATE);
         if (log.isDebugEnabled()) log.debug("log file activated, forcing file state to disk");
         activeTla.force();
         return cleanState;
@@ -329,11 +359,11 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
 
         //step 1
         TransactionLogAppender passiveTla = getPassiveTransactionLogAppender();
-        passiveTla.getHeader().rewind();
+        passiveTla.rewind();
         copyDanglingRecords(activeTla, passiveTla);
 
         //step 2
-        passiveTla.getHeader().setTimestamp(MonotonicClock.currentTimeMillis());
+        passiveTla.setTimestamp(MonotonicClock.currentTimeMillis());
 
         //step 3
         passiveTla.force();
@@ -370,6 +400,8 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
 
         Map<Uid, TransactionLogRecord> danglingRecords = collectDanglingRecords(fromTla);
         for (TransactionLogRecord tlog : danglingRecords.values()) {
+        	long writePosition = toTla.getPositionAndAdvance(tlog.calculateTotalRecordSize());
+        	tlog.setWritePosition(writePosition);
             toTla.writeLog(tlog);
         }
 

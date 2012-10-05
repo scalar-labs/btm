@@ -73,6 +73,7 @@ public class TransactionLogRecord implements JournalRecord {
     private final Uid gtrid;
     private final SortedSet<String> uniqueNames;
     private final int endRecord;
+    private long writePosition;
 
     /**
      * Use this constructor when restoring a log from the disk.
@@ -142,6 +143,16 @@ public class TransactionLogRecord implements JournalRecord {
 
     public Uid getGtrid() {
         return gtrid;
+    }
+
+    public long getWritePosition()
+    {
+    	return writePosition;
+    }
+
+    public void setWritePosition(long position)
+    {
+    	writePosition = position;
     }
 
     public Set<String> getUniqueNames() {
@@ -251,7 +262,7 @@ public class TransactionLogRecord implements JournalRecord {
      * @return recordLength
      */
     int calculateTotalRecordSize() {
-        return calculateRecordLength(uniqueNames) + 4 + 4; // + status + record length
+        return recordLength + 4 + 4; // + status + record length
     }
 
     /**

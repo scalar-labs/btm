@@ -41,7 +41,7 @@ public class DiskForceWaitQueue {
     private boolean isCleared = false;
 
 
-    public DiskForceWaitQueue() {
+    DiskForceWaitQueue() {
     }
 
     /**
@@ -53,7 +53,7 @@ public class DiskForceWaitQueue {
         }
         objects.add(tla);
         if (log.isDebugEnabled()) log.debug("enqueued " + tla + ", " + objects.size() + " TransactionLogAppender waiting for a disk force in " + this);
-        notifyAll();
+        notify();
         return true;
     }
 
@@ -66,29 +66,28 @@ public class DiskForceWaitQueue {
         if (log.isDebugEnabled()) log.debug("clearing list of " + objects.size() +  " waiting TransactionLogAppender(s) in " + this);
         objects.clear();
         isCleared = true;
-        notifyAll();
+        notify();
     }
 
     public synchronized boolean isEmpty() {
         return objects.isEmpty();
     }
 
-    public synchronized void waitUntilNotEmpty() throws InterruptedException {
-        while (objects.isEmpty()) {
-            if (log.isDebugEnabled()) log.debug("waiting for some TransactionLogAppender to get enqueued");
-            wait();
-        }
-    }
 
     public synchronized int size() {
         return objects.size();
     }
 
-    public synchronized void waitUntilNotContains(TransactionLogAppender tla) throws InterruptedException {
+    synchronized void waitUntilNotEmpty() throws InterruptedException {
+    	while (objects.isEmpty()) {
+    		if (log.isDebugEnabled()) log.debug("waiting for some TransactionLogAppender to get enqueued");
+    		wait();
+    	}
+    }
+    synchronized void waitUntilNotContains(TransactionLogAppender tla) throws InterruptedException {
         while (CollectionUtils.containsByIdentity(objects, tla)) {
             if (log.isDebugEnabled()) log.debug("waiting for " + tla + " to get dequeued");
             wait();
         }
     }
-
 }
