@@ -192,7 +192,9 @@ public class XAPool implements StateChangeListener {
                     long waitTime = bean.getAcquisitionInterval() * 1000L;
                     if (waitTime > 0) {
                         try {
-                            wait(waitTime);
+                            synchronized (this) {
+                                wait(waitTime);
+                            }
                         } catch (InterruptedException ex2) {
                             // ignore
                         }
@@ -493,10 +495,14 @@ public class XAPool implements StateChangeListener {
 
         try {
         	XAStatefulHolder xaStatefulHolder = availablePool.poll(remainingTimeMs, TimeUnit.MILLISECONDS);
-        	if (xaStatefulHolder != null) {
-        		return xaStatefulHolder;
+        	if (xaStatefulHolder == null) {
+        		if (TransactionManagerServices.isTransactionManagerRunning())
+        			TransactionManagerServices.getTransactionManager().dumpTransactionContexts();
+        		
+        		throw new BitronixRuntimeException("XA pool of resource " + bean.getUniqueName() + " still empty after " + bean.getAcquisitionTimeout() + "s wait time");
         	}
-        	throw new BitronixRuntimeException("XA pool of resource " + bean.getUniqueName() + " still empty after " + bean.getAcquisitionTimeout() + "s wait time");
+
+        	return xaStatefulHolder;
 		} catch (InterruptedException e) {
 			throw new BitronixRuntimeException("Interrupted while waiting for IN_POOL connection.");
 		}
@@ -508,10 +514,11 @@ public class XAPool implements StateChangeListener {
      * @throws Exception thrown if creating a pooled objects fails
      */
     private synchronized void grow() throws Exception {
-        if (totalPoolSize() < bean.getMaxPoolSize()) {
+    	final long totalPoolSize = totalPoolSize();
+        if (totalPoolSize < bean.getMaxPoolSize()) {
             long increment = bean.getAcquireIncrement();
-            if (totalPoolSize() + increment > bean.getMaxPoolSize()) {
-                increment = bean.getMaxPoolSize() - totalPoolSize();
+            if (totalPoolSize + increment > bean.getMaxPoolSize()) {
+                increment = bean.getMaxPoolSize() - totalPoolSize;
             }
 
             if (log.isDebugEnabled()) { log.debug("incrementing " + bean.getUniqueName() + " pool size by " + increment + " unit(s) to reach " + (totalPoolSize() + increment) + " connection(s)"); }
@@ -529,30 +536,6 @@ public class XAPool implements StateChangeListener {
         for (int i = (int)totalPoolSize(); i < bean.getMinPoolSize() ;i++) {
             createPooledObject(xaFactory);
         }
-    }
-
-    private synchronized void waitForConnectionInPool() {
-        long remainingTime = bean.getAcquisitionTimeout() * 1000L;
-        if (log.isDebugEnabled()) log.debug("waiting for IN_POOL connections count to be > 0, currently is " + inPoolSize());
-        while (inPoolSize() == 0) {
-            long before = MonotonicClock.currentTimeMillis();
-            try {
-                if (log.isDebugEnabled()) log.debug("waiting " + remainingTime + "ms");
-                wait(remainingTime);
-                if (log.isDebugEnabled()) log.debug("waiting over, IN_POOL connections count is now " + inPoolSize());
-            } catch (InterruptedException ex) {
-                // ignore
-            }
-
-            long now = MonotonicClock.currentTimeMillis();
-            remainingTime -= (now - before);
-            if (remainingTime <= 0 && inPoolSize() == 0) {
-                if (log.isDebugEnabled()) log.debug("connection pool dequeue timed out");
-                if (TransactionManagerServices.isTransactionManagerRunning())
-                    TransactionManagerServices.getTransactionManager().dumpTransactionContexts();
-                throw new BitronixRuntimeException("XA pool of resource " + bean.getUniqueName() + " still empty after " + bean.getAcquisitionTimeout() + "s wait time");
-            }
-        } // while
     }
 
     /**
