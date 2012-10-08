@@ -58,7 +58,7 @@ public class TransactionLogCursor {
     public TransactionLogCursor(File file) throws IOException {
         this.fis = new FileInputStream(file);
         this.fileChannel = fis.getChannel();
-        this.page = ByteBuffer.allocate(4096);
+        this.page = ByteBuffer.allocate(8192);
 
         fileChannel.position(TransactionLogHeader.CURRENT_POSITION_HEADER);
         fileChannel.read(page);
@@ -74,11 +74,7 @@ public class TransactionLogCursor {
      * @throws IOException if an I/O error occurs.
      */
     public TransactionLogRecord readLog() throws IOException {
-        return newReadLog(false);
-    }
-
-    public TransactionLogRecord readLog(boolean skipCrcCheck) throws IOException {
-        return newReadLog(skipCrcCheck);
+        return readLog(false);
     }
 
     /**
@@ -88,17 +84,18 @@ public class TransactionLogCursor {
      * @return the TransactionLogRecord or null if the end of the log file has been reached
      * @throws IOException if an I/O error occurs.
      */
-    private TransactionLogRecord newReadLog(boolean skipCrcCheck) throws IOException {
+    public TransactionLogRecord readLog(boolean skipCrcCheck) throws IOException {
         if (currentPosition >= endPosition) {
             if (log.isDebugEnabled())
                 log.debug("end of transaction log file reached at " + currentPosition);
             return null;
         }
 
-        int status = page.getInt();
-        currentPosition += 4;
-        int recordLength = page.getInt();
-        currentPosition += 4;
+        final int status = page.getInt();
+        // currentPosition += 4;
+        final int recordLength = page.getInt();
+        // currentPosition += 4;
+        currentPosition += 8;
 
         if (page.position() + recordLength + 8 > page.limit())
         {
@@ -107,7 +104,7 @@ public class TransactionLogCursor {
             page.rewind();
         }
 
-        int endOfRecordPosition = page.position() + recordLength;
+        final int endOfRecordPosition = page.position() + recordLength;
         if (currentPosition + recordLength > endPosition) {
             page.position(page.position() + recordLength);
             currentPosition += recordLength;
@@ -116,16 +113,17 @@ public class TransactionLogCursor {
                     + endPosition + ", recordLength: " + recordLength + ")");
         }
 
-        int headerLength = page.getInt();
-        currentPosition += 4;
-        long time = page.getLong();
-        currentPosition += 8;
-        int sequenceNumber = page.getInt();
-        currentPosition += 4;
-        int crc32 = page.getInt();
-        currentPosition += 4;
-        byte gtridSize = page.get();
-        currentPosition += 1;
+        final int headerLength = page.getInt();
+        // currentPosition += 4;
+        final long time = page.getLong();
+        // currentPosition += 8;
+        final int sequenceNumber = page.getInt();
+        // currentPosition += 4;
+        final int crc32 = page.getInt();
+        // currentPosition += 4;
+        final byte gtridSize = page.get();
+        // currentPosition += 1;
+        currentPosition += 21;
 
         // check for log terminator
         page.mark();
@@ -142,7 +140,7 @@ public class TransactionLogCursor {
                     + " (GTRID size too long)");
         }
 
-        byte[] gtridArray = new byte[gtridSize];
+        final byte[] gtridArray = new byte[gtridSize];
         page.get(gtridArray);
         currentPosition += gtridSize;
         Uid gtrid = new Uid(gtridArray);
@@ -169,7 +167,7 @@ public class TransactionLogCursor {
             currentPosition += length;
             uniqueNames.add(new String(nameBytes, "US-ASCII"));
         }
-        int cEndRecord = page.getInt();
+        final int cEndRecord = page.getInt();
         currentPosition += 4;
 
         TransactionLogRecord tlog = new TransactionLogRecord(status, recordLength, headerLength, time, sequenceNumber,

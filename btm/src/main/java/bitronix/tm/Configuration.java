@@ -236,6 +236,7 @@ public class Configuration implements Service {
      */
     public Configuration setForceBatchingEnabled(boolean forceBatchingEnabled) {
         checkNotStarted();
+        log.warn("forceBatchingEnabled is not longer used");
         this.forceBatchingEnabled = forceBatchingEnabled;
         return this;
     }
