@@ -80,23 +80,24 @@ public class TransactionLogAppender {
     /**
      * Get the current file position and advance the position by recordSize if
      * the maximum file length won't be exceeded.
-     * @param recordSize the record size
-     * @return the position the next write should be written at, or -1 if the
-     *   maximum file length would be exceeded
+     * @param tlog the TransactionLogRecord
+     * @return true if the log should rollover, false otherwise
      * @throws IOException if an I/O error occurs
      */
-    protected long getPositionAndAdvance(int recordSize) throws IOException {
-    	if (position + recordSize > maxFileLength) {
-    		return -1;
+    protected boolean setPositionAndAdvance(TransactionLogRecord tlog) throws IOException {
+        int tlogSize = tlog.calculateTotalRecordSize();
+    	if (position + tlogSize > maxFileLength) {
+    		return true;
     	}
 
-    	long newPosition = position;
-    	position += recordSize;
+    	long writePosition = position;
+    	position += tlogSize;
     	synchronized (outstandingHeaderWrites) {
-    		outstandingHeaderWrites.add(newPosition);			
+    		outstandingHeaderWrites.add(writePosition);			
 		}
 
-    	return newPosition;
+    	tlog.setWritePosition(writePosition);
+    	return false;
     }
 
     /**

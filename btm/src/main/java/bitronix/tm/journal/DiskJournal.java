@@ -118,24 +118,21 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         }
 
         TransactionLogRecord tlog = new TransactionLogRecord(status, gtrid, uniqueNames);
-        int tlogSize = tlog.calculateTotalRecordSize();
 
         try {
         	if (conservativeJournaling) {
         		journalLock.lock();
         	}
 
-	        long writePosition;
 	        synchronized (positionLock) {
-	        	writePosition = activeTla.getPositionAndAdvance(tlogSize);
-	            if (writePosition < 0) {
-	                if (log.isDebugEnabled()) log.debug("log file is full (size would be: " + activeTla.getPosition() + tlogSize + ", max allowed: " + maxFileLength + ")");
+	        	boolean rollover = activeTla.setPositionAndAdvance(tlog);
+	            if (rollover) {
 	                // time to swap log files
 	                try {
 	                	swapForceLock.writeLock().lock();
 
 	                	swapJournalFiles();
-	                	writePosition = activeTla.getPositionAndAdvance(tlogSize);
+	                	activeTla.setPositionAndAdvance(tlog);
 	                }
 	                finally {
 	                	swapForceLock.writeLock().unlock();
@@ -146,7 +143,6 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
 	        }
 
 	        try {
-	        	tlog.setWritePosition(writePosition);
 	        	activeTla.writeLog(tlog);
 	        }
 	        finally {
@@ -432,8 +428,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
 
         Map<Uid, TransactionLogRecord> danglingRecords = collectDanglingRecords(fromTla);
         for (TransactionLogRecord tlog : danglingRecords.values()) {
-        	long writePosition = toTla.getPositionAndAdvance(tlog.calculateTotalRecordSize());
-        	tlog.setWritePosition(writePosition);
+        	toTla.setPositionAndAdvance(tlog);
             toTla.writeLog(tlog);
         }
 
