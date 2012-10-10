@@ -299,6 +299,7 @@ public class DiskJournalTest extends TestCase {
 	        		for (int i = 1; i < 40000; i++) {
 	        			Uid gtrid = UidGenerator.generateUid();
 	        			journal.log(Status.STATUS_COMMITTING, gtrid, set);
+                        journal.force();
 	        			
 	        			journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet(ndx + ".name1"));
 	        			journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet(ndx + ".name2"));

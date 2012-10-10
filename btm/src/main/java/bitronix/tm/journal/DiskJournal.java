@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -86,6 +87,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
 	private Lock journalLock = new ReentrantLock();
 	private ReadWriteLock swapForceLock = new ReentrantReadWriteLock(true);
 	private Object positionLock = new Object();
+	private AtomicBoolean needsForce;
 
 	private Configuration configuration;
 
@@ -94,6 +96,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      */
     public DiskJournal() {
     	configuration = TransactionManagerServices.getConfiguration();
+    	needsForce = new AtomicBoolean();
     }
 
     /**
@@ -144,6 +147,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
 
 	        try {
 	        	activeTla.writeLog(tlog);
+	        	needsForce.set(true);
 	        }
 	        finally {
 	        	swapForceLock.readLock().unlock();
@@ -165,10 +169,11 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         if (activeTla == null)
             throw new IOException("cannot force log writing, disk logger is not open");
 
-        if (configuration.isForcedWriteEnabled()) {
+        if (needsForce.get() && configuration.isForcedWriteEnabled()) {
 	        swapForceLock.writeLock().lock();
 	        try {
 	        	activeTla.force();
+	        	needsForce.set(false);
 	        }
 	        finally {
 	        	swapForceLock.writeLock().unlock();
@@ -374,6 +379,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * becomes active.</p>
      * List of actions taken by this method:
      * <ul>
+     *   <li>ensure the all data has been forced to the active log file.</li>
      *   <li>copy dangling COMMITTING records to the passive log file.</li>
      *   <li>update header timestamp of passive log file (makes it become active).</li>
      *   <li>do a force on passive log file. It is now the active file.</li>
@@ -385,19 +391,21 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
     private synchronized void swapJournalFiles() throws IOException {
         if (log.isDebugEnabled()) log.debug("swapping journal log file to " + getPassiveTransactionLogAppender());
 
-        long start = System.currentTimeMillis();
         //step 1
+        activeTla.force();
+
+        //step 2
         TransactionLogAppender passiveTla = getPassiveTransactionLogAppender();
         passiveTla.rewind();
         copyDanglingRecords(activeTla, passiveTla);
 
-        //step 2
+        //step 3
         passiveTla.setTimestamp(MonotonicClock.currentTimeMillis());
 
-        //step 3
+        //step 4
         passiveTla.force();
 
-        //step 4
+        //step 5
         if (activeTla == tla1) {
             activeTla = tla2;
         }
@@ -405,7 +413,6 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
             activeTla = tla1;
         }
 
-        System.out.println(System.currentTimeMillis() - start + "ms");
         if (log.isDebugEnabled()) log.debug("journal log files swapped");
     }
 

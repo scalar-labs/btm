@@ -26,8 +26,8 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +54,7 @@ public class TransactionLogAppender {
     private final FileLock lock;
     private final TransactionLogHeader header;
 	private long maxFileLength;
-	private Set<Long> outstandingHeaderWrites;
+	private AtomicInteger outstandingWrites;
 	private long position;
 
     /**
@@ -73,7 +73,8 @@ public class TransactionLogAppender {
         if (this.lock == null)
             throw new IOException("transaction log file " + file.getName() + " is locked. Is another instance already running?");
 
-        this.outstandingHeaderWrites = new HashSet<Long>();
+        this.outstandingWrites = new AtomicInteger();
+
         this.position = header.getPosition();
     }
 
@@ -92,11 +93,9 @@ public class TransactionLogAppender {
 
     	long writePosition = position;
     	position += tlogSize;
-    	synchronized (outstandingHeaderWrites) {
-    		outstandingHeaderWrites.add(writePosition);			
-		}
-
     	tlog.setWritePosition(writePosition);
+
+    	outstandingWrites.incrementAndGet();
     	return false;
     }
 
@@ -107,38 +106,38 @@ public class TransactionLogAppender {
      * @throws IOException if an I/O error occurs.
      */
     protected void writeLog(TransactionLogRecord tlog) throws IOException {
-    	int recordSize = tlog.calculateTotalRecordSize();
-        ByteBuffer buf = ByteBuffer.allocate(recordSize);
-        buf.putInt(tlog.getStatus());
-        buf.putInt(tlog.getRecordLength());
-        buf.putInt(tlog.getHeaderLength());
-        buf.putLong(tlog.getTime());
-        buf.putInt(tlog.getSequenceNumber());
-        buf.putInt(tlog.getCrc32());
-        buf.put((byte) tlog.getGtrid().getArray().length);
-        buf.put(tlog.getGtrid().getArray());
-        Set<String> uniqueNames = tlog.getUniqueNames();
-        buf.putInt(uniqueNames.size());
-        for (String uniqueName : uniqueNames) {
-            buf.putShort((short) uniqueName.length());
-            buf.put(uniqueName.getBytes());
+        try {
+        	int recordSize = tlog.calculateTotalRecordSize();
+            ByteBuffer buf = ByteBuffer.allocate(recordSize);
+            buf.putInt(tlog.getStatus());
+            buf.putInt(tlog.getRecordLength());
+            buf.putInt(tlog.getHeaderLength());
+            buf.putLong(tlog.getTime());
+            buf.putInt(tlog.getSequenceNumber());
+            buf.putInt(tlog.getCrc32());
+            buf.put((byte) tlog.getGtrid().getArray().length);
+            buf.put(tlog.getGtrid().getArray());
+            Set<String> uniqueNames = tlog.getUniqueNames();
+            buf.putInt(uniqueNames.size());
+            for (String uniqueName : uniqueNames) {
+                buf.putShort((short) uniqueName.length());
+                buf.put(uniqueName.getBytes());
+            }
+            buf.putInt(tlog.getEndRecord());
+            buf.flip();
+    
+            if (log.isDebugEnabled()) log.debug("between " + tlog.getWritePosition() + " and " + tlog.getWritePosition() + tlog.calculateTotalRecordSize() + ", writing " + tlog);
+    
+            final long writePosition = tlog.getWritePosition();
+            while (buf.hasRemaining()) {
+            	fc.write(buf, writePosition + buf.position());
+            }
         }
-        buf.putInt(tlog.getEndRecord());
-        buf.flip();
-
-        if (log.isDebugEnabled()) log.debug("between " + tlog.getWritePosition() + " and " + tlog.getWritePosition() + tlog.calculateTotalRecordSize() + ", writing " + tlog);
-
-        final long writePosition = tlog.getWritePosition();
-        while (buf.hasRemaining()) {
-        	fc.write(buf, writePosition + buf.position());
-        }
-
-        synchronized (outstandingHeaderWrites) {
-        	outstandingHeaderWrites.remove(writePosition);
-        	if (outstandingHeaderWrites.isEmpty()) {
+        finally {
+        	if (outstandingWrites.decrementAndGet() == 0) {
         		header.setPosition(position);
         	}
-		}
+        }
     }
 
     /**
