@@ -233,7 +233,6 @@ public class DiskJournalTest extends TestCase {
     public void testJournalPerformance() throws IOException, InterruptedException {
         TransactionManagerServices.getConfiguration().setMaxLogSizeInMb(40);
         TransactionManagerServices.getConfiguration().setForcedWriteEnabled(false);
-        TransactionManagerServices.getConfiguration().setForceBatchingEnabled(false);
         final DiskJournal journal = new DiskJournal();
         journal.open();
 
@@ -281,7 +280,6 @@ public class DiskJournalTest extends TestCase {
 
     public void testRolloverStress() throws IOException, InterruptedException {
         TransactionManagerServices.getConfiguration().setMaxLogSizeInMb(1);
-        TransactionManagerServices.getConfiguration().setForceBatchingEnabled(false);
         final DiskJournal journal = new DiskJournal();
         journal.open();
 
