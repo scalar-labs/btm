@@ -28,7 +28,9 @@ import java.io.IOException;
  * @author lorban
  */
 public class CorruptedTransactionLogException extends IOException {
-    public CorruptedTransactionLogException(String s) {
+	private static final long serialVersionUID = 560393397990915916L;
+
+	public CorruptedTransactionLogException(String s) {
         super(s);
     }
 }

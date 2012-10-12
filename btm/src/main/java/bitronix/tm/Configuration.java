@@ -76,6 +76,7 @@ public class Configuration implements Service {
     private volatile boolean currentNodeOnlyRecovery;
     private volatile boolean allowMultipleLrc;
     private volatile String resourceConfigurationFilename;
+    private volatile boolean conservativeJournaling;
 
 
     protected Configuration() {
@@ -123,6 +124,7 @@ public class Configuration implements Service {
             currentNodeOnlyRecovery = getBoolean(properties, "bitronix.tm.currentNodeOnlyRecovery", true);
             allowMultipleLrc = getBoolean(properties, "bitronix.tm.allowMultipleLrc", false);
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
+            conservativeJournaling = getBoolean(properties, "bitronix.tm.conservativeJournaling", false);
         } catch (IOException ex) {
             throw new InitializationException("error loading configuration", ex);
         }
@@ -234,6 +236,7 @@ public class Configuration implements Service {
      */
     public Configuration setForceBatchingEnabled(boolean forceBatchingEnabled) {
         checkNotStarted();
+        log.warn("forceBatchingEnabled is not longer used");
         this.forceBatchingEnabled = forceBatchingEnabled;
         return this;
     }
@@ -640,6 +643,27 @@ public class Configuration implements Service {
         checkNotStarted();
         this.allowMultipleLrc = allowMultipleLrc;
         return this;
+    }
+
+    /**
+     * Should the Disk Journal follow a conservative (sequential write) policy?
+     * @return true if the Disk Journal should serialize writes to the transaction log, false otherwise.
+     */
+    public boolean isConservativeJournaling()
+    {
+    	return conservativeJournaling;
+    }
+
+    /**
+     * Set to true if the Disk Journal should follow a conservative (sequential write) policy.
+     * @param conservativeJournaling true if the Disk Journal should follow a conservative (sequential write) policy
+     * @return this
+     */
+    public Configuration setConservativeJournaling(boolean conservativeJournaling)
+    {
+    	checkNotStarted();
+    	this.conservativeJournaling = conservativeJournaling;
+    	return this;
     }
 
     /**

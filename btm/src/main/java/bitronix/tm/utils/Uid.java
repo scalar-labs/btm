@@ -62,6 +62,9 @@ public final class Uid {
         return Encoder.bytesToInt(array, array.length - 4); // - sequence
     }
 
+    public int length() {
+    	return array.length;
+    }
 
     public boolean equals(Object obj) {
         if (obj instanceof Uid) {

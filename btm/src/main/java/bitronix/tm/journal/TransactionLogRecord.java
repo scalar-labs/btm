@@ -20,17 +20,27 @@
  */
 package bitronix.tm.journal;
 
-import bitronix.tm.utils.Decoder;
-import bitronix.tm.utils.Encoder;
-import bitronix.tm.utils.MonotonicClock;
-import bitronix.tm.utils.Uid;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.CRC32;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.zip.CRC32;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.MonotonicClock;
+import bitronix.tm.utils.Uid;
 
 /**
  * Representation of a transaction log record on disk.
@@ -62,6 +72,9 @@ public class TransactionLogRecord implements JournalRecord {
 
     private final static Logger log = LoggerFactory.getLogger(TransactionLogRecord.class);
 
+    // status + record length + record header length + current time + sequence number + checksum
+    private final static int RECORD_HEADER_LENGTH = 4 + 4 + 4 + 8 + 4 + 4;
+
     private final static AtomicInteger sequenceGenerator = new AtomicInteger();
 
     private final int status;
@@ -73,6 +86,7 @@ public class TransactionLogRecord implements JournalRecord {
     private final Uid gtrid;
     private final SortedSet<String> uniqueNames;
     private final int endRecord;
+    private long writePosition;
 
     /**
      * Use this constructor when restoring a log from the disk.
@@ -112,6 +126,7 @@ public class TransactionLogRecord implements JournalRecord {
         this.gtrid = gtrid;
         this.uniqueNames = new TreeSet<String>(uniqueNames);
         this.endRecord = TransactionLogAppender.END_RECORD;
+        this.headerLength = RECORD_HEADER_LENGTH;
 
         refresh();
     }
@@ -144,6 +159,16 @@ public class TransactionLogRecord implements JournalRecord {
         return gtrid;
     }
 
+    public long getWritePosition()
+    {
+    	return writePosition;
+    }
+
+    public void setWritePosition(long position)
+    {
+    	writePosition = position;
+    }
+
     public Set<String> getUniqueNames() {
         return Collections.unmodifiableSortedSet(uniqueNames);
     }
@@ -163,8 +188,7 @@ public class TransactionLogRecord implements JournalRecord {
      * and {@link #calculateCrc32()}. This method must be called each time after the set of contained unique names is updated.
      */
     private void refresh() {
-        recordLength = calculateRecordLength(uniqueNames);
-        headerLength = getRecordHeaderLength();
+        // recordLength = calculateRecordLength(uniqueNames);
         crc32 = calculateCrc32();
     }
 
@@ -200,25 +224,34 @@ public class TransactionLogRecord implements JournalRecord {
      * @return the CRC32 value of this record.
      */
     public int calculateCrc32() {
-        CRC32 crc32 = new CRC32();
-        crc32.update(Encoder.intToBytes(status));
-        crc32.update(Encoder.intToBytes(recordLength));
-        crc32.update(Encoder.intToBytes(headerLength));
-        crc32.update(Encoder.longToBytes(time));
-        crc32.update(Encoder.intToBytes(sequenceNumber));
-        crc32.update(gtrid.getArray());
-        crc32.update(Encoder.intToBytes(uniqueNames.size()));
+        int total = 0;
+        for (String uniqueName : uniqueNames) {
+        	total += 2 + uniqueName.length(); // 2 bytes for storing the unique name length + unique name length
+        }
+        recordLength = total + getFixedRecordLength();
+
+    	ByteBuffer buf = ByteBuffer.allocate(24 + gtrid.length() + 4 + total + 4);
+    	buf.putInt(status);              // offset: 0
+    	buf.putInt(recordLength);        // offset: 4
+    	buf.putInt(headerLength);        // offset: 8
+    	buf.putLong(time);               // offset: 12
+    	buf.putInt(sequenceNumber);      // offset: 20
+    	buf.put(gtrid.getArray());       // offset: 24
+    	buf.putInt(uniqueNames.size());  // offset: 24 + gtridArray.length
 
         for (String name : uniqueNames) {
-            crc32.update(Encoder.shortToBytes((short) name.length()));
+        	buf.putShort((short) name.length());
             try {
-                crc32.update(name.getBytes("US-ASCII"));
+            	buf.put(name.getBytes("US-ASCII"));
             } catch (UnsupportedEncodingException ex) {
                 log.error("unable to convert unique name bytes to US-ASCII", ex);
             }
         }
 
-        crc32.update(Encoder.intToBytes(endRecord));
+        buf.putInt(endRecord);
+
+        CRC32 crc32 = new CRC32();
+        crc32.update(buf.array());
         return (int) crc32.getValue();
     }
 
@@ -251,24 +284,7 @@ public class TransactionLogRecord implements JournalRecord {
      * @return recordLength
      */
     int calculateTotalRecordSize() {
-        return calculateRecordLength(uniqueNames) + 4 + 4; // + status + record length
-    }
-
-    /**
-     * this is the value needed by field recordLength in the TransactionLog.
-     * @param uniqueNames the unique names ofthe record.
-     * @return recordLength
-     */
-    private int calculateRecordLength(Set<String> uniqueNames) {
-        int totalSize = 0;
-
-        for (String uniqueName : uniqueNames) {
-            totalSize += 2 + uniqueName.length(); // 2 bytes for storing the unique name length + unique name length
-        }
-
-        totalSize += getFixedRecordLength();
-
-        return totalSize;
+        return recordLength + 4 + 4; // + status + record length
     }
 
     /**
@@ -276,16 +292,16 @@ public class TransactionLogRecord implements JournalRecord {
      * @return fixedRecordLength
      */
     private int getFixedRecordLength() {
-        return 4 + 8 + 4 + 4 + 1 + gtrid.getArray().length + 4 + 4; // record header length + current time + sequence number + checksum + GTRID size + GTRID + unique names count + end record marker
+        return 4 + 8 + 4 + 4 + 1 + gtrid.length() + 4 + 4; // record header length + current time + sequence number + checksum + GTRID size + GTRID + unique names count + end record marker
     }
 
-    /**
-     * Value needed by field headerLength in the TransactionLog.
-     * @return headerLength
-     */
-    private int getRecordHeaderLength() {
-        return 4 + 4 + 4 + 8 + 4 + 4; // status + record length + record header length + current time + sequence number + checksum
+    static class NullOutputStream extends OutputStream {
+        static final NullOutputStream INSTANCE = new NullOutputStream();
+
+        private NullOutputStream() {
+        }
+
+        public void write(int b) throws IOException {
+        }
     }
-
-
 }
