@@ -118,7 +118,7 @@ public class TransactionManagerServices {
                 journal = new DiskJournal();
             } else {
                 try {
-                    Class clazz = ClassLoaderUtils.loadClass(configuredJournal);
+                    Class<?> clazz = ClassLoaderUtils.loadClass(configuredJournal);
                     journal = (Journal) clazz.newInstance();
                 } catch (Exception ex) {
                     throw new InitializationException("invalid journal implementation '" + configuredJournal + "'", ex);

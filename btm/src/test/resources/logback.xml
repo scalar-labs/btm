@@ -33,7 +33,7 @@
     </appender>
 
 
-    <logger name="bitronix.tm" level="DEBUG">
+    <logger name="bitronix.tm" level="INFO">
         <appender-ref ref="file"/>
     </logger>
 
