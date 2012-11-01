@@ -300,11 +300,13 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     }
 
     public void setFailed(boolean failed) {
-        pool.setFailed(failed);
+        if (pool != null) {
+            pool.setFailed(failed);
+        }
     }
 
     public boolean isFailed() {
-        return pool.isFailed();
+        return (pool != null ? pool.isFailed() : false);
     }
 
     public void close() {
