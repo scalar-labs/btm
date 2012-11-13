@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -397,7 +398,16 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         //step 2
         TransactionLogAppender passiveTla = getPassiveTransactionLogAppender();
         passiveTla.rewind();
-        copyDanglingRecords(activeTla, passiveTla);
+
+        List<TransactionLogRecord> danglingLogs = activeTla.getDanglingLogs();
+        for (TransactionLogRecord tlog : danglingLogs) {
+            passiveTla.setPositionAndAdvance(tlog);
+            passiveTla.writeLog(tlog);
+        }
+
+        if (log.isDebugEnabled()) log.debug(danglingLogs.size() + " dangling record(s) copied to passive log file");
+        
+        activeTla.clearDanglingLogs();
 
         //step 3
         passiveTla.setTimestamp(MonotonicClock.currentTimeMillis());
@@ -421,25 +431,6 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      */
     private TransactionLogAppender getPassiveTransactionLogAppender() {
         return (tla1 == activeTla ? tla2 : tla1);
-    }
-
-    /**
-     * Copy all records that have status COMMITTING and no corresponding COMMITTED record from the fromTla to the toTla.
-     *
-     * @param fromTla the source where to search for COMMITTING records with no corresponding COMMITTED record
-     * @param toTla the destination where the COMMITTING records will be copied to
-     * @throws java.io.IOException in case of disk IO failure.
-     */
-    private static void copyDanglingRecords(TransactionLogAppender fromTla, TransactionLogAppender toTla) throws IOException {
-        if (log.isDebugEnabled()) log.debug("starting copy of dangling records");
-
-        Map<Uid, TransactionLogRecord> danglingRecords = collectDanglingRecords(fromTla);
-        for (TransactionLogRecord tlog : danglingRecords.values()) {
-        	toTla.setPositionAndAdvance(tlog);
-            toTla.writeLog(tlog);
-        }
-
-        if (log.isDebugEnabled()) log.debug(danglingRecords.size() + " dangling record(s) copied to passive log file");
     }
 
     /**
