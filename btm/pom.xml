@@ -11,12 +11,14 @@
     <name>Bitronix Transaction Manager :: Core</name>
 
     <dependencies>
+    <!-- 
         <dependency>
             <groupId>org.codehaus.btm</groupId>
             <artifactId>btm-jdbc3-stubs</artifactId>
             <version>2.2.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+    -->
         <dependency>
             <groupId>javax.transaction</groupId>
             <artifactId>jta</artifactId>
@@ -58,7 +60,7 @@
                 <configuration>
                     <source>1.5</source>
                     <target>1.5</target>
-                    <compilerArgument>-Xbootclasspath/p:${basedir}/../btm-jdbc3-stubs/target/classes</compilerArgument>
+                    <compilerArgument>-Xbootclasspath/p:${project.basedir}/lib/jdbc-3.0.jar</compilerArgument>
                 </configuration>
             </plugin>
 
@@ -150,9 +152,8 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.9</version>
                 <configuration>
-                    <argLine>"-Xbootclasspath/p:${basedir}/../btm-jdbc3-stubs/target/classes"</argLine>
+                    <argLine>"-Xbootclasspath/p:${project.basedir}/lib/jdbc-3.0.jar"</argLine>
                 </configuration>
             </plugin>
         </plugins>
