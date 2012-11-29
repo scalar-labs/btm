@@ -40,6 +40,7 @@ import java.util.*;
  *
  * @author lorban
  */
+@SuppressWarnings("serial")
 public class PoolingConnectionFactory extends ResourceBean implements ConnectionFactory, XAResourceProducer, PoolingConnectionFactoryMBean {
 
     private final static Logger log = LoggerFactory.getLogger(PoolingConnectionFactory.class);

@@ -23,12 +23,14 @@ package bitronix.tm.mock;
 import java.sql.Connection;
 import java.util.ArrayList;
 
-import javax.transaction.*;
+import javax.transaction.Transaction;
 
-import org.slf4j.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import bitronix.tm.*;
-import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
+import bitronix.tm.BitronixTransactionManager;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.resource.jdbc.PooledConnectionProxy;
 
 /**
  *
@@ -84,9 +86,9 @@ public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
         thread2.start();
         thread2.join();
 
-        JdbcConnectionHandle handle1 = (JdbcConnectionHandle) twoConnections.get(0);
-        JdbcConnectionHandle handle2 = (JdbcConnectionHandle) twoConnections.get(1);
-        assertNotSame(handle1.getDelegateUnchecked(), handle2.getDelegateUnchecked());
+        PooledConnectionProxy handle1 = (PooledConnectionProxy) twoConnections.get(0);
+        PooledConnectionProxy handle2 = (PooledConnectionProxy) twoConnections.get(1);
+        assertNotSame(handle1.getProxiedDelegate(), handle2.getProxiedDelegate());
 
     }
 
@@ -107,9 +109,9 @@ public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
         if (log.isDebugEnabled()) log.debug("*** getting second connection from DS2");
         Connection connection2 = poolingDataSource2.getConnection();
 
-        JdbcConnectionHandle handle1 = (JdbcConnectionHandle) connection1;
-        JdbcConnectionHandle handle2 = (JdbcConnectionHandle) connection2;
-        assertNotSame(handle1.getDelegateUnchecked(), handle2.getDelegateUnchecked());
+        PooledConnectionProxy handle1 = (PooledConnectionProxy) connection1;
+        PooledConnectionProxy handle2 = (PooledConnectionProxy) connection2;
+        assertNotSame(handle1.getProxiedDelegate(), handle2.getProxiedDelegate());
 
         connection1.close();
         connection2.close();
@@ -127,9 +129,9 @@ public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
         if (log.isDebugEnabled()) log.debug("*** getting second connection from DS1");
         Connection connection2 = poolingDataSource1.getConnection();
 
-        JdbcConnectionHandle handle1 = (JdbcConnectionHandle) connection1;
-        JdbcConnectionHandle handle2 = (JdbcConnectionHandle) connection2;
-        assertNotSame(handle1.getDelegateUnchecked(), handle2.getDelegateUnchecked());
+        PooledConnectionProxy handle1 = (PooledConnectionProxy) connection1;
+        PooledConnectionProxy handle2 = (PooledConnectionProxy) connection2;
+        assertNotSame(handle1.getProxiedDelegate(), handle2.getProxiedDelegate());
 
         connection1.close();
         connection2.close();
@@ -145,9 +147,9 @@ public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
         if (log.isDebugEnabled()) log.debug("*** getting second connection from DS2");
         Connection connection2 = poolingDataSource2.getConnection();
 
-        JdbcConnectionHandle handle1 = (JdbcConnectionHandle) connection1;
-        JdbcConnectionHandle handle2 = (JdbcConnectionHandle) connection2;
-        assertNotSame(handle1.getDelegateUnchecked(), handle2.getDelegateUnchecked());
+        PooledConnectionProxy handle1 = (PooledConnectionProxy) connection1;
+        PooledConnectionProxy handle2 = (PooledConnectionProxy) connection2;
+        assertNotSame(handle1.getProxiedDelegate(), handle2.getProxiedDelegate());
 
         connection1.close();
         connection2.close();
@@ -168,9 +170,9 @@ public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
         if (log.isDebugEnabled()) log.debug("*** getting second connection from DS1");
         Connection connection2 = poolingDataSource1.getConnection();
 
-        JdbcConnectionHandle handle1 = (JdbcConnectionHandle) connection1;
-        JdbcConnectionHandle handle2 = (JdbcConnectionHandle) connection2;
-        assertSame(handle1.getDelegateUnchecked(), handle2.getDelegateUnchecked());
+        PooledConnectionProxy handle1 = (PooledConnectionProxy) connection1;
+        PooledConnectionProxy handle2 = (PooledConnectionProxy) connection2;
+        assertSame(handle1.getProxiedDelegate(), handle2.getProxiedDelegate());
 
         connection1.close();
         connection2.close();

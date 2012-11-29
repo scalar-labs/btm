@@ -20,6 +20,23 @@
  */
 package bitronix.tm.mock;
 
+import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
+import javax.sql.XAConnection;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+
+import junit.framework.TestCase;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import bitronix.tm.BitronixTransactionManager;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.internal.BitronixXAException;
@@ -33,21 +50,8 @@ import bitronix.tm.mock.resource.MockJournal;
 import bitronix.tm.mock.resource.MockXAResource;
 import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.resource.ResourceRegistrar;
-import bitronix.tm.resource.jdbc.JdbcConnectionHandle;
+import bitronix.tm.resource.jdbc.PooledConnectionProxy;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
-import junit.framework.TestCase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.sql.XAConnection;
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
-import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 
 public class DelistmentTest extends TestCase {
@@ -104,7 +108,7 @@ public class DelistmentTest extends TestCase {
         btm.begin();
 
         Connection connection1 = poolingDataSource1.getConnection();
-        JdbcConnectionHandle handle1 = (JdbcConnectionHandle) connection1;
+        PooledConnectionProxy handle1 = (PooledConnectionProxy) connection1;
         XAConnection xaConnection1 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle1.getPooledConnection());
         MockXAResource xaResource1 = (MockXAResource) xaConnection1.getXAResource();
         connection1.createStatement(); // triggers enlistment
@@ -113,7 +117,7 @@ public class DelistmentTest extends TestCase {
         xaResource1.setRollbackException(new BitronixXAException("delistment was screwed, cannot rollback", XAException.XAER_RMERR));
 
         Connection connection2 = poolingDataSource2.getConnection();
-        JdbcConnectionHandle handle2 = (JdbcConnectionHandle) connection2;
+        PooledConnectionProxy handle2 = (PooledConnectionProxy) connection2;
         XAConnection xaConnection2 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle2.getPooledConnection());
         MockXAResource xaResource2 = (MockXAResource) xaConnection2.getXAResource();
         connection2.createStatement(); // triggers enlistment
@@ -146,7 +150,7 @@ public class DelistmentTest extends TestCase {
         btm.begin();
 
         Connection connection1 = poolingDataSource1.getConnection();
-        JdbcConnectionHandle handle1 = (JdbcConnectionHandle) connection1;
+        PooledConnectionProxy handle1 = (PooledConnectionProxy) connection1;
         XAConnection xaConnection1 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle1.getPooledConnection());
         MockXAResource xaResource1 = (MockXAResource) xaConnection1.getXAResource();
         connection1.createStatement();
@@ -155,7 +159,7 @@ public class DelistmentTest extends TestCase {
         xaResource1.setRollbackException(new BitronixXAException("delistment unilaterally rolled back, cannot rollback twice", XAException.XAER_RMERR));
 
         Connection connection2 = poolingDataSource2.getConnection();
-        JdbcConnectionHandle handle2 = (JdbcConnectionHandle) connection2;
+        PooledConnectionProxy handle2 = (PooledConnectionProxy) connection2;
         XAConnection xaConnection2 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle2.getPooledConnection());
         MockXAResource xaResource2 = (MockXAResource) xaConnection2.getXAResource();
         connection2.createStatement(); // triggers enlistment
@@ -188,7 +192,7 @@ public class DelistmentTest extends TestCase {
         btm.begin();
 
         Connection connection1 = poolingDataSource1.getConnection();
-        JdbcConnectionHandle handle1 = (JdbcConnectionHandle) connection1;
+        PooledConnectionProxy handle1 = (PooledConnectionProxy) connection1;
         XAConnection xaConnection1 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle1.getPooledConnection());
         MockXAResource xaResource1 = (MockXAResource) xaConnection1.getXAResource();
         xaResource1.setEndException(new BitronixXAException("screw delistment", XAException.XAER_RMERR));
@@ -197,7 +201,7 @@ public class DelistmentTest extends TestCase {
         connection1.createStatement(); // triggers enlistment
 
         Connection connection2 = poolingDataSource2.getConnection();
-        JdbcConnectionHandle handle2 = (JdbcConnectionHandle) connection2;
+        PooledConnectionProxy handle2 = (PooledConnectionProxy) connection2;
         XAConnection xaConnection2 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle2.getPooledConnection());
         MockXAResource xaResource2 = (MockXAResource) xaConnection2.getXAResource();
         xaResource2.setEndException(new BitronixXAException("what was that transaction again?", XAException.XAER_NOTA));
@@ -235,7 +239,7 @@ public class DelistmentTest extends TestCase {
         btm.begin();
 
         Connection connection1 = poolingDataSource1.getConnection();
-        JdbcConnectionHandle handle = (JdbcConnectionHandle) connection1;
+        PooledConnectionProxy handle = (PooledConnectionProxy) connection1;
         XAConnection xaConnection1 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle.getPooledConnection());
         MockXAResource xaResource1 = (MockXAResource) xaConnection1.getXAResource();
         xaResource1.setEndException(new BitronixXAException("screw delistment", XAException.XAER_RMERR));
@@ -244,7 +248,7 @@ public class DelistmentTest extends TestCase {
         connection1.createStatement(); // triggers enlistment
 
         Connection connection2 = poolingDataSource2.getConnection();
-        JdbcConnectionHandle handle2 = (JdbcConnectionHandle) connection2;
+        PooledConnectionProxy handle2 = (PooledConnectionProxy) connection2;
         XAConnection xaConnection2 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle2.getPooledConnection());
         MockXAResource xaResource2 = (MockXAResource) xaConnection2.getXAResource();
         xaResource2.setEndException(new BitronixXAException("what was that transaction again?", XAException.XAER_NOTA));

@@ -39,7 +39,7 @@ public class ClassLoaderUtils {
     public static ClassLoader getClassLoader() {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         if (cl != null) {
-            return cl;
+            return new CascadingClassLoader(cl);
         }
         return ClassLoaderUtils.class.getClassLoader();
     }
@@ -54,7 +54,7 @@ public class ClassLoaderUtils {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         if (cl != null) {
             try {
-                return cl.loadClass(className);
+                return new CascadingClassLoader(cl).loadClass(className);
             } catch (ClassNotFoundException ex) {
                 if (log.isDebugEnabled()) log.debug("context classloader could not find class '" + className + "', trying Class.forName() instead");
             }
@@ -75,5 +75,19 @@ public class ClassLoaderUtils {
             return cl.getResourceAsStream(resourceName);
 
         return ClassLoaderUtils.class.getClassLoader().getResourceAsStream(resourceName);
+    }
+
+    private static class CascadingClassLoader extends ClassLoader {
+
+        private ClassLoader contextLoader;
+
+        CascadingClassLoader(ClassLoader contextLoader) {
+            this.contextLoader = contextLoader;
+        }
+
+        @Override
+        protected Class<?> findClass(String name) throws ClassNotFoundException {
+            return contextLoader.loadClass(name);
+        }
     }
 }

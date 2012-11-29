@@ -51,7 +51,7 @@
 
     <modules>
         <module>btm</module>
-        <module>btm-jdbc4</module>
+        <!-- module>btm-jdbc4</module -->
         <!-- module>btm-nio-journal</module -->
         <module>btm-jetty6-lifecycle</module>
         <module>btm-jetty7-lifecycle</module>
@@ -83,6 +83,7 @@
                 <version>${project.version}</version>
                 <classifier>javadoc</classifier>
             </dependency>
+<!--
             <dependency>
                 <groupId>org.codehaus.btm</groupId>
                 <artifactId>btm-jdbc4</artifactId>
@@ -94,6 +95,7 @@
                 <version>${project.version}</version>
                 <classifier>sources</classifier>
             </dependency>
+-->
             <!-- dependency>
                 <groupId>org.codehaus.btm</groupId>
                 <artifactId>btm-nio-journal</artifactId>

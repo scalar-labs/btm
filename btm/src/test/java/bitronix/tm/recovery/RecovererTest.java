@@ -74,9 +74,9 @@ public class RecovererTest extends TestCase {
         new File(TransactionManagerServices.getConfiguration().getLogPart2Filename()).delete();
 
         Connection connection1 = pds.getConnection();
-        JdbcConnectionHandle handle = (JdbcConnectionHandle) connection1;
+        PooledConnectionProxy handle = (PooledConnectionProxy) connection1;
         xaResource = (MockXAResource) handle.getPooledConnection().getXAResource();
-        handle.close();
+        connection1.close();
 
         // test the clustered recovery as its logic is more complex and covers the non-clustered logic
         TransactionManagerServices.getConfiguration().setCurrentNodeOnlyRecovery(true);
@@ -282,9 +282,9 @@ public class RecovererTest extends TestCase {
         pds.init();
 
         Connection connection = pds.getConnection();
-        JdbcConnectionHandle handle = (JdbcConnectionHandle) connection;
+        PooledConnectionProxy handle = (PooledConnectionProxy) connection;
         XAResource xaResource = handle.getPooledConnection().getXAResource();
-        handle.close();
+        connection.close();
 
         assertEquals(0, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
         assertEquals(0, TransactionManagerServices.getJournal().collectDanglingRecords().size());
