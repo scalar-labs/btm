@@ -50,6 +50,7 @@ import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
 import bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory;
+import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.ManagementRegistrar;
 import bitronix.tm.utils.MonotonicClock;
@@ -349,7 +350,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
      * @param key the key that has been used to cache the statement.
      * @return the cached statement corresponding to the key or null if no statement is cached under that key.
      */
-    public PreparedStatement getCachedStatement(LruStatementCache.CacheKey key) {
+    public PreparedStatement getCachedStatement(CacheKey key) {
         return statementsCache.get(key);
     }
 
@@ -358,7 +359,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
      * @param stmt the statement to cache.
      * @return the cached statement.
      */
-    public PreparedStatement putCachedStatement(LruStatementCache.CacheKey key, PreparedStatement statement) {
+    public PreparedStatement putCachedStatement(CacheKey key, PreparedStatement statement) {
         return statementsCache.put(key, statement);
     }
 

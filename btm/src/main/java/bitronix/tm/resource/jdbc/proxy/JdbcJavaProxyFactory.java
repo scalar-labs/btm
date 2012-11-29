@@ -42,7 +42,6 @@ import bitronix.tm.utils.ClassLoaderUtils;
  */
 public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 
-    private static Queue<Connection> proxyConnectionPool;
     private static Queue<Statement> proxyStatementPool;
     private static Queue<CallableStatement> proxyCallableStatementPool;
     private static Queue<PreparedStatement> proxyPreparedStatementPool;
@@ -50,7 +49,6 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
     private static Class<?> wrapperClass;
 
     static {
-        proxyConnectionPool = new LinkedBlockingQueue<Connection>(500);
         proxyStatementPool = new LinkedBlockingQueue<Statement>(500);
         proxyCallableStatementPool = new LinkedBlockingQueue<CallableStatement>(500);
         proxyPreparedStatementPool = new LinkedBlockingQueue<PreparedStatement>(500);
@@ -64,12 +62,6 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
     }
 
     public Connection getProxyConnection(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
-        Connection proxyConnection = proxyConnectionPool.poll();
-        if (proxyConnection != null) {
-            ((ConnectionJavaProxy) Proxy.getInvocationHandler(proxyConnection)).initialize(jdbcPooledConnection, connection);
-            return proxyConnection;
-        }
-        
         ConnectionJavaProxy jdbcConnectionProxy = new ConnectionJavaProxy(jdbcPooledConnection, connection);
 
         Class<?>[] interfaces;
@@ -156,10 +148,6 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
         }
 
         return (Connection) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), interfaces, lrcConnectionJavaProxy);
-    }
-
-    public void returnProxyConnection(Connection connection) {
-        proxyConnectionPool.offer(connection);
     }
 
     public void returnProxyStatement(Statement statement) {

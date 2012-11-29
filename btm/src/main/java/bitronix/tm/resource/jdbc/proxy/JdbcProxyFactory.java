@@ -58,8 +58,6 @@ public interface JdbcProxyFactory {
 
     /* Methods used to return proxies for pooling */
 
-    void returnProxyConnection(Connection connection);
-
     void returnProxyStatement(Statement statement);
 
     void returnProxyCallableStatement(CallableStatement statement);

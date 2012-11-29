@@ -62,26 +62,22 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
             return;
         }
 
-        try {
-            pretendClosed = true;
-    
-            if (cacheKey == null) {
-                jdbcPooledConnection.unregisterUncachedStatement(delegate);
-                delegate.close();
-                return;
-            }
-    
-            if (!pretendClosed) {
-                // Clear the parameters so the next use of this cached statement
-                // doesn't pick up unexpected values.
-                delegate.clearParameters();
-    
-                // Return to cache so the usage count can be updated
-                jdbcPooledConnection.putCachedStatement(cacheKey, delegate);
-            }
-        } finally {
+        pretendClosed = true;
+
+        if (cacheKey == null) {
+            jdbcPooledConnection.unregisterUncachedStatement(delegate);
+            delegate.close();
+
             initialize(null, null, null);
             JdbcProxyFactory.INSTANCE.returnProxyPreparedStatement(getProxy());
+        }
+        else {
+	        // Clear the parameters so the next use of this cached statement
+	        // doesn't pick up unexpected values.
+	        delegate.clearParameters();
+	
+	        // Return to cache so the usage count can be updated
+	        jdbcPooledConnection.putCachedStatement(cacheKey, delegate);
         }
     }
 

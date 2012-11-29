@@ -88,12 +88,8 @@ public class ConnectionJavaProxy extends JavaProxyBase<Connection> implements Po
         if (jdbcPooledConnection == null)
             return;
 
-        boolean lastRelease = jdbcPooledConnection.release();
+        jdbcPooledConnection.release();
         jdbcPooledConnection = null;
-        if (lastRelease) {
-            initialize(null, null);
-            JdbcProxyFactory.INSTANCE.returnProxyConnection(getProxy());
-        }
     }
 
     public void commit() throws SQLException {

@@ -156,6 +156,14 @@ public class LruStatementCache {
     	}
     }
 
+    public void addEvictionListener(LruEvictionListener listener) {
+        evictionListners.add(listener);
+    }
+
+    public void removeEvictionListener(LruEvictionListener listener) {
+        evictionListners.remove(listener);
+    }
+
     /**
      * Evict all statements from the cache.  This likely happens on
      * connection close.
@@ -203,14 +211,6 @@ public class LruStatementCache {
         for (LruEvictionListener listener : evictionListners) {
             listener.onEviction(value);
         }
-    }
-
-    public void addEvictionListener(LruEvictionListener listener) {
-        evictionListners.add(listener);
-    }
-
-    public void removeEvictionListener(LruEvictionListener listener) {
-        evictionListners.remove(listener);
     }
 
     public static final class CacheKey {
