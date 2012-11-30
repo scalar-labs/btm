@@ -11,14 +11,6 @@
     <name>Bitronix Transaction Manager :: Core</name>
 
     <dependencies>
-    <!-- 
-        <dependency>
-            <groupId>org.codehaus.btm</groupId>
-            <artifactId>btm-jdbc3-stubs</artifactId>
-            <version>2.2.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-    -->
         <dependency>
             <groupId>javax.transaction</groupId>
             <artifactId>jta</artifactId>
@@ -50,6 +42,11 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+        	<groupId>cglib</groupId>
+        	<artifactId>cglib</artifactId>
+        	<version>2.2.2</version>
         </dependency>
     </dependencies>
 

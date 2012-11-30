@@ -72,7 +72,7 @@ public abstract class JavaProxyBase<T> implements InvocationHandler {
         return selfMethodMap;
     }
 
-    private static String getMethodKey(Method method) {
+    protected static String getMethodKey(Method method) {
         String key = methodKeyMap.get(method);
         if (key != null) {
             return key;

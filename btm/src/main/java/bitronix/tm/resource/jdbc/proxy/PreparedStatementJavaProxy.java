@@ -44,6 +44,10 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
         initialize(jdbcPooledConnection, statement, cacheKey);
     }
 
+    public PreparedStatementJavaProxy() {
+        // Default constructor
+    }
+
     void initialize(JdbcPooledConnection jdbcPooledConnection, PreparedStatement statement, CacheKey cacheKey) {
         this.jdbcPooledConnection = jdbcPooledConnection;
         this.delegate = statement;
