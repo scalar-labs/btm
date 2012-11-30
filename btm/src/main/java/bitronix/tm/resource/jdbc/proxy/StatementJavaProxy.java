@@ -53,14 +53,8 @@ public class StatementJavaProxy extends JavaProxyBase<Statement> {
             return;
         }
 
-        try {
-            jdbcPooledConnection.unregisterUncachedStatement(delegate);
-            delegate.close();
-        }
-        finally {
-            initialize(null, null);
-            JdbcProxyFactory.INSTANCE.returnProxyStatement(getProxy());
-        }
+        jdbcPooledConnection.unregisterUncachedStatement(delegate);
+        delegate.close();
     }
 
     /* Overridden methods of JavaProxyBase */

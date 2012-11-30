@@ -56,14 +56,6 @@ public interface JdbcProxyFactory {
 
     Connection getProxyConnection(LrcXAResource xaResource, Connection connection);
 
-    /* Methods used to return proxies for pooling */
-
-    void returnProxyStatement(Statement statement);
-
-    void returnProxyCallableStatement(CallableStatement statement);
-
-    void returnProxyPreparedStatement(PreparedStatement statement);
-
     /**
      * Initializer class used to initialize the proxy factory. 
      */

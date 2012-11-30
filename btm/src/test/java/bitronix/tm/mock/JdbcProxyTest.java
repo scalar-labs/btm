@@ -46,7 +46,7 @@ public class JdbcProxyTest extends AbstractMockJdbcTest {
 
         Connection connection = poolingDataSource2.getConnection();
 
-        for (int i = 0; i < 20000; i++) {
+        for (int i = 0; i < 1000; i++) {
             PreparedStatement prepareStatement = connection.prepareStatement("SELECT 1 FROM nothing WHERE a=? AND b=? AND c=? AND d=?");
             prepareStatement.close();
         }
@@ -82,7 +82,7 @@ public class JdbcProxyTest extends AbstractMockJdbcTest {
     }
 
     @Test
-    public void testCachedPrepared2() throws Exception {
+    public void testUnCachedPrepared() throws Exception {
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         tm.setTransactionTimeout(60);
         tm.begin();
@@ -96,10 +96,7 @@ public class JdbcProxyTest extends AbstractMockJdbcTest {
 
         prepareStatement2.close();
 
-        PreparedStatement oldPrepareStatement2 = prepareStatement2;
-
         prepareStatement2 = connection.prepareStatement("SELECT 1 FROM nothing WHERE a=? AND b=? AND c=? AND d=?");
-        Assert.assertSame(oldPrepareStatement2, prepareStatement2);
         Assert.assertNotSame(prepareStatement1, prepareStatement2);
 
         prepareStatement1.close();

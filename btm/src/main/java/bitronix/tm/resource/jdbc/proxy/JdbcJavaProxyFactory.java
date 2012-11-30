@@ -46,34 +46,24 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
     private static Queue<CallableStatement> proxyCallableStatementPool;
     private static Queue<PreparedStatement> proxyPreparedStatementPool;
 
-    private static Class<?> wrapperClass;
-
     static {
         proxyStatementPool = new LinkedBlockingQueue<Statement>(500);
         proxyCallableStatementPool = new LinkedBlockingQueue<CallableStatement>(500);
         proxyPreparedStatementPool = new LinkedBlockingQueue<PreparedStatement>(500);
-
-        try {
-            wrapperClass = ClassLoaderUtils.loadClass("java.sql.wrapper");
-        }
-        catch (ClassNotFoundException cnfe) {
-            // continue
-        }        
     }
 
+    /* (non-Javadoc)
+     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyConnection(bitronix.tm.resource.jdbc.JdbcPooledConnection, java.sql.Connection)
+     */
     public Connection getProxyConnection(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
         ConnectionJavaProxy jdbcConnectionProxy = new ConnectionJavaProxy(jdbcPooledConnection, connection);
 
-        Class<?>[] interfaces;
-        if (wrapperClass != null) {
-            interfaces = new Class[] { Connection.class, PooledConnectionProxy.class, wrapperClass };
-        } else {
-            interfaces = new Class[] { Connection.class, PooledConnectionProxy.class };
-        }
-
-        return (Connection) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), interfaces, jdbcConnectionProxy);
+        return (Connection) createNewProxy(connection, jdbcConnectionProxy, PooledConnectionProxy.class);
     }
 
+    /* (non-Javadoc)
+     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyStatement(bitronix.tm.resource.jdbc.JdbcPooledConnection, java.sql.Statement)
+     */
     public Statement getProxyStatement(JdbcPooledConnection jdbcPooledConnection, Statement statement) {
         Statement proxyStatement = proxyStatementPool.poll();
         if (proxyStatement != null) {
@@ -83,16 +73,12 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 
         StatementJavaProxy jdbcStatementProxy = new StatementJavaProxy(jdbcPooledConnection, statement);
 
-        Class<?>[] interfaces;
-        if (wrapperClass != null) {
-            interfaces = new Class[] { Statement.class, wrapperClass };
-        } else {
-            interfaces = new Class[] { Statement.class };
-        }
-
-        return (Statement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), interfaces, jdbcStatementProxy);
+        return (Statement) createNewProxy(statement, jdbcStatementProxy);
     }
 
+    /* (non-Javadoc)
+     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyCallableStatement(bitronix.tm.resource.jdbc.JdbcPooledConnection, java.sql.CallableStatement)
+     */
     public CallableStatement getProxyCallableStatement(JdbcPooledConnection jdbcPooledConnection, CallableStatement statement) {
         CallableStatement proxyStatement = proxyCallableStatementPool.poll();
         if (proxyStatement != null) {
@@ -102,16 +88,12 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 
         CallableStatementJavaProxy jdbcStatementProxy = new CallableStatementJavaProxy(jdbcPooledConnection, statement);
 
-        Class<?>[] interfaces;
-        if (wrapperClass != null) {
-            interfaces = new Class[] { CallableStatement.class, wrapperClass };
-        } else {
-            interfaces = new Class[] { CallableStatement.class };
-        }
-
-        return (CallableStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), interfaces, jdbcStatementProxy);
+        return (CallableStatement) createNewProxy(statement, jdbcStatementProxy);
     }
 
+    /* (non-Javadoc)
+     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyPreparedStatement(bitronix.tm.resource.jdbc.JdbcPooledConnection, java.sql.PreparedStatement, bitronix.tm.resource.jdbc.LruStatementCache.CacheKey)
+     */
     public PreparedStatement getProxyPreparedStatement(JdbcPooledConnection jdbcPooledConnection, PreparedStatement statement, CacheKey cacheKey) {
         PreparedStatement proxyStatement = proxyPreparedStatementPool.poll();
         if (proxyStatement != null) {
@@ -121,44 +103,35 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 
         PreparedStatementJavaProxy jdbcStatementProxy = new PreparedStatementJavaProxy(jdbcPooledConnection, statement, cacheKey);
 
-        Class<?>[] interfaces;
-        if (wrapperClass != null) {
-            interfaces = new Class[] { PreparedStatement.class, wrapperClass };
-        } else {
-            interfaces = new Class[] { PreparedStatement.class };
-        }
-
-        return (PreparedStatement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), interfaces, jdbcStatementProxy);
+        return (PreparedStatement) createNewProxy(statement, jdbcStatementProxy);
     }
 
+    /* (non-Javadoc)
+     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyXaConnection(java.sql.Connection)
+     */
     public XAConnection getProxyXaConnection(Connection connection) {
         LrcXAConnectionJavaProxy jdbcLrcXaConnectionProxy = new LrcXAConnectionJavaProxy(connection);
 
-        return (XAConnection) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[] { XAConnection.class }, jdbcLrcXaConnectionProxy);
+        return (XAConnection) createNewProxy(connection, jdbcLrcXaConnectionProxy, XAConnection.class);
     }
 
+    /* (non-Javadoc)
+     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyConnection(bitronix.tm.resource.jdbc.lrc.LrcXAResource, java.sql.Connection)
+     */
     public Connection getProxyConnection(LrcXAResource xaResource, Connection connection) {
         LrcConnectionJavaProxy lrcConnectionJavaProxy = new LrcConnectionJavaProxy(xaResource, connection);
 
-        Class<?>[] interfaces;
-        if (wrapperClass != null) {
-            interfaces = new Class[] { Connection.class, PooledConnectionProxy.class, wrapperClass };
-        } else {
-            interfaces = new Class[] { Connection.class, PooledConnectionProxy.class };
+        return (Connection) createNewProxy(connection, lrcConnectionJavaProxy);
+    }
+
+    private Object createNewProxy(Object obj, JavaProxyBase<?> proxy, Class<?>... additionalInterfaces) {
+        Class<?>[] interfaces = obj.getClass().getInterfaces();
+        if (additionalInterfaces != null) {
+            Class<?>[] augmented = new Class<?>[interfaces.length + additionalInterfaces.length];
+            System.arraycopy(interfaces, 0, augmented, 0, interfaces.length);
+            System.arraycopy(additionalInterfaces, 0, augmented, interfaces.length, additionalInterfaces.length);
+            interfaces = augmented;
         }
-
-        return (Connection) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), interfaces, lrcConnectionJavaProxy);
-    }
-
-    public void returnProxyStatement(Statement statement) {
-        proxyStatementPool.offer(statement);
-    }
-
-    public void returnProxyCallableStatement(CallableStatement statement) {
-        proxyCallableStatementPool.offer(statement);
-    }
-
-    public void returnProxyPreparedStatement(PreparedStatement statement) {
-        proxyPreparedStatementPool.offer(statement);
+        return Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), interfaces, proxy);
     }
 }

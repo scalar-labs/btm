@@ -53,13 +53,8 @@ public class CallableStatementJavaProxy extends JavaProxyBase<CallableStatement>
             return;
         }
 
-        try {
-            jdbcPooledConnection.unregisterUncachedStatement(delegate);
-            delegate.close();
-        } finally {
-            initialize(null, null);
-            JdbcProxyFactory.INSTANCE.returnProxyCallableStatement(getProxy());
-        }
+        jdbcPooledConnection.unregisterUncachedStatement(delegate);
+        delegate.close();
     }
 
     @Override

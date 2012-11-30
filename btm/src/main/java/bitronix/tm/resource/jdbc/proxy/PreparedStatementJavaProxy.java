@@ -52,7 +52,7 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
     }
 
     public String toString() {
-        return "a JdbcPreparedStatementHandle wrapping [" + delegate + "]";
+        return "a PreparedStatementJavaProxy wrapping [" + delegate + "]";
     }
 
     /* Overridden methods of java.sql.PreparedStatement */
@@ -67,9 +67,6 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
         if (cacheKey == null) {
             jdbcPooledConnection.unregisterUncachedStatement(delegate);
             delegate.close();
-
-            initialize(null, null, null);
-            JdbcProxyFactory.INSTANCE.returnProxyPreparedStatement(getProxy());
         }
         else {
 	        // Clear the parameters so the next use of this cached statement
