@@ -4,8 +4,6 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 
-import javax.transaction.SystemException;
-
 import junit.framework.Assert;
 
 import org.junit.Test;
