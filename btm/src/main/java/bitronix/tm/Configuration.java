@@ -125,8 +125,7 @@ public class Configuration implements Service {
             allowMultipleLrc = getBoolean(properties, "bitronix.tm.allowMultipleLrc", false);
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
             conservativeJournaling = getBoolean(properties, "bitronix.tm.conservativeJournaling", false);
-            // jdbcProxyFactoryClass = getString(properties, "bitronix.tm.jdbcProxyFactoryClass", "bitronix.tm.resource.jdbc.proxy.JdbcJavaProxyFactory");
-            jdbcProxyFactoryClass = getString(properties, "bitronix.tm.jdbcProxyFactoryClass", "bitronix.tm.resource.jdbc.proxy.JdbcCglibProxyFactory");
+            jdbcProxyFactoryClass = getString(properties, "bitronix.tm.jdbcProxyFactoryClass", "auto");
         } catch (IOException ex) {
             throw new InitializationException("error loading configuration", ex);
         }

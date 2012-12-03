@@ -63,6 +63,15 @@ public interface JdbcProxyFactory {
         private static JdbcProxyFactory initialize() {
             try {
                 String jdbcProxyFactoryClass = TransactionManagerServices.getConfiguration().getJdbcProxyFactoryClass();
+                if ("auto".equals(jdbcProxyFactoryClass)) {
+                    try {
+                        ClassLoaderUtils.loadClass("net.sf.cglib.proxy.Enhancer");
+                        jdbcProxyFactoryClass = "bitronix.tm.resource.jdbc.proxy.JdbcCglibProxyFactory";
+                    }
+                    catch (ClassNotFoundException cnfe) {
+                        jdbcProxyFactoryClass = "bitronix.tm.resource.jdbc.proxy.JdbcJavaProxyFactory";
+                    }
+                }
                 Class<?> proxyFactoryClass = ClassLoaderUtils.loadClass(jdbcProxyFactoryClass);
                 return (JdbcProxyFactory) proxyFactoryClass.newInstance();
             } catch (Exception e) {
