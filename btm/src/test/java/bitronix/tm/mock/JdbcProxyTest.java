@@ -31,7 +31,7 @@ public class JdbcProxyTest extends AbstractMockJdbcTest {
             stmt.setFloat(4, 9.99f);
             stmt.clearParameters();
         }
-        System.out.println(System.nanoTime() - start);
+        long totalTime = System.nanoTime() - start;
 
         stmt.executeQuery();
 
