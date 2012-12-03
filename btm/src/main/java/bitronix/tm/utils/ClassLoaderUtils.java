@@ -46,6 +46,11 @@ public class ClassLoaderUtils {
         if (clazz.getSuperclass() != null) {
             interfaces.addAll(getAllInterfaces(clazz.getSuperclass()));
         }
+
+        if (clazz.isInterface()) {
+            interfaces.add(clazz);
+        }
+
         return interfaces;
     }
 
