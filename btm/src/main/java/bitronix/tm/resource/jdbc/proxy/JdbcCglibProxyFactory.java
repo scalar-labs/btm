@@ -50,12 +50,12 @@ import bitronix.tm.utils.ClassLoaderUtils;
  */
 public class JdbcCglibProxyFactory implements JdbcProxyFactory {
 
-    private static Class<Connection> proxyConnectionClass;
-    private static Class<Statement> proxyStatementClass;
-    private static Class<CallableStatement> proxyCallableStatementClass;
-    private static Class<PreparedStatement> proxyPreparedStatementClass;
+    private Class<Connection> proxyConnectionClass;
+    private Class<Statement> proxyStatementClass;
+    private Class<CallableStatement> proxyCallableStatementClass;
+    private Class<PreparedStatement> proxyPreparedStatementClass;
 
-    static {
+    JdbcCglibProxyFactory() {
         proxyConnectionClass = createProxyConnectionClass();
         proxyStatementClass = createProxyStatementClass();
         proxyCallableStatementClass = createProxyCallableStatementClass();
@@ -131,7 +131,7 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     // ---------------------------------------------------------------
 
     @SuppressWarnings("unchecked")
-    private static Class<Connection> createProxyConnectionClass() {
+    private Class<Connection> createProxyConnectionClass() {
         Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(Connection.class);
         interfaces.add(PooledConnectionProxy.class);
 
@@ -143,7 +143,7 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     }
 
     @SuppressWarnings("unchecked")
-    private static Class<PreparedStatement> createProxyPreparedStatementClass() {
+    private Class<PreparedStatement> createProxyPreparedStatementClass() {
         Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(PreparedStatement.class);
 
         Enhancer enhancer = new Enhancer();
@@ -154,7 +154,7 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     }
 
     @SuppressWarnings("unchecked")
-    private static Class<Statement> createProxyStatementClass() {
+    private Class<Statement> createProxyStatementClass() {
         Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(Statement.class);
 
         Enhancer enhancer = new Enhancer();
@@ -165,7 +165,7 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     }
 
     @SuppressWarnings("unchecked")
-    private static Class<CallableStatement> createProxyCallableStatementClass() {
+    private Class<CallableStatement> createProxyCallableStatementClass() {
         Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(CallableStatement.class);
 
         Enhancer enhancer = new Enhancer();

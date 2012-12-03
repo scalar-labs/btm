@@ -45,13 +45,13 @@ import bitronix.tm.utils.ClassLoaderUtils;
  */
 public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 
-	private static ProxyFactory<Connection> proxyConnectionFactory;
-	private static ProxyFactory<XAConnection> proxyXAConnectionFactory;
-	private static ProxyFactory<Statement> proxyStatementFactory;
-	private static ProxyFactory<CallableStatement> proxyCallableStatementFactory;
-	private static ProxyFactory<PreparedStatement> proxyPreparedStatementFactory;
+	private ProxyFactory<Connection> proxyConnectionFactory;
+	private ProxyFactory<XAConnection> proxyXAConnectionFactory;
+	private ProxyFactory<Statement> proxyStatementFactory;
+	private ProxyFactory<CallableStatement> proxyCallableStatementFactory;
+	private ProxyFactory<PreparedStatement> proxyPreparedStatementFactory;
 
-	static {
+	JdbcJavaProxyFactory() {
 		proxyConnectionFactory = createProxyConnectionFactory();
 		proxyXAConnectionFactory = createProxyXAConnectionFactory();
 		proxyStatementFactory = createProxyStatementFactory();
@@ -115,7 +115,7 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 
 	/* High-efficiency proxy factories (basically cached constructors) */
 
-	private static ProxyFactory<Connection> createProxyConnectionFactory() {
+	private ProxyFactory<Connection> createProxyConnectionFactory() {
 
 		Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(Connection.class);
 		interfaces.add(PooledConnectionProxy.class);
@@ -123,28 +123,28 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 		return new ProxyFactory<Connection>(interfaces.toArray(new Class<?>[0]));
 	}
 
-	private static ProxyFactory<Statement> createProxyStatementFactory() {
+	private ProxyFactory<Statement> createProxyStatementFactory() {
 
 		Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(Statement.class);
 
 		return new ProxyFactory<Statement>(interfaces.toArray(new Class<?>[0]));
 	}
 
-	private static ProxyFactory<PreparedStatement> createProxyPreparedStatementFactory() {
+	private ProxyFactory<PreparedStatement> createProxyPreparedStatementFactory() {
 
 		Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(PreparedStatement.class);
 
 		return new ProxyFactory<PreparedStatement>(interfaces.toArray(new Class<?>[0]));
 	}
 
-	private static ProxyFactory<CallableStatement> createProxyCallableStatementFactory() {
+	private ProxyFactory<CallableStatement> createProxyCallableStatementFactory() {
 
 		Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(CallableStatement.class);
 
 		return new ProxyFactory<CallableStatement>(interfaces.toArray(new Class<?>[0]));
 	}
 
-	private static ProxyFactory<XAConnection> createProxyXAConnectionFactory() {
+	private ProxyFactory<XAConnection> createProxyXAConnectionFactory() {
 
 		Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(Connection.class);
 		interfaces.add(XAConnection.class);
