@@ -180,14 +180,9 @@ public class MockitoXADataSource implements XADataSource {
         when(mockConnection.createStatement(anyInt(), anyInt(), anyInt())).thenReturn(statement);
 
         // Handle Connection.prepareStatement()
-        doAnswer(new Answer<PreparedStatement>() {
-			public PreparedStatement answer(InvocationOnMock invocation) throws Throwable {
-				return mock(PreparedStatement.class);
-			}
-        }).when(mockConnection).prepareStatement(anyString());
-
-        PreparedStatement mockPreparedStatement = mock(PreparedStatement.class);
-        // when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
+        // PreparedStatement mockPreparedStatement = mock(PreparedStatement.class);
+        PreparedStatement mockPreparedStatement = new MockPreparedStatement();
+        when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(anyString(), anyInt())).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(anyString(), (int[]) anyObject())).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(anyString(), (String[]) anyObject())).thenReturn(mockPreparedStatement);

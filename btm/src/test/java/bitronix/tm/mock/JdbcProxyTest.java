@@ -21,14 +21,17 @@ public class JdbcProxyTest extends AbstractMockJdbcTest {
 
         Connection connection = poolingDataSource1.getConnection();
 
+        long start = System.nanoTime();
         PreparedStatement stmt = connection.prepareStatement("SELECT 1 FROM nothing WHERE a=? AND b=? AND c=? AND d=?");
-        for (int i = 0; i < 30000; i++) {
+        Date date = new Date(0);
+        for (int i = 0; i < 50000; i++) {
             stmt.setString(1, "foo");
             stmt.setInt(2, 999);
-            stmt.setDate(3, new Date(0));
+            stmt.setDate(3, date);
             stmt.setFloat(4, 9.99f);
             stmt.clearParameters();
         }
+        System.out.println(System.nanoTime() - start);
 
         stmt.executeQuery();
 
@@ -104,33 +107,6 @@ public class JdbcProxyTest extends AbstractMockJdbcTest {
         prepareStatement2.close();
 
         connection.close();
-        tm.shutdown();
-    }
-
-    @Test
-    public void testCglibSetters() throws Exception {
-        TransactionManagerServices.getConfiguration().setJdbcProxyFactoryClass("bitronix.tm.resource.jdbc.proxy.JdbcCglibProxyFactory");
-
-        BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
-        tm.setTransactionTimeout(30);
-        tm.begin();
-
-        Connection connection = poolingDataSource1.getConnection();
-
-        PreparedStatement stmt = connection.prepareStatement("SELECT 1 FROM nothing WHERE a=? AND b=? AND c=? AND d=?");
-        for (int i = 0; i < 20000; i++) {
-            stmt.setString(1, "foo");
-            stmt.setInt(2, 999);
-            stmt.setDate(3, new Date(0));
-            stmt.setFloat(4, 9.99f);
-            stmt.clearParameters();
-        }
-
-        stmt.executeQuery();
-
-        connection.close();
-
-        tm.commit();
         tm.shutdown();
     }
 }

@@ -30,16 +30,17 @@ import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
 public class JdbcCglibProxyFactory implements JdbcProxyFactory {
 
     private static Class<Connection> proxyConnectionClass;
+    private static Class<Statement> proxyStatementClass;
+    private static Class<CallableStatement> proxyCallableStatementClass;
     private static Class<PreparedStatement> proxyPreparedStatementClass;
 
     static {
-        createProxyConnectionClass();
-        createProxyPreparedStatementClass();
+        proxyConnectionClass = createProxyConnectionClass();
+        proxyStatementClass = createProxyStatementClass();
+        proxyCallableStatementClass = createProxyCallableStatementClass();
+        proxyPreparedStatementClass = createProxyPreparedStatementClass();
     }
 
-    /* (non-Javadoc)
-     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyConnection(bitronix.tm.resource.jdbc.JdbcPooledConnection, java.sql.Connection)
-     */
     public Connection getProxyConnection(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
         FastDispatcher<Connection> fastDispatcher = new FastDispatcher<Connection>(connection);
         ConnectionJavaProxy methodInterceptor = new ConnectionJavaProxy(jdbcPooledConnection, connection);
@@ -54,26 +55,34 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
         }
     }
 
-    /* (non-Javadoc)
-     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyStatement(bitronix.tm.resource.jdbc.JdbcPooledConnection, java.sql.Statement)
-     */
     public Statement getProxyStatement(JdbcPooledConnection jdbcPooledConnection, Statement statement) {
-        // TODO Auto-generated method stub
-        return null;
+        FastDispatcher<Statement> fastDispatcher = new FastDispatcher<Statement>(statement);
+        StatementJavaProxy methodInterceptor = new StatementJavaProxy(jdbcPooledConnection, statement);
+        Interceptor<StatementJavaProxy> interceptor = new Interceptor<StatementJavaProxy>(methodInterceptor);
+
+        try {
+            Statement statementCglibProxy = proxyStatementClass.newInstance();
+            ((Factory) statementCglibProxy).setCallbacks(new Callback[] { fastDispatcher, interceptor });
+            return statementCglibProxy;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    /* (non-Javadoc)
-     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyCallableStatement(bitronix.tm.resource.jdbc.JdbcPooledConnection, java.sql.CallableStatement)
-     */
-    public CallableStatement getProxyCallableStatement(JdbcPooledConnection jdbcPooledConnection,
-            CallableStatement statement) {
-        // TODO Auto-generated method stub
-        return null;
+    public CallableStatement getProxyCallableStatement(JdbcPooledConnection jdbcPooledConnection, CallableStatement statement) {
+        FastDispatcher<CallableStatement> fastDispatcher = new FastDispatcher<CallableStatement>(statement);
+        CallableStatementJavaProxy methodInterceptor = new CallableStatementJavaProxy(jdbcPooledConnection, statement);
+        Interceptor<CallableStatementJavaProxy> interceptor = new Interceptor<CallableStatementJavaProxy>(methodInterceptor);
+
+        try {
+            CallableStatement statementCglibProxy = proxyCallableStatementClass.newInstance();
+            ((Factory) statementCglibProxy).setCallbacks(new Callback[] { fastDispatcher, interceptor });
+            return statementCglibProxy;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    /* (non-Javadoc)
-     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyPreparedStatement(bitronix.tm.resource.jdbc.JdbcPooledConnection, java.sql.PreparedStatement, bitronix.tm.resource.jdbc.LruStatementCache.CacheKey)
-     */
     public PreparedStatement getProxyPreparedStatement(JdbcPooledConnection jdbcPooledConnection, PreparedStatement statement, CacheKey cacheKey) {
         FastDispatcher<PreparedStatement> fastDispatcher = new FastDispatcher<PreparedStatement>(statement);
         PreparedStatementJavaProxy methodInterceptor = new PreparedStatementJavaProxy(jdbcPooledConnection, statement, cacheKey);
@@ -88,37 +97,54 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
         }
     }
 
-    /* (non-Javadoc)
-     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyXaConnection(java.sql.Connection)
-     */
     public XAConnection getProxyXaConnection(Connection connection) {
         return new JdbcJavaProxyFactory().getProxyXaConnection(connection);
     }
 
-    /* (non-Javadoc)
-     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyConnection(bitronix.tm.resource.jdbc.lrc.LrcXAResource, java.sql.Connection)
-     */
     public Connection getProxyConnection(LrcXAResource xaResource, Connection connection) {
         return new JdbcJavaProxyFactory().getProxyConnection(xaResource, connection);
     }
 
+    // ---------------------------------------------------------------
+    //  Generate CGLIB Proxy Classes
+    // ---------------------------------------------------------------
+
     @SuppressWarnings("unchecked")
-    private static void createProxyConnectionClass() {
+    private static Class<Connection> createProxyConnectionClass() {
         Enhancer enhancer = new Enhancer();
         enhancer.setInterfaces(new Class[] { Connection.class, PooledConnectionProxy.class } );
         enhancer.setCallbackTypes(new Class[] {FastDispatcher.class, Interceptor.class} );
         enhancer.setCallbackFilter(new InterceptorFilter(new ConnectionJavaProxy()));
-        proxyConnectionClass = enhancer.createClass();
+        return enhancer.createClass();
     }
 
     @SuppressWarnings("unchecked")
-    private static void createProxyPreparedStatementClass() {
+    private static Class<PreparedStatement> createProxyPreparedStatementClass() {
         Enhancer enhancer = new Enhancer();
         enhancer.setInterfaces(new Class[] { PreparedStatement.class } );
         enhancer.setCallbackTypes(new Class[] {FastDispatcher.class, Interceptor.class} );
         enhancer.setCallbackFilter(new InterceptorFilter(new PreparedStatementJavaProxy()));
-        proxyPreparedStatementClass = enhancer.createClass();
+        return enhancer.createClass();
     }
+
+    @SuppressWarnings("unchecked")
+    private static Class<Statement> createProxyStatementClass() {
+        Enhancer enhancer = new Enhancer();
+        enhancer.setInterfaces(new Class[] { Statement.class } );
+        enhancer.setCallbackTypes(new Class[] {FastDispatcher.class, Interceptor.class} );
+        enhancer.setCallbackFilter(new InterceptorFilter(new StatementJavaProxy()));
+        return enhancer.createClass();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Class<CallableStatement> createProxyCallableStatementClass() {
+        Enhancer enhancer = new Enhancer();
+        enhancer.setInterfaces(new Class[] { CallableStatement.class } );
+        enhancer.setCallbackTypes(new Class[] {FastDispatcher.class, Interceptor.class} );
+        enhancer.setCallbackFilter(new InterceptorFilter(new CallableStatementJavaProxy()));
+        return enhancer.createClass();
+    }
+
 
     // ---------------------------------------------------------------
     //  CGLIB Classes

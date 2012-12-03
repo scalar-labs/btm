@@ -41,6 +41,10 @@ public class CallableStatementJavaProxy extends JavaProxyBase<CallableStatement>
         initialize(jdbcPooledConnection, statement);
     }
 
+    public CallableStatementJavaProxy() {
+        // Default constructor
+    }
+
     void initialize(JdbcPooledConnection jdbcPooledConnection, CallableStatement statement) {
         this.jdbcPooledConnection = jdbcPooledConnection;
         this.delegate = statement;
