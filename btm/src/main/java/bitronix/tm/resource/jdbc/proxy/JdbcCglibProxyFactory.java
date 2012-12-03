@@ -55,11 +55,15 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     private Class<CallableStatement> proxyCallableStatementClass;
     private Class<PreparedStatement> proxyPreparedStatementClass;
 
+    // For LRC we just use the standard Java Proxies
+    private JdbcJavaProxyFactory lrcProxyFactory;
+
     JdbcCglibProxyFactory() {
         proxyConnectionClass = createProxyConnectionClass();
         proxyStatementClass = createProxyStatementClass();
         proxyCallableStatementClass = createProxyCallableStatementClass();
         proxyPreparedStatementClass = createProxyPreparedStatementClass();
+        lrcProxyFactory = new JdbcJavaProxyFactory();
     }
 
     public Connection getProxyConnection(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
@@ -119,11 +123,11 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     }
 
     public XAConnection getProxyXaConnection(Connection connection) {
-        return new JdbcJavaProxyFactory().getProxyXaConnection(connection);
+        return lrcProxyFactory.getProxyXaConnection(connection);
     }
 
     public Connection getProxyConnection(LrcXAResource xaResource, Connection connection) {
-        return new JdbcJavaProxyFactory().getProxyConnection(xaResource, connection);
+        return lrcProxyFactory.getProxyConnection(xaResource, connection);
     }
 
     // ---------------------------------------------------------------
