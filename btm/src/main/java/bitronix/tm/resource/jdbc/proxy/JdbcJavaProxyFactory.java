@@ -26,7 +26,12 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.sql.XAConnection;
@@ -45,25 +50,21 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
     private static Queue<Statement> proxyStatementPool;
     private static Queue<CallableStatement> proxyCallableStatementPool;
     private static Queue<PreparedStatement> proxyPreparedStatementPool;
+    private static Map<Class<?>, Set<Class<?>>> interfaceCache;
 
     static {
         proxyStatementPool = new LinkedBlockingQueue<Statement>(500);
         proxyCallableStatementPool = new LinkedBlockingQueue<CallableStatement>(500);
         proxyPreparedStatementPool = new LinkedBlockingQueue<PreparedStatement>(500);
+        interfaceCache = new ConcurrentHashMap<Class<?>, Set<Class<?>>>();
     }
 
-    /* (non-Javadoc)
-     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyConnection(bitronix.tm.resource.jdbc.JdbcPooledConnection, java.sql.Connection)
-     */
     public Connection getProxyConnection(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
         ConnectionJavaProxy jdbcConnectionProxy = new ConnectionJavaProxy(jdbcPooledConnection, connection);
 
         return (Connection) createNewProxy(connection, jdbcConnectionProxy, PooledConnectionProxy.class);
     }
 
-    /* (non-Javadoc)
-     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyStatement(bitronix.tm.resource.jdbc.JdbcPooledConnection, java.sql.Statement)
-     */
     public Statement getProxyStatement(JdbcPooledConnection jdbcPooledConnection, Statement statement) {
         Statement proxyStatement = proxyStatementPool.poll();
         if (proxyStatement != null) {
@@ -76,9 +77,6 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
         return (Statement) createNewProxy(statement, jdbcStatementProxy);
     }
 
-    /* (non-Javadoc)
-     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyCallableStatement(bitronix.tm.resource.jdbc.JdbcPooledConnection, java.sql.CallableStatement)
-     */
     public CallableStatement getProxyCallableStatement(JdbcPooledConnection jdbcPooledConnection, CallableStatement statement) {
         CallableStatement proxyStatement = proxyCallableStatementPool.poll();
         if (proxyStatement != null) {
@@ -91,9 +89,6 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
         return (CallableStatement) createNewProxy(statement, jdbcStatementProxy);
     }
 
-    /* (non-Javadoc)
-     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyPreparedStatement(bitronix.tm.resource.jdbc.JdbcPooledConnection, java.sql.PreparedStatement, bitronix.tm.resource.jdbc.LruStatementCache.CacheKey)
-     */
     public PreparedStatement getProxyPreparedStatement(JdbcPooledConnection jdbcPooledConnection, PreparedStatement statement, CacheKey cacheKey) {
         PreparedStatement proxyStatement = proxyPreparedStatementPool.poll();
         if (proxyStatement != null) {
@@ -106,18 +101,12 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
         return (PreparedStatement) createNewProxy(statement, jdbcStatementProxy);
     }
 
-    /* (non-Javadoc)
-     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyXaConnection(java.sql.Connection)
-     */
     public XAConnection getProxyXaConnection(Connection connection) {
         LrcXAConnectionJavaProxy jdbcLrcXaConnectionProxy = new LrcXAConnectionJavaProxy(connection);
 
         return (XAConnection) createNewProxy(connection, jdbcLrcXaConnectionProxy, XAConnection.class);
     }
 
-    /* (non-Javadoc)
-     * @see bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory#getProxyConnection(bitronix.tm.resource.jdbc.lrc.LrcXAResource, java.sql.Connection)
-     */
     public Connection getProxyConnection(LrcXAResource xaResource, Connection connection) {
         LrcConnectionJavaProxy lrcConnectionJavaProxy = new LrcConnectionJavaProxy(xaResource, connection);
 
@@ -125,13 +114,18 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
     }
 
     private Object createNewProxy(Object obj, JavaProxyBase<?> proxy, Class<?>... additionalInterfaces) {
-        Class<?>[] interfaces = obj.getClass().getInterfaces();
-        if (additionalInterfaces != null) {
-            Class<?>[] augmented = new Class<?>[interfaces.length + additionalInterfaces.length];
-            System.arraycopy(interfaces, 0, augmented, 0, interfaces.length);
-            System.arraycopy(additionalInterfaces, 0, augmented, interfaces.length, additionalInterfaces.length);
-            interfaces = augmented;
+
+        Set<Class<?>> interfaces = interfaceCache.get(obj.getClass());
+        if (interfaces == null) {
+            interfaces = ClassLoaderUtils.getAllInterfaces(obj.getClass());
+            interfaceCache.put(obj.getClass(), interfaces);
         }
-        return Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), interfaces, proxy);
+
+        if (additionalInterfaces != null) {
+            interfaces = new HashSet<Class<?>>(interfaces);
+            interfaces.addAll(Arrays.asList(additionalInterfaces));
+        }
+
+        return Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), interfaces.toArray(new Class<?>[0]), proxy);
     }
 }

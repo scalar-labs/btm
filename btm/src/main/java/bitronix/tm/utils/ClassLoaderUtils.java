@@ -24,6 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Static utility methods for loading classes and resources.
@@ -31,6 +34,20 @@ import java.io.InputStream;
 public class ClassLoaderUtils {
 
     private final static Logger log = LoggerFactory.getLogger(ClassLoaderUtils.class);
+
+    public static Set<Class<?>> getAllInterfaces(Class<?> clazz) {
+        Set<Class<?>> interfaces = new HashSet<Class<?>>();
+        for (Class<?> intf : Arrays.asList(clazz.getInterfaces())) {
+            if (intf.getInterfaces().length > 0) {
+                interfaces.addAll(getAllInterfaces(intf));
+            }
+            interfaces.add(intf);
+        }
+        if (clazz.getSuperclass() != null) {
+            interfaces.addAll(getAllInterfaces(clazz.getSuperclass()));
+        }
+        return interfaces;
+    }
 
     /**
      * Get the class loader which can be used to generate proxies without leaking memory.
@@ -87,7 +104,12 @@ public class ClassLoaderUtils {
 
         @Override
         protected Class<?> findClass(String name) throws ClassNotFoundException {
-            return contextLoader.loadClass(name);
+            try {
+                return contextLoader.loadClass(name);
+            }
+            catch (ClassNotFoundException cnfe) {
+                return CascadingClassLoader.class.getClassLoader().loadClass(name);
+            }
         }
     }
 }
