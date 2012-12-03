@@ -29,10 +29,8 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.sql.XAConnection;
 
@@ -47,15 +45,9 @@ import bitronix.tm.utils.ClassLoaderUtils;
  */
 public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 
-    private static Queue<Statement> proxyStatementPool;
-    private static Queue<CallableStatement> proxyCallableStatementPool;
-    private static Queue<PreparedStatement> proxyPreparedStatementPool;
     private static Map<Class<?>, Set<Class<?>>> interfaceCache;
 
     static {
-        proxyStatementPool = new LinkedBlockingQueue<Statement>(500);
-        proxyCallableStatementPool = new LinkedBlockingQueue<CallableStatement>(500);
-        proxyPreparedStatementPool = new LinkedBlockingQueue<PreparedStatement>(500);
         interfaceCache = new ConcurrentHashMap<Class<?>, Set<Class<?>>>();
     }
 
@@ -66,36 +58,18 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
     }
 
     public Statement getProxyStatement(JdbcPooledConnection jdbcPooledConnection, Statement statement) {
-        Statement proxyStatement = proxyStatementPool.poll();
-        if (proxyStatement != null) {
-            ((StatementJavaProxy) Proxy.getInvocationHandler(proxyStatement)).initialize(jdbcPooledConnection, statement);
-            return proxyStatement;
-        }
-
         StatementJavaProxy jdbcStatementProxy = new StatementJavaProxy(jdbcPooledConnection, statement);
 
         return (Statement) createNewProxy(statement, jdbcStatementProxy);
     }
 
     public CallableStatement getProxyCallableStatement(JdbcPooledConnection jdbcPooledConnection, CallableStatement statement) {
-        CallableStatement proxyStatement = proxyCallableStatementPool.poll();
-        if (proxyStatement != null) {
-            ((CallableStatementJavaProxy) Proxy.getInvocationHandler(proxyStatement)).initialize(jdbcPooledConnection, statement);
-            return proxyStatement;
-        }
-
         CallableStatementJavaProxy jdbcStatementProxy = new CallableStatementJavaProxy(jdbcPooledConnection, statement);
 
         return (CallableStatement) createNewProxy(statement, jdbcStatementProxy);
     }
 
     public PreparedStatement getProxyPreparedStatement(JdbcPooledConnection jdbcPooledConnection, PreparedStatement statement, CacheKey cacheKey) {
-        PreparedStatement proxyStatement = proxyPreparedStatementPool.poll();
-        if (proxyStatement != null) {
-            ((PreparedStatementJavaProxy) Proxy.getInvocationHandler(proxyStatement)).initialize(jdbcPooledConnection, statement, cacheKey);
-            return proxyStatement;
-        }
-
         PreparedStatementJavaProxy jdbcStatementProxy = new PreparedStatementJavaProxy(jdbcPooledConnection, statement, cacheKey);
 
         return (PreparedStatement) createNewProxy(statement, jdbcStatementProxy);
