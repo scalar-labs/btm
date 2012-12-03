@@ -14,9 +14,9 @@ import javax.sql.XAConnection;
 
 import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.CallbackFilter;
-import net.sf.cglib.proxy.Dispatcher;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.Factory;
+import net.sf.cglib.proxy.LazyLoader;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 import bitronix.tm.resource.jdbc.JdbcPooledConnection;
@@ -150,7 +150,7 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     //  CGLIB Classes
     // ---------------------------------------------------------------
     
-    static class FastDispatcher<T> implements Dispatcher {
+    static class FastDispatcher<T> implements LazyLoader {
         private T delegate;
 
         public FastDispatcher(T delegate) {
