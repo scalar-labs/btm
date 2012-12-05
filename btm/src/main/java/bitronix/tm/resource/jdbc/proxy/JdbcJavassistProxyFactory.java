@@ -22,6 +22,8 @@
 package bitronix.tm.resource.jdbc.proxy;
 
 import java.lang.reflect.Constructor;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -66,8 +68,10 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
 
     JdbcJavassistProxyFactory() {
         classMap = new ClassMap();
-        classPool = ClassPool.getDefault();
+        ClassPool defaultPool = ClassPool.getDefault();
+        classPool = new ClassPool(defaultPool);
         classPool.insertClassPath(new ClassClassPath(this.getClass()));
+        classPool.childFirstLookup = true;
 
         createProxyConnectionClass();
         createProxyStatementClass();
@@ -223,6 +227,6 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
             }
         }
 
-        return targetCt.toClass();
+        return targetCt.toClass(ClassLoaderUtils.getClassLoader(), null);
     }
 }

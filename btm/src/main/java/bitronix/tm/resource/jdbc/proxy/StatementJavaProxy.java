@@ -37,7 +37,7 @@ public class StatementJavaProxy extends JavaProxyBase<Statement> {
 
     private JdbcPooledConnection jdbcPooledConnection;
 
-    StatementJavaProxy(JdbcPooledConnection jdbcPooledConnection, Statement statement) {
+    public StatementJavaProxy(JdbcPooledConnection jdbcPooledConnection, Statement statement) {
         initialize(jdbcPooledConnection, statement);
     }
 

@@ -52,11 +52,11 @@ public class ConnectionJavaProxy extends JavaProxyBase<Connection> implements Po
     private JdbcPooledConnection jdbcPooledConnection;
     private boolean useStatementCache;
 
-    ConnectionJavaProxy() {
+    public ConnectionJavaProxy() {
         // Default constructor
     }
 
-    ConnectionJavaProxy(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
+    public ConnectionJavaProxy(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
         initialize(jdbcPooledConnection, connection);
     }
 

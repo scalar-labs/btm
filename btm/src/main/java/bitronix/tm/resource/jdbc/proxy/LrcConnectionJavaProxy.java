@@ -38,7 +38,7 @@ public class LrcConnectionJavaProxy extends JavaProxyBase<Connection> {
 
     private LrcXAResource xaResource;
 
-    LrcConnectionJavaProxy(LrcXAResource xaResource, Connection connection) {
+    public LrcConnectionJavaProxy(LrcXAResource xaResource, Connection connection) {
         this.delegate = connection;
         this.xaResource = xaResource;
     }

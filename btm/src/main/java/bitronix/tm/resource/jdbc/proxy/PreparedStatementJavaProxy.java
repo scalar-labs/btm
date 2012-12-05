@@ -40,7 +40,7 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
     private CacheKey cacheKey;
     private boolean pretendClosed;
 
-    PreparedStatementJavaProxy(JdbcPooledConnection jdbcPooledConnection, PreparedStatement statement, CacheKey cacheKey) {
+    public PreparedStatementJavaProxy(JdbcPooledConnection jdbcPooledConnection, PreparedStatement statement, CacheKey cacheKey) {
         initialize(jdbcPooledConnection, statement, cacheKey);
     }
 

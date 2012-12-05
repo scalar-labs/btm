@@ -50,7 +50,7 @@ public class LrcXAConnectionJavaProxy extends JavaProxyBase<Connection> {
     private LrcXAResource xaResource;
     private final List<ConnectionEventListener> connectionEventListeners = new CopyOnWriteArrayList<ConnectionEventListener>();
 
-    LrcXAConnectionJavaProxy(Connection connection) {
+    public LrcXAConnectionJavaProxy(Connection connection) {
         this.xaResource = new LrcXAResource(connection);
         this.delegate = new JdbcJavaProxyFactory().getProxyConnection(xaResource, connection);
     }
