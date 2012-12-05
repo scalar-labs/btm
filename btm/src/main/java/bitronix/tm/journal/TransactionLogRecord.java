@@ -188,7 +188,12 @@ public class TransactionLogRecord implements JournalRecord {
      * and {@link #calculateCrc32()}. This method must be called each time after the set of contained unique names is updated.
      */
     private void refresh() {
-        // recordLength = calculateRecordLength(uniqueNames);
+        int total = 0;
+        for (String uniqueName : uniqueNames) {
+        	total += 2 + uniqueName.length(); // 2 bytes for storing the unique name length + unique name length
+        }
+        recordLength = total + getFixedRecordLength();
+
         crc32 = calculateCrc32();
     }
 

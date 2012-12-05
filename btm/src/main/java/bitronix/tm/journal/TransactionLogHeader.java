@@ -200,7 +200,7 @@ public class TransactionLogHeader {
     public void setPosition(long position) throws IOException {
         if (position < HEADER_LENGTH)
             throw new IOException("invalid position " + position + " (too low)");
-        if (position >= maxFileLength)
+        if (position > maxFileLength)
             throw new IOException("invalid position " + position + " (too high)");
 
         ByteBuffer buf = ByteBuffer.allocate(8);
