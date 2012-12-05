@@ -423,22 +423,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     private Object getConnectionHandle(Connection connection) throws SQLException
     {
         return JdbcProxyFactory.INSTANCE.getProxyConnection(this, connection);
-//    	if (jdbcVersionDetected == 3)
-//    	{
-//    		return new JdbcConnectionHandle(this, connection);
-//    	}
-//
-//    	// JDBC 4.0
-//    	try {
-//			Class<?> handle = ClassLoaderUtils.loadClass("bitronix.tm.resource.jdbc4.Jdbc4ConnectionHandle");
-//			Constructor<?> constructor = handle.getConstructor( new Class[] {JdbcPooledConnection.class, Connection.class} );
-//			return constructor.newInstance( new Object[] {this, connection} );
-//		} catch (Exception e) {
-//			log.error("could not load JDBC4 wrapper class", e);
-//			SQLException sqlException = new SQLException("could not load JDBC4 wrapper class");
-//			sqlException.initCause(e);
-//			throw sqlException;
-//		}
     }
 
     /* management */
