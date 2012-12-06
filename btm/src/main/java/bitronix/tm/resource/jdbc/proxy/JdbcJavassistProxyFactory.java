@@ -22,8 +22,6 @@
 package bitronix.tm.resource.jdbc.proxy;
 
 import java.lang.reflect.Constructor;
-import java.security.CodeSource;
-import java.security.ProtectionDomain;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -163,7 +161,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
             CtClass superClass = classPool.getCtClass(CallableStatementJavaProxy.class.getName());
             CtClass statementClassCt = classPool.makeClass("bitronix.tm.resource.jdbc.proxy.CallableStatementJavassistProxy", superClass);
 
-            Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(PreparedStatement.class);
+            Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(CallableStatement.class);
 
             Class<CallableStatement> proxyClass = generateProxyClass(CallableStatement.class, superClass, statementClassCt, interfaces);
             proxyCallableStatementConstructor = proxyClass.getConstructor(new Class<?>[] {JdbcPooledConnection.class, CallableStatement.class});
