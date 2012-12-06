@@ -208,8 +208,6 @@ public class XAPool implements StateChangeListener {
                 if (remainingTimeMs <= 0) {
                     throw new BitronixRuntimeException("cannot get valid connection from " + this + " after trying for " + bean.getAcquisitionTimeout() + "s", ex);
                 }
-
-                Thread.sleep(bean.getAcquisitionInterval() * 1000L);
             }
         } // while true
     }
@@ -242,11 +240,11 @@ public class XAPool implements StateChangeListener {
      *
      * @return the total size of this pool
      */
-    public long totalPoolSize() {
+    public int totalPoolSize() {
         return availablePool.size() + accessiblePool.size() + inaccessiblePool.size();
     }
 
-    public long inPoolSize() {
+    public int inPoolSize() {
     	return availablePool.size();
     }
 
@@ -270,7 +268,7 @@ public class XAPool implements StateChangeListener {
     private void init() throws Exception {
         growUntilMinPoolSize();
 
-        if (bean.getMaxIdleTime() > 0) {
+        if (bean.getMaxIdleTime() > 0 || bean.getMaxLifeTime() > 0) {
             TransactionManagerServices.getTaskScheduler().schedulePoolShrinking(this);
         }
     }
@@ -297,9 +295,12 @@ public class XAPool implements StateChangeListener {
                 break;
             }
 
-            long expirationTime = (xaStatefulHolder.getLastReleaseDate().getTime() + (bean.getMaxIdleTime() * 1000));
-            if (bean.getMaxLifeTime() > 0)
-            {
+            long expirationTime = Integer.MAX_VALUE;
+            if (bean.getMaxIdleTime() > 0) {
+                expirationTime = (xaStatefulHolder.getLastReleaseDate().getTime() + (bean.getMaxIdleTime() * 1000));
+            }
+
+            if (bean.getMaxLifeTime() > 0) {
                 long endOfLife = xaStatefulHolder.getCreationDate().getTime() + (bean.getMaxLifeTime() * 1000);
                 expirationTime = Math.min(expirationTime, endOfLife);
             }
@@ -487,7 +488,7 @@ public class XAPool implements StateChangeListener {
         if (log.isDebugEnabled()) { log.debug("getting a IN_POOL connection from " + this); }
 
         if (inPoolSize() == 0) {
-            if (log.isDebugEnabled()) { log.debug("no more free connection in " + this + ", trying to grow it"); }
+            if (log.isDebugEnabled()) { log.debug("no more free connections in " + this + ", trying to grow it"); }
             grow();
         }
 
@@ -533,7 +534,7 @@ public class XAPool implements StateChangeListener {
 
     private synchronized void growUntilMinPoolSize() throws Exception {
         if (log.isDebugEnabled()) { log.debug("growing " + this + " to minimum pool size " + bean.getMinPoolSize()); }
-        for (int i = (int)totalPoolSize(); i < bean.getMinPoolSize() ;i++) {
+        for (int i = totalPoolSize(); i < bean.getMinPoolSize(); i++) {
             createPooledObject(xaFactory);
         }
     }

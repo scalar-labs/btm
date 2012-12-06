@@ -405,11 +405,11 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
 
 	/* management */
 
-    public long getInPoolSize() {
+    public int getInPoolSize() {
         return pool.inPoolSize();
     }
 
-    public long getTotalPoolSize() {
+    public int getTotalPoolSize() {
         return pool.totalPoolSize();
     }
 
