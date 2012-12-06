@@ -44,7 +44,6 @@ import javax.sql.XAConnection;
 
 import bitronix.tm.resource.jdbc.JdbcPooledConnection;
 import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
-import bitronix.tm.resource.jdbc.PooledConnectionProxy;
 import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
 import bitronix.tm.utils.ClassLoaderUtils;
 
@@ -129,13 +128,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
 
     private void createProxyConnectionClass() {
         try {
-            CtClass superClass = classPool.getCtClass(ConnectionJavaProxy.class.getName());
-            CtClass connectionClassCt = classPool.makeClass("bitronix.tm.resource.jdbc.proxy.ConnectionJavassistProxy", superClass);
-
-            Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(Connection.class);
-            interfaces.add(PooledConnectionProxy.class);
-
-            Class<Connection> proxyClass = generateProxyClass(Connection.class, superClass, connectionClassCt, interfaces);
+            Class<Connection> proxyClass = generateProxyClass(Connection.class, ConnectionJavaProxy.class);
             proxyConnectionConstructor = proxyClass.getConstructor(new Class<?>[] {JdbcPooledConnection.class, Connection.class} );
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -144,12 +137,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
 
     private void createProxyStatementClass() {
         try {
-            CtClass superClass = classPool.getCtClass(StatementJavaProxy.class.getName());
-            CtClass statementClassCt = classPool.makeClass("bitronix.tm.resource.jdbc.proxy.StatementJavassistProxy", superClass);
-
-            Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(Statement.class);
-
-            Class<Statement> proxyClass = generateProxyClass(Statement.class, superClass, statementClassCt, interfaces);
+            Class<Statement> proxyClass = generateProxyClass(Statement.class, StatementJavaProxy.class);
             proxyStatementConstructor = proxyClass.getConstructor(new Class<?>[] {JdbcPooledConnection.class, Statement.class});
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -158,12 +146,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
 
     private void createProxyCallableStatementClass() {
         try {
-            CtClass superClass = classPool.getCtClass(CallableStatementJavaProxy.class.getName());
-            CtClass statementClassCt = classPool.makeClass("bitronix.tm.resource.jdbc.proxy.CallableStatementJavassistProxy", superClass);
-
-            Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(CallableStatement.class);
-
-            Class<CallableStatement> proxyClass = generateProxyClass(CallableStatement.class, superClass, statementClassCt, interfaces);
+            Class<CallableStatement> proxyClass = generateProxyClass(CallableStatement.class, CallableStatementJavaProxy.class);
             proxyCallableStatementConstructor = proxyClass.getConstructor(new Class<?>[] {JdbcPooledConnection.class, CallableStatement.class});
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -172,12 +155,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
 
     private void createProxyPreparedStatementClass() {
         try {
-            CtClass superClass = classPool.getCtClass(PreparedStatementJavaProxy.class.getName());
-            CtClass statementClassCt = classPool.makeClass("bitronix.tm.resource.jdbc.proxy.PreparedStatementJavassistProxy", superClass);
-
-            Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(PreparedStatement.class);
-
-            Class<PreparedStatement> proxyClass = generateProxyClass(PreparedStatement.class, superClass, statementClassCt, interfaces);
+            Class<PreparedStatement> proxyClass = generateProxyClass(PreparedStatement.class, PreparedStatementJavaProxy.class);
             proxyPreparedStatementConstructor = proxyClass.getConstructor(new Class<?>[] {JdbcPooledConnection.class, PreparedStatement.class, CacheKey.class});
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -185,21 +163,27 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Class<T> generateProxyClass(Class<T> primaryInterface, CtClass superClass, CtClass targetCt, Set<Class<?>> interfaces)
+    private <T> Class<T> generateProxyClass(Class<T> primaryInterface, Class<?> superClass)
         throws NotFoundException, CannotCompileException, NoSuchMethodException, SecurityException {
 
+        // Make a new class that extends one of the JavaProxy classes (ie. superClass); use the name to XxxJavassistProxy instead of XxxJavaProxy
+        String superClassName = superClass.getName();
+        CtClass superClassCt = classPool.getCtClass(superClassName);
+        CtClass targetCt = classPool.makeClass(superClassName.replace("JavaProxy", "JavassistProxy"), superClassCt);
+
         // Generate constructors that simply call super(..)
-        for (CtConstructor constructor : superClass.getDeclaredConstructors()) {
+        for (CtConstructor constructor : superClassCt.getConstructors()) {
             CtConstructor ctConstructor = CtNewConstructor.make(constructor.getParameterTypes(), constructor.getExceptionTypes(), targetCt);
             targetCt.addConstructor(ctConstructor);
         }
 
         // Make a set of method signatures we inherit implementation for, so we don't generate delegates for these
         Set<String> superSigs = new HashSet<String>();
-        for (CtMethod method : superClass.getMethods()) {
+        for (CtMethod method : superClassCt.getMethods()) {
             superSigs.add(method.getName() + method.getSignature());
         }
 
+        Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(primaryInterface);
         for (Class<?> intf : interfaces) {
             CtClass intfCt = classPool.getCtClass(intf.getName());
             targetCt.addInterface(intfCt);
@@ -212,8 +196,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
                 // Generate a method that simply invokes the same method on the delegate
                 CtMethod method = CtNewMethod.copy(intfMethod, targetCt, classMap);
                 StringBuilder call = new StringBuilder("{");
-                CtClass returnType = method.getReturnType();
-                if (returnType != CtClass.voidType) {
+                if ( method.getReturnType() != CtClass.voidType) {
                     call.append("return ");
                 }
                 call.append("((").append(primaryInterface.getName()).append(')'); // cast to primary interface
