@@ -470,7 +470,9 @@ public class XAPool implements StateChangeListener {
             }
             LocalVisitor xaResourceHolderStateVisitor = new LocalVisitor();
             xaResourceHolder.acceptVisitorForXAResourceHolderStates(currentTxGtrid, xaResourceHolderStateVisitor);
-            return xaResourceHolderStateVisitor.found;
+            if (xaResourceHolderStateVisitor.found) {
+            	return true;
+            }
         }
         return false;
     }
