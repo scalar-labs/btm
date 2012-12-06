@@ -403,7 +403,11 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
 
         List<TransactionLogRecord> danglingLogs = activeTla.get().getDanglingLogs();
         for (TransactionLogRecord tlog : danglingLogs) {
-            passiveTla.setPositionAndAdvance(tlog);
+            boolean rolloverError = passiveTla.setPositionAndAdvance(tlog);
+            if (rolloverError) {
+                log.error("Moving in-flight transactions the rollover log file would have resulted in an overflow of that file.");
+                break;
+            }
             passiveTla.writeLog(tlog);
         }
 
@@ -418,9 +422,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         passiveTla.force();
 
         //step 5
-        if (!activeTla.compareAndSet(tla1, tla2)) {
-            activeTla.set(tla1);
-        }
+        activeTla.set(passiveTla);
 
         if (log.isDebugEnabled()) log.debug("journal log files swapped");
     }
