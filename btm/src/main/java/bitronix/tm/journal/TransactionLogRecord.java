@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -46,8 +45,16 @@ import bitronix.tm.utils.Uid;
  * Representation of a transaction log record on disk.
  * <p>On-disk format has been implemented following Mike Spille's recommendations. Quoting him:</p>
  * <p/>
- * <i><p><code>[RECORD_TYPE :4] [RECORD_LEN :4] [HEADER_LEN :4] [System.currentTimeMillis :8] [Sequence number :4]
- * [Checksum :4] [Payload :X] [END_RECORD_INDICATOR :4]</code></p>
+ * <i><p><code>
+ * [RECORD_TYPE :4]
+ * [RECORD_LEN :4]
+ * [HEADER_LEN :4]
+ * [System.currentTimeMillis :8]
+ * [Sequence number :4]
+ * [Checksum :4]
+ * [Payload :X]
+ * [END_RECORD_INDICATOR :4]
+ * </code></p>
  * <p>Where [RECORD_TYPE] is a passed-in record type from the TM. [RECORD_LEN] is the overall record length
  * (sans [RECORD_TYPE and [RECORD_LEN]). [HEADER_LEN] is the length of the remainder of the header - important if you
  * want to support easy upgrades of your format. The remaining pieces are the rest of the header, and the payload. The
@@ -177,23 +184,11 @@ public class TransactionLogRecord implements JournalRecord {
         return endRecord;
     }
 
-
-    public void removeUniqueNames(Collection<String> namesToRemove) {
-        uniqueNames.removeAll(namesToRemove);
-        refresh();
-    }
-
     /**
      * Recalculate and store the dynamic values of this record: {@link #getRecordLength()}, {@link #getRecordHeaderLength()}
      * and {@link #calculateCrc32()}. This method must be called each time after the set of contained unique names is updated.
      */
     private void refresh() {
-        int total = 0;
-        for (String uniqueName : uniqueNames) {
-        	total += 2 + uniqueName.length(); // 2 bytes for storing the unique name length + unique name length
-        }
-        recordLength = total + getFixedRecordLength();
-
         crc32 = calculateCrc32();
     }
 
@@ -235,7 +230,7 @@ public class TransactionLogRecord implements JournalRecord {
         }
         recordLength = total + getFixedRecordLength();
 
-    	ByteBuffer buf = ByteBuffer.allocate(24 + gtrid.length() + 4 + total + 4);
+    	ByteBuffer buf = ByteBuffer.allocate(24 + gtrid.length() + 4 /*uniqueNames.size*/ + total + 4 /*endRecord*/);
     	buf.putInt(status);              // offset: 0
     	buf.putInt(recordLength);        // offset: 4
     	buf.putInt(headerLength);        // offset: 8
@@ -297,7 +292,8 @@ public class TransactionLogRecord implements JournalRecord {
      * @return fixedRecordLength
      */
     private int getFixedRecordLength() {
-        return 4 + 8 + 4 + 4 + 1 + gtrid.length() + 4 + 4; // record header length + current time + sequence number + checksum + GTRID size + GTRID + unique names count + end record marker
+     // record header length + current time + sequence number + checksum + GTRID size + GTRID + unique names count + end record marker
+        return 4 + 8 + 4 + 4 + 1 + gtrid.length() + 4 + 4;
     }
 
     static class NullOutputStream extends OutputStream {

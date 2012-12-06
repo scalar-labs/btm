@@ -215,16 +215,6 @@ public class TransactionLogHeader {
     }
 
     /**
-     * Advance CURRENT_POSITION_HEADER.
-     * @see #setPosition
-     * @param distance the value to add to the current position.
-     * @throws IOException if an I/O error occurs.
-     */
-//    public void goAhead(long distance) throws IOException {
-//        setPosition(getPosition() + distance);
-//    }
-
-    /**
      * Rewind CURRENT_POSITION_HEADER back to the beginning of the file.
      * @see #setPosition
      * @throws IOException if an I/O error occurs.
