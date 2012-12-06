@@ -172,11 +172,18 @@ public class XAPool implements StateChangeListener {
                 if (bean.getShareTransactionConnections()) {
                     putSharedXAStatefulHolder(xaStatefulHolder);
                 }
-                growUntilMinPoolSize();
+
+                try {
+                	growUntilMinPoolSize();
+                }
+                catch (Exception e) {
+                	log.warn("exception while trying to fill pool to minimum size");
+                }
+
                 return connectionHandle;
             } catch (Exception ex) {
+            	if (log.isDebugEnabled()) { log.debug("connection is invalid, trying to close it", ex); }
                 try {
-                    if (log.isDebugEnabled()) { log.debug("connection is invalid, trying to close it", ex); }
                     xaStatefulHolder.close();
                 } catch (Exception ex2) {
                     if (log.isDebugEnabled()) { log.debug("exception while trying to close invalid connection, ignoring it", ex2); }
