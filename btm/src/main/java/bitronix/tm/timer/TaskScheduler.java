@@ -82,6 +82,14 @@ public class TaskScheduler extends Thread implements Service {
         }
     }
 
+    private SortedSet<Task> getSafeIterableTasks() {
+        if (tasksLock != null) {
+            return new TreeSet<Task>(tasks);
+        } else {
+            return tasks;
+        }
+    }
+
     /**
      * Get the amount of tasks currently queued.
      * @return the amount of tasks currently queued.
@@ -124,7 +132,7 @@ public class TaskScheduler extends Thread implements Service {
 
         TransactionTimeoutTask task = new TransactionTimeoutTask(transaction, executionTime, this);
         addTask(task);
-        if (log.isDebugEnabled()) { log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size()); }
+        if (log.isDebugEnabled()) { log.debug("scheduled " + task + ", total task(s) queued: " + countTasksQueued()); }
     }
 
     /**
@@ -154,7 +162,7 @@ public class TaskScheduler extends Thread implements Service {
 
         RecoveryTask task = new RecoveryTask(recoverer, executionTime, this);
         addTask(task);
-        if (log.isDebugEnabled()) { log.debug("scheduled " + task + ", total task(s) queued: " + tasks.size()); }
+        if (log.isDebugEnabled()) { log.debug("scheduled " + task + ", total task(s) queued: " + countTasksQueued()); }
     }
 
     /**
@@ -251,7 +259,7 @@ public class TaskScheduler extends Thread implements Service {
                 return;
 
             Set<Task> toRemove = new HashSet<Task>();
-            for (Task task : tasks) {
+            for (Task task : getSafeIterableTasks()) {
                 if (task.getExecutionTime().compareTo(new Date(MonotonicClock.currentTimeMillis())) <= 0) {
                     // if the execution time is now or in the past
                     if (log.isDebugEnabled()) { log.debug("running " + task); }

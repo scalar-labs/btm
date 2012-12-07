@@ -83,7 +83,7 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
     /* java.sql.Wrapper implementation */
 
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        return iface.isAssignableFrom(delegate.getClass()) || delegate.isWrapperFor(iface);
+        return iface.isAssignableFrom(delegate.getClass()) || isWrapperFor(delegate, iface);
     }
 
     @SuppressWarnings("unchecked")
@@ -92,7 +92,7 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
             return (T) delegate;
         }
         if (isWrapperFor(iface)) {
-            return delegate.unwrap(iface);
+            return unwrap(delegate, iface);
         }
         throw new SQLException(getClass().getName() + " is not a wrapper for " + iface);
     }

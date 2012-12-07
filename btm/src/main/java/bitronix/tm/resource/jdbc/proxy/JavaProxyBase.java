@@ -82,4 +82,32 @@ public abstract class JavaProxyBase<T> implements InvocationHandler {
         methodKeyMap.put(method, key);
         return key;
     }
+
+    protected static boolean isWrapperFor(Object obj, Class<?> param) {
+        try {
+            Method isWrapperForMethod = obj.getClass().getMethod("isWrapperFor", Class.class);
+            return (Boolean) isWrapperForMethod.invoke(obj, param);
+        } catch (NoSuchMethodException ex) {
+            throw new UnsupportedOperationException("isWrapperFor is not supported", ex);
+        } catch (IllegalAccessException ex) {
+            throw new UnsupportedOperationException("isWrapperFor is not supported", ex);
+        } catch (InvocationTargetException ex) {
+            throw new UnsupportedOperationException("isWrapperFor is not supported", ex);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static <T> T unwrap(Object obj, Class<T> param) {
+        try {
+            Method unwrapMethod = obj.getClass().getMethod("unwrap", Class.class);
+            return (T) unwrapMethod.invoke(obj, param);
+        } catch (NoSuchMethodException ex) {
+            throw new UnsupportedOperationException("unwrap is not supported", ex);
+        } catch (IllegalAccessException ex) {
+            throw new UnsupportedOperationException("unwrap is not supported", ex);
+        } catch (InvocationTargetException ex) {
+            throw new UnsupportedOperationException("unwrap is not supported", ex);
+        }
+    }
+
 }
