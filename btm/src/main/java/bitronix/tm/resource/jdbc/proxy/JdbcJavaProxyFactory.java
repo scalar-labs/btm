@@ -41,6 +41,9 @@ import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
 import bitronix.tm.utils.ClassLoaderUtils;
 
 /**
+ * This class generates JDBC proxy classes using stardard java.lang.reflect.Proxy
+ * implementations. 
+ *
  * @author Brett Wooldridge
  */
 public class JdbcJavaProxyFactory implements JdbcProxyFactory {
@@ -59,6 +62,7 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 		proxyPreparedStatementFactory = createProxyPreparedStatementFactory();
 	}
 
+    /** {@inheritDoc} */
 	public Connection getProxyConnection(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
 		try {
 			ConnectionJavaProxy jdbcConnectionProxy = new ConnectionJavaProxy(jdbcPooledConnection, connection);
@@ -68,6 +72,7 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 		}
 	}
 
+    /** {@inheritDoc} */
 	public Statement getProxyStatement(JdbcPooledConnection jdbcPooledConnection, Statement statement) {
 		try {
 			StatementJavaProxy jdbcStatementProxy = new StatementJavaProxy(jdbcPooledConnection, statement);
@@ -77,6 +82,7 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 		}
 	}
 
+    /** {@inheritDoc} */
 	public CallableStatement getProxyCallableStatement(JdbcPooledConnection jdbcPooledConnection, CallableStatement statement) {
 		try {
 			CallableStatementJavaProxy jdbcStatementProxy = new CallableStatementJavaProxy(jdbcPooledConnection, statement);
@@ -86,6 +92,7 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 		}
 	}
 
+    /** {@inheritDoc} */
 	public PreparedStatement getProxyPreparedStatement(JdbcPooledConnection jdbcPooledConnection, PreparedStatement statement, CacheKey cacheKey) {
 		try {
 			PreparedStatementJavaProxy jdbcStatementProxy = new PreparedStatementJavaProxy(jdbcPooledConnection, statement, cacheKey);
@@ -95,6 +102,7 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 		}
 	}
 
+    /** {@inheritDoc} */
 	public XAConnection getProxyXaConnection(Connection connection) {
 		try {
 			LrcXAConnectionJavaProxy jdbcLrcXaConnectionProxy = new LrcXAConnectionJavaProxy(connection);
@@ -104,6 +112,7 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 		}
 	}
 
+    /** {@inheritDoc} */
 	public Connection getProxyConnection(LrcXAResource xaResource, Connection connection) {
 		try {
 			LrcConnectionJavaProxy lrcConnectionJavaProxy = new LrcConnectionJavaProxy(xaResource, connection);
@@ -113,7 +122,9 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 		}
 	}
 
-	/* High-efficiency proxy factories (basically cached constructors) */
+    // ---------------------------------------------------------------
+    //  Generate high-efficiency Java Proxy Classes
+    // ---------------------------------------------------------------
 
 	private ProxyFactory<Connection> createProxyConnectionFactory() {
 

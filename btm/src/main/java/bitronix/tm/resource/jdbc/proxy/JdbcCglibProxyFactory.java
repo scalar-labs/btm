@@ -46,6 +46,10 @@ import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
 import bitronix.tm.utils.ClassLoaderUtils;
 
 /**
+ * This class generates JDBC proxy classes using CGLIB bytecode generated
+ * implementations. This factory's proxies are more efficient than JdbcJavaProxyFactory
+ * but less efficient than JdbcJavassistProxyFactory.
+ *
  * @author Brett Wooldridge
  */
 public class JdbcCglibProxyFactory implements JdbcProxyFactory {
@@ -66,6 +70,7 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
         lrcProxyFactory = new JdbcJavaProxyFactory();
     }
 
+    /** {@inheritDoc} */
     public Connection getProxyConnection(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
         ConnectionJavaProxy methodInterceptor = new ConnectionJavaProxy(jdbcPooledConnection, connection);
         Interceptor interceptor = new Interceptor(methodInterceptor);
@@ -80,6 +85,7 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
         }
     }
 
+    /** {@inheritDoc} */
     public Statement getProxyStatement(JdbcPooledConnection jdbcPooledConnection, Statement statement) {
         StatementJavaProxy methodInterceptor = new StatementJavaProxy(jdbcPooledConnection, statement);
         Interceptor interceptor = new Interceptor(methodInterceptor);
@@ -94,6 +100,7 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
         }
     }
 
+    /** {@inheritDoc} */
     public CallableStatement getProxyCallableStatement(JdbcPooledConnection jdbcPooledConnection, CallableStatement statement) {
         CallableStatementJavaProxy methodInterceptor = new CallableStatementJavaProxy(jdbcPooledConnection, statement);
         Interceptor interceptor = new Interceptor(methodInterceptor);
@@ -108,6 +115,7 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
         }
     }
 
+    /** {@inheritDoc} */
     public PreparedStatement getProxyPreparedStatement(JdbcPooledConnection jdbcPooledConnection, PreparedStatement statement, CacheKey cacheKey) {
         PreparedStatementJavaProxy methodInterceptor = new PreparedStatementJavaProxy(jdbcPooledConnection, statement, cacheKey);
         Interceptor interceptor = new Interceptor(methodInterceptor);
@@ -122,10 +130,12 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
         }
     }
 
+    /** {@inheritDoc} */
     public XAConnection getProxyXaConnection(Connection connection) {
         return lrcProxyFactory.getProxyXaConnection(connection);
     }
 
+    /** {@inheritDoc} */
     public Connection getProxyConnection(LrcXAResource xaResource, Connection connection) {
         return lrcProxyFactory.getProxyConnection(xaResource, connection);
     }
