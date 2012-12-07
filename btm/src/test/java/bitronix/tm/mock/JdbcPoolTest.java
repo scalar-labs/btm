@@ -425,7 +425,7 @@ public class JdbcPoolTest extends TestCase {
     public void testWrappers() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** Starting testWrappers"); }
         try {
-            Connection.class.getMethod("isWrapperFor");
+            Connection.class.getMethod("isWrapperFor", Class.class);
         } catch (NoSuchMethodException e) {
             // if there is no such method this means the JVM is running with pre-JDBC4 classes
             // so this test becomes pointless and must be skipped
@@ -435,7 +435,7 @@ public class JdbcPoolTest extends TestCase {
         // XADataSource
         assertTrue(pds.isWrapperFor(XADataSource.class));
         assertFalse(pds.isWrapperFor(DataSource.class));
-        XADataSource unwrappedXads = (XADataSource) pds.unwrap(XADataSource.class);
+        XADataSource unwrappedXads = pds.unwrap(XADataSource.class);
         assertEquals(MockitoXADataSource.class.getName(), unwrappedXads.getClass().getName());
 
         // Connection

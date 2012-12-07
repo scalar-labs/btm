@@ -41,6 +41,7 @@ import bitronix.tm.resource.jdbc.PooledConnectionProxy;
 public class ConnectionJavaProxy extends JavaProxyBase<Connection> implements PooledConnectionProxy {
 
     private final static Logger log = LoggerFactory.getLogger(ConnectionJavaProxy.class);
+
     private final static Map<String, Method> selfMethodMap = createMethodMap(ConnectionJavaProxy.class);
 
     private JdbcPooledConnection jdbcPooledConnection;
@@ -361,18 +362,18 @@ public class ConnectionJavaProxy extends JavaProxyBase<Connection> implements Po
     /* java.sql.Wrapper implementation */
 
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        if (Connection.class.equals(iface)) {
-            return true;
-        }
-        return false;
+        return iface.isAssignableFrom(delegate.getClass()) || delegate.isWrapperFor(iface);
     }
 
     @SuppressWarnings("unchecked")
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        if (Connection.class.equals(iface)) {
+        if (iface.isAssignableFrom(delegate.getClass())) {
             return (T) delegate;
         }
-        throw new SQLException(getClass().getName() + " is not a wrapper for interface " + iface.getName());
+        if (isWrapperFor(iface)) {
+            return delegate.unwrap(iface);
+        }
+        throw new SQLException(getClass().getName() + " is not a wrapper for " + iface);
     }
 
     /**

@@ -55,6 +55,23 @@ public class CallableStatementJavaProxy extends JavaProxyBase<CallableStatement>
         delegate.close();
     }
 
+    /* java.sql.Wrapper implementation */
+
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        return iface.isAssignableFrom(delegate.getClass()) || delegate.isWrapperFor(iface);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        if (iface.isAssignableFrom(delegate.getClass())) {
+            return (T) delegate;
+        }
+        if (isWrapperFor(iface)) {
+            return delegate.unwrap(iface);
+        }
+        throw new SQLException(getClass().getName() + " is not a wrapper for " + iface);
+    }
+
     @Override
     protected Map<String, Method> getMethodMap() {
         return selfMethodMap;
