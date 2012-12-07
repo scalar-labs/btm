@@ -34,6 +34,5 @@ public interface BitronixTransactionMBean {
     String getStatusDescription();
     String getThreadName();
     Date getStartDate();
-    Collection getEnlistedResourcesUniqueNames();
-
+    Collection<String> getEnlistedResourcesUniqueNames();
 }

@@ -275,7 +275,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
-    public Map<Uid, TransactionLogRecord> collectDanglingRecords() throws IOException {
+    public Map<Uid, JournalRecord> collectDanglingRecords() throws IOException {
         if (activeTla.get() == null)
             throw new IOException("cannot collect dangling records, disk logger is not open");
         return collectDanglingRecords(activeTla.get());
@@ -442,8 +442,8 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
      * @throws java.io.IOException in case of disk IO failure.
      */
-    private static Map<Uid, TransactionLogRecord> collectDanglingRecords(TransactionLogAppender tla) throws IOException {
-        Map<Uid, TransactionLogRecord> danglingRecords = new HashMap<Uid, TransactionLogRecord>(64);
+    private static Map<Uid, JournalRecord> collectDanglingRecords(TransactionLogAppender tla) throws IOException {
+        Map<Uid, JournalRecord> danglingRecords = new HashMap<Uid, JournalRecord>(64);
         TransactionLogCursor tlc = tla.getCursor();
 
         try {
@@ -475,7 +475,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
                 // UNKNOWN is when a 2PC transaction heuristically terminated
                 // ROLLEDBACK is when a 1PC transaction rolled back during commit
                 if (status == Status.STATUS_COMMITTED || status == Status.STATUS_UNKNOWN || status == Status.STATUS_ROLLEDBACK) {
-                    TransactionLogRecord rec = danglingRecords.get(tlog.getGtrid());
+                    JournalRecord rec = danglingRecords.get(tlog.getGtrid());
                     if (rec != null) {
                         Set<String> recUniqueNames = new HashSet<String>(rec.getUniqueNames());
                         recUniqueNames.removeAll(tlog.getUniqueNames());
