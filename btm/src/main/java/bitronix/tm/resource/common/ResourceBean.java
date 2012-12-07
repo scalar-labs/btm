@@ -29,6 +29,7 @@ import java.util.Properties;
  *
  * @author lorban
  */
+@SuppressWarnings("serial")
 public abstract class ResourceBean implements Serializable {
 
     private volatile String className;

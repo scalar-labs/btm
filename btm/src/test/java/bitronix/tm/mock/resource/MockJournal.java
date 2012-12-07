@@ -20,18 +20,20 @@
  */
 package bitronix.tm.mock.resource;
 
-import bitronix.tm.utils.Uid;
-import bitronix.tm.journal.Journal;
-import bitronix.tm.journal.TransactionLogRecord;
-import bitronix.tm.mock.events.EventRecorder;
-import bitronix.tm.mock.events.JournalLogEvent;
-
-import javax.transaction.Status;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import javax.transaction.Status;
+
+import bitronix.tm.journal.Journal;
+import bitronix.tm.journal.JournalRecord;
+import bitronix.tm.journal.TransactionLogRecord;
+import bitronix.tm.mock.events.EventRecorder;
+import bitronix.tm.mock.events.JournalLogEvent;
+import bitronix.tm.utils.Uid;
 
 /**
  *
@@ -39,7 +41,7 @@ import java.util.Set;
  */
 public class MockJournal implements Journal {
 
-    private Map<Uid, TransactionLogRecord> danglingRecords;
+    private Map<Uid, JournalRecord> danglingRecords;
 
     private EventRecorder getEventRecorder() {
         return EventRecorder.getEventRecorder(this);
@@ -57,7 +59,7 @@ public class MockJournal implements Journal {
     }
 
     public void open() throws IOException {
-        danglingRecords = new HashMap<Uid, TransactionLogRecord>();
+        danglingRecords = new HashMap<Uid, JournalRecord>();
     }
 
     public void close() throws IOException {
@@ -67,11 +69,11 @@ public class MockJournal implements Journal {
     public void force() throws IOException {
     }
 
-    public Map<Uid, TransactionLogRecord> collectDanglingRecords() throws IOException {
+    public Map<Uid, JournalRecord> collectDanglingRecords() throws IOException {
         return danglingRecords;
     }
 
-    public Iterator readRecords(boolean includeInvalid) throws IOException {
+    public Iterator<JournalRecord> readRecords(boolean includeInvalid) throws IOException {
         return danglingRecords.values().iterator();
     }
 

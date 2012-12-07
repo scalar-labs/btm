@@ -26,7 +26,6 @@ import bitronix.tm.resource.common.XAResourceHolder;
 
 import javax.transaction.xa.XAResource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 

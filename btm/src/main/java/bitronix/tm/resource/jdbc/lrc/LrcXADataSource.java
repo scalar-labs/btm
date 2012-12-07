@@ -29,7 +29,6 @@ import java.util.Properties;
 import javax.sql.XAConnection;
 import javax.sql.XADataSource;
 
-import bitronix.tm.resource.jdbc.proxy.JdbcJavaProxyFactory;
 import bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory;
 import bitronix.tm.utils.ClassLoaderUtils;
 
