@@ -48,6 +48,9 @@ import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
 import bitronix.tm.utils.ClassLoaderUtils;
 
 /**
+ * This class generates JDBC proxy classes using Javassist bytecode generated
+ * implementations.  This is the most efficient proxy factory.
+ *
  * @author Brett Wooldridge
  */
 public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
@@ -82,6 +85,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
         classPool = null;
     }
 
+    /** {@inheritDoc} */
     public Connection getProxyConnection(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
         try {
             return proxyConnectionConstructor.newInstance(jdbcPooledConnection, connection);
@@ -90,6 +94,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
         }
     }
 
+    /** {@inheritDoc} */
     public Statement getProxyStatement(JdbcPooledConnection jdbcPooledConnection, Statement statement) {
         try {
             return proxyStatementConstructor.newInstance(jdbcPooledConnection, statement);
@@ -98,6 +103,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
         }
     }
 
+    /** {@inheritDoc} */
     public CallableStatement getProxyCallableStatement(JdbcPooledConnection jdbcPooledConnection, CallableStatement statement) {
         try {
             return proxyCallableStatementConstructor.newInstance(jdbcPooledConnection, statement);
@@ -106,6 +112,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
         }
     }
 
+    /** {@inheritDoc} */
     public PreparedStatement getProxyPreparedStatement(JdbcPooledConnection jdbcPooledConnection, PreparedStatement statement, CacheKey cacheKey) {
         try {
             return proxyPreparedStatementConstructor.newInstance(jdbcPooledConnection, statement, cacheKey);
@@ -114,10 +121,12 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
         }
     }
 
+    /** {@inheritDoc} */
     public XAConnection getProxyXaConnection(Connection connection) {
         return lrcProxyFactory.getProxyXaConnection(connection);
     }
 
+    /** {@inheritDoc} */
     public Connection getProxyConnection(LrcXAResource xaResource, Connection connection) {
         return lrcProxyFactory.getProxyConnection(xaResource, connection);
     }
@@ -126,6 +135,9 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
     //  Generate Javassist Proxy Classes
     // ---------------------------------------------------------------
 
+    /**
+     * Create a proxy class: class ConnectionJavassistProxy extends ConnectionJavaProxy implements java.sql.Connection 
+     */
     private void createProxyConnectionClass() {
         try {
             Class<Connection> proxyClass = generateProxyClass(Connection.class, ConnectionJavaProxy.class);
@@ -135,6 +147,9 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
         }
     }
 
+    /**
+     * Create a proxy class: class StatementJavassistProxy extends StatementJavaProxy implements java.sql.Statement 
+     */
     private void createProxyStatementClass() {
         try {
             Class<Statement> proxyClass = generateProxyClass(Statement.class, StatementJavaProxy.class);
@@ -144,6 +159,9 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
         }
     }
 
+    /**
+     * Create a proxy class: class CallableStatementJavassistProxy extends CallableStatementJavaProxy implements java.sql.CallableStatement 
+     */
     private void createProxyCallableStatementClass() {
         try {
             Class<CallableStatement> proxyClass = generateProxyClass(CallableStatement.class, CallableStatementJavaProxy.class);
@@ -153,6 +171,9 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
         }
     }
 
+    /**
+     * Create a proxy class: class PreparedStatementJavassistProxy extends PreparedStatementJavaProxy implements java.sql.PreparedStatement 
+     */
     private void createProxyPreparedStatementClass() {
         try {
             Class<PreparedStatement> proxyClass = generateProxyClass(PreparedStatement.class, PreparedStatementJavaProxy.class);
