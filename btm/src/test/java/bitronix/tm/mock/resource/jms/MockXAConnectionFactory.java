@@ -90,13 +90,11 @@ public class MockXAConnectionFactory implements XAConnectionFactory {
         staticCreateXAConnectionException = e;
     }
 
-    public String getEndpoint()
-    {
+    public String getEndpoint() {
         return endPoint;
     }
 
-    public void setEndpoint(String endPoint)
-    {
+    public void setEndpoint(String endPoint) {
         this.endPoint = endPoint;
     }
 }

@@ -645,9 +645,8 @@ public class Configuration implements Service {
      * Should the Disk Journal follow a conservative (sequential write) policy?
      * @return true if the Disk Journal should serialize writes to the transaction log, false otherwise.
      */
-    public boolean isConservativeJournaling()
-    {
-    	return conservativeJournaling;
+    public boolean isConservativeJournaling() {
+        return conservativeJournaling;
     }
 
     /**
@@ -655,9 +654,8 @@ public class Configuration implements Service {
      * @param conservativeJournaling true if the Disk Journal should follow a conservative (sequential write) policy
      * @return this
      */
-    public Configuration setConservativeJournaling(boolean conservativeJournaling)
-    {
-    	checkNotStarted();
+    public Configuration setConservativeJournaling(boolean conservativeJournaling) {
+        checkNotStarted();
     	this.conservativeJournaling = conservativeJournaling;
     	return this;
     }

@@ -92,8 +92,7 @@ public class TransactionLogCursor {
         // currentPosition += 4;
         currentPosition += 8;
 
-        if (page.position() + recordLength + 8 > page.limit())
-        {
+        if (page.position() + recordLength + 8 > page.limit()) {
             page.compact();
             fileChannel.read(page);
             page.rewind();

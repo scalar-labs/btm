@@ -110,7 +110,6 @@ public class TransactionLogAppender {
     /**
      * Write a {@link TransactionLogRecord} to disk.
      * @param tlog the record to write to disk.
-     * @return true if there was room in the log file and the log was written, false otherwise.
      * @throws IOException if an I/O error occurs.
      */
     protected void writeLog(TransactionLogRecord tlog) throws IOException {
@@ -175,10 +174,8 @@ public class TransactionLogAppender {
     }
 
     private void trackOutstanding(int status, Uid gtrid, Set<String> uniqueNames) {
-        switch (status)
-        {
-            case Status.STATUS_COMMITTING:
-            {
+        switch (status) {
+            case Status.STATUS_COMMITTING: {
                 Set<String> outstanding = danglingRecords.putIfAbsent(gtrid, new TreeSet<String>(uniqueNames));
                 if (outstanding != null) {
                     synchronized (outstanding) {
@@ -189,8 +186,7 @@ public class TransactionLogAppender {
             }
             case Status.STATUS_ROLLEDBACK:
             case Status.STATUS_COMMITTED:
-            case Status.STATUS_UNKNOWN:
-            {
+            case Status.STATUS_UNKNOWN: {
                 Set<String> outstanding = danglingRecords.get(gtrid);
                 if (outstanding != null) {
                     synchronized (outstanding) {
@@ -207,7 +203,6 @@ public class TransactionLogAppender {
 
     /**
      * Return a {@link TransactionLogHeader} that allows reading and controlling the log file's header.
-     * @return this log file's TransactionLogHeader
      * @throws IOException if an I/O error occurs
      */
     void rewind() throws IOException {

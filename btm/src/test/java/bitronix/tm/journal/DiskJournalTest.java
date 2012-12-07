@@ -213,9 +213,8 @@ public class DiskJournalTest extends TestCase {
         Map<Uid, JournalRecord> danglingRecords = journal.collectDanglingRecords();
         assertEquals(400, danglingRecords.size());
 
-        for (Uid gtrid : uncommitted)
-        {
-	        journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet("name1"));
+        for (Uid gtrid : uncommitted) {
+            journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet("name1"));
 	        journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet("name2"));
 	        journal.log(Status.STATUS_COMMITTED, gtrid, csvToSet("name3"));
         }

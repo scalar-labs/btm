@@ -161,14 +161,12 @@ public class TransactionLogRecord implements JournalRecord {
         return gtrid;
     }
 
-    public long getWritePosition()
-    {
-    	return writePosition;
+    public long getWritePosition() {
+        return writePosition;
     }
 
-    public void setWritePosition(long position)
-    {
-    	writePosition = position;
+    public void setWritePosition(long position) {
+        writePosition = position;
     }
 
     public Set<String> getUniqueNames() {

@@ -648,9 +648,8 @@ public class XAPool implements StateChangeListener {
         }
     }
 
-    private static final class StatefulHolderThreadLocal extends ThreadLocal<XAStatefulHolder>
-    {
-    	@Override
+    private static final class StatefulHolderThreadLocal extends ThreadLocal<XAStatefulHolder> {
+        @Override
     	public XAStatefulHolder get() {
     		return super.get();
     	}

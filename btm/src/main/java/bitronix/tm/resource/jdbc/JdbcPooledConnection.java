@@ -256,9 +256,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         return xaResourceHolders;
     }
 
-    public int getJdbcVersion()
-    {
-    	return jdbcVersionDetected;
+    public int getJdbcVersion() {
+        return jdbcVersionDetected;
     }
 
     public Object getConnectionHandle() throws Exception {
@@ -351,7 +350,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     /**
      * Put a PreparedStatement in the cache.
-     * @param stmt the statement to cache.
+     * @param key the statement's cache key.
+     * @param statement the statement to cache.
      * @return the cached statement.
      */
     public PreparedStatement putCachedStatement(CacheKey key, PreparedStatement statement) {
@@ -415,8 +415,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         }
     }
 
-    private Object getConnectionHandle(Connection connection) throws SQLException
-    {
+    private Object getConnectionHandle(Connection connection) throws SQLException {
         return JdbcProxyFactory.INSTANCE.getProxyConnection(this, connection);
     }
 

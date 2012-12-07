@@ -38,7 +38,7 @@ public interface XAResourceHolder extends XAStatefulHolder {
 
     /**
      * This method implements a standard Visitor Pattern.  For the specified GTRID, the
-     * provided {@XAResourceHolderStateVisitor}'s visit() method is called for each matching
+     * provided {@link XAResourceHolderStateVisitor}'s visit() method is called for each matching
      * {@link XAResourceHolderState} in the order they were added.  This method was introduced
      * as a replacement for the old getXAResourceHolderStatesForGtrid(Uid) method.  The old
      * getXAResourceHolderStatesForGtrid method exported an internal collection which was unsynchronized
@@ -46,7 +46,7 @@ public interface XAResourceHolder extends XAStatefulHolder {
      * iteration within the context of a lock, and avoids exposing internal state and implementation
      * details to callers.
      * @param gtrid the GTRID of the transaction state to visit {@link XAResourceHolderState}s for
-     * @param visitor a {@XAResourceHolderStateVisitor} instance 
+     * @param visitor a {@link XAResourceHolderStateVisitor} instance
      */
     public void acceptVisitorForXAResourceHolderStates(Uid gtrid, XAResourceHolderStateVisitor visitor);
 
