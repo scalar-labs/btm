@@ -28,7 +28,7 @@ import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
  */
 public class LrcConnectionJavaProxy extends JavaProxyBase<Connection> {
 
-    private static Map<String, Method> selfMethodMap = createMethodMap(LrcConnectionJavaProxy.class);
+    private final static Map<String, Method> selfMethodMap = createMethodMap(LrcConnectionJavaProxy.class);
 
     private LrcXAResource xaResource;
 

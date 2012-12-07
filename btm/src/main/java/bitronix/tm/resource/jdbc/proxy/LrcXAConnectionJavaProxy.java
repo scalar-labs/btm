@@ -39,7 +39,7 @@ public class LrcXAConnectionJavaProxy extends JavaProxyBase<Connection> {
 
     private final static Logger log = LoggerFactory.getLogger(LrcXAConnectionJavaProxy.class);
 
-    private static Map<String, Method> selfMethodMap = createMethodMap(LrcXAConnectionJavaProxy.class);
+    private final static Map<String, Method> selfMethodMap = createMethodMap(LrcXAConnectionJavaProxy.class);
 
     private LrcXAResource xaResource;
     private final List<ConnectionEventListener> connectionEventListeners = new CopyOnWriteArrayList<ConnectionEventListener>();

@@ -23,6 +23,7 @@ import java.sql.Statement;
 import javax.sql.XAConnection;
 
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.internal.BitronixRuntimeException;
 import bitronix.tm.resource.jdbc.JdbcPooledConnection;
 import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
 import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
@@ -34,7 +35,7 @@ import bitronix.tm.utils.ClassLoaderUtils;
 public interface JdbcProxyFactory {
 
     /* Classes should use JdbcProxyFactory.INSTANCE to access the factory */
-    JdbcProxyFactory INSTANCE = Initializer.initialize();
+    final JdbcProxyFactory INSTANCE = Initializer.initialize();
 
     /* Methods used to create the proxies around various JDBC classes */
 
@@ -74,8 +75,8 @@ public interface JdbcProxyFactory {
                 }
                 Class<?> proxyFactoryClass = ClassLoaderUtils.loadClass(jdbcProxyFactoryClass);
                 return (JdbcProxyFactory) proxyFactoryClass.newInstance();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+            } catch (Exception ex) {
+                throw new BitronixRuntimeException("error initializing JdbcProxyFactory", ex);
             }
         }
     }
