@@ -131,6 +131,11 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         if ("READ_UNCOMMITTED".equals(isolationLevelGuarantee)) return Connection.TRANSACTION_READ_UNCOMMITTED;
         if ("REPEATABLE_READ".equals(isolationLevelGuarantee)) return Connection.TRANSACTION_REPEATABLE_READ;
         if ("SERIALIZABLE".equals(isolationLevelGuarantee)) return Connection.TRANSACTION_SERIALIZABLE;
+        try {
+            return Integer.parseInt(isolationLevelGuarantee);
+        } catch (NumberFormatException ex) {
+            // ignore
+        }
         return -1;
     }
 
