@@ -119,7 +119,7 @@ public class TransactionManagerServices {
                     throw new InitializationException("invalid journal implementation '" + configuredJournal + "'", ex);
                 }
             }
-            if (log.isDebugEnabled()) log.debug("using journal " + configuredJournal);
+            if (log.isDebugEnabled()) { log.debug("using journal " + configuredJournal); }
 
             if (!journalRef.compareAndSet(null, journal)) {
                 journal = journalRef.get();
@@ -183,10 +183,10 @@ public class TransactionManagerServices {
         Executor executor = executorRef.get();
         if (executor == null) {
             if (getConfiguration().isAsynchronous2Pc()) {
-                if (log.isDebugEnabled()) log.debug("using AsyncExecutor");
+                if (log.isDebugEnabled()) { log.debug("using AsyncExecutor"); }
                 executor = new AsyncExecutor();
             } else {
-                if (log.isDebugEnabled()) log.debug("using SyncExecutor");
+                if (log.isDebugEnabled()) { log.debug("using SyncExecutor"); }
                 executor = new SyncExecutor();
             }
             if (!executorRef.compareAndSet(null, executor)) {

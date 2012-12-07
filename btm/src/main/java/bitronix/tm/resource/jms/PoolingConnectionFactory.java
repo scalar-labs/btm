@@ -110,7 +110,7 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
         if (pool != null)
             return;
 
-        if (log.isDebugEnabled()) log.debug("building JMS XA pool for " + getUniqueName() + " with " + getMinPoolSize() + " connection(s)");
+        if (log.isDebugEnabled()) { log.debug("building JMS XA pool for " + getUniqueName() + " with " + getMinPoolSize() + " connection(s)"); }
         pool = new XAPool(this, this);
         try {
             ResourceRegistrar.register(this);
@@ -135,7 +135,7 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
     }
 
     public Connection createConnection(String userName, String password) throws JMSException {
-        if (log.isDebugEnabled()) log.debug("JMS connections are pooled, username and password ignored");
+        if (log.isDebugEnabled()) { log.debug("JMS connections are pooled, username and password ignored"); }
         return createConnection();
     }
 
@@ -168,7 +168,7 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
         try {
             if (recoveryConnectionHandle != null) {
                 try {
-                    if (log.isDebugEnabled()) log.debug("recovery connection handle is being closed: " + recoveryConnectionHandle);
+                    if (log.isDebugEnabled()) { log.debug("recovery connection handle is being closed: " + recoveryConnectionHandle); }
                     recoveryConnectionHandle.close();
                 } catch (Exception ex) {
                     throw new RecoveryException("error ending recovery", ex);
@@ -177,7 +177,7 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
 
             if (recoveryXAResourceHolder != null) {
                 try {
-                    if (log.isDebugEnabled()) log.debug("recovery xa resource is being closed: " + recoveryXAResourceHolder);
+                    if (log.isDebugEnabled()) { log.debug("recovery xa resource is being closed: " + recoveryXAResourceHolder); }
                     recoveryXAResourceHolder.close();
                 } catch (Exception ex) {
                     throw new RecoveryException("error ending recovery", ex);
@@ -203,7 +203,7 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
         if (pool == null)
             return;
 
-        if (log.isDebugEnabled()) log.debug("closing " + pool);
+        if (log.isDebugEnabled()) { log.debug("closing " + pool); }
         pool.close();
         pool = null;
 
@@ -220,11 +220,11 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
 
         XAConnection xaConnection;
         if (user == null || password == null) {
-            if (log.isDebugEnabled()) log.debug("creating new JMS XAConnection with no credentials");
+            if (log.isDebugEnabled()) { log.debug("creating new JMS XAConnection with no credentials"); }
             xaConnection = xaConnectionFactory.createXAConnection();
         }
         else {
-            if (log.isDebugEnabled()) log.debug("creating new JMS XAConnection with user <" + user + "> and password <" + password + ">");
+            if (log.isDebugEnabled()) { log.debug("creating new JMS XAConnection with user <" + user + "> and password <" + password + ">"); }
             xaConnection = xaConnectionFactory.createXAConnection(user, password);
         }
 
@@ -253,7 +253,7 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
      * @return a reference to this {@link PoolingConnectionFactory}.
      */
     public Reference getReference() throws NamingException {
-        if (log.isDebugEnabled()) log.debug("creating new JNDI reference of " + this);
+        if (log.isDebugEnabled()) { log.debug("creating new JNDI reference of " + this); }
         return new Reference(
                 PoolingConnectionFactory.class.getName(),
                 new StringRefAddr("uniqueName", getUniqueName()),

@@ -52,7 +52,7 @@ public final class TransactionContextHelper {
     public static void enlistInCurrentTransaction(XAResourceHolder xaResourceHolder) throws SystemException, RollbackException {
         BitronixTransaction currentTransaction = currentTransaction();
         ResourceBean bean = xaResourceHolder.getResourceBean();
-        if (log.isDebugEnabled()) log.debug("enlisting " + xaResourceHolder + " into " + currentTransaction);
+        if (log.isDebugEnabled()) { log.debug("enlisting " + xaResourceHolder + " into " + currentTransaction); }
 
         if (currentTransaction != null) {
             if (currentTransaction.timedOut())
@@ -64,11 +64,11 @@ public final class TransactionContextHelper {
             if (alreadyEnlistedXAResourceHolderState == null || alreadyEnlistedXAResourceHolderState.isEnded()) {
                 currentTransaction.enlistResource(xaResourceHolder.getXAResource());
             }
-            else if (log.isDebugEnabled()) log.debug("avoiding re-enlistment of already enlisted but not ended resource " + alreadyEnlistedXAResourceHolderState);
+            else if (log.isDebugEnabled()) { log.debug("avoiding re-enlistment of already enlisted but not ended resource " + alreadyEnlistedXAResourceHolderState); }
         }
         else {
             if (bean.getAllowLocalTransactions()) {
-                if (log.isDebugEnabled()) log.debug("in local transaction context, skipping enlistment");
+                if (log.isDebugEnabled()) { log.debug("in local transaction context, skipping enlistment"); }
             }
             else
                 throw new BitronixSystemException("resource '" + bean.getUniqueName() + "' cannot be used outside XA " +
@@ -156,17 +156,17 @@ public final class TransactionContextHelper {
             if (log.isDebugEnabled()) { log.debug("deferring release to pool of " + xaStatefulHolder); }
 
             if (!TransactionContextHelper.isAlreadyRegisteredForDeferredRelease(xaStatefulHolder, currentTransaction)) {
-                if (log.isDebugEnabled()) log.debug("registering DeferredReleaseSynchronization for " + xaStatefulHolder);
+                if (log.isDebugEnabled()) { log.debug("registering DeferredReleaseSynchronization for " + xaStatefulHolder); }
                 DeferredReleaseSynchronization synchronization = new DeferredReleaseSynchronization(xaStatefulHolder);
                 currentTransaction.getSynchronizationScheduler().add(synchronization, Scheduler.ALWAYS_LAST_POSITION);
             }
-            else if (log.isDebugEnabled()) log.debug("already registered DeferredReleaseSynchronization for " + xaStatefulHolder);
+            else if (log.isDebugEnabled()) { log.debug("already registered DeferredReleaseSynchronization for " + xaStatefulHolder); }
 
             xaStatefulHolder.setState(XAResourceHolder.STATE_NOT_ACCESSIBLE);
         }
         else {
             // global mode, immediate connection requeuing
-            if (log.isDebugEnabled()) log.debug("immediately releasing to pool " + xaStatefulHolder);
+            if (log.isDebugEnabled()) { log.debug("immediately releasing to pool " + xaStatefulHolder); }
             xaStatefulHolder.setState(XAResourceHolder.STATE_IN_POOL);
         }
     }
@@ -182,7 +182,7 @@ public final class TransactionContextHelper {
 
         DeferredReleaseSynchronization deferredReleaseSynchronization = findDeferredRelease(xaStatefulHolder, currentTransaction);
         if (deferredReleaseSynchronization != null) {
-            if (log.isDebugEnabled()) log.debug(xaStatefulHolder + " has been recycled, unregistering deferred release from " + currentTransaction);
+            if (log.isDebugEnabled()) { log.debug(xaStatefulHolder + " has been recycled, unregistering deferred release from " + currentTransaction); }
             synchronizationScheduler.remove(deferredReleaseSynchronization);
         }
     }
@@ -192,7 +192,7 @@ public final class TransactionContextHelper {
 
     private static boolean isAlreadyRegisteredForDeferredRelease(XAStatefulHolder xaStatefulHolder, BitronixTransaction currentTransaction) {
         boolean alreadyDeferred = findDeferredRelease(xaStatefulHolder, currentTransaction) != null;
-        if (log.isDebugEnabled()) log.debug(xaStatefulHolder + " is " + (alreadyDeferred ? "" : "not ") + "already registered for deferred release in " + currentTransaction);
+        if (log.isDebugEnabled()) { log.debug(xaStatefulHolder + " is " + (alreadyDeferred ? "" : "not ") + "already registered for deferred release in " + currentTransaction); }
         return alreadyDeferred;
     }
 
@@ -212,10 +212,10 @@ public final class TransactionContextHelper {
     }
 
     private static boolean isEnlistedInSomeTransaction(XAResourceHolder xaResourceHolder) throws BitronixSystemException {
-        if (log.isDebugEnabled()) log.debug("looking in in-flight transactions for XAResourceHolderState of " + xaResourceHolder);
+        if (log.isDebugEnabled()) { log.debug("looking in in-flight transactions for XAResourceHolderState of " + xaResourceHolder); }
 
         if (!TransactionManagerServices.isTransactionManagerRunning()) {
-            if (log.isDebugEnabled()) log.debug("transaction manager not running, there is no in-flight transaction");
+            if (log.isDebugEnabled()) { log.debug("transaction manager not running, there is no in-flight transaction"); }
             return false;
         }
 
@@ -241,7 +241,7 @@ public final class TransactionContextHelper {
         if (currentTransaction != null && xaResourceHolder.isExistXAResourceHolderStatesForGtrid(currentTransaction.getResourceManager().getGtrid())) {
             globalTransactionMode = true;
         }
-        if (log.isDebugEnabled()) log.debug("resource is " + (globalTransactionMode ? "" : "not ") + "in enlisting global transaction context: " + xaResourceHolder);
+        if (log.isDebugEnabled()) { log.debug("resource is " + (globalTransactionMode ? "" : "not ") + "in enlisting global transaction context: " + xaResourceHolder); }
         return globalTransactionMode;
     }
 

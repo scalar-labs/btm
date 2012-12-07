@@ -50,15 +50,15 @@ public class IncrementalRecoverer {
      */
     public static void recover(XAResourceProducer xaResourceProducer) throws RecoveryException {
         String uniqueName = xaResourceProducer.getUniqueName();
-        if (log.isDebugEnabled()) log.debug("start of incremental recovery on resource " + uniqueName);
+        if (log.isDebugEnabled()) { log.debug("start of incremental recovery on resource " + uniqueName); }
 
         try {
             XAResourceHolderState xaResourceHolderState = xaResourceProducer.startRecovery();
             boolean success = true;
             Set<BitronixXid> xids = RecoveryHelper.recover(xaResourceHolderState);
-            if (log.isDebugEnabled()) log.debug(xids.size() + " dangling transaction(s) found on resource");
+            if (log.isDebugEnabled()) { log.debug(xids.size() + " dangling transaction(s) found on resource"); }
             Map<?, ?> danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
-            if (log.isDebugEnabled()) log.debug(danglingRecords.size() + " dangling transaction(s) found in journal");
+            if (log.isDebugEnabled()) { log.debug(danglingRecords.size() + " dangling transaction(s) found in journal"); }
 
             int commitCount = 0;
             int rollbackCount = 0;
@@ -67,12 +67,12 @@ public class IncrementalRecoverer {
 
                 JournalRecord tlog = (JournalRecord) danglingRecords.get(gtrid);
                 if (tlog != null) {
-                    if (log.isDebugEnabled()) log.debug("committing " + xid);
+                    if (log.isDebugEnabled()) { log.debug("committing " + xid); }
                     success &= RecoveryHelper.commit(xaResourceHolderState, xid);
                     updateJournal(xid.getGlobalTransactionIdUid(), uniqueName, Status.STATUS_COMMITTED);
                     commitCount++;
                 } else {
-                    if (log.isDebugEnabled()) log.debug("rolling back " + xid);
+                    if (log.isDebugEnabled()) { log.debug("rolling back " + xid); }
                     success &= RecoveryHelper.rollback(xaResourceHolderState, xid);
                     updateJournal(xid.getGlobalTransactionIdUid(), uniqueName, Status.STATUS_ROLLEDBACK);
                     rollbackCount++;
@@ -104,12 +104,12 @@ public class IncrementalRecoverer {
             throw ex;
         } finally {
             xaResourceProducer.endRecovery();
-            if (log.isDebugEnabled()) log.debug("end of incremental recovery on resource " + uniqueName);
+            if (log.isDebugEnabled()) { log.debug("end of incremental recovery on resource " + uniqueName); }
         }
     }
 
     private static void updateJournal(Uid gtrid, String uniqueName, int status) throws IOException {
-        if (log.isDebugEnabled()) log.debug("updating journal, adding " + Decoder.decodeStatus(status) + " entry for [" + uniqueName + "] on GTRID [" +  gtrid + "]");
+        if (log.isDebugEnabled()) { log.debug("updating journal, adding " + Decoder.decodeStatus(status) + " entry for [" + uniqueName + "] on GTRID [" +  gtrid + "]"); }
         Set<String> participatingUniqueNames = new HashSet<String>();
         participatingUniqueNames.add(uniqueName);
         TransactionManagerServices.getJournal().log(status, gtrid, participatingUniqueNames);

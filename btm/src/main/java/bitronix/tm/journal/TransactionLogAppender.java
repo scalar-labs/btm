@@ -136,7 +136,7 @@ public class TransactionLogAppender {
             buf.putInt(tlog.getEndRecord());
             buf.flip();
 
-            if (log.isDebugEnabled()) log.debug("between " + tlog.getWritePosition() + " and " + tlog.getWritePosition() + tlog.calculateTotalRecordSize() + ", writing " + tlog);
+            if (log.isDebugEnabled()) { log.debug("between " + tlog.getWritePosition() + " and " + tlog.getWritePosition() + tlog.calculateTotalRecordSize() + ", writing " + tlog); }
     
             final long writePosition = tlog.getWritePosition();
             while (buf.hasRemaining()) {
@@ -283,9 +283,9 @@ public class TransactionLogAppender {
      * @throws IOException if an I/O error occurs.
      */
     protected void force() throws IOException {
-        if (log.isDebugEnabled()) log.debug("forcing log writing");
+        if (log.isDebugEnabled()) { log.debug("forcing log writing"); }
         fc.force(false);
-        if (log.isDebugEnabled()) log.debug("done forcing log");
+        if (log.isDebugEnabled()) { log.debug("done forcing log"); }
     }
 
     public String toString() {

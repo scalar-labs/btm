@@ -67,7 +67,7 @@ public final class Committer extends AbstractPhaseEngine {
         if (resourceManager.size() == 0) {
             transaction.setStatus(Status.STATUS_COMMITTING); //TODO: there is a disk force here that could be avoided
             transaction.setStatus(Status.STATUS_COMMITTED);
-            if (log.isDebugEnabled()) log.debug("phase 2 commit succeeded with no interested resource");
+            if (log.isDebugEnabled()) { log.debug("phase 2 commit succeeded with no interested resource"); }
             return;
         }
 
@@ -90,7 +90,7 @@ public final class Committer extends AbstractPhaseEngine {
             }
         }
 
-        if (log.isDebugEnabled()) log.debug("phase 2 commit executed on resources " + Decoder.collectResourcesNames(committedResources));
+        if (log.isDebugEnabled()) { log.debug("phase 2 commit executed on resources " + Decoder.collectResourcesNames(committedResources)); }
 
         // Some resources might have failed the 2nd phase of 2PC.
         // Only resources which successfully committed should be registered in the journal, the other
@@ -193,10 +193,10 @@ public final class Committer extends AbstractPhaseEngine {
 
         private void commitResource(XAResourceHolderState resourceHolder, boolean onePhase) throws XAException {
             try {
-                if (log.isDebugEnabled()) log.debug("committing resource " + resourceHolder + (onePhase ? " (with one-phase optimization)" : ""));
+                if (log.isDebugEnabled()) { log.debug("committing resource " + resourceHolder + (onePhase ? " (with one-phase optimization)" : "")); }
                 resourceHolder.getXAResource().commit(resourceHolder.getXid(), onePhase);
                 committedResources.add(resourceHolder);
-                if (log.isDebugEnabled()) log.debug("committed resource " + resourceHolder);
+                if (log.isDebugEnabled()) { log.debug("committed resource " + resourceHolder); }
             } catch (XAException ex) {
                handleXAException(resourceHolder, ex, onePhase);
             }
@@ -227,7 +227,7 @@ public final class Committer extends AbstractPhaseEngine {
 
                 default:
                     if (onePhase) {
-                        if (log.isDebugEnabled()) log.debug("XAException thrown in commit phase of 1PC optimization, rethrowing it");
+                        if (log.isDebugEnabled()) { log.debug("XAException thrown in commit phase of 1PC optimization, rethrowing it"); }
                         throw xaException;
                     }
                     String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(xaException);
@@ -239,9 +239,9 @@ public final class Committer extends AbstractPhaseEngine {
 
         private void forgetHeuristicCommit(XAResourceHolderState resourceHolder) {
             try {
-                if (log.isDebugEnabled()) log.debug("handling heuristic commit on resource " + resourceHolder.getXAResource());
+                if (log.isDebugEnabled()) { log.debug("handling heuristic commit on resource " + resourceHolder.getXAResource()); }
                 resourceHolder.getXAResource().forget(resourceHolder.getXid());
-                if (log.isDebugEnabled()) log.debug("forgotten heuristically committed resource " + resourceHolder.getXAResource());
+                if (log.isDebugEnabled()) { log.debug("forgotten heuristically committed resource " + resourceHolder.getXAResource()); }
             } catch (XAException ex) {
                 String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
                 log.error("cannot forget " + resourceHolder.getXid() + " assigned to " + resourceHolder.getXAResource() +

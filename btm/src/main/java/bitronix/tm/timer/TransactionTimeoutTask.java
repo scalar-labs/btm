@@ -44,7 +44,7 @@ public class TransactionTimeoutTask extends Task {
 
     public void execute() throws TaskException {
         try {
-            if (log.isDebugEnabled()) log.debug("marking " + transaction + " as timed out");
+            if (log.isDebugEnabled()) { log.debug("marking " + transaction + " as timed out"); }
             transaction.timeout();
         } catch (BitronixSystemException ex) {
             throw new TaskException("failed to timeout " + transaction, ex);

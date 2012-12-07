@@ -103,7 +103,7 @@ public class LruStatementCache {
 	        StatementTracker cached = cache.get(key);
 	        if (cached != null) {
 	            cached.usageCount++;
-	            if (log.isDebugEnabled()) log.debug("delivered from cache with usage count " + cached.usageCount + " statement <" + key + ">");
+	            if (log.isDebugEnabled()) { log.debug("delivered from cache with usage count " + cached.usageCount + " statement <" + key + ">"); }
 	            return cached.statement;
 	        }
 
@@ -130,13 +130,13 @@ public class LruStatementCache {
 	        // updated as the 'youngest' (Most Recently Used) entry.
 	        StatementTracker cached = cache.get(key);
 	        if (cached == null) {
-	            if (log.isDebugEnabled()) log.debug("adding to cache statement <" + key + ">");
+	            if (log.isDebugEnabled()) { log.debug("adding to cache statement <" + key + ">"); }
 	            cache.put(key, new StatementTracker(statement));
 	            size++;
 	        } else {
 	            cached.usageCount--;
 	            statement = cached.statement;
-	            if (log.isDebugEnabled()) log.debug("returning to cache statement <" + key + "> with usage count " + cached.usageCount);
+	            if (log.isDebugEnabled()) { log.debug("returning to cache statement <" + key + "> with usage count " + cached.usageCount); }
 	        }
 
 	        // If the size is exceeded, we will _try_ to evict one (or more)

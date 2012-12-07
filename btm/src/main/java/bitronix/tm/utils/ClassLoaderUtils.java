@@ -73,7 +73,7 @@ public class ClassLoaderUtils {
             try {
                 return new CascadingClassLoader(cl).loadClass(className);
             } catch (ClassNotFoundException ex) {
-                if (log.isDebugEnabled()) log.debug("context classloader could not find class '" + className + "', trying Class.forName() instead");
+                if (log.isDebugEnabled()) { log.debug("context classloader could not find class '" + className + "', trying Class.forName() instead"); }
             }
         }
         

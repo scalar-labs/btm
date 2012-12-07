@@ -40,12 +40,12 @@ public class DeferredReleaseSynchronization implements Synchronization {
     }
 
     public void afterCompletion(int status) {
-        if (log.isDebugEnabled()) log.debug("DeferredReleaseSynchronization requeuing " + xaStatefulHolder);
+        if (log.isDebugEnabled()) { log.debug("DeferredReleaseSynchronization requeuing " + xaStatefulHolder); }
 
         // set this connection's state back to IN_POOL
         xaStatefulHolder.setState(XAResourceHolder.STATE_IN_POOL);
 
-        if (log.isDebugEnabled()) log.debug("DeferredReleaseSynchronization requeued " + xaStatefulHolder);
+        if (log.isDebugEnabled()) { log.debug("DeferredReleaseSynchronization requeued " + xaStatefulHolder); }
     }
 
     public void beforeCompletion() {

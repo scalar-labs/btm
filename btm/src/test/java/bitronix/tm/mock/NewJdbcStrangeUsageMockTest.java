@@ -39,42 +39,42 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
 
 
     public void testDeferredReuse() throws Exception {
-        if (log.isDebugEnabled()) log.debug("*** getting TM");
+        if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 
         XAPool pool1 = getPool(poolingDataSource1);
 
-        if (log.isDebugEnabled()) log.debug("*** before begin");
+        if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.begin();
-        if (log.isDebugEnabled()) log.debug("*** after begin");
+        if (log.isDebugEnabled()) { log.debug("*** after begin"); }
 
         assertEquals(POOL_SIZE, pool1.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** getting connection from DS1");
+        if (log.isDebugEnabled()) { log.debug("*** getting connection from DS1"); }
         Connection connection1 = poolingDataSource1.getConnection();
         connection1.createStatement();
 
         assertEquals(POOL_SIZE -1, pool1.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** closing connection 1");
+        if (log.isDebugEnabled()) { log.debug("*** closing connection 1"); }
         connection1.close();
 
         assertEquals(POOL_SIZE -1, pool1.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** getting again connection from DS1");
+        if (log.isDebugEnabled()) { log.debug("*** getting again connection from DS1"); }
         connection1 = poolingDataSource1.getConnection();
         connection1.createStatement();
 
         assertEquals(POOL_SIZE -1, pool1.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** closing again connection 1");
+        if (log.isDebugEnabled()) { log.debug("*** closing again connection 1"); }
         connection1.close();
 
         assertEquals(POOL_SIZE -1, pool1.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** committing");
+        if (log.isDebugEnabled()) { log.debug("*** committing"); }
         tm.commit();
-        if (log.isDebugEnabled()) log.debug("*** TX is done");
+        if (log.isDebugEnabled()) { log.debug("*** TX is done"); }
 
         assertEquals(POOL_SIZE, pool1.inPoolSize());
 
@@ -101,43 +101,43 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testDeferredCannotReuse() throws Exception {
-        if (log.isDebugEnabled()) log.debug("*** getting TM");
+        if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 
         // Use DataSource2 because it does not have shared accessible connections
         XAPool pool2 = getPool(poolingDataSource2);
 
-        if (log.isDebugEnabled()) log.debug("*** before begin");
+        if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.begin();
-        if (log.isDebugEnabled()) log.debug("*** after begin");
+        if (log.isDebugEnabled()) { log.debug("*** after begin"); }
 
         assertEquals(POOL_SIZE, pool2.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** getting connection 1 from DS1");
+        if (log.isDebugEnabled()) { log.debug("*** getting connection 1 from DS1"); }
         Connection connection1 = poolingDataSource2.getConnection();
         connection1.createStatement();
 
         assertEquals(POOL_SIZE -1, pool2.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** getting connection 2 from DS1");
+        if (log.isDebugEnabled()) { log.debug("*** getting connection 2 from DS1"); }
         Connection connection2 = poolingDataSource2.getConnection();
         connection2.createStatement();
 
         assertEquals(POOL_SIZE -2, pool2.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** closing connection 1");
+        if (log.isDebugEnabled()) { log.debug("*** closing connection 1"); }
         connection1.close();
 
         assertEquals(POOL_SIZE -2, pool2.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** closing connection 2");
+        if (log.isDebugEnabled()) { log.debug("*** closing connection 2"); }
         connection2.close();
 
         assertEquals(POOL_SIZE -2, pool2.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** committing");
+        if (log.isDebugEnabled()) { log.debug("*** committing"); }
         tm.commit();
-        if (log.isDebugEnabled()) log.debug("*** TX is done");
+        if (log.isDebugEnabled()) { log.debug("*** TX is done"); }
 
         assertEquals(POOL_SIZE, pool2.inPoolSize());
 
@@ -167,37 +167,37 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
     }
 
     public void testConnectionCloseInDifferentContext() throws Exception {
-        if (log.isDebugEnabled()) log.debug("*** getting TM");
+        if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
-        if (log.isDebugEnabled()) log.debug("*** beginning");
+        if (log.isDebugEnabled()) { log.debug("*** beginning"); }
         tm.begin();
 
-        if (log.isDebugEnabled()) log.debug("*** getting connection from DS1");
+        if (log.isDebugEnabled()) { log.debug("*** getting connection from DS1"); }
         Connection connection1 = poolingDataSource1.getConnection();
         connection1.createStatement();
 
-        if (log.isDebugEnabled()) log.debug("*** getting connection from DS2");
+        if (log.isDebugEnabled()) { log.debug("*** getting connection from DS2"); }
         Connection connection2 = poolingDataSource2.getConnection();
         connection2.createStatement();
 
-        if (log.isDebugEnabled()) log.debug("*** closing connection 2");
+        if (log.isDebugEnabled()) { log.debug("*** closing connection 2"); }
         connection2.close();
 
 
-        if (log.isDebugEnabled()) log.debug("*** committing");
+        if (log.isDebugEnabled()) { log.debug("*** committing"); }
         tm.commit();
-        if (log.isDebugEnabled()) log.debug("*** TX is done");
+        if (log.isDebugEnabled()) { log.debug("*** TX is done"); }
 
-        if (log.isDebugEnabled()) log.debug("*** beginning");
+        if (log.isDebugEnabled()) { log.debug("*** beginning"); }
         tm.begin();
 
 
-        if (log.isDebugEnabled()) log.debug("*** closing connection 1");
+        if (log.isDebugEnabled()) { log.debug("*** closing connection 1"); }
         connection1.close();
 
-        if (log.isDebugEnabled()) log.debug("*** committing");
+        if (log.isDebugEnabled()) { log.debug("*** committing"); }
         tm.commit();
-        if (log.isDebugEnabled()) log.debug("*** TX is done");
+        if (log.isDebugEnabled()) { log.debug("*** TX is done"); }
 
         // check flow
         List orderedEvents = EventRecorder.getOrderedEvents();
@@ -236,33 +236,33 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
 
 
     public void testClosingSuspendedConnectionsInDifferentContext() throws Exception {
-        if (log.isDebugEnabled()) log.debug("*** getting TM");
+        if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 
-        if (log.isDebugEnabled()) log.debug("*** before begin");
+        if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.begin();
 
         XAPool pool1 = getPool(poolingDataSource1);
 
         assertEquals(POOL_SIZE, pool1.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** getting connection from DS1");
+        if (log.isDebugEnabled()) { log.debug("*** getting connection from DS1"); }
         Connection connection1 = poolingDataSource1.getConnection();
         connection1.createStatement();
 
         assertEquals(POOL_SIZE -1, pool1.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** suspending");
+        if (log.isDebugEnabled()) { log.debug("*** suspending"); }
         Transaction t1 = tm.suspend();
 
         assertEquals(POOL_SIZE -1, pool1.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** starting 2nd tx");
+        if (log.isDebugEnabled()) { log.debug("*** starting 2nd tx"); }
         tm.begin();
 
         assertEquals(POOL_SIZE -1, pool1.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** closing connection 1 too eagerly within another context");
+        if (log.isDebugEnabled()) { log.debug("*** closing connection 1 too eagerly within another context"); }
         try {
             // TODO: the ConnectionHandler tries to 'veto' the connection close here like the old pool did.
             // Instead, close the resource immediately or defer its release.
@@ -273,21 +273,21 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
         }
         assertEquals(POOL_SIZE -1, pool1.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** committing 2nd tx");
+        if (log.isDebugEnabled()) { log.debug("*** committing 2nd tx"); }
         tm.commit();
 
         assertEquals(POOL_SIZE -1, pool1.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** resuming");
+        if (log.isDebugEnabled()) { log.debug("*** resuming"); }
         tm.resume(t1);
 
         assertEquals(POOL_SIZE -1, pool1.inPoolSize());
 
-        if (log.isDebugEnabled()) log.debug("*** committing");
+        if (log.isDebugEnabled()) { log.debug("*** committing"); }
         tm.commit();
-        if (log.isDebugEnabled()) log.debug("*** TX is done");
+        if (log.isDebugEnabled()) { log.debug("*** TX is done"); }
 
-        if (log.isDebugEnabled()) log.debug("*** closing connection 1");
+        if (log.isDebugEnabled()) { log.debug("*** closing connection 1"); }
         connection1.close();
 
         assertEquals(POOL_SIZE, pool1.inPoolSize());

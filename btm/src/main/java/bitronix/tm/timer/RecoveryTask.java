@@ -43,7 +43,7 @@ public class RecoveryTask extends Task {
     }
 
     public void execute() throws TaskException {
-        if (log.isDebugEnabled()) log.debug("running recovery");
+        if (log.isDebugEnabled()) { log.debug("running recovery"); }
         Thread recovery = new Thread(recoverer);
         recovery.setName("bitronix-recovery-thread");
         recovery.setDaemon(true);
@@ -51,7 +51,7 @@ public class RecoveryTask extends Task {
         recovery.start();
 
         Date nextExecutionDate = new Date(getExecutionTime().getTime() + (TransactionManagerServices.getConfiguration().getBackgroundRecoveryIntervalSeconds() * 1000L));
-        if (log.isDebugEnabled()) log.debug("rescheduling recovery for " + nextExecutionDate);
+        if (log.isDebugEnabled()) { log.debug("rescheduling recovery for " + nextExecutionDate); }
         getTaskScheduler().scheduleRecovery(recoverer, nextExecutionDate);
     }
 

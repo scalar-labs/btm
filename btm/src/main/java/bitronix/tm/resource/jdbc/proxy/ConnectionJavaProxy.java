@@ -80,7 +80,7 @@ public class ConnectionJavaProxy extends JavaProxyBase<Connection> implements Po
     /* Overridden methods of java.sql.Connection */
 
     public void close() throws SQLException {
-        if (log.isDebugEnabled()) log.debug("closing " + this);
+        if (log.isDebugEnabled()) { log.debug("closing " + this); }
 
         // in case the connection has already been closed
         if (jdbcPooledConnection == null)

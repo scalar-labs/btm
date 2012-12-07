@@ -79,16 +79,16 @@ public class ResourceLoader implements Service {
             return init(filename);
         }
         else {
-            if (log.isDebugEnabled()) log.debug("no resource configuration file specified");
+            if (log.isDebugEnabled()) { log.debug("no resource configuration file specified"); }
             return 0;
         }
     }
 
     public synchronized void shutdown() {
-        if (log.isDebugEnabled()) log.debug("resource loader has registered " + resourcesByUniqueName.entrySet().size() + " resource(s), unregistering them now");
+        if (log.isDebugEnabled()) { log.debug("resource loader has registered " + resourcesByUniqueName.entrySet().size() + " resource(s), unregistering them now"); }
         for (Map.Entry<String, XAResourceProducer> entry : resourcesByUniqueName.entrySet()) {
             XAResourceProducer producer = entry.getValue();
-            if (log.isDebugEnabled()) log.debug("closing " + producer);
+            if (log.isDebugEnabled()) { log.debug("closing " + producer); }
             try {
                 producer.close();
             } catch (Exception ex) {
@@ -165,11 +165,11 @@ public class ResourceLoader implements Service {
             XAResourceProducer producer = buildXAResourceProducer(uniqueName, propertyPairs);
 
             if (ResourceRegistrar.get(producer.getUniqueName()) != null) {
-                if (log.isDebugEnabled()) log.debug("resource already registered, skipping it:" + producer.getUniqueName());
+                if (log.isDebugEnabled()) { log.debug("resource already registered, skipping it:" + producer.getUniqueName()); }
                 continue;
             }
 
-            if (log.isDebugEnabled()) log.debug("creating resource " + producer);
+            if (log.isDebugEnabled()) { log.debug("creating resource " + producer); }
             try {
                 producer.init();
             } catch (ResourceConfigurationException ex) {

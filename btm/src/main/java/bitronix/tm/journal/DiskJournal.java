@@ -113,7 +113,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
 
         if (configuration.isFilterLogStatus()) {
             if (status != Status.STATUS_COMMITTING && status != Status.STATUS_COMMITTED && status != Status.STATUS_UNKNOWN) {
-                if (log.isDebugEnabled()) log.debug("filtered out write to log for status " + Decoder.decodeStatus(status));
+                if (log.isDebugEnabled()) { log.debug("filtered out write to log for status " + Decoder.decodeStatus(status)); }
                 return;
             }
         }
@@ -216,7 +216,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         }
 
         maxFileLength = Math.max(file1.length(), file2.length());
-        if (log.isDebugEnabled()) log.debug("disk journal files max length: " + maxFileLength);
+        if (log.isDebugEnabled()) { log.debug("disk journal files max length: " + maxFileLength); }
 
         tla1 = new TransactionLogAppender(file1, maxFileLength);
         tla2 = new TransactionLogAppender(file2, maxFileLength);
@@ -226,7 +226,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
             log.warn("active log file is unclean, did you call BitronixTransactionManager.shutdown() at the end of the last run?");
         }
 
-        if (log.isDebugEnabled()) log.debug("disk journal opened");
+        if (log.isDebugEnabled()) { log.debug("disk journal opened"); }
     }
 
     /**
@@ -253,7 +253,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         tla2 = null;
         activeTla.set(null);
 
-        if (log.isDebugEnabled()) log.debug("disk journal closed");
+        if (log.isDebugEnabled()) { log.debug("disk journal closed"); }
     }
 
     public void shutdown() {
@@ -357,16 +357,16 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
     private synchronized byte pickActiveJournalFile(TransactionLogAppender tla1, TransactionLogAppender tla2) throws IOException {
         if (tla1.getTimestamp() > tla2.getTimestamp()) {
         	activeTla.set(tla1);
-            if (log.isDebugEnabled()) log.debug("logging to file 1: " + activeTla);
+            if (log.isDebugEnabled()) { log.debug("logging to file 1: " + activeTla); }
         }
         else {
         	activeTla.set(tla2);
-            if (log.isDebugEnabled()) log.debug("logging to file 2: " + activeTla);
+            if (log.isDebugEnabled()) { log.debug("logging to file 2: " + activeTla); }
         }
 
         byte cleanState = activeTla.get().getState();
         activeTla.get().setState(TransactionLogHeader.UNCLEAN_LOG_STATE);
-        if (log.isDebugEnabled()) log.debug("log file activated, forcing file state to disk");
+        if (log.isDebugEnabled()) { log.debug("log file activated, forcing file state to disk"); }
         activeTla.get().force();
         return cleanState;
     }
@@ -387,7 +387,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @throws java.io.IOException in case of disk IO failure.
      */
     private synchronized void swapJournalFiles() throws IOException {
-        if (log.isDebugEnabled()) log.debug("swapping journal log file to " + getPassiveTransactionLogAppender());
+        if (log.isDebugEnabled()) { log.debug("swapping journal log file to " + getPassiveTransactionLogAppender()); }
 
         //step 1
         activeTla.get().force();
@@ -406,7 +406,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
             passiveTla.writeLog(tlog);
         }
 
-        if (log.isDebugEnabled()) log.debug(danglingLogs.size() + " dangling record(s) copied to passive log file");
+        if (log.isDebugEnabled()) { log.debug(danglingLogs.size() + " dangling record(s) copied to passive log file"); }
         
         activeTla.get().clearDanglingLogs();
 
@@ -419,7 +419,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         //step 5
         activeTla.set(passiveTla);
 
-        if (log.isDebugEnabled()) log.debug("journal log files swapped");
+        if (log.isDebugEnabled()) { log.debug("journal log files swapped"); }
     }
 
     /**
@@ -484,7 +484,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
                 }
             }
 
-            if (log.isDebugEnabled()) log.debug("collected dangling records of " + tla + ", committing: " + committing + ", committed: " + committed + ", delta: " + danglingRecords.size());
+            if (log.isDebugEnabled()) { log.debug("collected dangling records of " + tla + ", committing: " + committing + ", committed: " + committed + ", delta: " + danglingRecords.size()); }
         }
         finally {
             tlc.close();

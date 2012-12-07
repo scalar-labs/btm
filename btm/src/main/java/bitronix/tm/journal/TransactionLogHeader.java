@@ -99,7 +99,7 @@ public class TransactionLogHeader {
         position = buf.getLong();
         fc.position(position);
 
-        if (log.isDebugEnabled()) log.debug("read header " + this);
+        if (log.isDebugEnabled()) { log.debug("read header " + this); }
     }
 
     /**

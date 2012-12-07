@@ -61,9 +61,6 @@ public final class ManagementRegistrar {
         commandQueue = mbeanServer == null || configuration.isSynchronousJmxRegistration() ? null :
                 new ArrayBlockingQueue<ManagementCommand>(1024);
 
-
-        // TODO: BEGIN - This part should use a system wide shared ScheduledExecutorService instead.
-        // TODO:         To be changed when the Executors system was refactored.
         if (commandQueue != null) {
             new Thread() {
                 {
@@ -77,23 +74,20 @@ public final class ManagementRegistrar {
                         try {
                             normalizeAndRunQueuedCommands();
                             sleep(250); // sampling interval
-                        } catch (InterruptedException t) {
+                        } catch (InterruptedException ex) {
                             return;
-                        } catch (Throwable t) {
-                            log.error("An unexpected fatal error occurred in JMX asynchronous registration code.", t);
+                        } catch (Exception ex) {
+                            log.error("an unexpected error occurred in JMX asynchronous registration code", ex);
                         }
                     }
                 }
             }.start();
         }
-        // TODO: END
     }
 
     static {
         if (mbeanServer != null) {
-            if (log.isDebugEnabled()) {
-                log.debug("Enabled JMX with MBeanServer " + mbeanServer + "; MBean registration is '" + (commandQueue == null ? "synchronous" : "asynchronous") + "'.");
-            }
+            if (log.isDebugEnabled()) { log.debug("Enabled JMX with MBeanServer " + mbeanServer + "; MBean registration is '" + (commandQueue == null ? "synchronous" : "asynchronous") + "'."); }
         } else {
             if (log.isDebugEnabled()) { log.debug("JMX support is disabled."); }
         }

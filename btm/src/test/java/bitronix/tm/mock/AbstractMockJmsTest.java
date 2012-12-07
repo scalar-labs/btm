@@ -75,7 +75,7 @@ public abstract class AbstractMockJmsTest extends TestCase {
     }
     protected void tearDown() throws Exception {
         try {
-            if (log.isDebugEnabled()) log.debug("*** tearDown rollback");
+            if (log.isDebugEnabled()) { log.debug("*** tearDown rollback"); }
             TransactionManagerServices.getTransactionManager().rollback();
         } catch (Exception ex) {
             // ignore

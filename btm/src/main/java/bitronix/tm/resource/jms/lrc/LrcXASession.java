@@ -55,7 +55,7 @@ public class LrcXASession implements XASession {
     public LrcXASession(Session session) {
         this.nonXaSession = session;
         this.xaResource = new LrcXAResource(session);
-        if (log.isDebugEnabled()) log.debug("creating new LrcXASession with " + xaResource);
+        if (log.isDebugEnabled()) { log.debug("creating new LrcXASession with " + xaResource); }
     }
 
 

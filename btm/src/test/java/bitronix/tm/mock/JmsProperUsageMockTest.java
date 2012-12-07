@@ -52,35 +52,35 @@ public class JmsProperUsageMockTest extends AbstractMockJmsTest {
     }
 
     public void testSimpleWorkingCase() throws Exception {
-        if (log.isDebugEnabled()) log.debug("*** getting TM");
+        if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
-        if (log.isDebugEnabled()) log.debug("*** before begin");
+        if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.setTransactionTimeout(10);
         tm.begin();
-        if (log.isDebugEnabled()) log.debug("*** after begin");
+        if (log.isDebugEnabled()) { log.debug("*** after begin"); }
 
-        if (log.isDebugEnabled()) log.debug("*** getting connection from CF1");
+        if (log.isDebugEnabled()) { log.debug("*** getting connection from CF1"); }
         Connection connection1 = poolingConnectionFactory1.createConnection();
 
-        if (log.isDebugEnabled()) log.debug("*** creating session 1 on connection 1");
+        if (log.isDebugEnabled()) { log.debug("*** creating session 1 on connection 1"); }
         Session session1 = connection1.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-        if (log.isDebugEnabled()) log.debug("*** creating queue 1 on session 1");
+        if (log.isDebugEnabled()) { log.debug("*** creating queue 1 on session 1"); }
         Queue queue1 = session1.createQueue("queue");
 
-        if (log.isDebugEnabled()) log.debug("*** creating producer1 on session 1");
+        if (log.isDebugEnabled()) { log.debug("*** creating producer1 on session 1"); }
         MessageProducer producer1 = session1.createProducer(queue1);
 
-        if (log.isDebugEnabled()) log.debug("*** sending message on producer1");
+        if (log.isDebugEnabled()) { log.debug("*** sending message on producer1"); }
         producer1.send(session1.createTextMessage("testSimpleWorkingCase"));
 
 
-        if (log.isDebugEnabled()) log.debug("*** closing connection 1");
+        if (log.isDebugEnabled()) { log.debug("*** closing connection 1"); }
         connection1.close();
 
-        if (log.isDebugEnabled()) log.debug("*** committing");
+        if (log.isDebugEnabled()) { log.debug("*** committing"); }
         tm.commit();
-        if (log.isDebugEnabled()) log.debug("*** TX is done");
+        if (log.isDebugEnabled()) { log.debug("*** TX is done"); }
 
         // check flow
         List orderedEvents = EventRecorder.getOrderedEvents();

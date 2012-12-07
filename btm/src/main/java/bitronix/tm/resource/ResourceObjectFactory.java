@@ -34,7 +34,7 @@ public class ResourceObjectFactory implements ObjectFactory {
 
     public Object getObjectInstance(Object obj, Name jndiNameObject, Context nameCtx, Hashtable<?,?> environment) throws Exception {
         Reference ref = (Reference) obj;
-        if (log.isDebugEnabled()) log.debug("referencing resource with reference of type " + ref.getClass());
+        if (log.isDebugEnabled()) { log.debug("referencing resource with reference of type " + ref.getClass()); }
 
         RefAddr refAddr = ref.get("uniqueName");
         if (refAddr == null)
@@ -44,7 +44,7 @@ public class ResourceObjectFactory implements ObjectFactory {
             throw new NamingException("'uniqueName' RefAddr content is not of type java.lang.String");
         String uniqueName = (String) content;
 
-        if (log.isDebugEnabled()) log.debug("getting registered resource with uniqueName '" + uniqueName + "'");
+        if (log.isDebugEnabled()) { log.debug("getting registered resource with uniqueName '" + uniqueName + "'"); }
         Referenceable resource = ResourceRegistrar.get(uniqueName);
         if (resource == null)
             throw new NamingException("no resource registered with uniqueName '" + uniqueName + "', available resources: " + ResourceRegistrar.getResourcesUniqueNames());

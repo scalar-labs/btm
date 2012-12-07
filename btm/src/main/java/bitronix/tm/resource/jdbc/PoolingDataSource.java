@@ -96,7 +96,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         if (pool != null)
             return;
 
-        if (log.isDebugEnabled()) log.debug("building XA pool for " + getUniqueName() + " with " + getMinPoolSize() + " connection(s)");
+        if (log.isDebugEnabled()) { log.debug("building XA pool for " + getUniqueName() + " with " + getMinPoolSize() + " connection(s)"); }
         pool = new XAPool(this, this);
         xaDataSource = (XADataSource) pool.getXAFactory();
         try {
@@ -247,9 +247,9 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         }
 
         init();
-        if (log.isDebugEnabled()) log.debug("acquiring connection from " + this);
+        if (log.isDebugEnabled()) { log.debug("acquiring connection from " + this); }
         if (pool == null) {
-            if (log.isDebugEnabled()) log.debug("pool is closed, returning null connection");
+            if (log.isDebugEnabled()) { log.debug("pool is closed, returning null connection"); }
             return null;
         }
 
@@ -263,7 +263,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     }
 
     public Connection getConnection(String username, String password) throws SQLException {
-        if (log.isDebugEnabled()) log.debug("JDBC connections are pooled, username and password ignored");
+        if (log.isDebugEnabled()) { log.debug("JDBC connections are pooled, username and password ignored"); }
         return getConnection();
     }
 
@@ -294,7 +294,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
             return;
 
         try {
-            if (log.isDebugEnabled()) log.debug("recovery xa resource is being closed: " + recoveryXAResourceHolder);
+            if (log.isDebugEnabled()) { log.debug("recovery xa resource is being closed: " + recoveryXAResourceHolder); }
             recoveryConnectionHandle.close();
         } catch (Exception ex) {
             throw new RecoveryException("error ending recovery on " + this, ex);
@@ -320,11 +320,11 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
 
     public void close() {
         if (pool == null) {
-            if (log.isDebugEnabled()) log.debug("trying to close already closed PoolingDataSource " + getUniqueName());
+            if (log.isDebugEnabled()) { log.debug("trying to close already closed PoolingDataSource " + getUniqueName()); }
             return;
         }
 
-        if (log.isDebugEnabled()) log.debug("closing " + this);
+        if (log.isDebugEnabled()) { log.debug("closing " + this); }
         pool.close();
         pool = null;
         
@@ -358,7 +358,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
      * @return a reference to this {@link PoolingDataSource}.
      */
     public Reference getReference() throws NamingException {
-        if (log.isDebugEnabled()) log.debug("creating new JNDI reference of " + this);
+        if (log.isDebugEnabled()) { log.debug("creating new JNDI reference of " + this); }
         return new Reference(
                 PoolingDataSource.class.getName(),
                 new StringRefAddr("uniqueName", getUniqueName()),

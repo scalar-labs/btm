@@ -55,7 +55,7 @@ public abstract class TransactionTableModel implements TableModel {
         }
         finally {
             tlis.close();
-            if (log.isDebugEnabled()) log.debug("read " + count + " transaction logs");
+            if (log.isDebugEnabled()) { log.debug("read " + count + " transaction logs"); }
         }
     }
 

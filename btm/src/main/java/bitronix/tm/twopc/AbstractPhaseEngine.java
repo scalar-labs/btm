@@ -59,11 +59,11 @@ public abstract class AbstractPhaseEngine {
         SortedSet<Integer> positions;
         if (reverse) {
             positions = resourceManager.getReverseOrderPositions();
-            if (log.isDebugEnabled()) log.debug("executing phase on " + resourceManager.size() + " resource(s) enlisted in " + positions.size() + " position(s) in reverse position order");
+            if (log.isDebugEnabled()) { log.debug("executing phase on " + resourceManager.size() + " resource(s) enlisted in " + positions.size() + " position(s) in reverse position order"); }
         }
         else {
             positions = resourceManager.getNaturalOrderPositions();
-            if (log.isDebugEnabled()) log.debug("executing phase on " + resourceManager.size() + " resource(s) enlisted in " + positions.size() + " position(s) in natural position order");
+            if (log.isDebugEnabled()) { log.debug("executing phase on " + resourceManager.size() + " resource(s) enlisted in " + positions.size() + " position(s) in natural position order"); }
         }
 
         List<JobsExecutionReport> positionErrorReports = new ArrayList<JobsExecutionReport>();
@@ -76,14 +76,14 @@ public abstract class AbstractPhaseEngine {
                 resources = resourceManager.getNaturalOrderResourcesForPosition(positionKey);
             }
 
-            if (log.isDebugEnabled()) log.debug("running " + resources.size() + " job(s) for position '" + positionKey + "'");
+            if (log.isDebugEnabled()) { log.debug("running " + resources.size() + " job(s) for position '" + positionKey + "'"); }
             JobsExecutionReport report = runJobsForPosition(resources);
             if (report.getExceptions().size() > 0) {
-                if (log.isDebugEnabled()) log.debug(report.getExceptions().size() + " error(s) happened during execution of position '" + positionKey + "'");
+                if (log.isDebugEnabled()) { log.debug(report.getExceptions().size() + " error(s) happened during execution of position '" + positionKey + "'"); }
                 positionErrorReports.add(report);
                 break;
             }
-            if (log.isDebugEnabled()) log.debug("ran " + resources.size() + " job(s) for position '" + positionKey + "'");
+            if (log.isDebugEnabled()) { log.debug("ran " + resources.size() + " job(s) for position '" + positionKey + "'"); }
         }
 
         if (positionErrorReports.size() > 0) {
@@ -108,7 +108,7 @@ public abstract class AbstractPhaseEngine {
         // start threads
         for (XAResourceHolderState resource : resources) {
             if (!isParticipating(resource)) {
-                if (log.isDebugEnabled()) log.debug("skipping not participating resource " + resource);
+                if (log.isDebugEnabled()) { log.debug("skipping not participating resource " + resource); }
                 continue;
             }
 
@@ -130,18 +130,18 @@ public abstract class AbstractPhaseEngine {
 
             if (xaException != null) {
                 String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(xaException);
-                if (log.isDebugEnabled()) log.debug("error executing " + job + ", errorCode=" + Decoder.decodeXAExceptionErrorCode(xaException) +
-                        (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails));
+                if (log.isDebugEnabled()) { log.debug("error executing " + job + ", errorCode=" + Decoder.decodeXAExceptionErrorCode(xaException) +
+                        (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails)); }
                 exceptions.add(xaException);
                 errorResources.add(job.getResource());
             } else if (runtimeException != null) {
-                if (log.isDebugEnabled()) log.debug("error executing " + job);
+                if (log.isDebugEnabled()) { log.debug("error executing " + job); }
                 exceptions.add(runtimeException);
                 errorResources.add(job.getResource());
             }
         }
 
-        if (log.isDebugEnabled()) log.debug("phase executed with " + exceptions.size() + " exception(s)");
+        if (log.isDebugEnabled()) { log.debug("phase executed with " + exceptions.size() + " exception(s)"); }
         return new JobsExecutionReport(exceptions, errorResources);
     }
 
