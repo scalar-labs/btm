@@ -160,22 +160,22 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     }
 
     protected Session createSession(boolean transacted, int acknowledgeMode) throws JMSException {
-        DualSessionWrapper sessionHandle = getNotAccessibleSession();
+        synchronized (sessions) {
+            DualSessionWrapper sessionHandle = getNotAccessibleSession();
 
-        if (sessionHandle == null) {
-            if (log.isDebugEnabled()) { log.debug("no session handle found in NOT_ACCESSIBLE state, creating new session"); }
-            sessionHandle = new DualSessionWrapper(this, transacted, acknowledgeMode);
-            sessionHandle.addStateChangeEventListener(new JmsConnectionHandleStateChangeListener());
-            synchronized (sessions) {
+            if (sessionHandle == null) {
+                if (log.isDebugEnabled()) { log.debug("no session handle found in NOT_ACCESSIBLE state, creating new session"); }
+                sessionHandle = new DualSessionWrapper(this, transacted, acknowledgeMode);
+                sessionHandle.addStateChangeEventListener(new JmsConnectionHandleStateChangeListener());
                 sessions.add(sessionHandle);
             }
-        }
-        else {
-            if (log.isDebugEnabled()) { log.debug("found session handle in NOT_ACCESSIBLE state, recycling it: " + sessionHandle); }
-            sessionHandle.setState(XAResourceHolder.STATE_ACCESSIBLE);
-        }
+            else {
+                if (log.isDebugEnabled()) { log.debug("found session handle in NOT_ACCESSIBLE state, recycling it: " + sessionHandle); }
+                sessionHandle.setState(XAResourceHolder.STATE_ACCESSIBLE);
+            }
 
-        return sessionHandle;
+            return sessionHandle;
+        }
     }
 
      private DualSessionWrapper getNotAccessibleSession() {
@@ -194,10 +194,8 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     }
 
     public String toString() {
-        synchronized (sessions) {
-            return "a JmsPooledConnection of pool " + poolingConnectionFactory.getUniqueName() + " in state " +
-                    Decoder.decodeXAStatefulHolderState(getState()) + " with underlying connection " + xaConnection;
-        }
+        return "a JmsPooledConnection of pool " + poolingConnectionFactory.getUniqueName() + " in state " +
+                Decoder.decodeXAStatefulHolderState(getState()) + " with underlying connection " + xaConnection;
     }
 
     /* management */
