@@ -1,7 +1,0 @@
-* Fixed transaction joining to make it compliant with the XA spec.
-* Changed enlistment algorithm so that connections can freely be shared between transactions.
-  Fixes bug #8 (cannot enlist a connection in more than on transaction at a time).
-* Fixed transaction timeout mechanism so that timeout exceptions are now thrown at appropriate time.
-* Improved timeout detection so that processing is aborted as soon as possible when a transaction timed out.
-* Dropped avoidRecoveryLoop property of DataSourceBean, setting is now autodetected.
-* Fixed bug that made recovery fail when two or more XIDs with the same GTRID were recovered from the same resource.

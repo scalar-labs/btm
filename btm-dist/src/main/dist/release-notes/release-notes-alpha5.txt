@@ -1,9 +1,0 @@
-* Fixed a bug that BitronixTransactionManager was too restrictive about when timeout can be set.
-* Fixed a bug in the JDBC pool's local/global context detection during automatic delistment.
-* Fixed duplicate name registration in the transaction log.
-* Shortened generated GTRID and BQUAL to the minimal possible size.
-* Exceptions thrown in Synchronization.beforeCompletion() now properly abort the transaction.
-* Fixed resource joining algorithm.
-* Changed default configured value for resource bean's useTmJoin property to true.
-* Dropped bitronix.tm.journal.JournalException.
-* Reinforced integrity by disallowing the TM to startup when initial recovery failed.

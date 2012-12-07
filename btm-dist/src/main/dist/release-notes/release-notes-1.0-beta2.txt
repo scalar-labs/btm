@@ -1,2 +1,0 @@
-* Refactored enlistment algorithm so that XAResource's can now be manually enlisted.
-* Implemented Last Resource Commit to allow non-XA resources to participate in XA transactions.

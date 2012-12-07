@@ -1,4 +1,0 @@
-* Refactored configuration to allow properties changes at runtime.
-* Improved TMJOIN support of Last Resource Commit wrapper.
-* Streamlined JMS and JDBC resources wrappers to share most of the infrastructure.
-* Refactored shutdown code to allow application code to call it manually.

@@ -1,5 +1,0 @@
-* Fixed and tested local/global transactions incoherences.
-* Fixed JMS wrapper as it was broken in alpha 2.
-* Dropped Jakarta commons logging in favor of SLF4J (thanks to Jan Bartel).
-* Improved javadoc.
-* Many other small improvements or fixes.

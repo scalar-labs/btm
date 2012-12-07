@@ -1,4 +1,0 @@
-* Fixed JMS conection pool so that when a thread waits for a connection to be released to the pool when the latter is depleted it is now awoken and does not get a time out exception.
-* Introduced cacheProducersConsumers ConnectionFactoryBean property to control if producers and consumers should be cached or not by the JMS session.
-* Async inbound via ASF refactored to improve quality up to a usable level.
-* Resources created after TM startup will now cause recovery to run again.
