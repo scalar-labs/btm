@@ -34,7 +34,7 @@
             <scope>runtime</scope>
             <classifier>javadoc</classifier>
         </dependency>
-
+<!-- 
         <dependency>
             <groupId>org.codehaus.btm</groupId>
             <artifactId>btm-jdbc4</artifactId>
@@ -46,6 +46,7 @@
             <scope>runtime</scope>
             <classifier>sources</classifier>
         </dependency>
+ -->
 <!--
         <dependency>
             <groupId>org.codehaus.btm</groupId>

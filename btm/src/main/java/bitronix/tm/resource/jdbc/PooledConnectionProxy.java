@@ -1,7 +1,7 @@
 /*
  * Bitronix Transaction Manager
  *
- * Copyright (c) 2010, Bitronix Software.
+ * Copyright (c) 2012, Bitronix Software.
  *
  * This copyrighted material is made available to anyone wishing to use, modify,
  * copy, or redistribute it subject to the terms and conditions of the GNU
@@ -18,21 +18,14 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA 02110-1301 USA
  */
-package bitronix.tm;
 
-import java.util.Collection;
-import java.util.Date;
+package bitronix.tm.resource.jdbc;
 
-/**
- * {@link BitronixTransaction} Management interface.
- *
- * @author lorban
- */
-public interface BitronixTransactionMBean {
+import java.sql.Connection;
 
-    String getGtrid();
-    String getStatusDescription();
-    String getThreadName();
-    Date getStartDate();
-    Collection<String> getEnlistedResourcesUniqueNames();
+public interface PooledConnectionProxy {
+
+    JdbcPooledConnection getPooledConnection();
+
+    Connection getProxiedDelegate();
 }

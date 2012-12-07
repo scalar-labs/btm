@@ -29,6 +29,7 @@ import java.util.Properties;
 import javax.sql.XAConnection;
 import javax.sql.XADataSource;
 
+import bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory;
 import bitronix.tm.utils.ClassLoaderUtils;
 
 /**
@@ -102,8 +103,8 @@ public class LrcXADataSource implements XADataSource {
             if (user != null) props.setProperty("user", user);
             if (password != null) props.setProperty("password", password);
             Connection connection = driver.connect(url, props);
-            LrcXAConnection lrcXAConnection = new LrcXAConnection(connection);
-            return lrcXAConnection;
+            XAConnection xaConnection = JdbcProxyFactory.INSTANCE.getProxyXaConnection(connection);
+            return xaConnection;
         } catch (Exception ex) {
             throw (SQLException) new SQLException("unable to connect to non-XA resource " + driverClassName).initCause(ex);
         }
@@ -117,8 +118,8 @@ public class LrcXADataSource implements XADataSource {
             props.setProperty("user", user);
             props.setProperty("password", password);
             Connection connection = driver.connect(url, props);
-            LrcXAConnection lrcXAConnection = new LrcXAConnection(connection);
-            return lrcXAConnection;
+            XAConnection xaConnection = JdbcProxyFactory.INSTANCE.getProxyXaConnection(connection);
+            return xaConnection;
         } catch (Exception ex) {
             throw (SQLException) new SQLException("unable to connect to non-XA resource " + driverClassName).initCause(ex);
         }

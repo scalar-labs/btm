@@ -51,7 +51,7 @@ public class NullJournal implements Journal {
     public void force() throws IOException {
     }
 
-    public Map<Uid, TransactionLogRecord> collectDanglingRecords() throws IOException {
+    public Map<Uid, JournalRecord> collectDanglingRecords() throws IOException {
         return Collections.emptyMap();
     }
 

@@ -50,7 +50,7 @@ import java.util.Hashtable;
  */
 public class BitronixInitialContextFactory implements InitialContextFactory {
 
-    public Context getInitialContext(Hashtable hashtable) throws NamingException {
+    public Context getInitialContext(Hashtable<?,?> hashtable) throws NamingException {
         return new BitronixContext();
     }
 

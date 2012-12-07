@@ -20,6 +20,25 @@
  */
 package bitronix.tm.resource.jdbc;
 
+import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+import javax.sql.XAConnection;
+import javax.transaction.SystemException;
+import javax.transaction.xa.XAResource;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import bitronix.tm.internal.BitronixRollbackSystemException;
 import bitronix.tm.internal.BitronixSystemException;
 import bitronix.tm.resource.common.AbstractXAResourceHolder;
@@ -30,26 +49,12 @@ import bitronix.tm.resource.common.TransactionContextHelper;
 import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
-import bitronix.tm.utils.ClassLoaderUtils;
+import bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory;
+import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.ManagementRegistrar;
 import bitronix.tm.utils.MonotonicClock;
 import bitronix.tm.utils.Scheduler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.sql.XAConnection;
-import javax.transaction.SystemException;
-import javax.transaction.xa.XAResource;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.*;
 
 /**
  * Implementation of a JDBC pooled connection wrapping vendor's {@link XAConnection} implementation.
@@ -195,7 +200,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         if (log.isDebugEnabled()) log.debug("testQuery successfully tested connection of " + this);
     }
 
-    protected void release() throws SQLException {
+    public boolean release() throws SQLException {
         if (log.isDebugEnabled()) log.debug("releasing to pool " + this);
         --usageCount;
 
@@ -234,6 +239,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
                 if (log.isDebugEnabled()) log.debug("not releasing " + this + " to pool yet, connection is still shared");
             }
         } // finally
+
+        return usageCount == 0;
     }
 
     public XAResource getXAResource() {
@@ -340,11 +347,11 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     /**
      * Get a PreparedStatement from cache.
-     * @param stmt the key that has been used to cache the statement.
+     * @param key the key that has been used to cache the statement.
      * @return the cached statement corresponding to the key or null if no statement is cached under that key.
      */
-    protected JdbcPreparedStatementHandle getCachedStatement(JdbcPreparedStatementHandle stmt) {
-        return statementsCache.get(stmt);
+    public PreparedStatement getCachedStatement(CacheKey key) {
+        return statementsCache.get(key);
     }
 
     /**
@@ -352,8 +359,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
      * @param stmt the statement to cache.
      * @return the cached statement.
      */
-    protected JdbcPreparedStatementHandle putCachedStatement(JdbcPreparedStatementHandle stmt) {
-        return statementsCache.put(stmt);
+    public PreparedStatement putCachedStatement(CacheKey key, PreparedStatement statement) {
+        return statementsCache.put(key, statement);
     }
 
     /**
@@ -362,12 +369,12 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
      * @param stmt the statement to register.
      * @return the registered statement.
      */
-    protected Statement registerUncachedStatement(Statement stmt) {
+    public Statement registerUncachedStatement(Statement stmt) {
         uncachedStatements.add(stmt);
         return stmt;
     }
 
-    protected void unregisterUncachedStatement(Statement stmt) {
+    public void unregisterUncachedStatement(Statement stmt) {
         uncachedStatements.remove(stmt);
     }
 
@@ -415,22 +422,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     private Object getConnectionHandle(Connection connection) throws SQLException
     {
-    	if (jdbcVersionDetected == 3)
-    	{
-    		return new JdbcConnectionHandle(this, connection);
-    	}
-
-    	// JDBC 4.0
-    	try {
-			Class<?> handle = ClassLoaderUtils.loadClass("bitronix.tm.resource.jdbc4.Jdbc4ConnectionHandle");
-			Constructor<?> constructor = handle.getConstructor( new Class[] {JdbcPooledConnection.class, Connection.class} );
-			return constructor.newInstance( new Object[] {this, connection} );
-		} catch (Exception e) {
-			log.error("could not load JDBC4 wrapper class", e);
-			SQLException sqlException = new SQLException("could not load JDBC4 wrapper class");
-			sqlException.initCause(e);
-			throw sqlException;
-		}
+        return JdbcProxyFactory.INSTANCE.getProxyConnection(this, connection);
     }
 
     /* management */

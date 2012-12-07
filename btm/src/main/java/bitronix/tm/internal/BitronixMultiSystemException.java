@@ -34,10 +34,10 @@ import java.util.List;
  */
 public class BitronixMultiSystemException extends BitronixSystemException {
 
-    private List exceptions = new ArrayList();
-    private List resourceStates = new ArrayList();
+    private List<? extends Exception> exceptions = new ArrayList<Exception>();
+    private List<XAResourceHolderState> resourceStates = new ArrayList<XAResourceHolderState>();
 
-    public BitronixMultiSystemException(String string, List exceptions, List resourceStates) {
+    public BitronixMultiSystemException(String string, List<? extends Exception> exceptions, List<XAResourceHolderState> resourceStates) {
         super(string);
         this.exceptions = exceptions;
         this.resourceStates = resourceStates;
@@ -89,7 +89,7 @@ public class BitronixMultiSystemException extends BitronixSystemException {
      * Get the list of exceptions that have been thrown during execution.
      * @return the list of exceptions that have been thrown during execution.
      */
-    public List getExceptions() {
+    public List<? extends Exception> getExceptions() {
         return exceptions;
     }
 
@@ -99,7 +99,7 @@ public class BitronixMultiSystemException extends BitronixSystemException {
      * Indices of both list always match a resource against the exception it threw.
      * @return the list of resource which threw an exception during execution.
      */
-    public List getResourceStates() {
+    public List<XAResourceHolderState> getResourceStates() {
         return resourceStates;
     }
 

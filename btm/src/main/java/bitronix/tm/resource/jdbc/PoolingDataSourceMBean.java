@@ -28,8 +28,8 @@ public interface PoolingDataSourceMBean {
 
     public int getMinPoolSize();
     public int getMaxPoolSize();
-    public long getInPoolSize();
-    public long getTotalPoolSize();
+    public int getInPoolSize();
+    public int getTotalPoolSize();
     public boolean isFailed();
     public void reset() throws Exception;
     public boolean isDisabled();

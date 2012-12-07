@@ -26,11 +26,21 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.transaction.Status;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import bitronix.tm.utils.Uid;
 
 /**
  * Used to write {@link TransactionLogRecord} objects to a log file.
@@ -56,6 +66,7 @@ public class TransactionLogAppender {
 	private long maxFileLength;
 	private AtomicInteger outstandingWrites;
 	private long position;
+	private ConcurrentHashMap<Uid, Set<String>> danglingRecords;
 
     /**
      * Create an appender that will write to specified file up to the specified maximum length.
@@ -74,6 +85,8 @@ public class TransactionLogAppender {
             throw new IOException("transaction log file " + file.getName() + " is locked. Is another instance already running?");
 
         this.outstandingWrites = new AtomicInteger();
+
+        this.danglingRecords = new ConcurrentHashMap<Uid, Set<String>>();
 
         this.position = header.getPosition();
     }
@@ -107,6 +120,9 @@ public class TransactionLogAppender {
      */
     protected void writeLog(TransactionLogRecord tlog) throws IOException {
         try {
+            int status = tlog.getStatus();
+            Uid gtrid = tlog.getGtrid();
+
         	int recordSize = tlog.calculateTotalRecordSize();
             ByteBuffer buf = ByteBuffer.allocate(recordSize);
             buf.putInt(tlog.getStatus());
@@ -115,8 +131,8 @@ public class TransactionLogAppender {
             buf.putLong(tlog.getTime());
             buf.putInt(tlog.getSequenceNumber());
             buf.putInt(tlog.getCrc32());
-            buf.put((byte) tlog.getGtrid().getArray().length);
-            buf.put(tlog.getGtrid().getArray());
+            buf.put((byte) gtrid.getArray().length);
+            buf.put(gtrid.getArray());
             Set<String> uniqueNames = tlog.getUniqueNames();
             buf.putInt(uniqueNames.size());
             for (String uniqueName : uniqueNames) {
@@ -125,19 +141,73 @@ public class TransactionLogAppender {
             }
             buf.putInt(tlog.getEndRecord());
             buf.flip();
-    
+
             if (log.isDebugEnabled()) log.debug("between " + tlog.getWritePosition() + " and " + tlog.getWritePosition() + tlog.calculateTotalRecordSize() + ", writing " + tlog);
     
             final long writePosition = tlog.getWritePosition();
             while (buf.hasRemaining()) {
             	fc.write(buf, writePosition + buf.position());
             }
+
+            trackOutstanding(status, gtrid, uniqueNames);
         }
         finally {
         	if (outstandingWrites.decrementAndGet() == 0) {
         		header.setPosition(position);
         	}
         }
+    }
+
+    protected List<TransactionLogRecord> getDanglingLogs() {
+        List<Uid> sortedUids = new ArrayList<Uid>(danglingRecords.keySet());
+        Collections.sort(sortedUids, new Comparator<Uid>() {
+            public int compare(Uid uid1, Uid uid2) {
+                return Integer.valueOf(uid1.extractSequence()).compareTo(uid2.extractSequence()); 
+            }
+        });
+
+        List<TransactionLogRecord> outstandingLogs = new ArrayList<TransactionLogRecord>(danglingRecords.size());
+        for (Uid uid : sortedUids) {
+            Set<String> uniqueNames = danglingRecords.get(uid);
+            outstandingLogs.add(new TransactionLogRecord(Status.STATUS_COMMITTING, uid, uniqueNames));
+        }
+
+        return outstandingLogs;
+    }
+
+    protected void clearDanglingLogs() {
+        danglingRecords.clear();
+    }
+
+    private void trackOutstanding(int status, Uid gtrid, Set<String> uniqueNames) {
+        switch (status)
+        {
+            case Status.STATUS_COMMITTING:
+            {
+                Set<String> outstanding = danglingRecords.putIfAbsent(gtrid, new TreeSet<String>(uniqueNames));
+                if (outstanding != null) {
+                    synchronized (outstanding) {
+                        outstanding.addAll(uniqueNames);
+                    }
+                }
+                break;
+            }
+            case Status.STATUS_ROLLEDBACK:
+            case Status.STATUS_COMMITTED:
+            case Status.STATUS_UNKNOWN:
+            {
+                Set<String> outstanding = danglingRecords.get(gtrid);
+                if (outstanding != null) {
+                    synchronized (outstanding) {
+                        outstanding.removeAll(uniqueNames);
+                        if (outstanding.isEmpty()) {
+                            danglingRecords.remove(gtrid);
+                        }
+                    }
+                }
+                break;
+            }
+        }        
     }
 
     /**

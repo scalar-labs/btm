@@ -27,10 +27,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -68,7 +70,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * The active log appender. This is exactly the same reference as tla1 or tla2 depending on which one is
      * currently active
      */
-    private volatile TransactionLogAppender activeTla;
+    private AtomicReference<TransactionLogAppender> activeTla;
 
     /**
      * The transaction log appender writing on the 1st file
@@ -97,6 +99,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
     public DiskJournal() {
     	configuration = TransactionManagerServices.getConfiguration();
     	needsForce = new AtomicBoolean();
+    	activeTla = new AtomicReference<TransactionLogAppender>();
     }
 
     /**
@@ -110,7 +113,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
     public void log(int status, Uid gtrid, Set<String> uniqueNames) throws IOException {
-        if (activeTla == null)
+        if (activeTla.get() == null)
             throw new IOException("cannot write log, disk logger is not open");
 
         if (configuration.isFilterLogStatus()) {
@@ -128,14 +131,14 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         	}
 
 	        synchronized (positionLock) {
-	        	boolean rollover = activeTla.setPositionAndAdvance(tlog);
+	        	boolean rollover = activeTla.get().setPositionAndAdvance(tlog);
 	            if (rollover) {
 	                // time to swap log files
 	                try {
 	                	swapForceLock.writeLock().lock();
 
 	                	swapJournalFiles();
-	                	activeTla.setPositionAndAdvance(tlog);
+	                	activeTla.get().setPositionAndAdvance(tlog);
 	                }
 	                finally {
 	                	swapForceLock.writeLock().unlock();
@@ -146,7 +149,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
 	        }
 
 	        try {
-	        	activeTla.writeLog(tlog);
+	        	activeTla.get().writeLog(tlog);
 	        	needsForce.set(true);
 	        }
 	        finally {
@@ -166,13 +169,13 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
     public void force() throws IOException {
-        if (activeTla == null)
+        if (activeTla.get() == null)
             throw new IOException("cannot force log writing, disk logger is not open");
 
         if (needsForce.get() && configuration.isForcedWriteEnabled()) {
 	        swapForceLock.writeLock().lock();
 	        try {
-	        	activeTla.force();
+	        	activeTla.get().force();
 	        	needsForce.set(false);
 	        }
 	        finally {
@@ -188,7 +191,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @throws java.io.IOException in case of disk IO failure.
      */
     public synchronized void open() throws IOException {
-        if (activeTla != null) {
+        if (activeTla.get() != null) {
             log.warn("disk journal already open");
             return;
         }
@@ -237,7 +240,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @throws java.io.IOException in case of disk IO failure.
      */
     public synchronized void close() throws IOException {
-        if (activeTla == null) {
+        if (activeTla.get() == null) {
             return;
         }
 
@@ -253,7 +256,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
             log.error("cannot close " + tla2, ex);
         }
         tla2 = null;
-        activeTla = null;
+        activeTla.set(null);
 
         if (log.isDebugEnabled()) log.debug("disk journal closed");
     }
@@ -272,10 +275,10 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
-    public Map<Uid, TransactionLogRecord> collectDanglingRecords() throws IOException {
-        if (activeTla == null)
+    public Map<Uid, JournalRecord> collectDanglingRecords() throws IOException {
+        if (activeTla.get() == null)
             throw new IOException("cannot collect dangling records, disk logger is not open");
-        return collectDanglingRecords(activeTla);
+        return collectDanglingRecords(activeTla.get());
     }
 
     /**
@@ -297,10 +300,10 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * {@inheritDoc}
      */
     public synchronized void unsafeReadRecordsInto(Collection<JournalRecord> target, boolean includeInvalid) throws IOException {
-        if (activeTla == null)
+        if (activeTla.get() == null)
             throw new IOException("cannot read records, disk logger is not open");
 
-        for (Iterator<TransactionLogRecord> i = iterateRecords(activeTla, includeInvalid); i.hasNext(); )
+        for (Iterator<TransactionLogRecord> i = iterateRecords(activeTla.get(), includeInvalid); i.hasNext(); )
             target.add(i.next());
     }
 
@@ -358,18 +361,18 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      */
     private synchronized byte pickActiveJournalFile(TransactionLogAppender tla1, TransactionLogAppender tla2) throws IOException {
         if (tla1.getTimestamp() > tla2.getTimestamp()) {
-            activeTla = tla1;
+        	activeTla.set(tla1);
             if (log.isDebugEnabled()) log.debug("logging to file 1: " + activeTla);
         }
         else {
-            activeTla = tla2;
+        	activeTla.set(tla2);
             if (log.isDebugEnabled()) log.debug("logging to file 2: " + activeTla);
         }
 
-        byte cleanState = activeTla.getState();
-        activeTla.setState(TransactionLogHeader.UNCLEAN_LOG_STATE);
+        byte cleanState = activeTla.get().getState();
+        activeTla.get().setState(TransactionLogHeader.UNCLEAN_LOG_STATE);
         if (log.isDebugEnabled()) log.debug("log file activated, forcing file state to disk");
-        activeTla.force();
+        activeTla.get().force();
         return cleanState;
     }
 
@@ -392,12 +395,25 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         if (log.isDebugEnabled()) log.debug("swapping journal log file to " + getPassiveTransactionLogAppender());
 
         //step 1
-        activeTla.force();
+        activeTla.get().force();
 
         //step 2
         TransactionLogAppender passiveTla = getPassiveTransactionLogAppender();
         passiveTla.rewind();
-        copyDanglingRecords(activeTla, passiveTla);
+
+        List<TransactionLogRecord> danglingLogs = activeTla.get().getDanglingLogs();
+        for (TransactionLogRecord tlog : danglingLogs) {
+            boolean rolloverError = passiveTla.setPositionAndAdvance(tlog);
+            if (rolloverError) {
+                log.error("Moving in-flight transactions the rollover log file would have resulted in an overflow of that file.");
+                break;
+            }
+            passiveTla.writeLog(tlog);
+        }
+
+        if (log.isDebugEnabled()) log.debug(danglingLogs.size() + " dangling record(s) copied to passive log file");
+        
+        activeTla.get().clearDanglingLogs();
 
         //step 3
         passiveTla.setTimestamp(MonotonicClock.currentTimeMillis());
@@ -406,12 +422,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         passiveTla.force();
 
         //step 5
-        if (activeTla == tla1) {
-            activeTla = tla2;
-        }
-        else {
-            activeTla = tla1;
-        }
+        activeTla.set(passiveTla);
 
         if (log.isDebugEnabled()) log.debug("journal log files swapped");
     }
@@ -420,26 +431,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @return the TransactionFileAppender of the passive journal file.
      */
     private TransactionLogAppender getPassiveTransactionLogAppender() {
-        return (tla1 == activeTla ? tla2 : tla1);
-    }
-
-    /**
-     * Copy all records that have status COMMITTING and no corresponding COMMITTED record from the fromTla to the toTla.
-     *
-     * @param fromTla the source where to search for COMMITTING records with no corresponding COMMITTED record
-     * @param toTla the destination where the COMMITTING records will be copied to
-     * @throws java.io.IOException in case of disk IO failure.
-     */
-    private static void copyDanglingRecords(TransactionLogAppender fromTla, TransactionLogAppender toTla) throws IOException {
-        if (log.isDebugEnabled()) log.debug("starting copy of dangling records");
-
-        Map<Uid, TransactionLogRecord> danglingRecords = collectDanglingRecords(fromTla);
-        for (TransactionLogRecord tlog : danglingRecords.values()) {
-        	toTla.setPositionAndAdvance(tlog);
-            toTla.writeLog(tlog);
-        }
-
-        if (log.isDebugEnabled()) log.debug(danglingRecords.size() + " dangling record(s) copied to passive log file");
+        return (tla1 == activeTla.get() ? tla2 : tla1);
     }
 
     /**
@@ -450,8 +442,8 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
      * @throws java.io.IOException in case of disk IO failure.
      */
-    private static Map<Uid, TransactionLogRecord> collectDanglingRecords(TransactionLogAppender tla) throws IOException {
-        Map<Uid, TransactionLogRecord> danglingRecords = new HashMap<Uid, TransactionLogRecord>(64);
+    private static Map<Uid, JournalRecord> collectDanglingRecords(TransactionLogAppender tla) throws IOException {
+        Map<Uid, JournalRecord> danglingRecords = new HashMap<Uid, JournalRecord>(64);
         TransactionLogCursor tlc = tla.getCursor();
 
         try {
@@ -483,7 +475,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
                 // UNKNOWN is when a 2PC transaction heuristically terminated
                 // ROLLEDBACK is when a 1PC transaction rolled back during commit
                 if (status == Status.STATUS_COMMITTED || status == Status.STATUS_UNKNOWN || status == Status.STATUS_ROLLEDBACK) {
-                    TransactionLogRecord rec = danglingRecords.get(tlog.getGtrid());
+                    JournalRecord rec = danglingRecords.get(tlog.getGtrid());
                     if (rec != null) {
                         Set<String> recUniqueNames = new HashSet<String>(rec.getUniqueNames());
                         recUniqueNames.removeAll(tlog.getUniqueNames());

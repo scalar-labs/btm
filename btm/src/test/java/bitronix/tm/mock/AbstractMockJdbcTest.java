@@ -21,6 +21,7 @@
 package bitronix.tm.mock;
 
 import java.lang.reflect.Field;
+import java.sql.Connection;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -52,7 +53,7 @@ public abstract class AbstractMockJdbcTest extends TestCase {
     protected static final String DATASOURCE2_NAME = "pds2";
 
     protected void setUp() throws Exception {
-        Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+        Iterator<?> it = ResourceRegistrar.getResourcesUniqueNames().iterator();
         while (it.hasNext()) {
             String name = (String) it.next();
             ResourceRegistrar.unregister(ResourceRegistrar.get(name));
@@ -66,6 +67,7 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         poolingDataSource1.setMaxPoolSize(POOL_SIZE);
         poolingDataSource1.setAllowLocalTransactions(true);
         poolingDataSource1.setShareTransactionConnections(true);
+        poolingDataSource1.setPreparedStatementCacheSize(10);
         poolingDataSource1.init();
 
         // DataSource2 does not have shared accessible connections
@@ -80,6 +82,7 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         // change disk journal into mock journal
         Field field = TransactionManagerServices.class.getDeclaredField("journalRef");
         field.setAccessible(true);
+        @SuppressWarnings("unchecked")
         AtomicReference<Journal> journalRef = (AtomicReference<Journal>) field.get(TransactionManagerServices.class);
         journalRef.set(new MockJournal());
 
@@ -105,12 +108,12 @@ public abstract class AbstractMockJdbcTest extends TestCase {
     }
 
     private void registerPoolEventListener(XAPool pool) throws Exception {
-        ArrayList connections = new ArrayList();
+        ArrayList<PooledConnectionProxy> connections = new ArrayList<PooledConnectionProxy>();
 
-        Iterator iterator = XAPoolHelper.getXAResourceHolders(pool).iterator();
+        Iterator<?> iterator = pool.getXAResourceHolders().iterator();
         while (iterator.hasNext()) {
             XAStatefulHolder holder = (XAStatefulHolder) iterator.next();
-            JdbcConnectionHandle connectionHandle = (JdbcConnectionHandle) holder.getConnectionHandle();
+            PooledConnectionProxy connectionHandle = (PooledConnectionProxy) holder.getConnectionHandle();
             JdbcPooledConnection jdbcPooledConnection = connectionHandle.getPooledConnection();
             connections.add(connectionHandle);
             jdbcPooledConnection.addStateChangeEventListener(new StateChangeListener() {
@@ -127,7 +130,7 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         }
 
         for (int i = 0; i < connections.size(); i++) {
-            JdbcConnectionHandle connectionHandle = (JdbcConnectionHandle) connections.get(i);
+            Connection connectionHandle = (Connection) connections.get(i);
             connectionHandle.close();
         }
     }

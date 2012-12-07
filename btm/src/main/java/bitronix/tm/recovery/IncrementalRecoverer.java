@@ -62,7 +62,7 @@ public class IncrementalRecoverer {
             boolean success = true;
             Set<BitronixXid> xids = RecoveryHelper.recover(xaResourceHolderState);
             if (log.isDebugEnabled()) log.debug(xids.size() + " dangling transaction(s) found on resource");
-            Map danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
+            Map<?, ?> danglingRecords = TransactionManagerServices.getJournal().collectDanglingRecords();
             if (log.isDebugEnabled()) log.debug(danglingRecords.size() + " dangling transaction(s) found in journal");
 
             int commitCount = 0;

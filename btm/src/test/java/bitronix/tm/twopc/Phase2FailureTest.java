@@ -80,7 +80,7 @@ public class Phase2FailureTest extends TestCase {
         connection1.createStatement();
 
         Connection connection2 = poolingDataSource2.getConnection();
-        JdbcConnectionHandle handle = (JdbcConnectionHandle) connection2;
+        PooledConnectionProxy handle = (PooledConnectionProxy) connection2;
         XAConnection xaConnection2 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle.getPooledConnection());
         connection2.createStatement();
 
@@ -149,7 +149,7 @@ public class Phase2FailureTest extends TestCase {
         Connection connection1 = poolingDataSource1.getConnection();
         connection1.createStatement();
         Connection connection2 = poolingDataSource2.getConnection();
-        JdbcConnectionHandle handle = (JdbcConnectionHandle) connection2;
+        PooledConnectionProxy handle = (PooledConnectionProxy) connection2;
         XAConnection xaConnection2 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle.getPooledConnection());
         connection2.createStatement();
 
@@ -211,7 +211,7 @@ public class Phase2FailureTest extends TestCase {
         Connection connection1 = poolingDataSource1.getConnection();
         connection1.createStatement();
         Connection connection2 = poolingDataSource2.getConnection();
-        JdbcConnectionHandle handle = (JdbcConnectionHandle) connection2;
+        PooledConnectionProxy handle = (PooledConnectionProxy) connection2;
         XAConnection xaConnection2 = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle.getPooledConnection());
         connection2.createStatement();
 

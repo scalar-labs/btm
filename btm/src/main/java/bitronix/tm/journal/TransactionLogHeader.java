@@ -200,7 +200,7 @@ public class TransactionLogHeader {
     public void setPosition(long position) throws IOException {
         if (position < HEADER_LENGTH)
             throw new IOException("invalid position " + position + " (too low)");
-        if (position >= maxFileLength)
+        if (position > maxFileLength)
             throw new IOException("invalid position " + position + " (too high)");
 
         ByteBuffer buf = ByteBuffer.allocate(8);
@@ -213,16 +213,6 @@ public class TransactionLogHeader {
         this.position = position;
         fc.position(position);
     }
-
-    /**
-     * Advance CURRENT_POSITION_HEADER.
-     * @see #setPosition
-     * @param distance the value to add to the current position.
-     * @throws IOException if an I/O error occurs.
-     */
-//    public void goAhead(long distance) throws IOException {
-//        setPosition(getPosition() + distance);
-//    }
 
     /**
      * Rewind CURRENT_POSITION_HEADER back to the beginning of the file.

@@ -37,6 +37,7 @@ import javax.transaction.xa.XAResource;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * JMS Session wrapper that will send calls to either a XASession or to a non-XA Session depending on the calling
@@ -199,9 +200,9 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
                 session = null;
             }
 
-            Iterator it = messageProducers.entrySet().iterator();
+            Iterator<Entry<MessageProducerConsumerKey, MessageProducer>> it = messageProducers.entrySet().iterator();
             while (it.hasNext()) {
-                Map.Entry entry = (Map.Entry) it.next();
+                Entry<MessageProducerConsumerKey, MessageProducer> entry = it.next();
                 MessageProducerWrapper messageProducerWrapper = (MessageProducerWrapper) entry.getValue();
                 try {
                     messageProducerWrapper.close();
@@ -211,9 +212,9 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
             }
             messageProducers.clear();
 
-            it = messageConsumers.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry entry = (Map.Entry) it.next();
+            Iterator<Entry<MessageProducerConsumerKey, MessageConsumer>> it2 = messageConsumers.entrySet().iterator();
+            while (it2.hasNext()) {
+                Entry<MessageProducerConsumerKey, MessageConsumer> entry = it2.next();
                 MessageConsumerWrapper messageConsumerWrapper = (MessageConsumerWrapper) entry.getValue();
                 try {
                     messageConsumerWrapper.close();

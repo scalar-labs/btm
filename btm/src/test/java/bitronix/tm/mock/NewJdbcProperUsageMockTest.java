@@ -785,7 +785,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         tm.begin();
 
         Connection connection1 = poolingDataSource1.getConnection();
-        JdbcConnectionHandle handle = (JdbcConnectionHandle) connection1;
+        PooledConnectionProxy handle = (PooledConnectionProxy) connection1;
         JdbcPooledConnection pc1 = handle.getPooledConnection();
             XAConnection mockXAConnection1 = (XAConnection) getWrappedXAConnectionOf(pc1);
             MockXAResource mockXAResource = (MockXAResource) mockXAConnection1.getXAResource();
@@ -845,7 +845,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         tm.begin();
 
         Connection connection1 = poolingDataSource1.getConnection();
-        JdbcConnectionHandle handle = (JdbcConnectionHandle) connection1;
+        PooledConnectionProxy handle = (PooledConnectionProxy) connection1;
         JdbcPooledConnection pc1 = handle.getPooledConnection();
             XAConnection mockXAConnection1 = (XAConnection) getWrappedXAConnectionOf(pc1);
             MockXAResource mockXAResource = (MockXAResource) mockXAConnection1.getXAResource();

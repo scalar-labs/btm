@@ -24,6 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Static utility methods for loading classes and resources.
@@ -32,6 +35,25 @@ public class ClassLoaderUtils {
 
     private final static Logger log = LoggerFactory.getLogger(ClassLoaderUtils.class);
 
+    public static Set<Class<?>> getAllInterfaces(Class<?> clazz) {
+        Set<Class<?>> interfaces = new HashSet<Class<?>>();
+        for (Class<?> intf : Arrays.asList(clazz.getInterfaces())) {
+            if (intf.getInterfaces().length > 0) {
+                interfaces.addAll(getAllInterfaces(intf));
+            }
+            interfaces.add(intf);
+        }
+        if (clazz.getSuperclass() != null) {
+            interfaces.addAll(getAllInterfaces(clazz.getSuperclass()));
+        }
+
+        if (clazz.isInterface()) {
+            interfaces.add(clazz);
+        }
+
+        return interfaces;
+    }
+
     /**
      * Get the class loader which can be used to generate proxies without leaking memory.
      * @return the class loader which can be used to generate proxies without leaking memory.
@@ -39,7 +61,7 @@ public class ClassLoaderUtils {
     public static ClassLoader getClassLoader() {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         if (cl != null) {
-            return cl;
+            return new CascadingClassLoader(cl);
         }
         return ClassLoaderUtils.class.getClassLoader();
     }
@@ -54,7 +76,7 @@ public class ClassLoaderUtils {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         if (cl != null) {
             try {
-                return cl.loadClass(className);
+                return new CascadingClassLoader(cl).loadClass(className);
             } catch (ClassNotFoundException ex) {
                 if (log.isDebugEnabled()) log.debug("context classloader could not find class '" + className + "', trying Class.forName() instead");
             }
@@ -75,5 +97,24 @@ public class ClassLoaderUtils {
             return cl.getResourceAsStream(resourceName);
 
         return ClassLoaderUtils.class.getClassLoader().getResourceAsStream(resourceName);
+    }
+
+    private static class CascadingClassLoader extends ClassLoader {
+
+        private ClassLoader contextLoader;
+
+        CascadingClassLoader(ClassLoader contextLoader) {
+            this.contextLoader = contextLoader;
+        }
+
+        @Override
+        protected Class<?> findClass(String name) throws ClassNotFoundException {
+            try {
+                return contextLoader.loadClass(name);
+            }
+            catch (ClassNotFoundException cnfe) {
+                return CascadingClassLoader.class.getClassLoader().loadClass(name);
+            }
+        }
     }
 }

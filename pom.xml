@@ -47,17 +47,11 @@
         <java.version>1.5</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
-        <!-- Stubs should not be analyzed by Sonar -->
-        <sonar.skippedModules>btm-jdbc3-stubs,btm-jdbc4-stubs</sonar.skippedModules>
     </properties>
 
     <modules>
-        <module>btm-jdbc3-stubs</module>
-        <module>btm-jdbc4-stubs</module>
-
         <module>btm</module>
-        <module>btm-jdbc4</module>
+        <!-- module>btm-jdbc4</module -->
         <!-- module>btm-nio-journal</module -->
         <module>btm-jetty6-lifecycle</module>
         <module>btm-jetty7-lifecycle</module>
@@ -66,16 +60,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>org.codehaus.btm</groupId>
-                <artifactId>btm-jdbc3-stubs</artifactId>
-                <version>2.2.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>org.codehaus.btm</groupId>
-                <artifactId>btm-jdbc4-stubs</artifactId>
-                <version>2.2.0-SNAPSHOT</version>
-            </dependency>
             <dependency>
                 <groupId>org.codehaus.btm</groupId>
                 <artifactId>btm</artifactId>
@@ -99,6 +83,7 @@
                 <version>${project.version}</version>
                 <classifier>javadoc</classifier>
             </dependency>
+<!--
             <dependency>
                 <groupId>org.codehaus.btm</groupId>
                 <artifactId>btm-jdbc4</artifactId>
@@ -110,6 +95,7 @@
                 <version>${project.version}</version>
                 <classifier>sources</classifier>
             </dependency>
+-->
             <!-- dependency>
                 <groupId>org.codehaus.btm</groupId>
                 <artifactId>btm-nio-journal</artifactId>

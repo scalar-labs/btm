@@ -29,6 +29,7 @@ import java.util.*;
 import javax.sql.*;
 import javax.transaction.xa.*;
 
+import org.mockito.MockSettings;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -78,7 +79,7 @@ public class MockitoXADataSource implements XADataSource {
         // Setup mock XAConnection
         final XAConnection mockXAConnection = mock(XAConnection.class);
         // Handle XAConnection.close(), first time we answer, after that we throw
-        doAnswer(new Answer() {
+        doAnswer(new Answer<Object>() {
 			public Object answer(InvocationOnMock invocation) throws Throwable {
 				EventRecorder eventRecorder = EventRecorder.getEventRecorder(mockXAConnection);
 				eventRecorder.addEvent(new XAConnectionCloseEvent(mockXAConnection));
@@ -87,8 +88,13 @@ public class MockitoXADataSource implements XADataSource {
 		}).doThrow(new SQLException("XAConnection is already closed")).when(mockXAConnection).close();
 
         when(mockXAConnection.getXAResource()).thenReturn(xaResource);
-        Connection mockConnection = createMockConnection();
-        when(mockXAConnection.getConnection()).thenReturn(mockConnection);
+//        Connection mockConnection = createMockConnection();
+//        when(mockXAConnection.getConnection()).thenReturn(mockConnection);
+        doAnswer(new Answer<Connection>() {
+			public Connection answer(InvocationOnMock invocation) throws Throwable {
+				return createMockConnection();
+			}
+		}).when(mockXAConnection).getConnection();
 
         if (staticCloseXAConnectionException != null)
             doThrow(staticCloseXAConnectionException).when(mockXAConnection).close();
@@ -163,26 +169,32 @@ public class MockitoXADataSource implements XADataSource {
     public static Connection createMockConnection() throws SQLException {
         // Setup mock connection
         final Connection mockConnection = mock(Connection.class);
+
         // Autocommit is always true by default
         when(mockConnection.getAutoCommit()).thenReturn(true);
+
         // Handle Connection.createStatement()
         Statement statement = mock(Statement.class);
         when(mockConnection.createStatement()).thenReturn(statement);
         when(mockConnection.createStatement(anyInt(), anyInt())).thenReturn(statement);
         when(mockConnection.createStatement(anyInt(), anyInt(), anyInt())).thenReturn(statement);
+
         // Handle Connection.prepareStatement()
-        PreparedStatement mockPreparedStatement = mock(PreparedStatement.class);
+        // PreparedStatement mockPreparedStatement = mock(PreparedStatement.class);
+        PreparedStatement mockPreparedStatement = new MockPreparedStatement();
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(anyString(), anyInt())).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(anyString(), (int[]) anyObject())).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(anyString(), (String[]) anyObject())).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(anyString(), anyInt(), anyInt())).thenReturn(mockPreparedStatement);
         when(mockConnection.prepareStatement(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(mockPreparedStatement);
+
         // Handle Connection.prepareCall()
         CallableStatement mockCallableStatement = mock(CallableStatement.class);
         when(mockConnection.prepareCall(anyString())).thenReturn(mockCallableStatement);
         when(mockConnection.prepareCall(anyString(), anyInt(), anyInt())).thenReturn(mockCallableStatement);
         when(mockConnection.prepareCall(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(mockCallableStatement);
+
         // Handle Connection.close()
         doAnswer(new Answer() {
 			public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -191,6 +203,7 @@ public class MockitoXADataSource implements XADataSource {
 				return null;
 			}
         }).doThrow(new SQLException("Connection is already closed")).when(mockConnection).close();
+
         // Handle Connection.commit()
         doAnswer(new Answer() {
 			public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -199,6 +212,7 @@ public class MockitoXADataSource implements XADataSource {
 				return null;
 			}
         }).doThrow(new SQLException("Transaction already commited")).when(mockConnection).commit();
+
         // Handle Connection.rollback()
         doAnswer(new Answer() {
 			public Object answer(InvocationOnMock invocation) throws Throwable {

@@ -183,7 +183,7 @@ public final class TransactionContextHelper {
     public static void recycle(XAStatefulHolder xaStatefulHolder) {
         BitronixTransaction currentTransaction = currentTransaction();
         if (log.isDebugEnabled()) { log.debug("marking " + xaStatefulHolder + " as recycled in " + currentTransaction); }
-        Scheduler synchronizationScheduler = currentTransaction.getSynchronizationScheduler();
+        Scheduler<Synchronization> synchronizationScheduler = currentTransaction.getSynchronizationScheduler();
 
         DeferredReleaseSynchronization deferredReleaseSynchronization = findDeferredRelease(xaStatefulHolder, currentTransaction);
         if (deferredReleaseSynchronization != null) {

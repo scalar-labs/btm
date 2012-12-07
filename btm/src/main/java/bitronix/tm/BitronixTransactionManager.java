@@ -105,7 +105,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         if (debug) { log.debug("Attempting to use a concurrent sorted map of type 'ConcurrentSkipListMap' (from jre6 or custom supplied backport)"); }
         try {
             @SuppressWarnings("unchecked")
-            SortedMap<BitronixTransaction, ClearContextSynchronization> mapInstance = (SortedMap)
+            SortedMap<BitronixTransaction, ClearContextSynchronization> mapInstance = (SortedMap<BitronixTransaction, ClearContextSynchronization>)
                     ClassLoaderUtils.loadClass("java.util.concurrent.ConcurrentSkipListMap").
                             getConstructor(Comparator.class).newInstance(timestampSortComparator);
             return mapInstance;

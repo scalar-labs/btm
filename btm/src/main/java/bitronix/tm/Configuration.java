@@ -77,7 +77,7 @@ public class Configuration implements Service {
     private volatile boolean allowMultipleLrc;
     private volatile String resourceConfigurationFilename;
     private volatile boolean conservativeJournaling;
-
+    private volatile String jdbcProxyFactoryClass;
 
     protected Configuration() {
         try {
@@ -125,6 +125,7 @@ public class Configuration implements Service {
             allowMultipleLrc = getBoolean(properties, "bitronix.tm.allowMultipleLrc", false);
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
             conservativeJournaling = getBoolean(properties, "bitronix.tm.conservativeJournaling", false);
+            jdbcProxyFactoryClass = getString(properties, "bitronix.tm.jdbcProxyFactoryClass", "auto");
         } catch (IOException ex) {
             throw new InitializationException("error loading configuration", ex);
         }
@@ -665,6 +666,26 @@ public class Configuration implements Service {
     	this.conservativeJournaling = conservativeJournaling;
     	return this;
     }
+
+    /**
+     * Get the factory class for creating JDBC proxy instances.
+     *
+     * @return the name of the factory class
+     */
+    public String getJdbcProxyFactoryClass() {
+        return jdbcProxyFactoryClass;
+    }
+
+
+    /**
+     * Set the name of the factory class for creating JDBC proxy instances.
+     *
+     * @param jdbcProxyFactoryClass the name of the proxy class
+     */
+    public void setJdbcProxyFactoryClass(String jdbcProxyFactoryClass) {
+        this.jdbcProxyFactoryClass = jdbcProxyFactoryClass;
+    }
+
 
     /**
      * {@link bitronix.tm.resource.ResourceLoader} configuration file name. {@link bitronix.tm.resource.ResourceLoader}

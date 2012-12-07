@@ -99,7 +99,7 @@ public class ConfigurationTest extends TestCase {
                 " backgroundRecoveryInterval=1, backgroundRecoveryIntervalSeconds=60, conservativeJournaling=false, currentNodeOnlyRecovery=true," +
                 " debugZeroResourceTransaction=false, defaultTransactionTimeout=60, disableJmx=false," +
                 " exceptionAnalyzer=null, filterLogStatus=false," +
-                " forceBatchingEnabled=true, forcedWriteEnabled=true, gracefulShutdownInterval=10," +
+                " forceBatchingEnabled=true, forcedWriteEnabled=true, gracefulShutdownInterval=10, jdbcProxyFactoryClass=auto," +
                 " jndiTransactionSynchronizationRegistryName=java:comp/TransactionSynchronizationRegistry," +
                 " jndiUserTransactionName=java:comp/UserTransaction, journal=disk," +
                 " logPart1Filename=target/btm1.tlog, logPart2Filename=target/btm2.tlog, maxLogSizeInMb=2," +

@@ -116,7 +116,7 @@ public class ResourceLoader implements Service {
      * @throws InstantiationException if the {@link XAResourceProducer} cannot be instantiated.
      */
     private static XAResourceProducer instantiate(String xaResourceClassName) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-        Class clazz = ClassLoaderUtils.loadClass(xaResourceClassName);
+        Class<?> clazz = ClassLoaderUtils.loadClass(xaResourceClassName);
 
         // resource classes are instantiated via reflection so that there is no hard class binding between this internal
         // transaction manager service and 3rd party libraries like the JMS ones.

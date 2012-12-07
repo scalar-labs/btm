@@ -215,7 +215,7 @@ public class DiskJournalTest extends TestCase {
 	        }
         }
 
-        Map<Uid, TransactionLogRecord> danglingRecords = journal.collectDanglingRecords();
+        Map<Uid, JournalRecord> danglingRecords = journal.collectDanglingRecords();
         assertEquals(400, danglingRecords.size());
 
         for (Uid gtrid : uncommitted)

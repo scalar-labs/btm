@@ -49,6 +49,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * </p>
  * @author lorban
  */
+@SuppressWarnings("serial")
 public final class EhCacheXAResourceProducer extends ResourceBean implements XAResourceProducer {
 
     private static final Logger log = LoggerFactory.getLogger(EhCacheXAResourceProducer.class.getName());
