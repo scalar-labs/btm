@@ -154,7 +154,7 @@ public class XAPool implements StateChangeListener {
             reinitializePool();
         }
 
-        long remainingTimeMs = bean.getAcquisitionTimeout() * 1000L;
+        long remainingTimeMs = TimeUnit.SECONDS.toMillis(bean.getAcquisitionTimeout());
         while (true) {
             long before = MonotonicClock.currentTimeMillis();
             XAStatefulHolder xaStatefulHolder = null;
@@ -225,6 +225,11 @@ public class XAPool implements StateChangeListener {
         } // while true
     }
 
+    /* ------------------------------------------------------------------------
+     * Pool Transition.  stateChanging() and stateChanged() contain the only
+     * write lock usage in this class.  All other methods obtain read locks.
+     * ------------------------------------------------------------------------*/
+
     public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
         stateTransitionLock.writeLock().lock();
         try {
@@ -277,6 +282,45 @@ public class XAPool implements StateChangeListener {
         }
     }
 
+    /* ------------------------------------------------------------------------
+     * Methods to obtain a connection from one of the internal pools.
+     * ------------------------------------------------------------------------*/
+
+    /**
+     * Get an IN_POOL connection.  This method blocks for up to remainingTimeMs milliseconds
+     * for someone to return or create a connection in the available pool.  If remainingTimeMs
+     * expires, an exception is thrown.  It does not use stateTransitionLock.readLock() because
+     * the availablePool [a LinkedBlockingQueue] is already thread safe.
+     *
+     * @param remainingTimeMs the maximum time to wait for a connection
+     * @return a connection from the available (IN_POOL) pool
+     * @throws Exception thrown in no connection is available before the remainingTimeMs time expires
+     */
+    private XAStatefulHolder getInPool(long remainingTimeMs) throws Exception {
+        if (log.isDebugEnabled()) { log.debug("getting a IN_POOL connection from " + this); }
+
+        if (inPoolSize() == 0) {
+            if (log.isDebugEnabled()) { log.debug("no more free connections in " + this + ", trying to grow it"); }
+            grow();
+        }
+
+        if (log.isDebugEnabled()) { log.debug("getting IN_POOL connection, waiting if necessary, current size is " + inPoolSize()); }
+
+        try {
+            XAStatefulHolder xaStatefulHolder = availablePool.poll(remainingTimeMs, TimeUnit.MILLISECONDS);
+            if (xaStatefulHolder == null) {
+                if (TransactionManagerServices.isTransactionManagerRunning())
+                    TransactionManagerServices.getTransactionManager().dumpTransactionContexts();
+                
+                throw new BitronixRuntimeException("XA pool of resource " + bean.getUniqueName() + " still empty after " + bean.getAcquisitionTimeout() + "s wait time");
+            }
+
+            return xaStatefulHolder;
+        } catch (InterruptedException e) {
+            throw new BitronixRuntimeException("Interrupted while waiting for IN_POOL connection.");
+        }
+    }
+
     /**
      * Get a XAStatefulHolder (connection) from the NOT_ACCESSIBLE pool.
      *
@@ -298,7 +342,7 @@ public class XAPool implements StateChangeListener {
                 if (log.isDebugEnabled()) { log.debug("found a connection in NOT_ACCESSIBLE state: " + xaStatefulHolder); }
                 if (containsXAResourceHolderMatchingGtrid(xaStatefulHolder, currentTxGtrid))
                     return xaStatefulHolder;
-            } // for
+            }
     
             if (log.isDebugEnabled()) { log.debug("no NOT_ACCESSIBLE connection enlisted in this transaction"); }
             return null;
@@ -308,25 +352,59 @@ public class XAPool implements StateChangeListener {
         }
     }
 
+    /**
+     * Try to get a shared XAStatefulHolder.  This method will either return a
+     * shared XAStatefulHolder or <code>null</code>.  If there is no current
+     * transaction, XAStatefulHolder's are not shared.  If there is a transaction
+     * <i>and</i> there is a XAStatefulHolder associated with this thread already,
+     * we return that XAStatefulHolder (provided it is ACCESSIBLE or NOT_ACCESSIBLE).
+     *
+     * @return a shared XAStatefulHolder or <code>null</code>
+     */
+    private XAStatefulHolder getSharedXAStatefulHolder() {
+        BitronixTransaction transaction = TransactionContextHelper.currentTransaction();
+        if (transaction == null) {
+            if (log.isDebugEnabled()) { log.debug("no current transaction, shared connection map will not be used"); }
+            return null;
+        }
+        Uid currentTxGtrid = transaction.getResourceManager().getGtrid();
+
+        StatefulHolderThreadLocal threadLocal = statefulHolderTransactionMap.get(currentTxGtrid);
+        if (threadLocal != null) {
+            XAStatefulHolder xaStatefulHolder = (XAStatefulHolder) threadLocal.get();
+            // Additional sanity checks...
+            if (xaStatefulHolder != null &&
+                xaStatefulHolder.getState() != XAStatefulHolder.STATE_IN_POOL &&
+                xaStatefulHolder.getState() != XAStatefulHolder.STATE_CLOSED) {
+
+                if (log.isDebugEnabled()) { log.debug("sharing connection " + xaStatefulHolder + " in transaction " + currentTxGtrid); }
+                return xaStatefulHolder;
+            }
+        }
+
+        return null;
+    }
+
     private boolean containsXAResourceHolderMatchingGtrid(XAStatefulHolder xaStatefulHolder, final Uid currentTxGtrid) {
         List<XAResourceHolder> xaResourceHolders = xaStatefulHolder.getXAResourceHolders();
         if (log.isDebugEnabled()) { log.debug(xaResourceHolders.size() + " xa resource(s) created by connection in NOT_ACCESSIBLE state: " + xaStatefulHolder); }
-        for (XAResourceHolder xaResourceHolder : xaResourceHolders) {
 
-            class LocalVisitor implements XAResourceHolderStateVisitor {
-                private boolean found;
-                public boolean visit(XAResourceHolderState xaResourceHolderState) {
-                    // compare GTRIDs
-                    BitronixXid bitronixXid = xaResourceHolderState.getXid();
-                    Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
-                    if (log.isDebugEnabled()) { log.debug("NOT_ACCESSIBLE xa resource GTRID: " + resourceGtrid); }
-                    if (currentTxGtrid.equals(resourceGtrid)) {
-                        if (log.isDebugEnabled()) { log.debug("NOT_ACCESSIBLE xa resource's GTRID matched this transaction's GTRID, recycling it"); }
-                        found = true;
-                    }
-                    return !found; // continue visitation if not found, stop visitation if found
+        class LocalVisitor implements XAResourceHolderStateVisitor {
+            private boolean found;
+            public boolean visit(XAResourceHolderState xaResourceHolderState) {
+                // compare GTRIDs
+                BitronixXid bitronixXid = xaResourceHolderState.getXid();
+                Uid resourceGtrid = bitronixXid.getGlobalTransactionIdUid();
+                if (log.isDebugEnabled()) { log.debug("NOT_ACCESSIBLE xa resource GTRID: " + resourceGtrid); }
+                if (currentTxGtrid.equals(resourceGtrid)) {
+                    if (log.isDebugEnabled()) { log.debug("NOT_ACCESSIBLE xa resource's GTRID matched this transaction's GTRID, recycling it"); }
+                    found = true;
                 }
+                return !found; // continue visitation if not found, stop visitation if found
             }
+        }
+
+        for (XAResourceHolder xaResourceHolder : xaResourceHolders) {
             LocalVisitor xaResourceHolderStateVisitor = new LocalVisitor();
             xaResourceHolder.acceptVisitorForXAResourceHolderStates(currentTxGtrid, xaResourceHolderStateVisitor);
             if (xaResourceHolderStateVisitor.found) {
@@ -334,40 +412,6 @@ public class XAPool implements StateChangeListener {
             }
         }
         return false;
-    }
-
-    /**
-     * Get an IN_POOL connection.  This method blocks for up to remainingTimeMs milliseconds
-     * for someone to return or create a connection in the available pool.  If remainingTimeMs
-     * expires, an exception is thrown.
-     *
-     * @param remainingTimeMs the maximum time to wait for a connection
-     * @return a connection from the available (IN_POOL) pool
-     * @throws Exception thrown in no connection is available before the remainingTimeMs time expires
-     */
-    private XAStatefulHolder getInPool(long remainingTimeMs) throws Exception {
-        if (log.isDebugEnabled()) { log.debug("getting a IN_POOL connection from " + this); }
-
-        if (inPoolSize() == 0) {
-            if (log.isDebugEnabled()) { log.debug("no more free connections in " + this + ", trying to grow it"); }
-            grow();
-        }
-
-        if (log.isDebugEnabled()) { log.debug("getting IN_POOL connection, waiting if necessary, current size is " + inPoolSize()); }
-
-        try {
-        	XAStatefulHolder xaStatefulHolder = availablePool.poll(remainingTimeMs, TimeUnit.MILLISECONDS);
-        	if (xaStatefulHolder == null) {
-        		if (TransactionManagerServices.isTransactionManagerRunning())
-        			TransactionManagerServices.getTransactionManager().dumpTransactionContexts();
-        		
-        		throw new BitronixRuntimeException("XA pool of resource " + bean.getUniqueName() + " still empty after " + bean.getAcquisitionTimeout() + "s wait time");
-        	}
-
-        	return xaStatefulHolder;
-		} catch (InterruptedException e) {
-			throw new BitronixRuntimeException("Interrupted while waiting for IN_POOL connection.");
-		}
     }
 
     /* ------------------------------------------------------------------------
@@ -415,7 +459,7 @@ public class XAPool implements StateChangeListener {
      * ------------------------------------------------------------------------*/
 
     public Date getNextShrinkDate() {
-        return new Date(MonotonicClock.currentTimeMillis() + bean.getMaxIdleTime() * 1000);
+        return new Date(MonotonicClock.currentTimeMillis() + TimeUnit.SECONDS.toMillis(bean.getMaxIdleTime()));
     }
     
     public void shrink() throws Exception {
@@ -442,11 +486,11 @@ public class XAPool implements StateChangeListener {
 
             long expirationTime = Integer.MAX_VALUE;
             if (bean.getMaxIdleTime() > 0) {
-                expirationTime = (xaStatefulHolder.getLastReleaseDate().getTime() + (bean.getMaxIdleTime() * 1000));
+                expirationTime = xaStatefulHolder.getLastReleaseDate().getTime() + TimeUnit.SECONDS.toMillis(bean.getMaxIdleTime());
             }
 
             if (bean.getMaxLifeTime() > 0) {
-                long endOfLife = xaStatefulHolder.getCreationDate().getTime() + (bean.getMaxLifeTime() * 1000);
+                long endOfLife = xaStatefulHolder.getCreationDate().getTime() + TimeUnit.SECONDS.toMillis(bean.getMaxLifeTime());
                 expirationTime = Math.min(expirationTime, endOfLife);
             }
 
@@ -488,7 +532,7 @@ public class XAPool implements StateChangeListener {
     }
 
     /* ------------------------------------------------------------------------
-     * Miscellaneous public accessors
+     * Miscellaneous public methods
      * ------------------------------------------------------------------------*/
 
     /**
@@ -550,42 +594,13 @@ public class XAPool implements StateChangeListener {
         }
     }
 
+    public String toString() {
+        return "an XAPool of resource " + bean.getUniqueName() + " with " + totalPoolSize() + " connection(s) (" + inPoolSize() + " still available)" + (isFailed() ? " -failed-" : "");
+    }
+
     /* ------------------------------------------------------------------------
      * Shared Connection Handling
      * ------------------------------------------------------------------------*/
-
-    /**
-     * Try to get a shared XAStatefulHolder.  This method will either return
-     * a shared XAStatefulHolder or <code>null</code>.  If there is no current
-     * transaction, XAStatefulHolder's are not shared.  If there is a transaction
-     * <i>and</i> there is a XAStatefulHolder associated with this thread already,
-     * we return that XAStatefulHolder (provided it is ACCESSIBLE or NOT_ACCESSIBLE).
-     *
-     * @return a shared XAStatefulHolder or <code>null</code>
-     */
-    private XAStatefulHolder getSharedXAStatefulHolder() {
-        BitronixTransaction transaction = TransactionContextHelper.currentTransaction();
-        if (transaction == null) {
-            if (log.isDebugEnabled()) { log.debug("no current transaction, shared connection map will not be used"); }
-            return null;
-        }
-        Uid currentTxGtrid = transaction.getResourceManager().getGtrid();
-
-        StatefulHolderThreadLocal threadLocal = statefulHolderTransactionMap.get(currentTxGtrid);
-        if (threadLocal != null) {
-            XAStatefulHolder xaStatefulHolder = (XAStatefulHolder) threadLocal.get();
-            // Additional sanity checks...
-            if (xaStatefulHolder != null &&
-                xaStatefulHolder.getState() != XAStatefulHolder.STATE_IN_POOL &&
-                xaStatefulHolder.getState() != XAStatefulHolder.STATE_CLOSED) {
-
-                if (log.isDebugEnabled()) { log.debug("sharing connection " + xaStatefulHolder + " in transaction " + currentTxGtrid); }
-                return xaStatefulHolder;
-            }
-        }
-
-        return null;
-    }
 
     /**
      * Try to share a XAStatefulHolder with other callers on this thread.  If
@@ -658,9 +673,5 @@ public class XAPool implements StateChangeListener {
     	public void set(XAStatefulHolder value) {
     		super.set(value);
     	}
-    }
-
-    public String toString() {
-        return "an XAPool of resource " + bean.getUniqueName() + " with " + totalPoolSize() + " connection(s) (" + inPoolSize() + " still available)" + (isFailed() ? " -failed-" : "");
     }
 }
