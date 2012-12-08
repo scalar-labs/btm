@@ -17,7 +17,7 @@ package bitronix.tm.mock.events;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public abstract class Event {
 

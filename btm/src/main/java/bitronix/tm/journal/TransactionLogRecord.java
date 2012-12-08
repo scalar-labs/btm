@@ -67,7 +67,7 @@ import java.util.zip.CRC32;
  * different for each name.</p>
  *
  * @see <a href="http://jroller.com/page/pyrasun?entry=xa_exposed_part_iii_the">XA Exposed, Part III: The Implementor's Notebook</a>
- * @author lorban
+ * @author Ludovic Orban
  */
 public class TransactionLogRecord implements JournalRecord {
 

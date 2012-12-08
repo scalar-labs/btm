@@ -27,7 +27,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * This implementation executes submitted jobs using a <code>java.util.concurrent</code> cached thread pool.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class AsyncExecutor implements Executor {
 

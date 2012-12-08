@@ -17,7 +17,7 @@ package bitronix.tm.resource.jms;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public interface PoolingConnectionFactoryMBean {
 

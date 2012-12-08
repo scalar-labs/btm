@@ -29,7 +29,7 @@ import java.util.Map;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class ResourcesPanel extends JPanel {
 

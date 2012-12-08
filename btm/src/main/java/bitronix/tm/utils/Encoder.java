@@ -18,7 +18,7 @@ package bitronix.tm.utils;
 /**
  * Number to byte array and byte array to number encoder.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class Encoder {
 

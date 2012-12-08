@@ -31,7 +31,7 @@ import java.lang.reflect.Field;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class JmsPoolTest extends TestCase {
 

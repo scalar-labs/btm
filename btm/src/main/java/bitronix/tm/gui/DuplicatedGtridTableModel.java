@@ -25,7 +25,7 @@ import java.util.Map;
 /**
  * <p></p>
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class DuplicatedGtridTableModel extends DefaultTableModel {
 

@@ -27,7 +27,7 @@ import java.util.Set;
  * No-op journal. Do not use for anything else than testing as the transaction manager cannot guarantee
  * data integrity with this journal implementation.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class NullJournal implements Journal {
 

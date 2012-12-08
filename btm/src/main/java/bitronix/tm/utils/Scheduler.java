@@ -30,7 +30,7 @@ import java.util.TreeSet;
  * retrieved later on in their position + added order. All the objects of a scheduler can be iterated in order or
  * objects of a cetain position can be retrieved for iteration.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class Scheduler<T> implements Iterable<T> {
 

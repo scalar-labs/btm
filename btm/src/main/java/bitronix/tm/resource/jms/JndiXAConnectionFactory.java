@@ -29,7 +29,7 @@ import java.util.Properties;
  * {@link XAConnectionFactory} implementation that wraps another {@link XAConnectionFactory} implementation available
  * in some JNDI tree.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class JndiXAConnectionFactory implements XAConnectionFactory {
 

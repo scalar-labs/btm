@@ -18,7 +18,7 @@ package bitronix.tm.twopc.executor;
 /**
  * This implementation executes submitted jobs synchronously.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class SyncExecutor implements Executor {
 

@@ -20,7 +20,7 @@ import javax.transaction.SystemException;
 /**
  * Subclass of {@link javax.transaction.SystemException} supporting nested {@link Throwable}s.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class BitronixSystemException extends SystemException {
 

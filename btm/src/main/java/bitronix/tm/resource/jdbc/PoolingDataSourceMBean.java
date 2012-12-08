@@ -17,7 +17,7 @@ package bitronix.tm.resource.jdbc;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public interface PoolingDataSourceMBean {
 

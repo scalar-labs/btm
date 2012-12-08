@@ -52,7 +52,8 @@ import java.util.List;
 /**
  * Implementation of a JDBC pooled connection wrapping vendor's {@link XAConnection} implementation.
  *
- * @author lorban, brettw
+ * @author Ludovic Orban
+ * @author Brett Wooldridge
  */
 public class JdbcPooledConnection extends AbstractXAResourceHolder implements StateChangeListener, JdbcPooledConnectionMBean {
 

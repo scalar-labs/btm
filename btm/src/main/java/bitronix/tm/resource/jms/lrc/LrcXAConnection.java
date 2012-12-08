@@ -30,7 +30,7 @@ import javax.jms.XASession;
 /**
  * XAConnection implementation for a non-XA JMS resource emulating XA with Last Resource Commit.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class LrcXAConnection implements XAConnection {
 

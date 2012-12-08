@@ -32,7 +32,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * support implementation.
  *
  *
- * @author lorban, brettw
+ * @author Ludovic Orban
+ * @author Brett Wooldridge
  */
 public class LruStatementCache {
 

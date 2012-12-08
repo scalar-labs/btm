@@ -47,7 +47,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * {@link XAResourceProducer}. Those objects are then pooled and can be retrieved and/or recycled by the pool
  * depending on the running XA transaction's and the {@link XAStatefulHolder}'s states.
  *
- * @author lorban
+ * @author Ludovic Orban
  * @author Brett Wooldridge
  */
 public class XAPool implements StateChangeListener {

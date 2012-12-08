@@ -20,7 +20,7 @@ import java.io.IOException;
 /**
  * Thrown by {@link TransactionLogCursor} when an integrity check fails upon reading a record.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class CorruptedTransactionLogException extends IOException {
 	private static final long serialVersionUID = 560393397990915916L;

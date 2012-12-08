@@ -20,7 +20,7 @@ import javax.transaction.xa.XAException;
 /**
  * Exception analyzers are used to extract non-standard information from vendor exceptions.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public interface ExceptionAnalyzer extends Service {
 

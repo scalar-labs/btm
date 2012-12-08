@@ -21,7 +21,7 @@ import java.util.Collection;
 /**
  * Gives (unsafe) read access to Journals implementing this interface.
  *
- * @author juergen kellerer, 2011-05-15
+ * @author Juergen Kellerer
  */
 public interface ReadableJournal {
     /**

@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * Subclass of {@link javax.transaction.SystemException} supporting nested {@link Throwable}s.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class BitronixMultiSystemException extends BitronixSystemException {
 

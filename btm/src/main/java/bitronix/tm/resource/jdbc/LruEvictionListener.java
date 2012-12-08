@@ -18,7 +18,7 @@ package bitronix.tm.resource.jdbc;
 /**
  * Eviction listener interface for {@link LruStatementCache}.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public interface LruEvictionListener {
 

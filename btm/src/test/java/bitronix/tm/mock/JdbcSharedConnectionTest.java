@@ -27,7 +27,7 @@ import java.util.ArrayList;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
     private final static Logger log = LoggerFactory.getLogger(NewJdbcProperUsageMockTest.class);

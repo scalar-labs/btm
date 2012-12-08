@@ -27,7 +27,7 @@ import javax.transaction.SystemException;
 /**
  * {@link MessageProducer} wrapper that adds XA enlistment semantics.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class MessageProducerWrapper implements MessageProducer {
 

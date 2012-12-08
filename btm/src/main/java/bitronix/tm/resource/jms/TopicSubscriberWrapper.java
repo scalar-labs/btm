@@ -22,7 +22,7 @@ import javax.jms.TopicSubscriber;
 /**
  * {@link TopicSubscriber} wrapper that adds XA enlistment semantics.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class TopicSubscriberWrapper extends MessageConsumerWrapper implements TopicSubscriber {
 

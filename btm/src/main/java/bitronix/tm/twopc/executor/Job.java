@@ -23,7 +23,7 @@ import javax.transaction.xa.XAException;
 /**
  * Abstract job definition executable by the 2PC thread pools.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public abstract class Job implements Runnable {
     private final XAResourceHolderState resourceHolder;

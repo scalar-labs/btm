@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class Phase1FailureTest extends TestCase {
     private final static Logger log = LoggerFactory.getLogger(Phase1FailureTest.class);

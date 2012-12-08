@@ -48,7 +48,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Implementation of a JDBC {@link DataSource} wrapping vendor's {@link XADataSource} implementation.
  *
- * @author lorban, brettw
+ * @author Ludovic Orban
+ * @author Brett Wooldridge
  */
 public class PoolingDataSource extends ResourceBean implements DataSource, XAResourceProducer, PoolingDataSourceMBean {
 

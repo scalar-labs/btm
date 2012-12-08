@@ -35,7 +35,7 @@ import java.security.spec.InvalidKeySpecException;
 /**
  * <p>Simple crypto helper that uses symetric keys to crypt and decrypt resources passwords.</p>
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class CryptoEngine {
 

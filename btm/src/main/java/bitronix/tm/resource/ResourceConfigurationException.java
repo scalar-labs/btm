@@ -18,7 +18,7 @@ package bitronix.tm.resource;
 /**
  * Thrown when a resource cannot be created due to a configuration error.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class ResourceConfigurationException extends RuntimeException {
     public ResourceConfigurationException(String message, Throwable cause) {

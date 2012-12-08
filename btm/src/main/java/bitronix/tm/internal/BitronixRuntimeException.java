@@ -18,7 +18,7 @@ package bitronix.tm.internal;
 /**
  * Thrown when a runtime exception happens.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class BitronixRuntimeException extends RuntimeException {
     public BitronixRuntimeException(String message, Throwable cause) {

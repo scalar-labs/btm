@@ -30,7 +30,7 @@ import javax.transaction.xa.Xid;
  * {@link bitronix.tm.internal.XAResourceManager}. Both GTRID and XIDs are generated
  * by the {@link bitronix.tm.utils.UidGenerator}.</p>
  *
- * @author lorban
+ * @author Ludovic Orban
  * @see bitronix.tm.utils.UidGenerator
  * @see bitronix.tm.BitronixTransaction
  * @see bitronix.tm.internal.XAResourceManager

@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Used to write {@link TransactionLogRecord} objects to a log file.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class TransactionLogAppender {
 

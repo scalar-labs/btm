@@ -26,7 +26,7 @@ import java.io.Serializable;
  * A {@link XAResourceProducer} is a {@link XAStatefulHolder} factory. It must be implemented by any class that is
  * able to produce pooled XA connections.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public interface XAResourceProducer extends Referenceable, Serializable {
 

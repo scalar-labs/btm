@@ -19,7 +19,7 @@ package bitronix.tm.utils;
  * All internal services implement this interface.
  *
  * @see bitronix.tm.TransactionManagerServices
- * @author lorban
+ * @author Ludovic Orban
  */
 public interface Service {
 

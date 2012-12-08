@@ -26,7 +26,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Implementation of all services required by a {@link XAStatefulHolder}.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
 

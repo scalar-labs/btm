@@ -37,7 +37,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Timed tasks service.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class TaskScheduler extends Thread implements Service {
 

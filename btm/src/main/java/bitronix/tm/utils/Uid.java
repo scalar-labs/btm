@@ -20,7 +20,7 @@ import java.util.Arrays;
 /**
  * <p>A constant UID byte array container optimized for use with hashed collections.</p>
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public final class Uid {
 

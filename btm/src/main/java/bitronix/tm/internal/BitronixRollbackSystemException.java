@@ -19,7 +19,7 @@ package bitronix.tm.internal;
  * Subclass of {@link javax.transaction.SystemException} indicating a rollback must be performed.
  * This exception is used to handle unilateral rollback of resources during delistement.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class BitronixRollbackSystemException extends BitronixSystemException {
 

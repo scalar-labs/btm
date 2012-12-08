@@ -29,7 +29,7 @@ import java.util.List;
  * <p>
  *   Copyright 2003-2010 Terracotta, Inc.
  * </p>
- * @author lorban
+ * @author Ludovic Orban
  */
 public class EhCacheXAResourceHolder extends AbstractXAResourceHolder {
 

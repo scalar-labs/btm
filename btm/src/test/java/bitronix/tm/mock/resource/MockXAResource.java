@@ -32,7 +32,7 @@ import javax.transaction.xa.Xid;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class MockXAResource implements XAResource {
 

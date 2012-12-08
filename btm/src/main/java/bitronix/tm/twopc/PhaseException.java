@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * Thrown when a phase exection has thrown one or more exception(s).  
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class PhaseException extends Exception {
 

@@ -20,7 +20,7 @@ import java.util.Map;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class EventsIterator implements Iterator {
 

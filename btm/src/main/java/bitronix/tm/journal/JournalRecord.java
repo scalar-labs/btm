@@ -24,8 +24,8 @@ import java.util.Set;
  * Defines the base interface that must be implemented by records that get returned with
  * {@link Journal#collectDanglingRecords()}.
  *
- * @author lorban
- * @author juergen kellerer, 2011-05-01
+ * @author Ludovic Orban
+ * @author Juergen Kellerer
  */
 public interface JournalRecord {
     /**

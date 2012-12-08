@@ -18,7 +18,7 @@ package bitronix.tm.internal;
 /**
  * {@link bitronix.tm.BitronixTransaction} status change listener interface.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public interface TransactionStatusChangeListener {
 

@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * Phase 1 Prepare logic engine.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public final class Preparer extends AbstractPhaseEngine {
 

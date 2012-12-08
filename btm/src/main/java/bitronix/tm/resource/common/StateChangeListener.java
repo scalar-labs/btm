@@ -18,7 +18,7 @@ package bitronix.tm.resource.common;
 /**
  * {@link XAStatefulHolder} state change listener interface.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public interface StateChangeListener {
 

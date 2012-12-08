@@ -31,7 +31,7 @@ import java.util.Hashtable;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class JndiTest extends TestCase {
 

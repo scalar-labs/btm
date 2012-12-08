@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * Reovery helper methods.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class RecoveryHelper {
 

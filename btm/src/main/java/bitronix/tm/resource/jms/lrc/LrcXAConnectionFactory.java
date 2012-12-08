@@ -27,7 +27,7 @@ import java.util.Properties;
 /**
  * XAConnectionFactory implementation for a non-XA JMS resource emulating XA with Last Resource Commit.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class LrcXAConnectionFactory implements XAConnectionFactory {
 

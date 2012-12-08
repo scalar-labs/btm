@@ -23,7 +23,7 @@ import javax.transaction.Synchronization;
 /**
  * {@link Synchronization} used to release a {@link XAStatefulHolder} object after 2PC has executed.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class DeferredReleaseSynchronization implements Synchronization {
 

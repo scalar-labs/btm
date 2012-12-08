@@ -39,7 +39,7 @@ import java.util.Date;
  * {@link javax.transaction.Transaction}.</p>
  *
  * @see bitronix.tm.resource.common.ResourceBean
- * @author lorban
+ * @author Ludovic Orban
  */
 public class XAResourceHolderState {
 

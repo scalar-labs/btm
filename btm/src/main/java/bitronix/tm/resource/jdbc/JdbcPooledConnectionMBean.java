@@ -21,7 +21,7 @@ import java.util.Date;
 /**
  * {@link JdbcPooledConnection} Management interface.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public interface JdbcPooledConnectionMBean {
 

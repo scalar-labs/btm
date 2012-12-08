@@ -40,7 +40,7 @@ import java.util.Hashtable;
  * {@link bitronix.tm.resource.common.ResourceBean#getUniqueName()}.
  * </p>
  *
- * @author lorban
+ * @author Ludovic Orban
  * @see bitronix.tm.jndi.BitronixContext
  */
 public class BitronixInitialContextFactory implements InitialContextFactory {

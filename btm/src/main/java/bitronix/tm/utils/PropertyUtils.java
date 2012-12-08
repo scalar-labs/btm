@@ -27,7 +27,7 @@ import java.util.TreeMap;
 /**
  * Smart reflection helper.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public final class PropertyUtils {
 

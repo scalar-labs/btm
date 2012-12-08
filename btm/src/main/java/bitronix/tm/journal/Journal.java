@@ -26,7 +26,7 @@ import java.util.Set;
  * Transaction logs journal implementations must implement this interface to provide functionality required by the
  * transaction manager.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public interface Journal extends Service {
 

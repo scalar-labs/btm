@@ -20,7 +20,7 @@ import java.util.Collection;
 /**
  * <p>{@link Collection} helper functions.</p>
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class CollectionUtils {
 

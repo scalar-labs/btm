@@ -25,7 +25,7 @@ import java.util.Iterator;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class ResourcesTreeModel implements TreeModel {
 

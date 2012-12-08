@@ -23,7 +23,7 @@ import javax.transaction.TransactionSynchronizationRegistry;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class BitronixTransactionSynchronizationRegistryTest extends TestCase {
 

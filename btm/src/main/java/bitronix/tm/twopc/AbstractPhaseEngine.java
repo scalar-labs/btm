@@ -36,7 +36,7 @@ import java.util.SortedSet;
 /**
  * Abstract phase execution engine.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public abstract class AbstractPhaseEngine {
 

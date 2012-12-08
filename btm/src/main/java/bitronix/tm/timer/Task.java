@@ -20,7 +20,7 @@ import java.util.Date;
 /**
  * Asbtract superclass of all timed tasks.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public abstract class Task implements Comparable<Task> {
 

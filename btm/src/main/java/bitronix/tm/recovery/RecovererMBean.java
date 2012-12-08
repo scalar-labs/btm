@@ -18,7 +18,7 @@ package bitronix.tm.recovery;
 /**
  * {@link Recoverer} Management interface.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public interface RecovererMBean {
 

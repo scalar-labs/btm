@@ -34,7 +34,7 @@ import java.util.Map;
 /**
  * Implementation of JTA 1.1 {@link TransactionSynchronizationRegistry}.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class BitronixTransactionSynchronizationRegistry implements TransactionSynchronizationRegistry, Referenceable {
 

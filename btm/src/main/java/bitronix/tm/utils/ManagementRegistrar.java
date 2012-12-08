@@ -38,7 +38,8 @@ import java.util.concurrent.ArrayBlockingQueue;
  * The latter enables higher throughput by avoiding the registration of very short lived instances and
  * by that fact the JMX registrations can work on uncontended thread synchronization.
  *
- * @author lorban, jkellerer
+ * @author Ludovic Orban
+ * @author Juergen Kellerer
  */
 public final class ManagementRegistrar {
 

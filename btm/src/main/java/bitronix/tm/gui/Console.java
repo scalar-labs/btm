@@ -41,7 +41,7 @@ import java.util.HashMap;
 /**
  * <p></p>
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class Console extends JFrame {
 

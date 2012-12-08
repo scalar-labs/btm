@@ -22,7 +22,7 @@ import oracle.jdbc.xa.OracleXAException;
 import javax.transaction.xa.XAException;
 
 /**
- * @author lorban
+ * @author Ludovic Orban
  */
 public class DefaultExceptionAnalyzerTest extends TestCase {
 

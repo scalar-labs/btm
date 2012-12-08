@@ -27,7 +27,7 @@ import java.sql.SQLException;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class JdbcFailedPoolTest extends TestCase {
 

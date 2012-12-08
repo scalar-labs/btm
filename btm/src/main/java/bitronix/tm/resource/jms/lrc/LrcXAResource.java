@@ -53,7 +53,7 @@ import javax.transaction.xa.Xid;
  * </pre>
  * {@link XAResource#TMSUSPEND} and {@link XAResource#TMRESUME} are not supported.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class LrcXAResource implements XAResource {
 

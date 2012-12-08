@@ -47,7 +47,7 @@ import java.util.Set;
 /**
  * Implementation of a JMS pooled connection wrapping vendor's {@link XAConnection} implementation.
  *
- * @author lorban
+ * @author Ludovic Orban
  * TODO: how can the JMS connection be accurately tested?
  */
 public class JmsPooledConnection extends AbstractXAStatefulHolder implements JmsPooledConnectionMBean {

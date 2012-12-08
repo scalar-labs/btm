@@ -40,7 +40,7 @@ import java.util.List;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class JmsProperUsageMockTest extends AbstractMockJmsTest {
 

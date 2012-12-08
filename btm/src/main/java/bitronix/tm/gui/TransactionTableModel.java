@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * <p></p>
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public abstract class TransactionTableModel implements TableModel {
 

@@ -57,7 +57,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Implementation of {@link TransactionManager} and {@link UserTransaction}.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class BitronixTransactionManager implements TransactionManager, UserTransaction, Referenceable, Service {
 

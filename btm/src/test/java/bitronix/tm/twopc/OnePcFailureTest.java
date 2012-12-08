@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class OnePcFailureTest extends TestCase {
 

@@ -41,7 +41,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * {@link Configuration}, {@link Journal}, {@link TaskScheduler}, {@link ResourceLoader}, {@link Recoverer} and {@link Executor}.
  * They are used in all places of the TM so they must be globally reachable.</p>
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class TransactionManagerServices {
 

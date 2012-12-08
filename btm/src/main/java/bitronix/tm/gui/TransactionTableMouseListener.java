@@ -24,7 +24,7 @@ import java.awt.event.MouseEvent;
 /**
  * <p></p>
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class TransactionTableMouseListener extends MouseAdapter {
 

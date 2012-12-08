@@ -39,7 +39,7 @@ import java.util.Hashtable;
  * <p>This implementation is trivial as only the <code>lookup</code> methods are implemented,
  * all the other ones will throw a {@link OperationNotSupportedException}.</p>
  *
- * @author lorban
+ * @author Ludovic Orban
  * @see bitronix.tm.jndi.BitronixInitialContextFactory
  */
 public class BitronixContext implements Context {

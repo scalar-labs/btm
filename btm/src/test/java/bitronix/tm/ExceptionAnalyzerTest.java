@@ -23,7 +23,7 @@ import javax.transaction.xa.XAException;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class ExceptionAnalyzerTest extends TestCase {
 

@@ -18,7 +18,7 @@ package bitronix.tm.utils;
 /**
  * Thrown at transaction manager startup when an error occurs.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class InitializationException extends RuntimeException {
     public InitializationException(String message) {

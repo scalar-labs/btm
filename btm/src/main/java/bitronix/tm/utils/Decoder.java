@@ -28,7 +28,7 @@ import java.util.Iterator;
 /**
  * Constant to string decoder.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class Decoder {
 

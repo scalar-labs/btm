@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public abstract class AbstractMockJdbcTest extends TestCase {
 

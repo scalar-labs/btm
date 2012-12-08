@@ -28,7 +28,7 @@ import java.nio.channels.FileChannel;
  * <p>The physical data is read when this object is created then cached. Calling setter methods sets the header field
  * then moves the file pointer back to the previous location.</p>
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class TransactionLogHeader {
 

@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public abstract class AbstractMockJmsTest extends TestCase {
 

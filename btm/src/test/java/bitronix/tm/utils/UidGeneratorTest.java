@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * @author lorban
+ * @author Ludovic Orban
  */
 public class UidGeneratorTest extends TestCase {
 

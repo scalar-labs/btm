@@ -35,7 +35,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * one per transaction in which this {@link XAResourceHolder} is enlisted plus all the suspended transactions in which
  * it is enlisted as well.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder implements XAResourceHolder {
 

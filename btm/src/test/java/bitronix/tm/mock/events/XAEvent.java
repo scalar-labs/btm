@@ -19,7 +19,7 @@ import javax.transaction.xa.Xid;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public abstract class XAEvent extends Event {
 

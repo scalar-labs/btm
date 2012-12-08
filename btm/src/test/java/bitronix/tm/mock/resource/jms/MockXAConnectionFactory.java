@@ -40,7 +40,7 @@ import static org.mockito.Mockito.when;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class MockXAConnectionFactory implements XAConnectionFactory {
 

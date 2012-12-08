@@ -41,7 +41,7 @@ import java.util.Set;
 /**
  * Phase 1 & 2 Rollback logic engine.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public final class Rollbacker extends AbstractPhaseEngine {
 

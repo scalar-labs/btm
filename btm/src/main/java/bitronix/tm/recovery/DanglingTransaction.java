@@ -20,7 +20,7 @@ import javax.transaction.xa.Xid;
 /**
  * Simple bean containing a unique resource name paired with a XID corresponding to a branch on that resource.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public final class DanglingTransaction {
 

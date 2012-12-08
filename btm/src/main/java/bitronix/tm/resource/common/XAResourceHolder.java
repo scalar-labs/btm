@@ -26,7 +26,7 @@ import javax.transaction.xa.XAResource;
  * state of this {@link XAResourceHolder}.
  *
  * @see XAResourceHolderState
- * @author lorban
+ * @author Ludovic Orban
  */
 public interface XAResourceHolder extends XAStatefulHolder {
 

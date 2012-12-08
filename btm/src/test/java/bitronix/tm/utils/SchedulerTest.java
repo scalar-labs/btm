@@ -26,7 +26,7 @@ import java.util.Set;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class SchedulerTest extends TestCase {
 

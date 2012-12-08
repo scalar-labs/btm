@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * all servers of the network running this transaction manager have their clock reasonably in sync. An order of 1
  * second synchronicity is generally fine.</p>
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class UidGenerator {
 

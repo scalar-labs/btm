@@ -31,7 +31,7 @@ import java.sql.Connection;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class JtaTest extends TestCase {
 

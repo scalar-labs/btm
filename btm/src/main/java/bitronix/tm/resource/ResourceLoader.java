@@ -43,7 +43,7 @@ import java.util.Properties;
  * <p>When <code>bitronix.tm.resource.configuration</code> is not specified, ResourceLoader is disabled and resources
  * should be manually created.</p>
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class ResourceLoader implements Service {
 

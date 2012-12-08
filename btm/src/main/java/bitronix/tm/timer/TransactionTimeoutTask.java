@@ -25,7 +25,7 @@ import java.util.Date;
 /**
  * This task is used to mark a transaction as timed-out.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class TransactionTimeoutTask extends Task {
 

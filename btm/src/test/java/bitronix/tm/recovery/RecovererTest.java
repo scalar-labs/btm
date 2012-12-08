@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class RecovererTest extends TestCase {
     private final static Logger log = LoggerFactory.getLogger(RecovererTest.class);

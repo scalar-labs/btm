@@ -22,7 +22,7 @@ import java.util.Set;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class JournalLogEvent extends Event {
 

@@ -22,7 +22,7 @@ import java.util.Properties;
  * Abstract javabean container for all common properties of a {@link bitronix.tm.resource.common.XAResourceProducer} as configured in the
  * resources configuration file.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 @SuppressWarnings("serial")
 public abstract class ResourceBean implements Serializable {

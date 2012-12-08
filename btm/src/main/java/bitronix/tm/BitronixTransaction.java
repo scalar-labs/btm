@@ -65,7 +65,7 @@ import java.util.Set;
 /**
  * Implementation of {@link Transaction}.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class BitronixTransaction implements Transaction, BitronixTransactionMBean {
 

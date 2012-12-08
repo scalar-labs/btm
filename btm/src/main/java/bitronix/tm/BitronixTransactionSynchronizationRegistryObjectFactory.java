@@ -26,7 +26,7 @@ import java.util.Hashtable;
 /**
  * {@link bitronix.tm.BitronixTransactionSynchronizationRegistry} object factory for JNDI references.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class BitronixTransactionSynchronizationRegistryObjectFactory implements ObjectFactory {
 

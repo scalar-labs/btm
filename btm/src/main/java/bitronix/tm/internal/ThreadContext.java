@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
  * Transactional context of a thread. It contains both the active transaction (if any) and all default parameters
  * that a transaction running on a thread must inherit.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class ThreadContext {
 

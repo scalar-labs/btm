@@ -24,7 +24,7 @@ import junit.framework.TestCase;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class XAPoolTest extends TestCase {
 

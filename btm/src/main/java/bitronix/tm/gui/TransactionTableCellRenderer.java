@@ -24,7 +24,7 @@ import java.awt.*;
 /**
  * <p></p>
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 

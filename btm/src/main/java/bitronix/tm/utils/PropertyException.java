@@ -18,7 +18,7 @@ package bitronix.tm.utils;
 /**
  * Thrown by {@link PropertyUtils} when some reflection error occurs.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class PropertyException extends RuntimeException {
 

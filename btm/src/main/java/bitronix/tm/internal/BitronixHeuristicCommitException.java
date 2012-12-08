@@ -20,7 +20,7 @@ import javax.transaction.HeuristicCommitException;
 /**
  * Subclass of {@link javax.transaction.HeuristicCommitException} supporting nested {@link Throwable}s.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class BitronixHeuristicCommitException extends HeuristicCommitException {
 

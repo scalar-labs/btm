@@ -18,7 +18,7 @@ package bitronix.tm.timer;
 /**
  * Thrown when an error occurs during the execution of a task.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class TaskException extends Exception {
     public TaskException(String message, Throwable cause) {

@@ -18,7 +18,7 @@ package bitronix.tm.recovery;
 /**
  * Thrown when an error occurs during recovery.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class RecoveryException extends Exception {
     public RecoveryException(String message, Throwable cause) {

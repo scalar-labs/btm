@@ -38,7 +38,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * number of registered resources is around 1 to 16 entries and does not change often. If this assumption is
  * not-true it may be required to re-implement this with a ConcurrentMap instead.
  *
- * @author lorban, jkellerer
+ * @author Ludovic Orban
+ * @author Juergen Kellerer
  */
 public final class ResourceRegistrar {
 

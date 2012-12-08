@@ -20,7 +20,7 @@ import javax.transaction.xa.XAException;
 /**
  * Default implementation of {@link ExceptionAnalyzer}.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class DefaultExceptionAnalyzer implements ExceptionAnalyzer {
 

@@ -38,7 +38,7 @@ import java.util.SortedSet;
  * Every {@link bitronix.tm.BitronixTransaction} contains an instance of this class that is used to register
  * and keep track of resources enlisted in a transaction.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class XAResourceManager {
 

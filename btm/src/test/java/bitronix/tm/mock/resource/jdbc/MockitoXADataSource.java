@@ -48,7 +48,7 @@ import static org.mockito.Mockito.when;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class MockitoXADataSource implements XADataSource {
 

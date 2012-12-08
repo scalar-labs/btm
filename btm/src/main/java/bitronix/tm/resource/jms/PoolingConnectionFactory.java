@@ -46,7 +46,7 @@ import java.util.List;
 /**
  * Implementation of a JMS {@link ConnectionFactory} wrapping vendor's {@link XAConnectionFactory} implementation.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 @SuppressWarnings("serial")
 public class PoolingConnectionFactory extends ResourceBean implements ConnectionFactory, XAResourceProducer, PoolingConnectionFactoryMBean {

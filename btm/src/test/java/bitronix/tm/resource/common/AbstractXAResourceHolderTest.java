@@ -28,7 +28,7 @@ import java.util.Map;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class AbstractXAResourceHolderTest extends TestCase {
 

@@ -65,7 +65,7 @@ import java.util.Map.Entry;
  * JMS Session wrapper that will send calls to either a XASession or to a non-XA Session depending on the calling
  * context.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class DualSessionWrapper extends AbstractXAResourceHolder implements Session, StateChangeListener {
 

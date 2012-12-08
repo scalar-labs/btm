@@ -35,7 +35,7 @@ import java.util.Set;
 /**
  * Incremental resource recoverer.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class IncrementalRecoverer {
 

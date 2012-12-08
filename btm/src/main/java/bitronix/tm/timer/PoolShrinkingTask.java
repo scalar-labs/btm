@@ -22,7 +22,7 @@ import java.util.Date;
 /**
  * This task is used to notify a XA pool to close idle connections.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class PoolShrinkingTask extends Task {
 

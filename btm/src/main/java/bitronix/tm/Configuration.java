@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>All those properties can refer to other defined ones or to system properties using the Ant notation:
  * <code>${some.property.name}</code>.</p>
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class Configuration implements Service {
 

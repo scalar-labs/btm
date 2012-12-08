@@ -25,7 +25,7 @@ import java.util.Date;
 /**
  * This task is used to run the background recovery.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class RecoveryTask extends Task {
 

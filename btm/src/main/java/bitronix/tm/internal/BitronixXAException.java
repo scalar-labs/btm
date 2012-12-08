@@ -20,7 +20,7 @@ import javax.transaction.xa.XAException;
 /**
  * Subclass of {@link javax.transaction.xa.XAException} supporting nested {@link Throwable}s.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class BitronixXAException extends XAException {
 

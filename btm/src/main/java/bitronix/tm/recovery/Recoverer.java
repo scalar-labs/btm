@@ -82,7 +82,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *   <li>rollback any remaining recovered transaction (Mike's step 7)</li>
  * </ul></p>
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class Recoverer implements Runnable, Service, RecovererMBean {
 

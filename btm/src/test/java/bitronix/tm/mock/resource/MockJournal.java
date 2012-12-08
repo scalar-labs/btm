@@ -31,7 +31,7 @@ import java.util.Set;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class MockJournal implements Journal {
 

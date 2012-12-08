@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p>
  *   Copyright 2003-2010 Terracotta, Inc.
  * </p>
- * @author lorban
+ * @author Ludovic Orban
  */
 @SuppressWarnings("serial")
 public final class EhCacheXAResourceProducer extends ResourceBean implements XAResourceProducer {

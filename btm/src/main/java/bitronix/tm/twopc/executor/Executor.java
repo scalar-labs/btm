@@ -20,7 +20,7 @@ import bitronix.tm.utils.Service;
 /**
  * Thread pool interface required by the two-phase commit logic.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public interface Executor extends Service {
 

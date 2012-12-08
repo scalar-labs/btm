@@ -20,7 +20,7 @@ import javax.transaction.HeuristicMixedException;
 /**
  * Subclass of {@link javax.transaction.HeuristicMixedException} supporting nested {@link Throwable}s.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class BitronixHeuristicMixedException extends HeuristicMixedException  {
     

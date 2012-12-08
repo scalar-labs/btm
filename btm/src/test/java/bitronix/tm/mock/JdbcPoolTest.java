@@ -39,7 +39,7 @@ import java.sql.Statement;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class JdbcPoolTest extends TestCase {
 

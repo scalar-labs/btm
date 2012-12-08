@@ -19,7 +19,7 @@ import javax.transaction.xa.XAResource;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class XAResourceIsSameRmEvent extends XAEvent {
 

@@ -61,7 +61,7 @@ import java.util.List;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
 

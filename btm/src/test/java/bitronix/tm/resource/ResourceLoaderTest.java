@@ -29,7 +29,7 @@ import java.util.Properties;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class ResourceLoaderTest extends TestCase {
 

@@ -23,7 +23,7 @@ import java.util.List;
  * {@link XAResourceHolder} created by an {@link bitronix.tm.resource.common.XAResourceProducer} that is
  * used to perform recovery. Objects of this class cannot be used outside recovery scope.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class RecoveryXAResourceHolder extends AbstractXAResourceHolder {
 

@@ -20,7 +20,7 @@ import javax.transaction.HeuristicRollbackException;
 /**
  * Subclass of {@link javax.transaction.HeuristicRollbackException} supporting nested {@link Throwable}s.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class BitronixHeuristicRollbackException extends HeuristicRollbackException {
     

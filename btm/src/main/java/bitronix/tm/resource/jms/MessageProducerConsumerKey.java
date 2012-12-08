@@ -26,7 +26,7 @@ import javax.jms.Topic;
  * JMS destination wrapper optimized for use with hashed collections where it is the key and a
  * {@link javax.jms.MessageProducer} or a {@link javax.jms.MessageConsumer} is the value.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class MessageProducerConsumerKey {
 

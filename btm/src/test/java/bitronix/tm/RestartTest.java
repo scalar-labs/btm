@@ -25,7 +25,7 @@ import java.util.Iterator;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class RestartTest extends TestCase {
 

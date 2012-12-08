@@ -23,7 +23,7 @@ import java.util.List;
  * that must be implemented by the connection as well as the pooling lifecycle states.
  * Instances of this interface have to create and manage {@link XAResourceHolder}s.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public interface XAStatefulHolder {
 

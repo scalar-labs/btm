@@ -43,7 +43,7 @@ import java.util.Set;
 /**
  * Phase 2 Commit logic engine.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public final class Committer extends AbstractPhaseEngine {
 

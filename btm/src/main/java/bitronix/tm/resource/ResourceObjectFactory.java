@@ -31,7 +31,7 @@ import java.util.Hashtable;
  * {@link bitronix.tm.resource.common.XAResourceProducer} object factory for JNDI references.
  *
  * @see bitronix.tm.resource.common.ResourceBean
- * @author lorban
+ * @author Ludovic Orban
  */
 public class ResourceObjectFactory implements ObjectFactory {
 

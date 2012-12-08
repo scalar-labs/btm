@@ -21,7 +21,7 @@ import java.util.Date;
 /**
  * {@link BitronixTransaction} Management interface.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public interface BitronixTransactionMBean {
 

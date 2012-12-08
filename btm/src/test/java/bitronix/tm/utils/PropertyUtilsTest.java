@@ -22,7 +22,7 @@ import java.util.Properties;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class PropertyUtilsTest extends TestCase {
 

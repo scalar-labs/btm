@@ -29,7 +29,8 @@ import java.util.Properties;
 /**
  * XADataSource implementation for a non-XA JDBC resource emulating XA with Last Resource Commit.
  *
- * @author lorban, brettw
+ * @author Ludovic Orban
+ * @author Brett Wooldridge
  */
 public class LrcXADataSource implements XADataSource {
 

@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * Helper class that contains static logic common accross all resource types.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public final class TransactionContextHelper {
 

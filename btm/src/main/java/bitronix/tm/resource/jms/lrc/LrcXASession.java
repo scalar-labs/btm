@@ -43,7 +43,7 @@ import java.io.Serializable;
 /**
  * XASession implementation for a non-XA JMS resource emulating XA with Last Resource Commit.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class LrcXASession implements XASession {
 

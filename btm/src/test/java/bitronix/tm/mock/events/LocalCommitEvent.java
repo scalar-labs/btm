@@ -17,7 +17,7 @@ package bitronix.tm.mock.events;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class LocalCommitEvent extends Event {
 

@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * A System.currentTimeMillis() replacement which guarantees monotonic time increment.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public final class MonotonicClock {
 

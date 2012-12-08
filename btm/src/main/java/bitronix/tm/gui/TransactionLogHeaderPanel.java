@@ -30,7 +30,7 @@ import java.util.Date;
 /**
  * <p></p>
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class TransactionLogHeaderPanel extends JPanel {
 

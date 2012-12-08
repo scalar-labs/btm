@@ -19,7 +19,7 @@ import bitronix.tm.resource.jdbc.JdbcPooledConnection;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class ConnectionQueuedEvent extends Event {
 

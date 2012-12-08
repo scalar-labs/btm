@@ -33,7 +33,7 @@ import java.util.TreeSet;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class DiskJournalTest extends TestCase {
 

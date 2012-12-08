@@ -20,7 +20,7 @@ import java.io.IOException;
 /**
  * May be implemented by journal implementations that support migrating the contained logs into another Journal.
  *
- * @author juergen kellerer, 2011-05-15
+ * @author Juergen Kellerer
  */
 public interface MigratableJournal {
     /**

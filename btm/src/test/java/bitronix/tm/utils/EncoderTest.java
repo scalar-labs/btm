@@ -19,7 +19,7 @@ import junit.framework.TestCase;
 
 /**
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class EncoderTest extends TestCase {
 

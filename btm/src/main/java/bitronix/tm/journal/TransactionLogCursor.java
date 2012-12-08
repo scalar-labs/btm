@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * Used to read {@link TransactionLogRecord} objects from a log file.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class TransactionLogCursor {
 

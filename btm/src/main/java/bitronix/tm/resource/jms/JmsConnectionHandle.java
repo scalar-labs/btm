@@ -29,7 +29,7 @@ import javax.jms.XAConnection;
 /**
  * Disposable Connection handle.
  *
- * @author lorban
+ * @author Ludovic Orban
  */
 public class JmsConnectionHandle implements Connection {
 
