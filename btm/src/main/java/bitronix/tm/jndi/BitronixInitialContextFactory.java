@@ -15,9 +15,9 @@
  */
 package bitronix.tm.jndi;
 
-import javax.naming.spi.InitialContextFactory;
 import javax.naming.Context;
 import javax.naming.NamingException;
+import javax.naming.spi.InitialContextFactory;
 import java.util.Hashtable;
 
 /**

@@ -15,12 +15,12 @@
  */
 package bitronix.tm.resource.jdbc.proxy;
 
+import bitronix.tm.resource.jdbc.JdbcPooledConnection;
+
 import java.lang.reflect.Method;
 import java.sql.CallableStatement;
 import java.sql.SQLException;
 import java.util.Map;
-
-import bitronix.tm.resource.jdbc.JdbcPooledConnection;
 
 /**
  * @author Brett Wooldridge

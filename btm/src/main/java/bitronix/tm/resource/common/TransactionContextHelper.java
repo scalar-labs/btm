@@ -15,18 +15,20 @@
  */
 package bitronix.tm.resource.common;
 
-import bitronix.tm.*;
+import bitronix.tm.BitronixTransaction;
+import bitronix.tm.BitronixXid;
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.internal.BitronixSystemException;
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.utils.Scheduler;
 import bitronix.tm.utils.Uid;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.transaction.*;
+import javax.transaction.RollbackException;
+import javax.transaction.Synchronization;
+import javax.transaction.SystemException;
 import javax.transaction.xa.XAResource;
-
 import java.util.List;
 
 /**

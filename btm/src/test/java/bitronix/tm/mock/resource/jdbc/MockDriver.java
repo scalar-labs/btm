@@ -15,10 +15,10 @@
  */
 package bitronix.tm.mock.resource.jdbc;
 
-import java.sql.Driver;
-import java.sql.SQLException;
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.DriverPropertyInfo;
+import java.sql.SQLException;
 import java.util.Properties;
 
 /**

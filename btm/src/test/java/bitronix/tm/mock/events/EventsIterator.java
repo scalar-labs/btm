@@ -15,7 +15,8 @@
  */
 package bitronix.tm.mock.events;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  *

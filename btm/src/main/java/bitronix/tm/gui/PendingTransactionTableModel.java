@@ -16,10 +16,10 @@
 package bitronix.tm.gui;
 
 import bitronix.tm.journal.JournalRecord;
-import bitronix.tm.utils.Decoder;
 import bitronix.tm.journal.TransactionLogRecord;
-import org.slf4j.LoggerFactory;
+import bitronix.tm.utils.Decoder;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.event.TableModelListener;
 import javax.transaction.Status;

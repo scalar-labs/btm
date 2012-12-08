@@ -15,14 +15,18 @@
  */
 package bitronix.tm.jndi;
 
-import java.util.Hashtable;
-
-import javax.naming.*;
-
-import junit.framework.TestCase;
-import bitronix.tm.*;
+import bitronix.tm.BitronixTransactionManager;
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
+import junit.framework.TestCase;
+
+import javax.naming.CompositeName;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.Name;
+import javax.naming.NameNotFoundException;
+import java.util.Hashtable;
 
 
 /**

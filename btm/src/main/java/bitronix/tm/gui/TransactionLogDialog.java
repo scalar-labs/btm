@@ -15,14 +15,14 @@
  */
 package bitronix.tm.gui;
 
-import bitronix.tm.utils.Decoder;
 import bitronix.tm.journal.TransactionLogRecord;
+import bitronix.tm.utils.Decoder;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Date;
-import java.util.Set;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * <p></p>

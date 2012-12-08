@@ -15,9 +15,9 @@
  */
 package bitronix.tm.utils;
 
+import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.journal.TransactionLogHeader;
 import bitronix.tm.resource.common.XAStatefulHolder;
-import bitronix.tm.internal.XAResourceHolderState;
 
 import javax.transaction.Status;
 import javax.transaction.xa.XAException;

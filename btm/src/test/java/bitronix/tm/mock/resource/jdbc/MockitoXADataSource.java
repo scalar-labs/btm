@@ -15,21 +15,36 @@
  */
 package bitronix.tm.mock.resource.jdbc;
 
-import static org.mockito.Mockito.*;
-
-import java.io.PrintWriter;
-import java.sql.*;
-import java.util.*;
-
-import javax.sql.*;
-import javax.transaction.xa.*;
-
-import org.mockito.MockSettings;
+import bitronix.tm.mock.events.ConnectionCloseEvent;
+import bitronix.tm.mock.events.EventRecorder;
+import bitronix.tm.mock.events.LocalCommitEvent;
+import bitronix.tm.mock.events.LocalRollbackEvent;
+import bitronix.tm.mock.events.XAConnectionCloseEvent;
+import bitronix.tm.mock.resource.MockXAResource;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import bitronix.tm.mock.events.*;
-import bitronix.tm.mock.resource.MockXAResource;
+import javax.sql.XAConnection;
+import javax.sql.XADataSource;
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
+import java.io.PrintWriter;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyObject;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  *

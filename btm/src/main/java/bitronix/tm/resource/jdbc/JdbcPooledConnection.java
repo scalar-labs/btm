@@ -15,6 +15,28 @@
  */
 package bitronix.tm.resource.jdbc;
 
+import bitronix.tm.internal.BitronixRollbackSystemException;
+import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.resource.common.AbstractXAResourceHolder;
+import bitronix.tm.resource.common.RecoveryXAResourceHolder;
+import bitronix.tm.resource.common.ResourceBean;
+import bitronix.tm.resource.common.StateChangeListener;
+import bitronix.tm.resource.common.TransactionContextHelper;
+import bitronix.tm.resource.common.XAResourceHolder;
+import bitronix.tm.resource.common.XAStatefulHolder;
+import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
+import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
+import bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.ManagementRegistrar;
+import bitronix.tm.utils.MonotonicClock;
+import bitronix.tm.utils.Scheduler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sql.XAConnection;
+import javax.transaction.SystemException;
+import javax.transaction.xa.XAResource;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -26,30 +48,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-
-import javax.sql.XAConnection;
-import javax.transaction.SystemException;
-import javax.transaction.xa.XAResource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import bitronix.tm.internal.BitronixRollbackSystemException;
-import bitronix.tm.internal.BitronixSystemException;
-import bitronix.tm.resource.common.AbstractXAResourceHolder;
-import bitronix.tm.resource.common.RecoveryXAResourceHolder;
-import bitronix.tm.resource.common.ResourceBean;
-import bitronix.tm.resource.common.StateChangeListener;
-import bitronix.tm.resource.common.TransactionContextHelper;
-import bitronix.tm.resource.common.XAResourceHolder;
-import bitronix.tm.resource.common.XAStatefulHolder;
-import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
-import bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory;
-import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
-import bitronix.tm.utils.Decoder;
-import bitronix.tm.utils.ManagementRegistrar;
-import bitronix.tm.utils.MonotonicClock;
-import bitronix.tm.utils.Scheduler;
 
 /**
  * Implementation of a JDBC pooled connection wrapping vendor's {@link XAConnection} implementation.

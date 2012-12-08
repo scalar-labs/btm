@@ -16,18 +16,22 @@
 package bitronix.tm.twopc;
 
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.internal.XAResourceManager;
 import bitronix.tm.internal.XAResourceHolderState;
-import bitronix.tm.twopc.executor.Job;
+import bitronix.tm.internal.XAResourceManager;
 import bitronix.tm.twopc.executor.Executor;
-import bitronix.tm.utils.Decoder;
+import bitronix.tm.twopc.executor.Job;
 import bitronix.tm.utils.CollectionUtils;
-
-import javax.transaction.xa.XAException;
-import java.util.*;
-
+import bitronix.tm.utils.Decoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.transaction.xa.XAException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
 
 /**
  * Abstract phase execution engine.

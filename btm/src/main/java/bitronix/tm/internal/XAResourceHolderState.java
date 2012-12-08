@@ -15,13 +15,13 @@
  */
 package bitronix.tm.internal;
 
+import bitronix.tm.BitronixXid;
 import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.resource.common.XAResourceHolder;
-import bitronix.tm.BitronixXid;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.MonotonicClock;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;

@@ -15,7 +15,11 @@
  */
 package bitronix.tm;
 
-import bitronix.tm.utils.*;
+import bitronix.tm.utils.ClassLoaderUtils;
+import bitronix.tm.utils.InitializationException;
+import bitronix.tm.utils.PropertyException;
+import bitronix.tm.utils.PropertyUtils;
+import bitronix.tm.utils.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -17,16 +17,16 @@ package bitronix.tm.recovery;
 
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.journal.JournalRecord;
-import bitronix.tm.utils.Decoder;
-import bitronix.tm.utils.ManagementRegistrar;
-import bitronix.tm.utils.Uid;
-import bitronix.tm.utils.Service;
-import bitronix.tm.internal.*;
 import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.resource.ResourceLoader;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.XAResourceProducer;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.ManagementRegistrar;
+import bitronix.tm.utils.Service;
+import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,8 +35,12 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**

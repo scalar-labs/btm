@@ -24,9 +24,9 @@ import junit.framework.TestCase;
 
 import javax.jms.Connection;
 import javax.jms.JMSException;
-import javax.jms.Session;
-import javax.jms.Queue;
 import javax.jms.MessageProducer;
+import javax.jms.Queue;
+import javax.jms.Session;
 import java.lang.reflect.Field;
 
 /**

@@ -18,7 +18,12 @@ package bitronix.tm.utils;
 import bitronix.tm.Version;
 import bitronix.tm.internal.BitronixRuntimeException;
 
-import javax.crypto.*;
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

@@ -15,6 +15,13 @@
  */
 package bitronix.tm.resource.jdbc.proxy;
 
+import bitronix.tm.resource.jdbc.JdbcPooledConnection;
+import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
+import bitronix.tm.resource.jdbc.PooledConnectionProxy;
+import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
+import bitronix.tm.utils.ClassLoaderUtils;
+
+import javax.sql.XAConnection;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Constructor;
@@ -25,14 +32,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.Set;
-
-import javax.sql.XAConnection;
-
-import bitronix.tm.resource.jdbc.JdbcPooledConnection;
-import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
-import bitronix.tm.resource.jdbc.PooledConnectionProxy;
-import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
-import bitronix.tm.utils.ClassLoaderUtils;
 
 /**
  * This class generates JDBC proxy classes using stardard java.lang.reflect.Proxy

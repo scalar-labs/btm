@@ -15,11 +15,20 @@
  */
 package bitronix.tm.mock.resource;
 
-import javax.transaction.xa.*;
-
 import bitronix.tm.internal.BitronixXAException;
-import bitronix.tm.mock.events.*;
-import bitronix.tm.mock.resource.jdbc.*;
+import bitronix.tm.mock.events.EventRecorder;
+import bitronix.tm.mock.events.XAResourceCommitEvent;
+import bitronix.tm.mock.events.XAResourceEndEvent;
+import bitronix.tm.mock.events.XAResourceForgetEvent;
+import bitronix.tm.mock.events.XAResourceIsSameRmEvent;
+import bitronix.tm.mock.events.XAResourcePrepareEvent;
+import bitronix.tm.mock.events.XAResourceRollbackEvent;
+import bitronix.tm.mock.events.XAResourceStartEvent;
+import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
+
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
 
 /**
  *

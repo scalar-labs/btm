@@ -15,14 +15,10 @@
  */
 package bitronix.tm.resource.jdbc.proxy;
 
-import java.lang.reflect.Constructor;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
-import java.util.HashSet;
-import java.util.Set;
-
+import bitronix.tm.resource.jdbc.JdbcPooledConnection;
+import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
+import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
+import bitronix.tm.utils.ClassLoaderUtils;
 import javassist.CannotCompileException;
 import javassist.ClassClassPath;
 import javassist.ClassMap;
@@ -35,11 +31,13 @@ import javassist.CtNewMethod;
 import javassist.NotFoundException;
 
 import javax.sql.XAConnection;
-
-import bitronix.tm.resource.jdbc.JdbcPooledConnection;
-import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
-import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
-import bitronix.tm.utils.ClassLoaderUtils;
+import java.lang.reflect.Constructor;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This class generates JDBC proxy classes using Javassist bytecode generated

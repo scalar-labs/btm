@@ -15,9 +15,9 @@
  */
 package bitronix.tm.integration.jetty6;
 
+import bitronix.tm.TransactionManagerServices;
 import org.mortbay.component.AbstractLifeCycle;
 import org.mortbay.log.Log;
-import bitronix.tm.TransactionManagerServices;
 
 public class BTMLifeCycle extends AbstractLifeCycle {
 

@@ -15,11 +15,12 @@
  */
 package bitronix.tm.resource.common;
 
-import junit.framework.TestCase;
-import bitronix.tm.*;
+import bitronix.tm.BitronixTransactionManager;
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import bitronix.tm.utils.CryptoEngine;
+import junit.framework.TestCase;
 
 /**
  *

@@ -15,17 +15,11 @@
  */
 package bitronix.tm.resource.jdbc.proxy;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.InvocationHandler;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
-import java.util.Map;
-import java.util.Set;
-
-import javax.sql.XAConnection;
-
+import bitronix.tm.resource.jdbc.JdbcPooledConnection;
+import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
+import bitronix.tm.resource.jdbc.PooledConnectionProxy;
+import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
+import bitronix.tm.utils.ClassLoaderUtils;
 import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.CallbackFilter;
 import net.sf.cglib.proxy.Enhancer;
@@ -33,11 +27,16 @@ import net.sf.cglib.proxy.Factory;
 import net.sf.cglib.proxy.LazyLoader;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
-import bitronix.tm.resource.jdbc.JdbcPooledConnection;
-import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
-import bitronix.tm.resource.jdbc.PooledConnectionProxy;
-import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
-import bitronix.tm.utils.ClassLoaderUtils;
+
+import javax.sql.XAConnection;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This class generates JDBC proxy classes using CGLIB bytecode generated

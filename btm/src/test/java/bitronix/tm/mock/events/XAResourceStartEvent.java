@@ -15,9 +15,9 @@
  */
 package bitronix.tm.mock.events;
 
-import javax.transaction.xa.Xid;
-
 import bitronix.tm.utils.Decoder;
+
+import javax.transaction.xa.Xid;
 
 /**
  *

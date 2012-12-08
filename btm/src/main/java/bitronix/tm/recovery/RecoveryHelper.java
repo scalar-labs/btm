@@ -15,22 +15,21 @@
  */
 package bitronix.tm.recovery;
 
-import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.BitronixXid;
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.utils.Uid;
+import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.Uid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
-import java.util.Collections;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.Arrays;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Reovery helper methods.

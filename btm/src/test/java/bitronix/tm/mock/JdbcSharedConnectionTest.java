@@ -15,17 +15,15 @@
  */
 package bitronix.tm.mock;
 
-import java.sql.Connection;
-import java.util.ArrayList;
-
-import javax.transaction.Transaction;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import bitronix.tm.BitronixTransactionManager;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.resource.jdbc.PooledConnectionProxy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.transaction.Transaction;
+import java.sql.Connection;
+import java.util.ArrayList;
 
 /**
  *

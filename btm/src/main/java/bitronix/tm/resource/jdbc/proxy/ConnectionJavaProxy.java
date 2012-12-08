@@ -15,6 +15,15 @@
  */
 package bitronix.tm.resource.jdbc.proxy;
 
+import bitronix.tm.resource.common.TransactionContextHelper;
+import bitronix.tm.resource.jdbc.JdbcPooledConnection;
+import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
+import bitronix.tm.resource.jdbc.PooledConnectionProxy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import java.lang.reflect.Method;
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -23,17 +32,6 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.Map;
-
-import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import bitronix.tm.resource.common.TransactionContextHelper;
-import bitronix.tm.resource.jdbc.JdbcPooledConnection;
-import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
-import bitronix.tm.resource.jdbc.PooledConnectionProxy;
 
 /**
  * @author Brett Wooldridge

@@ -15,6 +15,20 @@
  */
 package bitronix.tm.resource.common;
 
+import bitronix.tm.BitronixTransaction;
+import bitronix.tm.BitronixXid;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.internal.BitronixRuntimeException;
+import bitronix.tm.internal.XAResourceHolderState;
+import bitronix.tm.recovery.IncrementalRecoverer;
+import bitronix.tm.recovery.RecoveryException;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.MonotonicClock;
+import bitronix.tm.utils.Uid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.transaction.Synchronization;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -27,22 +41,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import javax.transaction.Synchronization;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import bitronix.tm.BitronixTransaction;
-import bitronix.tm.BitronixXid;
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.internal.BitronixRuntimeException;
-import bitronix.tm.internal.XAResourceHolderState;
-import bitronix.tm.recovery.IncrementalRecoverer;
-import bitronix.tm.recovery.RecoveryException;
-import bitronix.tm.utils.Decoder;
-import bitronix.tm.utils.MonotonicClock;
-import bitronix.tm.utils.Uid;
 
 /**
  * Generic XA pool. {@link XAStatefulHolder} instances are created by the {@link XAPool} out of a

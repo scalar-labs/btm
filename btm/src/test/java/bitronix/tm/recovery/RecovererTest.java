@@ -15,29 +15,43 @@
  */
 package bitronix.tm.recovery;
 
-import java.io.File;
-import java.lang.reflect.*;
-import java.sql.Connection;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-
-import javax.transaction.Status;
-import javax.transaction.xa.*;
-
-import junit.framework.TestCase;
-
-import org.slf4j.*;
-
-import bitronix.tm.*;
+import bitronix.tm.BitronixTransaction;
+import bitronix.tm.BitronixTransactionManager;
+import bitronix.tm.BitronixXid;
+import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.internal.TransactionStatusChangeListener;
 import bitronix.tm.journal.Journal;
-import bitronix.tm.mock.events.*;
-import bitronix.tm.mock.resource.*;
+import bitronix.tm.mock.events.Event;
+import bitronix.tm.mock.events.EventRecorder;
+import bitronix.tm.mock.events.JournalLogEvent;
+import bitronix.tm.mock.resource.MockJournal;
+import bitronix.tm.mock.resource.MockXAResource;
+import bitronix.tm.mock.resource.MockXid;
 import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.resource.ResourceRegistrar;
-import bitronix.tm.resource.common.*;
-import bitronix.tm.resource.jdbc.*;
-import bitronix.tm.utils.*;
+import bitronix.tm.resource.common.ResourceBean;
+import bitronix.tm.resource.common.XAStatefulHolder;
+import bitronix.tm.resource.jdbc.JdbcPooledConnection;
+import bitronix.tm.resource.jdbc.PooledConnectionProxy;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+import bitronix.tm.utils.Uid;
+import bitronix.tm.utils.UidGenerator;
+import junit.framework.TestCase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.transaction.Status;
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
+import java.io.File;
+import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *

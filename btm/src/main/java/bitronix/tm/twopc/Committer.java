@@ -15,23 +15,29 @@
  */
 package bitronix.tm.twopc;
 
-import bitronix.tm.TransactionManagerServices;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import bitronix.tm.BitronixTransaction;
-import bitronix.tm.utils.Decoder;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.internal.BitronixHeuristicMixedException;
+import bitronix.tm.internal.BitronixHeuristicRollbackException;
+import bitronix.tm.internal.BitronixRollbackException;
+import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.internal.BitronixXAException;
+import bitronix.tm.internal.XAResourceHolderState;
+import bitronix.tm.internal.XAResourceManager;
 import bitronix.tm.twopc.executor.Executor;
 import bitronix.tm.twopc.executor.Job;
-import bitronix.tm.internal.*;
+import bitronix.tm.utils.Decoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.Status;
 import javax.transaction.xa.XAException;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**

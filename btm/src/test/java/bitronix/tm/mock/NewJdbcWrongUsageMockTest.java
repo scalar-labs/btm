@@ -15,24 +15,38 @@
  */
 package bitronix.tm.mock;
 
-import java.sql.*;
-import java.util.List;
-
-import javax.sql.XAConnection;
-import javax.transaction.*;
-import javax.transaction.xa.*;
-
-import bitronix.tm.*;
-import bitronix.tm.mock.events.*;
+import bitronix.tm.BitronixTransactionManager;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.mock.events.ConnectionDequeuedEvent;
+import bitronix.tm.mock.events.ConnectionQueuedEvent;
+import bitronix.tm.mock.events.EventRecorder;
+import bitronix.tm.mock.events.JournalLogEvent;
+import bitronix.tm.mock.events.XAResourceEndEvent;
+import bitronix.tm.mock.events.XAResourcePrepareEvent;
+import bitronix.tm.mock.events.XAResourceRollbackEvent;
+import bitronix.tm.mock.events.XAResourceStartEvent;
 import bitronix.tm.mock.resource.MockXAResource;
-import bitronix.tm.mock.resource.jdbc.*;
+import bitronix.tm.mock.resource.jdbc.MockDriver;
 import bitronix.tm.mock.resource.jms.MockConnectionFactory;
-import bitronix.tm.resource.jdbc.*;
+import bitronix.tm.resource.jdbc.JdbcPooledConnection;
+import bitronix.tm.resource.jdbc.PooledConnectionProxy;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
 import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
 import bitronix.tm.resource.jms.PoolingConnectionFactory;
 import bitronix.tm.resource.jms.lrc.LrcXAConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.sql.XAConnection;
+import javax.transaction.InvalidTransactionException;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.Transaction;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
 
 /**
  *

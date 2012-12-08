@@ -15,16 +15,14 @@
  */
 package bitronix.tm.mock;
 
+import bitronix.tm.BitronixTransactionManager;
+import bitronix.tm.TransactionManagerServices;
+import junit.framework.Assert;
+import org.junit.Test;
+
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
-
-import junit.framework.Assert;
-
-import org.junit.Test;
-
-import bitronix.tm.BitronixTransactionManager;
-import bitronix.tm.TransactionManagerServices;
 
 public class JdbcProxyTest extends AbstractMockJdbcTest {
 

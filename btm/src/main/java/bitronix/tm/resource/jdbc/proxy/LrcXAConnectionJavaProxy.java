@@ -15,22 +15,20 @@
  */
 package bitronix.tm.resource.jdbc.proxy;
 
+import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sql.ConnectionEvent;
+import javax.sql.ConnectionEventListener;
+import javax.sql.PooledConnection;
+import javax.transaction.xa.XAResource;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import javax.sql.ConnectionEvent;
-import javax.sql.ConnectionEventListener;
-import javax.sql.PooledConnection;
-import javax.transaction.xa.XAResource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
 
 /**
  * @author Brett Wooldridge

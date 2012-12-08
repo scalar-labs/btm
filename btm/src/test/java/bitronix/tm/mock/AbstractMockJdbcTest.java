@@ -15,23 +15,30 @@
  */
 package bitronix.tm.mock;
 
-import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-
-import bitronix.tm.journal.Journal;
-import junit.framework.TestCase;
-
-import org.slf4j.*;
-
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.mock.events.*;
+import bitronix.tm.journal.Journal;
+import bitronix.tm.mock.events.ConnectionDequeuedEvent;
+import bitronix.tm.mock.events.ConnectionQueuedEvent;
+import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.resource.MockJournal;
 import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.resource.ResourceRegistrar;
-import bitronix.tm.resource.common.*;
-import bitronix.tm.resource.jdbc.*;
+import bitronix.tm.resource.common.AbstractXAResourceHolder;
+import bitronix.tm.resource.common.StateChangeListener;
+import bitronix.tm.resource.common.XAPool;
+import bitronix.tm.resource.common.XAStatefulHolder;
+import bitronix.tm.resource.jdbc.JdbcPooledConnection;
+import bitronix.tm.resource.jdbc.PooledConnectionProxy;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+import junit.framework.TestCase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *

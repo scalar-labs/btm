@@ -15,26 +15,35 @@
  */
 package bitronix.tm.twopc;
 
-import java.lang.reflect.*;
+import bitronix.tm.BitronixTransactionManager;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.journal.Journal;
+import bitronix.tm.mock.AbstractMockJdbcTest;
+import bitronix.tm.mock.events.Event;
+import bitronix.tm.mock.events.EventRecorder;
+import bitronix.tm.mock.events.JournalLogEvent;
+import bitronix.tm.mock.events.LocalRollbackEvent;
+import bitronix.tm.mock.events.XAResourcePrepareEvent;
+import bitronix.tm.mock.events.XAResourceRollbackEvent;
+import bitronix.tm.mock.resource.MockJournal;
+import bitronix.tm.mock.resource.MockXAResource;
+import bitronix.tm.mock.resource.jdbc.MockDriver;
+import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
+import bitronix.tm.resource.jdbc.PooledConnectionProxy;
+import bitronix.tm.resource.jdbc.PoolingDataSource;
+import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
+import junit.framework.TestCase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sql.XAConnection;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.xa.XAException;
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-
-import javax.sql.XAConnection;
-import javax.transaction.*;
-import javax.transaction.xa.XAException;
-
-import bitronix.tm.journal.Journal;
-import junit.framework.TestCase;
-import bitronix.tm.*;
-import bitronix.tm.mock.AbstractMockJdbcTest;
-import bitronix.tm.mock.events.*;
-import bitronix.tm.mock.resource.*;
-import bitronix.tm.mock.resource.jdbc.*;
-import bitronix.tm.resource.jdbc.*;
-import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *

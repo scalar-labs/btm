@@ -15,19 +15,18 @@
  */
 package bitronix.tm.resource.jdbc.proxy;
 
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
-
-import javax.sql.XAConnection;
-
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.internal.BitronixRuntimeException;
 import bitronix.tm.resource.jdbc.JdbcPooledConnection;
 import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
 import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
 import bitronix.tm.utils.ClassLoaderUtils;
+
+import javax.sql.XAConnection;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 
 /**
  *

@@ -17,7 +17,9 @@ package bitronix.tm;
 
 import junit.framework.TestCase;
 
-import javax.transaction.*;
+import javax.transaction.Status;
+import javax.transaction.Synchronization;
+import javax.transaction.TransactionSynchronizationRegistry;
 
 /**
  *

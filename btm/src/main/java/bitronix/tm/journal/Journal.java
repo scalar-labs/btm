@@ -15,8 +15,8 @@
  */
 package bitronix.tm.journal;
 
-import bitronix.tm.utils.Uid;
 import bitronix.tm.utils.Service;
+import bitronix.tm.utils.Uid;
 
 import java.io.IOException;
 import java.util.Map;

@@ -15,6 +15,16 @@
  */
 package bitronix.tm.journal;
 
+import bitronix.tm.BitronixXid;
+import bitronix.tm.Configuration;
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.MonotonicClock;
+import bitronix.tm.utils.Uid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.transaction.Status;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -32,18 +42,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import javax.transaction.Status;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import bitronix.tm.BitronixXid;
-import bitronix.tm.Configuration;
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.utils.Decoder;
-import bitronix.tm.utils.MonotonicClock;
-import bitronix.tm.utils.Uid;
 
 /**
  * Simple implementation of a journal that writes on a two-files disk log.

@@ -17,18 +17,23 @@ package bitronix.tm.twopc;
 
 import bitronix.tm.BitronixTransaction;
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.utils.Decoder;
-import bitronix.tm.internal.*;
+import bitronix.tm.internal.BitronixRollbackException;
+import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.internal.XAResourceHolderState;
+import bitronix.tm.internal.XAResourceManager;
 import bitronix.tm.twopc.executor.Executor;
 import bitronix.tm.twopc.executor.Job;
+import bitronix.tm.utils.Decoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.transaction.Status;
 import javax.transaction.RollbackException;
+import javax.transaction.Status;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Phase 1 Prepare logic engine.

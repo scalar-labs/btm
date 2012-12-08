@@ -15,13 +15,15 @@
  */
 package bitronix.tm;
 
-import java.sql.SQLException;
-
-import junit.framework.TestCase;
-import bitronix.tm.mock.resource.jdbc.*;
-import bitronix.tm.recovery.*;
+import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
+import bitronix.tm.recovery.IncrementalRecoverer;
+import bitronix.tm.recovery.Recoverer;
+import bitronix.tm.recovery.RecoveryException;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
+import junit.framework.TestCase;
+
+import java.sql.SQLException;
 
 /**
  *

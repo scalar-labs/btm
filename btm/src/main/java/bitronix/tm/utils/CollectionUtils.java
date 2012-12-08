@@ -16,7 +16,6 @@
 package bitronix.tm.utils;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * <p>{@link Collection} helper functions.</p>

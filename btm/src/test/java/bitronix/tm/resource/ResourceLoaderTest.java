@@ -15,17 +15,17 @@
  */
 package bitronix.tm.resource;
 
-import java.lang.reflect.Field;
-import java.util.*;
-
-import javax.sql.XADataSource;
-
-import junit.framework.TestCase;
 import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.mock.resource.jms.MockXAConnectionFactory;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import bitronix.tm.resource.jms.PoolingConnectionFactory;
 import bitronix.tm.utils.PropertyUtils;
+import junit.framework.TestCase;
+
+import javax.sql.XADataSource;
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  *

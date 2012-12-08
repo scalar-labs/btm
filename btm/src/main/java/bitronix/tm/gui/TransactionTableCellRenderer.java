@@ -16,7 +16,6 @@
 package bitronix.tm.gui;
 
 import bitronix.tm.journal.JournalRecord;
-import bitronix.tm.journal.TransactionLogRecord;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;

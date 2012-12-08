@@ -15,20 +15,19 @@
  */
 package bitronix.tm.mock.resource;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
-import javax.transaction.Status;
-
 import bitronix.tm.journal.Journal;
 import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.events.JournalLogEvent;
 import bitronix.tm.utils.Uid;
+
+import javax.transaction.Status;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /**
  *

@@ -15,6 +15,11 @@
  */
 package bitronix.tm.journal;
 
+import bitronix.tm.utils.Uid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.transaction.Status;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -29,13 +34,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.transaction.Status;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import bitronix.tm.utils.Uid;
 
 /**
  * Used to write {@link TransactionLogRecord} objects to a log file.

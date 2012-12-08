@@ -15,13 +15,13 @@
  */
 package bitronix.tm.resource.jdbc.proxy;
 
+import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
+
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.Map;
-
-import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
 
 /**
  * @author Brett Wooldridge

@@ -15,14 +15,14 @@
  */
 package bitronix.tm.utils;
 
-import junit.framework.TestCase;
-import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.internal.XAResourceHolderState;
+import bitronix.tm.resource.common.ResourceBean;
+import junit.framework.TestCase;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.List;
 
 /**
  *

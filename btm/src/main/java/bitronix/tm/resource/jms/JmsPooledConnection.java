@@ -16,17 +16,33 @@
 package bitronix.tm.resource.jms;
 
 import bitronix.tm.internal.BitronixSystemException;
-import bitronix.tm.resource.common.*;
+import bitronix.tm.resource.common.AbstractXAStatefulHolder;
+import bitronix.tm.resource.common.RecoveryXAResourceHolder;
+import bitronix.tm.resource.common.StateChangeListener;
+import bitronix.tm.resource.common.TransactionContextHelper;
+import bitronix.tm.resource.common.XAResourceHolder;
+import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.resource.jms.lrc.LrcXAConnectionFactory;
-import bitronix.tm.utils.*;
-
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.ManagementRegistrar;
+import bitronix.tm.utils.MonotonicClock;
+import bitronix.tm.utils.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jms.*;
+import javax.jms.JMSException;
+import javax.jms.Session;
+import javax.jms.TemporaryQueue;
+import javax.jms.XAConnection;
+import javax.jms.XASession;
 import javax.transaction.xa.XAResource;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Implementation of a JMS pooled connection wrapping vendor's {@link XAConnection} implementation.

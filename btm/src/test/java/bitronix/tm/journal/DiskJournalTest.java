@@ -15,6 +15,12 @@
  */
 package bitronix.tm.journal;
 
+import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.utils.Uid;
+import bitronix.tm.utils.UidGenerator;
+import junit.framework.TestCase;
+
+import javax.transaction.Status;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,13 +30,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-
-import javax.transaction.Status;
-
-import junit.framework.TestCase;
-import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.utils.Uid;
-import bitronix.tm.utils.UidGenerator;
 
 /**
  *

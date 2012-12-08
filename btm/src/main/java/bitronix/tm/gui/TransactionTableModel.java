@@ -18,8 +18,8 @@ package bitronix.tm.gui;
 import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.journal.TransactionLogCursor;
 import bitronix.tm.journal.TransactionLogRecord;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.table.TableModel;
 import java.io.File;

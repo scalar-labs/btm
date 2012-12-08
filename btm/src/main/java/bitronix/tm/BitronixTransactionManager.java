@@ -15,19 +15,44 @@
  */
 package bitronix.tm;
 
-import bitronix.tm.internal.*;
-import bitronix.tm.utils.*;
+import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.internal.ThreadContext;
+import bitronix.tm.internal.XAResourceManager;
+import bitronix.tm.utils.ClassLoaderUtils;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.InitializationException;
+import bitronix.tm.utils.MonotonicClock;
+import bitronix.tm.utils.Scheduler;
+import bitronix.tm.utils.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
-import org.slf4j.*;
-
+import javax.naming.NamingException;
+import javax.naming.Reference;
+import javax.naming.Referenceable;
+import javax.naming.StringRefAddr;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.InvalidTransactionException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.Synchronization;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
+import javax.transaction.xa.XAException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.NoSuchElementException;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
-
-import javax.naming.*;
-import javax.transaction.*;
-import javax.transaction.xa.XAException;
 
 /**
  * Implementation of {@link TransactionManager} and {@link UserTransaction}.

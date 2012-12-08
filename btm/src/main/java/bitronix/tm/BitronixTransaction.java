@@ -15,24 +15,52 @@
  */
 package bitronix.tm;
 
-import bitronix.tm.internal.*;
+import bitronix.tm.internal.BitronixMultiSystemException;
+import bitronix.tm.internal.BitronixRollbackException;
+import bitronix.tm.internal.BitronixRollbackSystemException;
+import bitronix.tm.internal.BitronixSystemException;
+import bitronix.tm.internal.BitronixXAException;
+import bitronix.tm.internal.TransactionStatusChangeListener;
+import bitronix.tm.internal.XAResourceHolderState;
+import bitronix.tm.internal.XAResourceManager;
 import bitronix.tm.journal.Journal;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.resource.common.XAResourceHolderStateVisitor;
 import bitronix.tm.timer.TaskScheduler;
-import bitronix.tm.twopc.*;
+import bitronix.tm.twopc.Committer;
+import bitronix.tm.twopc.PhaseException;
+import bitronix.tm.twopc.Preparer;
+import bitronix.tm.twopc.Rollbacker;
 import bitronix.tm.twopc.executor.Executor;
-import bitronix.tm.utils.*;
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.ExceptionUtils;
+import bitronix.tm.utils.ManagementRegistrar;
+import bitronix.tm.utils.MonotonicClock;
+import bitronix.tm.utils.Scheduler;
+import bitronix.tm.utils.StackTrace;
+import bitronix.tm.utils.Uid;
+import bitronix.tm.utils.UidGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.transaction.*;
+import javax.transaction.HeuristicCommitException;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.Synchronization;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
-
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Implementation of {@link Transaction}.

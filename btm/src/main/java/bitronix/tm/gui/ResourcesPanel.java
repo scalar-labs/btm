@@ -16,9 +16,9 @@
 package bitronix.tm.gui;
 
 import bitronix.tm.TransactionManagerServices;
-import bitronix.tm.utils.PropertyUtils;
 import bitronix.tm.resource.ResourceLoader;
 import bitronix.tm.resource.common.ResourceBean;
+import bitronix.tm.utils.PropertyUtils;
 
 import javax.swing.*;
 import java.awt.*;

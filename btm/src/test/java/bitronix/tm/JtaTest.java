@@ -15,19 +15,19 @@
  */
 package bitronix.tm;
 
-import bitronix.tm.utils.DefaultExceptionAnalyzer;
-import junit.framework.TestCase;
-
-import javax.transaction.*;
-
+import bitronix.tm.mock.resource.jdbc.MockDriver;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
-import bitronix.tm.mock.resource.jdbc.MockDriver;
-
-import java.sql.Connection;
-
-import org.slf4j.LoggerFactory;
+import bitronix.tm.utils.DefaultExceptionAnalyzer;
+import junit.framework.TestCase;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.Synchronization;
+import javax.transaction.Transaction;
+import java.sql.Connection;
 
 /**
  *

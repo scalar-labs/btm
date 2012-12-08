@@ -15,6 +15,12 @@
  */
 package bitronix.tm.journal;
 
+import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.MonotonicClock;
+import bitronix.tm.utils.Uid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -28,13 +34,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import bitronix.tm.utils.Decoder;
-import bitronix.tm.utils.MonotonicClock;
-import bitronix.tm.utils.Uid;
 
 /**
  * Representation of a transaction log record on disk.

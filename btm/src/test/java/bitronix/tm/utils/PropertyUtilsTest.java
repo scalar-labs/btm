@@ -17,8 +17,8 @@ package bitronix.tm.utils;
 
 import junit.framework.TestCase;
 
-import java.util.Properties;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  *

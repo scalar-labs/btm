@@ -15,14 +15,13 @@
  */
 package bitronix.tm.resource.common;
 
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import bitronix.tm.utils.ClassLoaderUtils;
 import bitronix.tm.utils.CryptoEngine;
 import bitronix.tm.utils.PropertyUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * @author Brett Wooldridge

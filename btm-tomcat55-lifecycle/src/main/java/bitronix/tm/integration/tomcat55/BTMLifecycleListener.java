@@ -15,11 +15,10 @@
  */
 package bitronix.tm.integration.tomcat55;
 
+import bitronix.tm.TransactionManagerServices;
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleEvent;
 import org.apache.catalina.LifecycleListener;
-
-import bitronix.tm.TransactionManagerServices;
 
 import java.util.logging.Logger;
 

@@ -15,8 +15,10 @@
  */
 package bitronix.tm.gui;
 
-import bitronix.tm.utils.Decoder;
 import bitronix.tm.journal.TransactionLogHeader;
+import bitronix.tm.utils.Decoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,9 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Date;
-
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
 
 /**
  * <p></p>

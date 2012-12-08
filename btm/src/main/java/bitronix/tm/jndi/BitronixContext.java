@@ -17,12 +17,21 @@ package bitronix.tm.jndi;
 
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.resource.ResourceRegistrar;
-
-import javax.naming.*;
-import java.util.Hashtable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.naming.Binding;
+import javax.naming.CompositeName;
+import javax.naming.Context;
+import javax.naming.Name;
+import javax.naming.NameClassPair;
+import javax.naming.NameNotFoundException;
+import javax.naming.NameParser;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.OperationNotSupportedException;
+import javax.naming.ServiceUnavailableException;
+import java.util.Hashtable;
 
 /**
  * Implementation of {@link javax.naming.Context} that allows lookup of transaction manager

@@ -15,13 +15,13 @@
  */
 package bitronix.tm;
 
-import java.io.File;
-import java.util.Iterator;
-
-import junit.framework.TestCase;
 import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
+import junit.framework.TestCase;
+
+import java.io.File;
+import java.util.Iterator;
 
 /**
  *
