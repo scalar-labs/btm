@@ -60,7 +60,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <compilerArgument>-Xbootclasspath/p:${project.basedir}/src/main/lib/jdbc-3.0.jar</compilerArgument>
+                    <compilerArgument>-Xbootclasspath/p:${project.basedir}/src/main/jar/jdbc-3.0.jar</compilerArgument>
                 </configuration>
             </plugin>
 
@@ -154,7 +154,7 @@ public final class Version {
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine>"-Xbootclasspath/p:${project.basedir}/src/main/lib/jdbc-3.0.jar"</argLine>
+                    <argLine>"-Xbootclasspath/p:${project.basedir}/src/main/jar/jdbc-3.0.jar"</argLine>
                 </configuration>
             </plugin>
         </plugins>
