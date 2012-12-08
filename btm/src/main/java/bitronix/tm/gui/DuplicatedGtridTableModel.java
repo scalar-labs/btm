@@ -65,7 +65,7 @@ public class DuplicatedGtridTableModel extends DefaultTableModel {
     }
 
     private String buildTlogsSequenceNumber(List tlogs) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (int i = 0; i < tlogs.size(); i++) {
             JournalRecord tlog = (JournalRecord) tlogs.get(i);
             sb.append(tlog.getRecordProperties().get("sequenceNumber"));

@@ -103,7 +103,7 @@ public class TransactionLogDialog extends JDialog {
     }
 
     private String buildString(Set uniqueNames) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         Iterator it = uniqueNames.iterator();
         while (it.hasNext()) {

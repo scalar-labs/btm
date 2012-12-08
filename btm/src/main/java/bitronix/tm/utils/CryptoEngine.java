@@ -108,7 +108,7 @@ public class CryptoEngine {
         ByteArrayInputStream bis = new ByteArrayInputStream(cypherBytes);
         CipherInputStream cis = new CipherInputStream(bis, desCipher);
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         while (true) {
             int b = cis.read();

@@ -61,7 +61,7 @@ public class ResourcesPanel extends JPanel {
                 if (resource != null) {
                     try {
                         Map properties = PropertyUtils.getProperties(resource);
-                        StringBuffer sb = new StringBuffer();
+                        StringBuilder sb = new StringBuilder();
                         Iterator it2 = properties.entrySet().iterator();
                         while (it2.hasNext()) {
                             Map.Entry entry = (Map.Entry) it2.next();

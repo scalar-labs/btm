@@ -39,7 +39,7 @@ public class BitronixMultiSystemException extends BitronixSystemException {
     }
 
     public String getMessage() {
-        StringBuffer errorMessage = new StringBuffer();
+        StringBuilder errorMessage = new StringBuilder();
         errorMessage.append("collected ");
         errorMessage.append(exceptions.size());
         errorMessage.append(" exception(s):");

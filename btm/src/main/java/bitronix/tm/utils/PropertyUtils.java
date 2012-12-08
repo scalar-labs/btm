@@ -46,7 +46,7 @@ public final class PropertyUtils {
     public static void setProperty(Object target, String propertyName, Object propertyValue) throws PropertyException {
         String[] propertyNames = propertyName.split("\\.");
 
-        StringBuffer visitedPropertyName = new StringBuffer();
+        StringBuilder visitedPropertyName = new StringBuilder();
         Object currentTarget = target;
         int i = 0;
         while (i < propertyNames.length -1) {
@@ -192,7 +192,7 @@ public final class PropertyUtils {
      * @return a a comma-separated String of r/w properties.
      */
     public static String propertiesToString(Object obj) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         Map properties = new TreeMap(getProperties(obj));
         Iterator it = properties.keySet().iterator();
         while (it.hasNext()) {
