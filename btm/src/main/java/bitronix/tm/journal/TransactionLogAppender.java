@@ -174,11 +174,9 @@ public class TransactionLogAppender {
     private void trackOutstanding(int status, Uid gtrid, Set<String> uniqueNames) {
         switch (status) {
             case Status.STATUS_COMMITTING: {
-                Set<String> outstanding = danglingRecords.putIfAbsent(gtrid, new TreeSet<String>(uniqueNames));
+                Set<String> outstanding = danglingRecords.putIfAbsent(gtrid, Collections.synchronizedSet(new TreeSet<String>(uniqueNames)));
                 if (outstanding != null) {
-                    synchronized (outstanding) {
-                        outstanding.addAll(uniqueNames);
-                    }
+                    outstanding.addAll(uniqueNames);
                 }
                 break;
             }
@@ -187,11 +185,9 @@ public class TransactionLogAppender {
             case Status.STATUS_UNKNOWN: {
                 Set<String> outstanding = danglingRecords.get(gtrid);
                 if (outstanding != null) {
-                    synchronized (outstanding) {
-                        outstanding.removeAll(uniqueNames);
-                        if (outstanding.isEmpty()) {
-                            danglingRecords.remove(gtrid);
-                        }
+                    outstanding.removeAll(uniqueNames);
+                    if (outstanding.isEmpty()) {
+                        danglingRecords.remove(gtrid);
                     }
                 }
                 break;
@@ -247,7 +243,6 @@ public class TransactionLogAppender {
      * @return the file position
      */
     public long getPosition() {
-    	// return header.getPosition();
     	return position;
     }
 
