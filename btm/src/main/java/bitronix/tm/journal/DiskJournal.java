@@ -63,7 +63,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * The active log appender. This is exactly the same reference as tla1 or tla2 depending on which one is
      * currently active
      */
-    private AtomicReference<TransactionLogAppender> activeTla;
+    private final AtomicReference<TransactionLogAppender> activeTla;
 
     /**
      * The transaction log appender writing on the 1st file
@@ -75,16 +75,12 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      */
     private TransactionLogAppender tla2;
 
-	private long maxFileLength;
+	private final Lock conservativeJournalingLock = new ReentrantLock();
+	private final ReadWriteLock swapForceLock = new ReentrantReadWriteLock(true);
+	private final Object positionLock = new Object();
+	private final AtomicBoolean needsForce;
 
-	private boolean conservativeJournaling;
-	
-	private Lock journalLock = new ReentrantLock();
-	private ReadWriteLock swapForceLock = new ReentrantReadWriteLock(true);
-	private Object positionLock = new Object();
-	private AtomicBoolean needsForce;
-
-	private Configuration configuration;
+	private final Configuration configuration;
 
     /**
      * Create an uninitialized disk journal. You must call open() prior you can use it.
@@ -119,17 +115,16 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         TransactionLogRecord tlog = new TransactionLogRecord(status, gtrid, uniqueNames);
 
         try {
-        	if (conservativeJournaling) {
-        		journalLock.lock();
+        	if (configuration.isConservativeJournaling()) {
+        		conservativeJournalingLock.lock();
         	}
 
 	        synchronized (positionLock) {
 	        	boolean rollover = activeTla.get().setPositionAndAdvance(tlog);
 	            if (rollover) {
 	                // time to swap log files
+                    swapForceLock.writeLock().lock();
 	                try {
-	                	swapForceLock.writeLock().lock();
-
 	                	swapJournalFiles();
 	                	activeTla.get().setPositionAndAdvance(tlog);
 	                }
@@ -138,6 +133,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
 	                }
 	            }
 
+                // this read lock MUST be acquired under positionLock
 	        	swapForceLock.readLock().lock();
 	        }
 
@@ -150,8 +146,8 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
 	        }
         }
         finally {
-        	if (conservativeJournaling) {
-        		journalLock.unlock();
+        	if (configuration.isConservativeJournaling()) {
+        		conservativeJournalingLock.unlock();
         	}
         }
     }
@@ -189,8 +185,6 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
             return;
         }
 
-        conservativeJournaling = configuration.isConservativeJournaling();
-
         File file1 = new File(configuration.getLogPart1Filename());
         File file2 = new File(configuration.getLogPart2Filename());
 
@@ -213,7 +207,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
             log.error("transaction log files are not of the same length: corrupted files?");
         }
 
-        maxFileLength = Math.max(file1.length(), file2.length());
+        long maxFileLength = Math.max(file1.length(), file2.length());
         if (log.isDebugEnabled()) { log.debug("disk journal files max length: " + maxFileLength); }
 
         tla1 = new TransactionLogAppender(file1, maxFileLength);
@@ -279,9 +273,9 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      */
     public void migrateTo(Journal other) throws IOException, IllegalArgumentException {
         if (other == this)
-            throw new IllegalArgumentException("Cannot migrate a journal to itself (this == otherJournal).");
+            throw new IllegalArgumentException("cannot migrate a journal to itself (this == otherJournal)");
         if (other == null)
-            throw new IllegalArgumentException("The migration target journal may not be 'null'.");
+            throw new IllegalArgumentException("the migration target journal cannot be null");
 
         for (Object record : collectDanglingRecords().values()) {
             JournalRecord jr = (JournalRecord) record;
@@ -398,8 +392,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         for (TransactionLogRecord tlog : danglingLogs) {
             boolean rolloverError = passiveTla.setPositionAndAdvance(tlog);
             if (rolloverError) {
-                log.error("Moving in-flight transactions the rollover log file would have resulted in an overflow of that file.");
-                break;
+                throw new IOException("moving in-flight transactions the rollover log file would have resulted in an overflow of that file");
             }
             passiveTla.writeLog(tlog);
         }
@@ -423,7 +416,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
     /**
      * @return the TransactionFileAppender of the passive journal file.
      */
-    private TransactionLogAppender getPassiveTransactionLogAppender() {
+    private synchronized TransactionLogAppender getPassiveTransactionLogAppender() {
         return (tla1 == activeTla.get() ? tla2 : tla1);
     }
 
@@ -498,11 +491,9 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @return an iterator over all contained log records.
      * @throws java.io.IOException in case of the initial disk IO failed (subsequent errors are unchecked exceptions).
      */
-    private static Iterator<TransactionLogRecord> iterateRecords(
-            TransactionLogAppender tla, final boolean skipCrcCheck) throws IOException {
+    private static Iterator<TransactionLogRecord> iterateRecords(TransactionLogAppender tla, final boolean skipCrcCheck) throws IOException {
         final TransactionLogCursor tlc = tla.getCursor();
         final Iterator<TransactionLogRecord> it = new Iterator<TransactionLogRecord>() {
-
             TransactionLogRecord tlog;
 
             public boolean hasNext() {
@@ -545,10 +536,10 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         try {
             it.hasNext();
             return it;
-        } catch (RuntimeException e) {
-            if (e.getCause() instanceof IOException)
-                throw (IOException) e.getCause();
-            throw e;
+        } catch (RuntimeException ex) {
+            if (ex.getCause() instanceof IOException)
+                throw (IOException) ex.getCause();
+            throw ex;
         }
     }
 }
