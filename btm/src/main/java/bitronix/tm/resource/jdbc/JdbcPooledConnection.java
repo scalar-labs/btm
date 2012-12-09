@@ -142,7 +142,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     public void close() throws SQLException {
         // this should never happen, should we throw an exception or log at warn/error?
         if (usageCount > 0) {
-            if (log.isDebugEnabled()) { log.debug("close connection with usage count > 0, " + this); }
+            if (log.isDebugEnabled()) { log.warn("close connection with usage count > 0, " + this); }
         }
 
         setState(STATE_CLOSED);
