@@ -220,10 +220,12 @@ public class XAPool implements StateChangeListener {
         } // while true
     }
 
-    /* ------------------------------------------------------------------------
-     * Pool Transition.  stateChanging() and stateChanged() contain the only
-     * write lock usage in this class.  All other methods obtain read locks.
-     * ------------------------------------------------------------------------*/
+    /* -----------------------------------------------------------------------------------
+     * Pool Transition.  stateChanging() and stateChanged() obtain the stateTransitionLock
+     * write lock to prevent other threads from iterating the pools while a coonection is
+     * in transition from one pool to another.  However, this window of time is extremely
+     * small, and in general allows high-concurrency.
+     * ----------------------------------------------------------------------------------*/
 
     public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
         stateTransitionLock.writeLock().lock();
@@ -321,7 +323,9 @@ public class XAPool implements StateChangeListener {
     }
 
     /**
-     * Get a XAStatefulHolder (connection) from the NOT_ACCESSIBLE pool.
+     * Get a XAStatefulHolder (connection) from the NOT_ACCESSIBLE pool.  This method obtains
+     * the stateTransitionLock.readLock() which prevents any modification during iteration, but
+     * allows multiple threads to iterate simultaneously.
      *
      * @return a connection, or null if there are no connections in the inaccessible pool for the current transaction
      */
@@ -352,11 +356,11 @@ public class XAPool implements StateChangeListener {
     }
 
     /**
-     * Try to get a shared XAStatefulHolder.  This method will either return a
-     * shared XAStatefulHolder or <code>null</code>.  If there is no current
-     * transaction, XAStatefulHolder's are not shared.  If there is a transaction
-     * <i>and</i> there is a XAStatefulHolder associated with this thread already,
-     * we return that XAStatefulHolder (provided it is ACCESSIBLE or NOT_ACCESSIBLE).
+     * Try to get a shared XAStatefulHolder.  This method will either return a shared
+     * XAStatefulHolder or <code>null</code>.  If there is no current transaction,
+     * XAStatefulHolder's are not shared.  If there is a transaction <i>and</i> there is
+     * a XAStatefulHolder associated with this thread already, we return that XAStatefulHolder
+     * (provided it is ACCESSIBLE or NOT_ACCESSIBLE).
      *
      * @return a shared XAStatefulHolder or <code>null</code>
      */
