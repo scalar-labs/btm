@@ -29,16 +29,17 @@ import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Used to write {@link TransactionLogRecord} objects to a log file.
  *
  * @author Ludovic Orban
+ * @author Brett Wooldridge
  */
 public class TransactionLogAppender {
 
@@ -52,14 +53,14 @@ public class TransactionLogAppender {
     public static final int END_RECORD = 0x786e7442;
 
     private final File file;
-    private RandomAccessFile randomeAccessFile;
+    private final RandomAccessFile randomeAccessFile;
     private final FileChannel fc;
     private final FileLock lock;
     private final TransactionLogHeader header;
-	private long maxFileLength;
-	private AtomicInteger outstandingWrites;
+	private final long maxFileLength;
+	private final AtomicInteger outstandingWrites;
+	private final HashMap<Uid, Set<String>> danglingRecords;
 	private long position;
-	private ConcurrentHashMap<Uid, Set<String>> danglingRecords;
 
     /**
      * Create an appender that will write to specified file up to the specified maximum length.
@@ -79,14 +80,19 @@ public class TransactionLogAppender {
 
         this.outstandingWrites = new AtomicInteger();
 
-        this.danglingRecords = new ConcurrentHashMap<Uid, Set<String>>();
+        this.danglingRecords = new HashMap<Uid, Set<String>>();
 
         this.position = header.getPosition();
     }
 
     /**
      * Get the current file position and advance the position by recordSize if
-     * the maximum file length won't be exceeded.
+     * the maximum file length won't be exceeded.  Callers to this method are
+     * synchronized within the DiskJournal and it is guaranteed there will 
+     * never be two callers to this method.  This creates a Java memory barrier
+     * that guarantees that 'position' will never be viewed inconsistently
+     * between threads.
+     *
      * @param tlog the TransactionLogRecord
      * @return true if the log should rollover, false otherwise
      * @throws IOException if an I/O error occurs
@@ -151,48 +157,68 @@ public class TransactionLogAppender {
     }
 
     protected List<TransactionLogRecord> getDanglingLogs() {
-        List<Uid> sortedUids = new ArrayList<Uid>(danglingRecords.keySet());
-        Collections.sort(sortedUids, new Comparator<Uid>() {
-            public int compare(Uid uid1, Uid uid2) {
-                return Integer.valueOf(uid1.extractSequence()).compareTo(uid2.extractSequence()); 
-            }
-        });
-
-        List<TransactionLogRecord> outstandingLogs = new ArrayList<TransactionLogRecord>(danglingRecords.size());
-        for (Uid uid : sortedUids) {
-            Set<String> uniqueNames = danglingRecords.get(uid);
-            outstandingLogs.add(new TransactionLogRecord(Status.STATUS_COMMITTING, uid, uniqueNames));
-        }
-
-        return outstandingLogs;
+    	synchronized (danglingRecords) {
+	        List<Uid> sortedUids = new ArrayList<Uid>(danglingRecords.keySet());
+	        Collections.sort(sortedUids, new Comparator<Uid>() {
+	            public int compare(Uid uid1, Uid uid2) {
+	                return Integer.valueOf(uid1.extractSequence()).compareTo(uid2.extractSequence()); 
+	            }
+	        });
+	
+	        List<TransactionLogRecord> outstandingLogs = new ArrayList<TransactionLogRecord>(danglingRecords.size());
+	        for (Uid uid : sortedUids) {
+	            Set<String> uniqueNames = danglingRecords.get(uid);
+	            outstandingLogs.add(new TransactionLogRecord(Status.STATUS_COMMITTING, uid, uniqueNames));
+	        }
+	
+	        return outstandingLogs;
+    	}
     }
 
     protected void clearDanglingLogs() {
-        danglingRecords.clear();
+    	synchronized (danglingRecords) {
+    		danglingRecords.clear();
+    	}
     }
 
+    /**
+     * This method tracks outstanding (uncommitted) resources by gtrid.  Access
+     * to the danglingRecords map, and the TreeSets contained within are guarded
+     * by a synchronization lock on danglingRecords itself.
+     *
+     * @param status the transaction log record status
+     * @param gtrid the transaction id
+     * @param uniqueNames the set of uniquely named resources
+     */
     private void trackOutstanding(int status, Uid gtrid, Set<String> uniqueNames) {
+    	if (uniqueNames.isEmpty()) {
+    		return;
+    	}
+
         switch (status) {
             case Status.STATUS_COMMITTING: {
-                Set<String> outstanding = danglingRecords.putIfAbsent(gtrid, Collections.synchronizedSet(new TreeSet<String>(uniqueNames)));
-                if (outstanding != null) {
-                    outstanding.addAll(uniqueNames);
-                }
+            	synchronized (danglingRecords) {
+            		Set<String> outstanding = danglingRecords.get(gtrid);
+            		if (outstanding == null) {
+            			outstanding = new TreeSet<String>(uniqueNames);
+            			danglingRecords.put(gtrid, outstanding);
+            		}
+            		outstanding.addAll(uniqueNames);
+            	}
                 break;
             }
             case Status.STATUS_ROLLEDBACK:
             case Status.STATUS_COMMITTED:
             case Status.STATUS_UNKNOWN: {
-                Set<String> outstanding = danglingRecords.get(gtrid);
-                if (outstanding != null) {
-                    outstanding.removeAll(uniqueNames);
-                    if (outstanding.isEmpty()) {
-                        danglingRecords.remove(gtrid);
-                    }
-                }
+            	synchronized (danglingRecords) {
+	                Set<String> outstanding = danglingRecords.get(gtrid);
+	                if (outstanding != null && outstanding.removeAll(uniqueNames) && outstanding.isEmpty()) {
+	                    danglingRecords.remove(gtrid);
+	                }
+            	}
                 break;
             }
-        }        
+        }
     }
 
     /**

@@ -53,7 +53,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @see bitronix.tm.Configuration
  * @see <a href="http://jroller.com/page/pyrasun?entry=xa_exposed_part_iii_the">XA Exposed, Part III: The Implementor's Notebook</a>
+ *
  * @author Ludovic Orban
+ * @author Brett Wooldridge
  */
 public class DiskJournal implements Journal, MigratableJournal, ReadableJournal {
 
