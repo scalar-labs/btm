@@ -258,10 +258,8 @@ public class XAPool implements StateChangeListener {
         try {
         	switch (newState) {
         	case XAStatefulHolder.STATE_IN_POOL:
-                if (!expireStatefulHolder(source, false)) {
-                    if (log.isDebugEnabled()) { log.debug("added " + source + " to the available pool"); }
-                    availablePool.add(source);
-                }
+                if (log.isDebugEnabled()) { log.debug("added " + source + " to the available pool"); }
+                availablePool.add(source);
         		break;
         	case XAStatefulHolder.STATE_ACCESSIBLE:
         		if (log.isDebugEnabled()) { log.debug("added " + source + " to the accessible pool"); }
@@ -442,6 +440,10 @@ public class XAPool implements StateChangeListener {
             }
             else {
                 if (log.isDebugEnabled()) { log.debug("pool " + bean.getUniqueName() + " already at max size of " + totalPoolSize() + " connection(s), not growing it"); }
+            }
+
+            if (totalPoolSize() < bean.getMinPoolSize()) {
+            	growUntilMinPoolSize();
             }
         }
     }
