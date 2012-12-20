@@ -74,21 +74,11 @@ public class JdbcFailedPoolTest extends TestCase {
         poolingDataSource.setMaxPoolSize(1);
         poolingDataSource.init();
 
-//        try {
-//            IncrementalRecoverer.recover(poolingDataSource);
-//            fail("expected RecoveryException");
-//        } catch (RecoveryException ex) {
-//            assertEquals("cannot start recovery on a PoolingDataSource containing an XAPool of resource ds1 with 0 connection(s) (0 still available)", ex.getMessage());
-//        }
-//
-//        assertEquals("a PoolingDataSource containing an XAPool of resource ds1 with 0 connection(s) (0 still available) -failed-", poolingDataSource.toString());
-
         Recoverer recoverer = new Recoverer();
         recoverer.run();
         assertEquals("a PoolingDataSource containing an XAPool of resource ds1 with 0 connection(s) (0 still available) -failed-", poolingDataSource.toString());
         // recoverer must not unregister the resource
         assertSame(poolingDataSource, ResourceRegistrar.get("ds1"));
-
 
         MockitoXADataSource.setStaticGetXAConnectionException(null);
 
@@ -96,7 +86,6 @@ public class JdbcFailedPoolTest extends TestCase {
         assertEquals("a PoolingDataSource containing an XAPool of resource ds1 with 1 connection(s) (1 still available)", poolingDataSource.toString());
         // recoverer must not unregister the resource
         assertSame(poolingDataSource, ResourceRegistrar.get("ds1"));
-
 
         poolingDataSource.close();
     }
@@ -118,7 +107,6 @@ public class JdbcFailedPoolTest extends TestCase {
         }
 
         assertEquals("a PoolingDataSource containing an XAPool of resource ds1 with 0 connection(s) (0 still available) -failed-", poolingDataSource.toString());
-
 
         MockitoXADataSource.setStaticGetXAConnectionException(null);
 
