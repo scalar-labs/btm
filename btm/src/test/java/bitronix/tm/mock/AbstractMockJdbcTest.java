@@ -28,15 +28,12 @@ import bitronix.tm.resource.common.StateChangeListener;
 import bitronix.tm.resource.common.XAPool;
 import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.resource.jdbc.JdbcPooledConnection;
-import bitronix.tm.resource.jdbc.PooledConnectionProxy;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import junit.framework.TestCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -110,14 +107,9 @@ public abstract class AbstractMockJdbcTest extends TestCase {
     }
 
     private void registerPoolEventListener(XAPool pool) throws Exception {
-        ArrayList<PooledConnectionProxy> connections = new ArrayList<PooledConnectionProxy>();
-
         Iterator<?> iterator = pool.getXAResourceHolders().iterator();
         while (iterator.hasNext()) {
-            XAStatefulHolder holder = (XAStatefulHolder) iterator.next();
-            PooledConnectionProxy connectionHandle = (PooledConnectionProxy) holder.getConnectionHandle();
-            JdbcPooledConnection jdbcPooledConnection = connectionHandle.getPooledConnection();
-            connections.add(connectionHandle);
+        	JdbcPooledConnection jdbcPooledConnection = (JdbcPooledConnection) iterator.next();
             jdbcPooledConnection.addStateChangeEventListener(new StateChangeListener() {
                 public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
                     if (newState == AbstractXAResourceHolder.STATE_IN_POOL)
@@ -129,11 +121,6 @@ public abstract class AbstractMockJdbcTest extends TestCase {
                 public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
                 }
             });
-        }
-
-        for (int i = 0; i < connections.size(); i++) {
-            Connection connectionHandle = (Connection) connections.get(i);
-            connectionHandle.close();
         }
     }
 
