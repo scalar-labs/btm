@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -67,6 +68,8 @@ public class XAPool implements StateChangeListener {
     private final BlockingQueue<XAStatefulHolder> availablePool = new LinkedBlockingQueue<XAStatefulHolder>();
     private final Queue<XAStatefulHolder> accessiblePool = new LinkedList<XAStatefulHolder>();
     private final Queue<XAStatefulHolder> inaccessiblePool = new LinkedList<XAStatefulHolder>();
+
+    private final AtomicInteger poolSize = new AtomicInteger();
 
     /**
      * This map is used to implement the connection sharing feature of Bitronix.
@@ -232,8 +235,8 @@ public class XAPool implements StateChangeListener {
         try {
             switch (currentState) {
             case XAStatefulHolder.STATE_IN_POOL:
-                if (log.isDebugEnabled()) { log.debug("removed " + source + " from the available pool"); }
-                availablePool.remove(source);
+            	// no-op.  calling availablePool.remove(source) here is reduncant because it was
+            	// already removed when availablePool.poll() was called.
                 break;
             case XAStatefulHolder.STATE_ACCESSIBLE:
                 if (log.isDebugEnabled()) { log.debug("removed " + source + " from the accessible pool"); }
@@ -244,7 +247,6 @@ public class XAPool implements StateChangeListener {
                 inaccessiblePool.remove(source);
                 break;
             case XAStatefulHolder.STATE_CLOSED:
-                source.removeStateChangeEventListener(this);
                 break;
             }
         }
@@ -271,6 +273,7 @@ public class XAPool implements StateChangeListener {
         		break;
         	case XAStatefulHolder.STATE_CLOSED:
                 source.removeStateChangeEventListener(this);
+                poolSize.decrementAndGet();
         		break;
         	}
         }
@@ -461,6 +464,7 @@ public class XAPool implements StateChangeListener {
         XAStatefulHolder xaStatefulHolder = xaResourceProducer.createPooledConnection(xaFactory, bean);
         xaStatefulHolder.addStateChangeEventListener(this);
         availablePool.add(xaStatefulHolder);
+        poolSize.incrementAndGet();
     }
 
     /* ------------------------------------------------------------------------
@@ -584,7 +588,7 @@ public class XAPool implements StateChangeListener {
      * @return the total size of this pool
      */
     public int totalPoolSize() {
-        return availablePool.size() + accessiblePool.size() + inaccessiblePool.size();
+        return poolSize.get();
     }
 
     /**
