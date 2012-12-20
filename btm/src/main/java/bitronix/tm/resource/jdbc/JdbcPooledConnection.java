@@ -174,7 +174,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
                 log.warn("dysfunctional JDBC4 Connection.isValid() method, or negative acquisition timeout, in call to test connection of " + this + ".  Falling back to test query.");
                 jdbcVersionDetected = 3;
             }
-            // if isValid is null, and exception was caught above and we fall through to the query test
+            // if isValid is null, an exception was caught above and we fall through to the query test
             if (isValid != null) {
                 if (isValid.booleanValue()) {
                     if (log.isDebugEnabled()) { log.debug("isValid successfully tested connection of " + this); }
@@ -303,22 +303,19 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
         if (newState == STATE_IN_POOL) {
-            if (log.isDebugEnabled()) { log.debug("requeued JDBC connection of " + poolingDataSource); }
             lastReleaseDate = new Date(MonotonicClock.currentTimeMillis());
         }
-        if (oldState == STATE_IN_POOL && newState == STATE_ACCESSIBLE) {
+        else if (oldState == STATE_IN_POOL && newState == STATE_ACCESSIBLE) {
             acquisitionDate = new Date(MonotonicClock.currentTimeMillis());
         }
-        if (oldState == STATE_NOT_ACCESSIBLE && newState == STATE_ACCESSIBLE) {
+        else if (oldState == STATE_NOT_ACCESSIBLE && newState == STATE_ACCESSIBLE) {
             TransactionContextHelper.recycle(this);
         }
     }
 
     public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
-        if (futureState == STATE_IN_POOL) {
-            if (usageCount > 0) {
-                log.warn("usage count too high (" + usageCount + ") on connection returned to pool " + source);
-            }
+        if (futureState == STATE_IN_POOL && usageCount > 0) {
+            log.warn("usage count too high (" + usageCount + ") on connection returned to pool " + source);
         }
 
         if (futureState == STATE_IN_POOL || futureState == STATE_NOT_ACCESSIBLE) {
@@ -335,7 +332,6 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
             // clear SQL warnings
             try {
-                if (log.isDebugEnabled()) { log.debug("clearing warnings of " + connection); }
                 connection.clearWarnings();
             } catch (SQLException ex) {
                 if (log.isDebugEnabled()) { log.debug("error cleaning warnings of " + connection, ex); }
