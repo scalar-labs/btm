@@ -82,7 +82,7 @@ public class XAPool implements StateChangeListener {
     private final AtomicBoolean failed = new AtomicBoolean();
     private final Object poolGrowthShrinkLock = new Object();
 
-    public XAPool(XAResourceProducer xaResourceProducer, ResourceBean bean) throws Exception {
+    public XAPool(XAResourceProducer xaResourceProducer, ResourceBean bean, Object xaFactory) throws Exception {
         this.xaResourceProducer = xaResourceProducer;
         this.bean = bean;
         if (bean.getMaxPoolSize() < 1 || bean.getMinPoolSize() > bean.getMaxPoolSize())
@@ -90,7 +90,11 @@ public class XAPool implements StateChangeListener {
         if (bean.getAcquireIncrement() < 1)
             throw new IllegalArgumentException("cannot create a pool with a connection acquisition increment less than 1, configured value is " + bean.getAcquireIncrement());
 
-        xaFactory = XAFactoryHelper.createXAFactory(bean);
+        if (xaFactory == null) {
+            this.xaFactory = XAFactoryHelper.createXAFactory(bean);
+        } else {
+            this.xaFactory = xaFactory;
+        }
         init();
 
         if (bean.getIgnoreRecoveryFailures())

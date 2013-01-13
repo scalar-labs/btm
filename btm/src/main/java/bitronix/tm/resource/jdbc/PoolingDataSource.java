@@ -61,6 +61,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     private volatile transient RecoveryXAResourceHolder recoveryXAResourceHolder;
     private volatile transient Connection recoveryConnectionHandle;
     private volatile transient Map<XAResource, XAResourceHolder> xaResourceHolderMap;
+
     private volatile String testQuery;
     private volatile boolean enableJdbc4ConnectionTest;
     private volatile int preparedStatementCacheSize = 0;
@@ -95,15 +96,36 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
             return;
 
         if (log.isDebugEnabled()) { log.debug("building XA pool for " + getUniqueName() + " with " + getMinPoolSize() + " connection(s)"); }
-        pool = new XAPool(this, this);
-        xaDataSource = (XADataSource) pool.getXAFactory();
+        pool = new XAPool(this, this, xaDataSource);
+        boolean builtXaFactory = false;
+        if (xaDataSource == null) {
+            xaDataSource = (XADataSource) pool.getXAFactory();
+            builtXaFactory = true;
+        }
         try {
             ResourceRegistrar.register(this);
         } catch (RecoveryException ex) {
+            if (builtXaFactory) xaDataSource = null;
             pool = null;
-            xaDataSource = null;
             throw ex;
         }
+    }
+
+    /**
+     * @return the wrapped XADataSource.
+     */
+    public XADataSource getXaDataSource() {
+        return xaDataSource;
+    }
+
+    /**
+     * Inject a pre-configured XADataSource instead of relying on className and driverProperties
+     * to build one. Upon deserialization the xaDataSource will be null and will need to be
+     * manually re-injected.
+     * @param xaDataSource the pre-configured XADataSource.
+     */
+    public void setXaDataSource(XADataSource xaDataSource) {
+        this.xaDataSource = xaDataSource;
     }
 
     /**

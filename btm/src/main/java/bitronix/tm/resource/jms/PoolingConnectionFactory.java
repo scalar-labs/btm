@@ -39,9 +39,8 @@ import javax.naming.NamingException;
 import javax.naming.Reference;
 import javax.naming.StringRefAddr;
 import javax.transaction.xa.XAResource;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Implementation of a JMS {@link ConnectionFactory} wrapping vendor's {@link XAConnectionFactory} implementation.
@@ -54,6 +53,7 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
     private final static Logger log = LoggerFactory.getLogger(PoolingConnectionFactory.class);
 
     private volatile transient XAPool pool;
+    private volatile transient XAConnectionFactory xaConnectionFactory;
     private volatile transient JmsPooledConnection recoveryPooledConnection;
     private volatile transient RecoveryXAResourceHolder recoveryXAResourceHolder;
     private volatile transient List<JmsPooledConnection> xaStatefulHolders;
@@ -66,7 +66,7 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
     private volatile String jmxName;
 
     public PoolingConnectionFactory() {
-        xaStatefulHolders = Collections.synchronizedList(new ArrayList<JmsPooledConnection>());
+        xaStatefulHolders = new CopyOnWriteArrayList<JmsPooledConnection>();
     }
 
     /**
@@ -118,16 +118,38 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
         this.password = password;
     }
 
+    /**
+     * @return the wrapped XAConnectionFactory.
+     */
+    public XAConnectionFactory getXaConnectionFactory() {
+        return xaConnectionFactory;
+    }
+
+    /**
+     * Inject a pre-configured XAConnectionFactory instead of relying on className and driverProperties
+     * to build one. Upon deserialization the xaConnectionFactory will be null and will need to be
+     * manually re-injected.
+     * @param xaConnectionFactory the pre-configured XAConnectionFactory.
+     */
+    public void setXaConnectionFactory(XAConnectionFactory xaConnectionFactory) {
+        this.xaConnectionFactory = xaConnectionFactory;
+    }
 
     private void buildXAPool() throws Exception {
         if (pool != null)
             return;
 
         if (log.isDebugEnabled()) { log.debug("building JMS XA pool for " + getUniqueName() + " with " + getMinPoolSize() + " connection(s)"); }
-        pool = new XAPool(this, this);
+        pool = new XAPool(this, this, xaConnectionFactory);
+        boolean builtXaFactory = false;
+        if (this.xaConnectionFactory == null) {
+            this.xaConnectionFactory = (XAConnectionFactory) pool.getXAFactory();
+            builtXaFactory = true;
+        }
         try {
             ResourceRegistrar.register(this);
         } catch (RecoveryException ex) {
+            if (builtXaFactory) xaConnectionFactory = null;
             pool = null;
             throw ex;
         }
@@ -150,6 +172,10 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
     public Connection createConnection(String userName, String password) throws JMSException {
         if (log.isDebugEnabled()) { log.debug("JMS connections are pooled, username and password ignored"); }
         return createConnection();
+    }
+
+    void unregister(JmsPooledConnection jmsPooledConnection) {
+        xaStatefulHolders.remove(jmsPooledConnection);
     }
 
     public String toString() {
@@ -288,7 +314,4 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
         pool.reset();
     }
 
-    public void unregister(JmsPooledConnection jmsPooledConnection) {
-        xaStatefulHolders.remove(jmsPooledConnection);
-    }
 }
