@@ -22,7 +22,8 @@ import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.XAConnection;
 import javax.jms.XAConnectionFactory;
-import java.util.Properties;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * XAConnectionFactory implementation for a non-XA JMS resource emulating XA with Last Resource Commit.
@@ -32,7 +33,7 @@ import java.util.Properties;
 public class LrcXAConnectionFactory implements XAConnectionFactory {
 
     private volatile String connectionFactoryClassName;
-    private volatile Properties properties = new Properties();
+    private volatile Map<String, Object> properties = new HashMap<String, Object>();
 
     public LrcXAConnectionFactory() {
     }
@@ -45,11 +46,11 @@ public class LrcXAConnectionFactory implements XAConnectionFactory {
         this.connectionFactoryClassName = connectionFactoryClassName;
     }
 
-    public Properties getProperties() {
+    public Map<String, Object> getProperties() {
         return properties;
     }
 
-    public void setProperties(Properties properties) {
+    public void setProperties(Map<String, Object> properties) {
         this.properties = properties;
     }
 

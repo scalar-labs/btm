@@ -21,7 +21,6 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Properties;
 import java.util.TreeMap;
 
 /**
@@ -53,7 +52,7 @@ public final class PropertyUtils {
             String name = propertyNames[i];
             Object result = callGetter(currentTarget, name);
             if (result == null) {
-                // try to instanciate the object & set it in place
+                // try to instantiate the object & set it in place
                 Class propertyType = getPropertyType(target, name);
                 try {
                     result = propertyType.newInstance();
@@ -70,18 +69,19 @@ public final class PropertyUtils {
             visitedPropertyName.append('.');
             i++;
 
-            // if it's a Properties object -> the non-visited part of the key should be used
-            // as this Properties' object key so stop iterating over the dotted properties.
-            if (currentTarget instanceof Properties)
+            // if it's a Map object -> the non-visited part of the key should be used
+            // as this Map' object key so stop iterating over the dotted properties.
+            if (currentTarget instanceof Map) {
                 break;
+            }
         }
 
         String lastPropertyName = propertyName.substring(visitedPropertyName.length(), propertyName.length());
-        if (currentTarget instanceof Properties) {
-            Properties p = (Properties) currentTarget;
-            p.setProperty(lastPropertyName, propertyValue.toString());
-        }
-        else {
+        if (currentTarget instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> p = (Map<String, Object>) currentTarget;
+            p.put(lastPropertyName, propertyValue.toString());
+        } else {
             setDirectProperty(currentTarget, lastPropertyName, propertyValue);
         }
     }
@@ -93,29 +93,29 @@ public final class PropertyUtils {
      * @return a Map of String with properties names as key and their values
      * @throws PropertyException if an error happened while trying to get a property.
      */
-    public static Map getProperties(Object target) throws PropertyException {
-        Map properties = new HashMap();
+    public static Map<String, Object> getProperties(Object target) throws PropertyException {
+        Map<String, Object> properties = new HashMap<String, Object>();
         Class clazz = target.getClass();
         Method[] methods = clazz.getMethods();
-        for (int i = 0; i < methods.length; i++) {
-            Method method = methods[i];
+        for (Method method : methods) {
             String name = method.getName();
             if (method.getModifiers() == Modifier.PUBLIC && method.getParameterTypes().length == 0 && (name.startsWith("get") || name.startsWith("is")) && containsSetterForGetter(clazz, method)) {
                 String propertyName;
-                if (name.startsWith("get"))
+                if (name.startsWith("get")) {
                     propertyName = Character.toLowerCase(name.charAt(3)) + name.substring(4);
-                else if (name.startsWith("is"))
+                } else if (name.startsWith("is")) {
                     propertyName = Character.toLowerCase(name.charAt(2)) + name.substring(3);
-                else
+                } else {
                     throw new PropertyException("method '" + name + "' is not a getter, thereof no setter can be found");
+                }
 
                 try {
-                    Object propertyValue = method.invoke(target, (Object[]) null);  // casting to (Object[]) b/c of javac 1.5 warning
-                    if (propertyValue != null && propertyValue instanceof Properties) {
-                        Map propertiesContent = getNestedProperties(propertyName, (Properties) propertyValue);
+                    Object propertyValue = method.invoke(target);
+                    if (propertyValue != null && propertyValue instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> propertiesContent = getNestedProperties(propertyName, (Map<String, Object>) propertyValue);
                         properties.putAll(propertiesContent);
-                    }
-                    else {
+                    } else {
                         properties.put(propertyName, propertyValue);
                     }
                 } catch (IllegalAccessException ex) {
@@ -133,18 +133,19 @@ public final class PropertyUtils {
         String methodName = method.getName();
         String setterName;
 
-        if (methodName.startsWith("get"))
+        if (methodName.startsWith("get")) {
             setterName = "set" + methodName.substring(3);
-        else if (methodName.startsWith("is"))
+        } else if (methodName.startsWith("is")) {
             setterName = "set" + methodName.substring(2);
-        else
+        } else {
             throw new PropertyException("method '" + methodName + "' is not a getter, thereof no setter can be found");
+        }
 
         Method[] methods = clazz.getMethods();
-        for (int i = 0; i < methods.length; i++) {
-            Method method1 = methods[i];
-            if (method1.getName().equals(setterName))
+        for (Method m : methods) {
+            if (m.getName().equals(setterName)) {
                 return true;
+            }
         }
         return false;
     }
@@ -162,8 +163,9 @@ public final class PropertyUtils {
         for (int i = 0; i < propertyNames.length; i++) {
             String name = propertyNames[i];
             Object result = callGetter(currentTarget, name);
-            if (result == null && i < propertyNames.length -1)
+            if (result == null && i < propertyNames.length -1) {
                 throw new PropertyException("cannot get property '" + propertyName + "' - '" + name + "' is null");
+            }
             currentTarget = result;
         }
 
@@ -176,11 +178,9 @@ public final class PropertyUtils {
      * @param properties a {@link Map} of String/Object pairs.
      * @throws PropertyException if an error happened while trying to set a property.
      */
-    public static void setProperties(Object target, Map properties) throws PropertyException {
-        Iterator it = properties.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            String name = (String) entry.getKey();
+    public static void setProperties(Object target, Map<String, Object> properties) throws PropertyException {
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+            String name = entry.getKey();
             Object value = entry.getValue();
             setProperty(target, name, value);
         }
@@ -193,7 +193,7 @@ public final class PropertyUtils {
      */
     public static String propertiesToString(Object obj) {
         StringBuilder sb = new StringBuilder();
-        Map properties = new TreeMap(getProperties(obj));
+        Map<String, Object> properties = new TreeMap<String, Object>(getProperties(obj));
         Iterator it = properties.keySet().iterator();
         while (it.hasNext()) {
             String property = (String) it.next();
@@ -201,8 +201,9 @@ public final class PropertyUtils {
             sb.append(property);
             sb.append("=");
             sb.append(val);
-            if (it.hasNext())
+            if (it.hasNext()) {
                 sb.append(", ");
+            }
         }
         return sb.toString();
     }
@@ -221,10 +222,9 @@ public final class PropertyUtils {
         try {
             if (propertyValue != null) {
                 Object transformedPropertyValue = transform(propertyValue, parameterType);
-                setter.invoke(target, new Object[] {transformedPropertyValue});
-            }
-            else {
-                setter.invoke(target, new Object[] {null});
+                setter.invoke(target, transformedPropertyValue);
+            } else {
+                setter.invoke(target);
             }
         } catch (IllegalAccessException ex) {
             throw new PropertyException("property '" + propertyName + "' is not accessible", ex);
@@ -233,12 +233,10 @@ public final class PropertyUtils {
         }
     }
 
-    private static Map getNestedProperties(String prefix, Properties properties) {
-        Map result = new HashMap();
-        Iterator it = properties.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            String name = (String) entry.getKey();
+    private static Map<String, Object> getNestedProperties(String prefix, Map<String, Object> properties) {
+        Map<String, Object> result = new HashMap<String, Object>();
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+            String name = entry.getKey();
             String value = (String) entry.getValue();
             result.put(prefix + '.' + name, value);
         }
@@ -246,8 +244,9 @@ public final class PropertyUtils {
     }
 
     private static Object transform(Object value, Class destinationClass) {
-        if (value.getClass() == destinationClass)
+        if (value.getClass() == destinationClass) {
             return value;
+        }
 
         if (    value.getClass() == boolean.class || value.getClass() == Boolean.class ||
                 value.getClass() == byte.class || value.getClass() == Byte.class ||
@@ -256,8 +255,9 @@ public final class PropertyUtils {
                 value.getClass() == long.class || value.getClass() == Long.class ||
                 value.getClass() == float.class || value.getClass() == Float.class ||
                 value.getClass() == double.class || value.getClass() == Double.class
-            )
+            ) {
             return value;
+        }
 
         if ((destinationClass == boolean.class || destinationClass == Boolean.class)  &&  value.getClass() == String.class) {
             return Boolean.valueOf((String) value);
@@ -287,7 +287,7 @@ public final class PropertyUtils {
     private static void callSetter(Object target, String propertyName, Object parameter) throws PropertyException {
         Method setter = getSetter(target, propertyName);
         try {
-            setter.invoke(target, new Object[] {parameter});
+            setter.invoke(target, parameter);
         } catch (IllegalAccessException ex) {
             throw new PropertyException("property '" + propertyName + "' is not accessible", ex);
         } catch (InvocationTargetException ex) {
@@ -298,7 +298,7 @@ public final class PropertyUtils {
     private static Object callGetter(Object target, String propertyName) throws PropertyException {
         Method getter = getGetter(target, propertyName);
         try {
-            return getter.invoke(target, (Object[]) null); // casting to (Object[]) b/c of javac 1.5 warning
+            return getter.invoke(target);
         } catch (IllegalAccessException ex) {
             throw new PropertyException("property '" + propertyName + "' is not accessible", ex);
         } catch (InvocationTargetException ex) {
@@ -307,13 +307,13 @@ public final class PropertyUtils {
     }
 
     private static Method getSetter(Object target, String propertyName) {
-        if (propertyName == null || "".equals(propertyName))
+        if (propertyName == null || "".equals(propertyName)) {
             throw new PropertyException("encountered invalid null or empty property name");
+        }
         String setterName = "set" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
         Method[] methods = target.getClass().getMethods();
-        for (int i = 0; i < methods.length; i++) {
-            Method method = methods[i];
-            if (method.getName().equals(setterName)  &&  method.getReturnType().equals(void.class)  &&  method.getParameterTypes().length == 1) {
+        for (Method method : methods) {
+            if (method.getName().equals(setterName) && method.getReturnType().equals(void.class) && method.getParameterTypes().length == 1) {
                 return method;
             }
         }
@@ -324,9 +324,8 @@ public final class PropertyUtils {
         String getterName = "get" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
         String getterIsName = "is" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
         Method[] methods = target.getClass().getMethods();
-        for (int i = 0; i < methods.length; i++) {
-            Method method = methods[i];
-            if ((method.getName().equals(getterName) || method.getName().equals(getterIsName))  &&  !method.getReturnType().equals(void.class)  &&  method.getParameterTypes().length == 0) {
+        for (Method method : methods) {
+            if ((method.getName().equals(getterName) || method.getName().equals(getterIsName)) && !method.getReturnType().equals(void.class) && method.getParameterTypes().length == 0) {
                 return method;
             }
         }
@@ -337,9 +336,8 @@ public final class PropertyUtils {
         String getterName = "get" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
         String getterIsName = "is" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
         Method[] methods = target.getClass().getMethods();
-        for (int i = 0; i < methods.length; i++) {
-            Method method = methods[i];
-            if ((method.getName().equals(getterName) || method.getName().equals(getterIsName))  &&  !method.getReturnType().equals(void.class)  &&  method.getParameterTypes().length == 0) {
+        for (Method method : methods) {
+            if ((method.getName().equals(getterName) || method.getName().equals(getterIsName)) && !method.getReturnType().equals(void.class) && method.getParameterTypes().length == 0) {
                 return method.getReturnType();
             }
         }
