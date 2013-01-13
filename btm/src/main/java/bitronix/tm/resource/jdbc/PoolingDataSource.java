@@ -51,9 +51,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Ludovic Orban
  * @author Brett Wooldridge
  */
+@SuppressWarnings("serial")
 public class PoolingDataSource extends ResourceBean implements DataSource, XAResourceProducer, PoolingDataSourceMBean {
-
-    private static final long serialVersionUID = -6076467876187620570L;
 
     private final static Logger log = LoggerFactory.getLogger(PoolingDataSource.class);
 
