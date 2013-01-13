@@ -15,6 +15,7 @@
  */
 package bitronix.tm.utils;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -24,7 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class MonotonicClock {
 
-    private static final AtomicLong lastTime = new AtomicLong();
+    private static final AtomicLong lastTime = new AtomicLong(Long.MIN_VALUE);
 
     private MonotonicClock() {
     }
@@ -34,7 +35,7 @@ public final class MonotonicClock {
      * @return the current time in milliseconds.
      */
     public static long currentTimeMillis() {
-        long now = System.nanoTime() / 1000000;
+        long now = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
         long time = lastTime.get();
         if (now > time) {
             lastTime.compareAndSet(time, now);
