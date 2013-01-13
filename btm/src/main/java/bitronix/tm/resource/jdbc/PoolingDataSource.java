@@ -66,8 +66,8 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     private volatile boolean enableJdbc4ConnectionTest;
     private volatile int preparedStatementCacheSize = 0;
     private volatile String isolationLevel;
-	private volatile String cursorHoldability;
-	private volatile String localAutoCommit;
+    private volatile String cursorHoldability;
+    private volatile String localAutoCommit;
     private volatile String jmxName;
     private final List<ConnectionCustomizer> connectionCustomizers = new CopyOnWriteArrayList<ConnectionCustomizer>();
 
