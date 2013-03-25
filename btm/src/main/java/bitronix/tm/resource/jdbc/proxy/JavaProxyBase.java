@@ -29,7 +29,7 @@ public abstract class JavaProxyBase<T> implements InvocationHandler {
 
     private final static Map<Method, String> methodKeyMap = new ConcurrentHashMap<Method, String>();
 
-    private T proxy;
+    protected T proxy;
 
     protected T delegate;
 

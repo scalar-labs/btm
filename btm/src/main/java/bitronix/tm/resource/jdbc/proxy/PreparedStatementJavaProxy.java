@@ -15,13 +15,14 @@
  */
 package bitronix.tm.resource.jdbc.proxy;
 
-import bitronix.tm.resource.jdbc.JdbcPooledConnection;
-import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
-
 import java.lang.reflect.Method;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
+
+import bitronix.tm.resource.jdbc.JdbcPooledConnection;
+import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
 
 /**
  * @author Brett Wooldridge
@@ -43,6 +44,7 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
     }
 
     void initialize(JdbcPooledConnection jdbcPooledConnection, PreparedStatement statement, CacheKey cacheKey) {
+    	this.proxy = (PreparedStatement) this;
         this.jdbcPooledConnection = jdbcPooledConnection;
         this.delegate = statement;
         this.cacheKey = cacheKey;
@@ -80,6 +82,22 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
         return pretendClosed;
     }
 
+    public ResultSet getResultSet() throws SQLException {
+    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), delegate.getResultSet());
+    }
+
+    public ResultSet executeQuery() throws SQLException {
+    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), delegate.executeQuery());
+    }
+
+    public ResultSet executeQuery(String sql) throws SQLException {
+    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), delegate.executeQuery(sql));
+    }
+
+    public ResultSet getGeneratedKeys() throws SQLException {
+    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), delegate.getGeneratedKeys());
+    }
+    
     /* java.sql.Wrapper implementation */
 
     public boolean isWrapperFor(Class<?> iface) throws SQLException {

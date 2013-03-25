@@ -15,10 +15,15 @@
  */
 package bitronix.tm.resource.jdbc.proxy;
 
-import bitronix.tm.resource.jdbc.JdbcPooledConnection;
-import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
-import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
-import bitronix.tm.utils.ClassLoaderUtils;
+import java.lang.reflect.Constructor;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.HashSet;
+import java.util.Set;
+
 import javassist.CannotCompileException;
 import javassist.ClassClassPath;
 import javassist.ClassMap;
@@ -31,13 +36,11 @@ import javassist.CtNewMethod;
 import javassist.NotFoundException;
 
 import javax.sql.XAConnection;
-import java.lang.reflect.Constructor;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
-import java.util.HashSet;
-import java.util.Set;
+
+import bitronix.tm.resource.jdbc.JdbcPooledConnection;
+import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
+import bitronix.tm.resource.jdbc.lrc.LrcXAResource;
+import bitronix.tm.utils.ClassLoaderUtils;
 
 /**
  * This class generates JDBC proxy classes using Javassist bytecode generated
@@ -54,6 +57,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
     private Constructor<Statement> proxyStatementConstructor;
     private Constructor<CallableStatement> proxyCallableStatementConstructor;
     private Constructor<PreparedStatement> proxyPreparedStatementConstructor;
+    private Constructor<ResultSet> proxyResultSetConstructor;
 
     // For LRC we just use the standard Java Proxies
     private JdbcJavaProxyFactory lrcProxyFactory;
@@ -69,6 +73,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
         createProxyStatementClass();
         createProxyCallableStatementClass();
         createProxyPreparedStatementClass();
+        createProxyResultSetClass();
 
         lrcProxyFactory = new JdbcJavaProxyFactory();
 
@@ -112,6 +117,15 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
             throw new RuntimeException(e);
         }
     }
+
+    /** {@inheritDoc} */
+	public ResultSet getProxyResultSet(Statement statement, ResultSet resultSet) {
+        try {
+            return proxyResultSetConstructor.newInstance(statement, resultSet);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+	}
 
     /** {@inheritDoc} */
     public XAConnection getProxyXaConnection(Connection connection) {
@@ -170,6 +184,18 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
         try {
             Class<PreparedStatement> proxyClass = generateProxyClass(PreparedStatement.class, PreparedStatementJavaProxy.class);
             proxyPreparedStatementConstructor = proxyClass.getConstructor(new Class<?>[] {JdbcPooledConnection.class, PreparedStatement.class, CacheKey.class});
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Create a proxy class: class ResultSetJavassistProxy extends ResultSetJavaProxy implements java.sql.ResultSet 
+     */
+    private void createProxyResultSetClass() {
+        try {
+            Class<ResultSet> proxyClass = generateProxyClass(ResultSet.class, ResultSetJavaProxy.class);
+            proxyResultSetConstructor = proxyClass.getConstructor(new Class<?>[] {Statement.class, ResultSet.class});
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

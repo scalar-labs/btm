@@ -30,6 +30,7 @@ import java.lang.reflect.Proxy;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Set;
 
@@ -46,6 +47,7 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 	private ProxyFactory<Statement> proxyStatementFactory;
 	private ProxyFactory<CallableStatement> proxyCallableStatementFactory;
 	private ProxyFactory<PreparedStatement> proxyPreparedStatementFactory;
+	private ProxyFactory<ResultSet> proxyResultSetFactory;
 
 	JdbcJavaProxyFactory() {
 		proxyConnectionFactory = createProxyConnectionFactory();
@@ -53,9 +55,10 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 		proxyStatementFactory = createProxyStatementFactory();
 		proxyCallableStatementFactory = createProxyCallableStatementFactory();
 		proxyPreparedStatementFactory = createProxyPreparedStatementFactory();
+		proxyResultSetFactory = createProxyResultSetFactory();
 	}
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
 	public Connection getProxyConnection(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
 		try {
 			ConnectionJavaProxy jdbcConnectionProxy = new ConnectionJavaProxy(jdbcPooledConnection, connection);
@@ -90,6 +93,16 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 		try {
 			PreparedStatementJavaProxy jdbcStatementProxy = new PreparedStatementJavaProxy(jdbcPooledConnection, statement, cacheKey);
 			return proxyPreparedStatementFactory.getConstructor().newInstance(jdbcStatementProxy);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+    /** {@inheritDoc} */
+	public ResultSet getProxyResultSet(Statement statement, ResultSet resultSet) {
+		try {
+			ResultSetJavaProxy jdbcResultSetProxy = new ResultSetJavaProxy(statement, resultSet);
+			return proxyResultSetFactory.getConstructor().newInstance(jdbcResultSetProxy);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -139,6 +152,12 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 		Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(PreparedStatement.class);
 
 		return new ProxyFactory<PreparedStatement>(interfaces.toArray(new Class<?>[0]));
+	}
+
+    private ProxyFactory<ResultSet> createProxyResultSetFactory() {
+		Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(ResultSet.class);
+
+		return new ProxyFactory<ResultSet>(interfaces.toArray(new Class<?>[0]));
 	}
 
 	private ProxyFactory<CallableStatement> createProxyCallableStatementFactory() {

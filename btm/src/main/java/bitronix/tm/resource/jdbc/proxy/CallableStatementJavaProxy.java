@@ -19,6 +19,7 @@ import bitronix.tm.resource.jdbc.JdbcPooledConnection;
 
 import java.lang.reflect.Method;
 import java.sql.CallableStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
@@ -40,6 +41,7 @@ public class CallableStatementJavaProxy extends JavaProxyBase<CallableStatement>
     }
 
     void initialize(JdbcPooledConnection jdbcPooledConnection, CallableStatement statement) {
+    	this.proxy = (CallableStatement) this;
         this.jdbcPooledConnection = jdbcPooledConnection;
         this.delegate = statement;
     }
@@ -53,6 +55,18 @@ public class CallableStatementJavaProxy extends JavaProxyBase<CallableStatement>
 
         jdbcPooledConnection.unregisterUncachedStatement(delegate);
         delegate.close();
+    }
+
+    public ResultSet executeQuery() throws SQLException {
+    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), delegate.executeQuery());
+    }
+
+    public ResultSet executeQuery(String sql) throws SQLException {
+    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), delegate.executeQuery(sql));
+    }
+
+    public ResultSet getGeneratedKeys() throws SQLException {
+    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), delegate.getGeneratedKeys());
     }
 
     /* java.sql.Wrapper implementation */

@@ -15,12 +15,13 @@
  */
 package bitronix.tm.resource.jdbc.proxy;
 
-import bitronix.tm.resource.jdbc.JdbcPooledConnection;
-
 import java.lang.reflect.Method;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
+
+import bitronix.tm.resource.jdbc.JdbcPooledConnection;
 
 /**
  * @author Brett Wooldridge
@@ -40,6 +41,7 @@ public class StatementJavaProxy extends JavaProxyBase<Statement> {
     }
 
     void initialize(JdbcPooledConnection jdbcPooledConnection, Statement statement) {
+    	this.proxy = (Statement) this;
         this.jdbcPooledConnection = jdbcPooledConnection;
         this.delegate = statement;
     }
@@ -53,6 +55,14 @@ public class StatementJavaProxy extends JavaProxyBase<Statement> {
 
         jdbcPooledConnection.unregisterUncachedStatement(delegate);
         delegate.close();
+    }
+
+    public ResultSet executeQuery(String sql) throws SQLException {
+    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), delegate.executeQuery(sql));
+    }
+
+    public ResultSet getGeneratedKeys() throws SQLException {
+    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), delegate.getGeneratedKeys());
     }
 
     /* java.sql.Wrapper implementation */

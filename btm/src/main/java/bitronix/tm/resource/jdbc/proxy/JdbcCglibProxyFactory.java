@@ -34,6 +34,7 @@ import java.lang.reflect.Method;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Map;
 import java.util.Set;
@@ -51,6 +52,7 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     private Class<Statement> proxyStatementClass;
     private Class<CallableStatement> proxyCallableStatementClass;
     private Class<PreparedStatement> proxyPreparedStatementClass;
+    private Class<ResultSet> proxyResultSetClass;
 
     // For LRC we just use the standard Java Proxies
     private JdbcJavaProxyFactory lrcProxyFactory;
@@ -60,10 +62,11 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
         proxyStatementClass = createProxyStatementClass();
         proxyCallableStatementClass = createProxyCallableStatementClass();
         proxyPreparedStatementClass = createProxyPreparedStatementClass();
+        proxyResultSetClass = createProxyResultSetClass();
         lrcProxyFactory = new JdbcJavaProxyFactory();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     public Connection getProxyConnection(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
         ConnectionJavaProxy methodInterceptor = new ConnectionJavaProxy(jdbcPooledConnection, connection);
         Interceptor interceptor = new Interceptor(methodInterceptor);
@@ -124,6 +127,21 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     }
 
     /** {@inheritDoc} */
+	public ResultSet getProxyResultSet(Statement statement, ResultSet resultSet) {
+        ResultSetJavaProxy methodInterceptor = new ResultSetJavaProxy(statement, resultSet);
+        Interceptor interceptor = new Interceptor(methodInterceptor);
+        FastDispatcher fastDispatcher = new FastDispatcher(resultSet);
+
+        try {
+            ResultSet resultSetCglibProxy = proxyResultSetClass.newInstance();
+            ((Factory) resultSetCglibProxy).setCallbacks(new Callback[] { fastDispatcher, interceptor });
+            return resultSetCglibProxy;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+	}
+
+    /** {@inheritDoc} */
     public XAConnection getProxyXaConnection(Connection connection) {
         return lrcProxyFactory.getProxyXaConnection(connection);
     }
@@ -182,6 +200,16 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
         return enhancer.createClass();
     }
 
+    @SuppressWarnings("unchecked")
+    private Class<ResultSet> createProxyResultSetClass() {
+        Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(ResultSet.class);
+
+        Enhancer enhancer = new Enhancer();
+        enhancer.setInterfaces(interfaces.toArray(new Class<?>[0]));
+        enhancer.setCallbackTypes(new Class[] {FastDispatcher.class, Interceptor.class} );
+        enhancer.setCallbackFilter(new InterceptorFilter(new ResultSetJavaProxy()));
+        return enhancer.createClass();
+	}
 
     // ---------------------------------------------------------------
     //  CGLIB Classes
