@@ -32,15 +32,23 @@ public final class MonotonicClock {
 
     /**
      * Return the current time in milliseconds, guaranteeing monotonic time increment.
+     *
      * @return the current time in milliseconds.
      */
     public static long currentTimeMillis() {
-        long now = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+        long nanoTime = System.nanoTime();
+        System.out.println("nano time: " + nanoTime);
+        long now = TimeUnit.NANOSECONDS.toMillis(nanoTime);
+        System.out.println("now: " + now);
         long time = lastTime.get();
+        System.out.println("time: " + time);
         if (now > time) {
             lastTime.compareAndSet(time, now);
-            return lastTime.get();
+            long lastTime = MonotonicClock.lastTime.get();
+            System.out.println("lastTime: " + lastTime);
+            return lastTime;
         }
+        System.out.println("time: " + time);
         return time;
     }
 }

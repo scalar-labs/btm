@@ -11,7 +11,7 @@ public class MonotonicClockTest extends TestCase {
         for (int i = 0; i < 100; i++) {
             long monoTime = MonotonicClock.currentTimeMillis();
             long wallTime = System.currentTimeMillis();
-            assertTrue("iteration #" + i + "wall time: " + wallTime + ", mono time: " + monoTime, Math.abs(wallTime - monoTime) < 5L);
+            assertTrue("iteration #" + i + " wall time: " + wallTime + ", mono time: " + monoTime, Math.abs(wallTime - monoTime) < 5L);
             Thread.sleep(10);
         }
     }
