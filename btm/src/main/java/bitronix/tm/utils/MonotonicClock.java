@@ -35,7 +35,7 @@ public final class MonotonicClock {
      * @return the current time in milliseconds.
      */
     public static long currentTimeMillis() {
-        long now = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+        long now = System.currentTimeMillis();
         long time = lastTime.get();
         if (now > time) {
             lastTime.compareAndSet(time, now);
