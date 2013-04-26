@@ -64,8 +64,7 @@ public class Activator implements BundleActivator {
         File cfgFile = new File(btmConfig);
         if (!cfgFile.exists()) {
         	cfgFile = new File(btmPropFile);
-        	if (!cfgFile.exists())
-        	{
+        	if (!cfgFile.exists()) {
         		throw new InitializationException("Configuration file not found: " + btmPropFile);
         	}
         }
@@ -88,8 +87,7 @@ public class Activator implements BundleActivator {
         	resourceFile = new File(resourceConfig);
             if (!resourceFile.exists()) {
             	resourceFile = new File(resourcePropFile);
-            	if (!resourceFile.exists())
-            	{
+            	if (!resourceFile.exists()) {
             		throw new InitializationException("Configuration file not found: " + resourcePropFile);
             	}
             }
