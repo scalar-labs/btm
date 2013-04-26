@@ -53,7 +53,7 @@ public final class PropertyUtils {
             Object result = callGetter(currentTarget, name);
             if (result == null) {
                 // try to instantiate the object & set it in place
-                Class propertyType = getPropertyType(target, name);
+                Class<?> propertyType = getPropertyType(target, name);
                 try {
                     result = propertyType.newInstance();
                 } catch (InstantiationException ex) {
@@ -95,7 +95,7 @@ public final class PropertyUtils {
      */
     public static Map<String, Object> getProperties(Object target) throws PropertyException {
         Map<String, Object> properties = new HashMap<String, Object>();
-        Class clazz = target.getClass();
+        Class<?> clazz = target.getClass();
         Method[] methods = clazz.getMethods();
         for (Method method : methods) {
             String name = method.getName();
@@ -129,7 +129,7 @@ public final class PropertyUtils {
         return properties;
     }
 
-    private static boolean containsSetterForGetter(Class clazz, Method method) {
+    private static boolean containsSetterForGetter(Class<?> clazz, Method method) {
         String methodName = method.getName();
         String setterName;
 
@@ -194,7 +194,7 @@ public final class PropertyUtils {
     public static String propertiesToString(Object obj) {
         StringBuilder sb = new StringBuilder();
         Map<String, Object> properties = new TreeMap<String, Object>(getProperties(obj));
-        Iterator it = properties.keySet().iterator();
+        Iterator<String> it = properties.keySet().iterator();
         while (it.hasNext()) {
             String property = (String) it.next();
             Object val = getProperty(obj, property);
@@ -218,7 +218,7 @@ public final class PropertyUtils {
      */
     private static void setDirectProperty(Object target, String propertyName, Object propertyValue) throws PropertyException {
         Method setter = getSetter(target, propertyName);
-        Class parameterType = setter.getParameterTypes()[0];
+        Class<?> parameterType = setter.getParameterTypes()[0];
         try {
             if (propertyValue != null) {
                 Object transformedPropertyValue = transform(propertyValue, parameterType);
@@ -243,7 +243,7 @@ public final class PropertyUtils {
         return result;
     }
 
-    private static Object transform(Object value, Class destinationClass) {
+    private static Object transform(Object value, Class<?> destinationClass) {
         if (value.getClass() == destinationClass) {
             return value;
         }
@@ -332,7 +332,7 @@ public final class PropertyUtils {
         throw new PropertyException("no readable property '" + propertyName + "' in class '" + target.getClass().getName() + "'");
     }
 
-    private static Class getPropertyType(Object target, String propertyName) {
+    private static Class<?> getPropertyType(Object target, String propertyName) {
         String getterName = "get" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
         String getterIsName = "is" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
         Method[] methods = target.getClass().getMethods();
