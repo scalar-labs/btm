@@ -117,6 +117,8 @@ public class CryptoEngine {
             sb.append((char) b);
         }
 
+        cis.close();
+
         if (sb.length() < LONG_SIZE_IN_BYTES +1)
             throw new BitronixRuntimeException("invalid crypted password '" + data + "'");
 
