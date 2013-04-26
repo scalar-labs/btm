@@ -228,13 +228,14 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     }
 
     static class Interceptor implements MethodInterceptor {
-        private InvocationHandler interceptor;
+        private JavaProxyBase<?> interceptor;
 
-        public Interceptor(InvocationHandler interceptor) {
+        public Interceptor(JavaProxyBase<?> interceptor) {
             this.interceptor = interceptor;
         }
         
         public Object intercept(Object enhanced, Method method, Object[] args, MethodProxy fastProxy) throws Throwable {
+        	interceptor.proxy = enhanced;
             return interceptor.invoke(interceptor, method, args);
         }
     }

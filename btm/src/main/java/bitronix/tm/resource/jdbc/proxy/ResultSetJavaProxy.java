@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class ResultSetJavaProxy extends JavaProxyBase<ResultSet> {
 
-    private final static Map<String, Method> selfMethodMap = createMethodMap(ConnectionJavaProxy.class);
+    private final static Map<String, Method> selfMethodMap = createMethodMap(ResultSetJavaProxy.class);
 
     private Statement statement;
 
@@ -39,6 +39,7 @@ public class ResultSetJavaProxy extends JavaProxyBase<ResultSet> {
     }
 
     void initialize(Statement statement, ResultSet resultSet) {
+    	this.proxy = this;
         this.statement = statement;
         this.delegate = resultSet;
     }

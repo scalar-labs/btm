@@ -41,7 +41,7 @@ public class StatementJavaProxy extends JavaProxyBase<Statement> {
     }
 
     void initialize(JdbcPooledConnection jdbcPooledConnection, Statement statement) {
-    	this.proxy = (Statement) this;
+    	this.proxy = this;
         this.jdbcPooledConnection = jdbcPooledConnection;
         this.delegate = statement;
     }
@@ -58,11 +58,19 @@ public class StatementJavaProxy extends JavaProxyBase<Statement> {
     }
 
     public ResultSet executeQuery(String sql) throws SQLException {
-    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), delegate.executeQuery(sql));
+    	ResultSet resultSet = delegate.executeQuery(sql);
+    	if (resultSet == null) {
+    		return null;
+    	}
+    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), resultSet);
     }
 
     public ResultSet getGeneratedKeys() throws SQLException {
-    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), delegate.getGeneratedKeys());
+    	ResultSet generatedKeys = delegate.getGeneratedKeys();
+    	if (generatedKeys == null) {
+    		return null;
+    	}
+    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), generatedKeys);
     }
 
     /* java.sql.Wrapper implementation */

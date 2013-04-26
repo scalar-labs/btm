@@ -44,7 +44,7 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
     }
 
     void initialize(JdbcPooledConnection jdbcPooledConnection, PreparedStatement statement, CacheKey cacheKey) {
-    	this.proxy = (PreparedStatement) this;
+    	this.proxy = this;
         this.jdbcPooledConnection = jdbcPooledConnection;
         this.delegate = statement;
         this.cacheKey = cacheKey;
@@ -83,19 +83,35 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
     }
 
     public ResultSet getResultSet() throws SQLException {
-    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), delegate.getResultSet());
+    	ResultSet resultSet = delegate.getResultSet();
+    	if (resultSet == null) {
+    		return null;
+    	}
+    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), resultSet);
     }
 
     public ResultSet executeQuery() throws SQLException {
-    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), delegate.executeQuery());
+    	ResultSet resultSet = delegate.executeQuery();
+    	if (resultSet == null) {
+    		return null;
+    	}
+    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), resultSet);
     }
 
     public ResultSet executeQuery(String sql) throws SQLException {
-    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), delegate.executeQuery(sql));
+    	ResultSet resultSet = delegate.executeQuery(sql);
+    	if (resultSet == null) {
+    		return null;
+    	}
+    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), resultSet);
     }
 
     public ResultSet getGeneratedKeys() throws SQLException {
-    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), delegate.getGeneratedKeys());
+    	ResultSet generatedKeys = delegate.getGeneratedKeys();
+    	if (generatedKeys == null) {
+    		return null;
+    	}
+    	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), generatedKeys);
     }
     
     /* java.sql.Wrapper implementation */

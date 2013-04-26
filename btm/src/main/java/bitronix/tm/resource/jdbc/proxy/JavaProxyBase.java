@@ -18,6 +18,7 @@ package bitronix.tm.resource.jdbc.proxy;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,19 +30,22 @@ public abstract class JavaProxyBase<T> implements InvocationHandler {
 
     private final static Map<Method, String> methodKeyMap = new ConcurrentHashMap<Method, String>();
 
-    protected T proxy;
+    protected Object proxy;
 
     protected T delegate;
 
     protected abstract Map<String, Method> getMethodMap();
 
-    protected T getProxy() {
-        return proxy;
+    @SuppressWarnings("unchecked")
+	protected T getProxy() {
+        return (T) proxy;
     }
 
     @SuppressWarnings("unchecked")
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        this.proxy = (T) proxy;
+    	if (Proxy.isProxyClass(proxy.getClass())) {
+    		this.proxy = (T) proxy;
+    	}
 
         try {
             Method ourMethod = getMethodMap().get(getMethodKey(method));

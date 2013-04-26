@@ -54,7 +54,7 @@ public class ConnectionJavaProxy extends JavaProxyBase<Connection> implements Po
     }
 
     void initialize(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
-    	this.proxy = (Connection) this;
+    	this.proxy = this;
         this.jdbcPooledConnection = jdbcPooledConnection;
         this.delegate = connection;
 
