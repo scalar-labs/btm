@@ -33,6 +33,7 @@ import javassist.CtConstructor;
 import javassist.CtMethod;
 import javassist.CtNewConstructor;
 import javassist.CtNewMethod;
+import javassist.Modifier;
 import javassist.NotFoundException;
 
 import javax.sql.XAConnection;
@@ -222,6 +223,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
             superSigs.add(method.getName() + method.getSignature());
         }
 
+        Set<String> methods = new HashSet<String>();
         Set<Class<?>> interfaces = ClassLoaderUtils.getAllInterfaces(primaryInterface);
         for (Class<?> intf : interfaces) {
             CtClass intfCt = classPool.getCtClass(intf.getName());
@@ -232,8 +234,15 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
                     continue;
                 }
 
-                // Generate a method that simply invokes the same method on the delegate
                 CtMethod method = CtNewMethod.copy(intfMethod, targetCt, classMap);
+                // Ignore already added methods that come from other interfaces
+                if (methods.contains(intfMethod.getName() + intfMethod.getSignature())) {
+                	continue;
+                }
+
+                methods.add(intfMethod.getName() + intfMethod.getSignature());
+
+                // Generate a method that simply invokes the same method on the delegate
                 StringBuilder call = new StringBuilder("{");
                 if ( method.getReturnType() != CtClass.voidType) {
                     call.append("return ");
