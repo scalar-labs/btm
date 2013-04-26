@@ -6,9 +6,9 @@
         <artifactId>btm-parent</artifactId>
         <version>3.0.0-SNAPSHOT</version>
     </parent>
-    <groupId>org.codehaus.btm</groupId>
     <artifactId>btm</artifactId>
     <name>Bitronix Transaction Manager :: Core</name>
+    <packaging>bundle</packaging>
 
     <dependencies>
         <dependency>
@@ -31,11 +31,13 @@
             <groupId>cglib</groupId>
             <artifactId>cglib</artifactId>
             <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>javassist</groupId>
             <artifactId>javassist</artifactId>
             <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -51,6 +53,21 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+        	<groupId>org.apache.felix</groupId>
+        	<artifactId>maven-bundle-plugin</artifactId>
+        	<version>2.3.7</version>
+        	<type>maven-plugin</type>
+            <scope>provided</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>org.osgi.core</artifactId>
+          <version>1.0.0</version>
+          <scope>provided</scope>
+          <optional>true</optional>
         </dependency>
     </dependencies>
 
@@ -147,6 +164,35 @@ public final class Version {
                             <mainClass>bitronix.tm.utils.CryptoEngine</mainClass>
                         </manifest>
                     </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>2.3.7</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-Activator>bitronix.tm.osgi.Activator</Bundle-Activator>
+                        <Bundle-SymbolicName>bitronix.tm</Bundle-SymbolicName>
+                        <Export-Package>bitronix.tm,bitronix.tm.utils,bitronix.tm.resource.jdbc</Export-Package>
+                        <Import-Package>
+                            javassist,
+                            net.sf.cglib.proxy,
+                            org.osgi.framework,
+                            org.slf4j,
+                            javax.crypto,javax.crypto.spec,
+                            javax.jms,javax.management,javax.naming,javax.naming.spi,javax.rmi,javax.sql,
+                            javax.transaction,javax.transaction.xa,
+                            javax.swing;resolution:=optional,
+                            javax.swing.border;resolution:=optional,
+                            javax.swing.event;resolution:=optional,
+                            javax.swing.table;resolution:=optional,
+                            javax.swing.tree;resolution:=optional
+                        </Import-Package> -->
+                        <DynamicImport-Package>*</DynamicImport-Package>
+                    </instructions>
                 </configuration>
             </plugin>
 
