@@ -1,3 +1,5 @@
+[![Build Status](https://www.travis-ci.org/bitronix/btm.png?branch=master)](https://www.travis-ci.org/bitronix/btm)
+
 ### Home of BTM, the Bitronix JTA Transaction Manager ###
 
 The Bitronix Transaction Manager (BTM) is a simple but complete implementation of the JTA 1.1 API. It is a fully 
