@@ -6,4 +6,9 @@ The Bitronix Transaction Manager (BTM) is a simple but complete implementation o
 working XA transaction manager that provides all services required by the JTA API while trying to keep the code 
 as simple as possible for easier understanding of the XA semantics.
 
+#### Using BTM ####
+* [Overview](https://github.com/bitronix/btm/wiki/Overview)
+* [FAQ}(https://github.com/bitronix/btm/wiki/FAQ)
 
+#### Configuration ####
+Coming soon.
