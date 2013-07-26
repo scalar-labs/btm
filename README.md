@@ -8,7 +8,7 @@ as simple as possible for easier understanding of the XA semantics.
 
 #### Using BTM ####
 * [Overview](https://github.com/bitronix/btm/wiki/Overview)
-* [FAQ}(https://github.com/bitronix/btm/wiki/FAQ)
+* [FAQ](https://github.com/bitronix/btm/wiki/FAQ)
 
 #### Configuration ####
 Coming soon.
