@@ -16,8 +16,8 @@ workload compared to BTM 2.1 total connection wait time went from 76 seconds to 
 to just 21.
 * High-performance proxies around `javax.sql` entities via bytecode generation with support for Javassist, cglib, and 
 `java.lang.reflect.proxy`.  Javassist and cglib offer substantial performance increases and are strongly recommended.
-* High-performance transaction log journaling using `java.nio` and a new design that allows concurrent appenders through a 
-write reservation model.  The new journal is 3-14x faster than BTM 2.1.
+* High-performance transaction log journaling using a new design that allows concurrent appenders through a 
+write-reservation model.  The new journal is 3-14x faster than BTM 2.1.
 * Support for all levels of JDBC upto and including JDBC 4.1
 
 #### General Information ####
