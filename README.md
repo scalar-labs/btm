@@ -11,4 +11,4 @@ as simple as possible for easier understanding of the XA semantics.
 * [FAQ](https://github.com/bitronix/btm/wiki/FAQ)
 
 #### Configuration ####
-Coming soon.
+* [Transaction manager configuration](https://github.com/bitronix/btm/wiki/Transaction-manager-configuration)
