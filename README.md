@@ -26,3 +26,4 @@ write-reservation model.  The new journal is 3-14x faster than BTM 2.1.
 
 #### Configuration ####
 * [Transaction manager configuration](https://github.com/bitronix/btm/wiki/Transaction-manager-configuration)
+* [Resource loader configuration](https://github.com/bitronix/btm/wiki/Resource-loader-configuration)
