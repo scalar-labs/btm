@@ -20,7 +20,7 @@ fallback to `java.lang.reflect.proxy`.  Javassist and cglib offer substantial pe
 write-reservation model.  The new journal is 3-14x faster than BTM 2.1.
 * Support for all levels of JDBC upto and including JDBC 4.1
 * OSGi support
-* 
+
 #### General Information ####
 * [Overview](https://github.com/bitronix/btm/wiki/Overview)
 * [FAQ](https://github.com/bitronix/btm/wiki/FAQ)
