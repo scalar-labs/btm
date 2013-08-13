@@ -14,12 +14,13 @@ performance.  Notable improvements are:
 * A new connection pool with a focus on zero-wait connection acquisition and concurrent expansion/contraction. For one large
 workload compared to BTM 2.1 total connection wait time went from 76 seconds to 372ms, and lock contentions went from 26269
 to just 21.
-* High-performance proxies around `javax.sql` entities via bytecode generation with support for Javassist, cglib, and 
-`java.lang.reflect.proxy`.  Javassist and cglib offer substantial performance increases and are strongly recommended.
+* High-performance proxies around `javax.sql` entities via bytecode generation with support for Javassist, and cglib, with 
+fallback to `java.lang.reflect.proxy`.  Javassist and cglib offer substantial performance increases and are strongly recommended.
 * High-performance transaction log journaling using a new design that allows concurrent appenders through a 
 write-reservation model.  The new journal is 3-14x faster than BTM 2.1.
 * Support for all levels of JDBC upto and including JDBC 4.1
-
+* OSGi support
+* 
 #### General Information ####
 * [Overview](https://github.com/bitronix/btm/wiki/Overview)
 * [FAQ](https://github.com/bitronix/btm/wiki/FAQ)
