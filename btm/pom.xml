@@ -178,8 +178,8 @@ public final class Version {
                         <Bundle-SymbolicName>bitronix.tm</Bundle-SymbolicName>
                         <Export-Package>bitronix.tm,bitronix.tm.utils,bitronix.tm.resource.jdbc</Export-Package>
                         <Import-Package>
-                            javassist,
-                            net.sf.cglib.proxy,
+                            javassist;resolution:=optional,
+                            net.sf.cglib.proxy;resolution:=optional,
                             org.osgi.framework,
                             org.slf4j,
                             javax.crypto,javax.crypto.spec,
