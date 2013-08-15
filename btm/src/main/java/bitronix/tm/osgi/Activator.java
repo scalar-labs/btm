@@ -110,7 +110,7 @@ public class Activator implements BundleActivator {
             Dictionary<String, Object> props = new Hashtable<String, Object>();
             props.put("service.pid", me.getKey());
             props.put("service.ranking", ranking);
-            props.put("osgi.jndi.serviceName", me.getKey());
+            props.put("osgi.jndi.service.name", me.getKey());
             ServiceRegistration sr = context.registerService(DataSource.class.getName(), me.getValue(), props);
             dsRegistrations.put(me.getKey(), sr);
         }
