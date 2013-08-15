@@ -66,11 +66,14 @@ public abstract class ResourceBean implements Serializable {
 		target.setMinPoolSize(getMinPoolSize());
 		target.setMaxPoolSize(getMaxPoolSize());
 		target.setMaxIdleTime(getMaxIdleTime());
+		target.setMaxLifeTime(getMaxLifeTime());
 		target.setAcquireIncrement(getAcquireIncrement());
 		target.setAcquisitionTimeout(getAcquisitionTimeout());
 		target.setAcquisitionInterval(getAcquisitionInterval());
 		target.setDeferConnectionRelease(getDeferConnectionRelease());
 		target.setAllowLocalTransactions(getAllowLocalTransactions());
+		target.setTwoPcOrderingPosition(getTwoPcOrderingPosition());
+		target.setApplyTransactionTimeout(getApplyTransactionTimeout());
 		target.setShareTransactionConnections(getShareTransactionConnections());
 		target.setDisabled(isDisabled());
 		target.setIgnoreRecoveryFailures(getIgnoreRecoveryFailures());
