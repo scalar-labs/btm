@@ -56,31 +56,6 @@ public abstract class ResourceBean implements Serializable {
     }
 
     /**
-     * Copies all settings in this ResourceBean to to the target bean.
-     */
-	protected void copySettingsTo(ResourceBean target) {
-		target.setClassName(getClassName());
-		target.setUniqueName(getUniqueName());
-		target.setAutomaticEnlistingEnabled(getAutomaticEnlistingEnabled());
-		target.setUseTmJoin(getUseTmJoin());
-		target.setMinPoolSize(getMinPoolSize());
-		target.setMaxPoolSize(getMaxPoolSize());
-		target.setMaxIdleTime(getMaxIdleTime());
-		target.setMaxLifeTime(getMaxLifeTime());
-		target.setAcquireIncrement(getAcquireIncrement());
-		target.setAcquisitionTimeout(getAcquisitionTimeout());
-		target.setAcquisitionInterval(getAcquisitionInterval());
-		target.setDeferConnectionRelease(getDeferConnectionRelease());
-		target.setAllowLocalTransactions(getAllowLocalTransactions());
-		target.setTwoPcOrderingPosition(getTwoPcOrderingPosition());
-		target.setApplyTransactionTimeout(getApplyTransactionTimeout());
-		target.setShareTransactionConnections(getShareTransactionConnections());
-		target.setDisabled(isDisabled());
-		target.setIgnoreRecoveryFailures(getIgnoreRecoveryFailures());
-		target.setDriverProperties(getDriverProperties());
-	}
-
-    /**
      * @return the underlying implementation class name.
      */
     public String getClassName() {

@@ -45,6 +45,7 @@
 
     <properties>
         <java.version>1.5</java.version>
+        <spring.version>3.2.4.RELEASE</spring.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
@@ -54,6 +55,7 @@
         <module>btm-jetty6-lifecycle</module>
         <module>btm-jetty7-lifecycle</module>
         <module>btm-tomcat55-lifecycle</module>
+        <module>btm-spring</module>
     </modules>
 
     <dependencyManagement>
@@ -81,6 +83,12 @@
                 <version>${project.version}</version>
                 <classifier>javadoc</classifier>
             </dependency>
+            <dependency>
+                <groupId>org.codehaus.btm</groupId>
+                <artifactId>btm</artifactId>
+                <type>test-jar</type>
+                <version>${project.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>javax.transaction</groupId>
@@ -101,6 +109,11 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
+                <version>1.6.4</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>jcl-over-slf4j</artifactId>
                 <version>1.6.4</version>
             </dependency>
             <dependency>
@@ -128,6 +141,32 @@
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-plus</artifactId>
                 <version>7.3.0.v20110203</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>javax.inject</groupId>
+                <artifactId>javax.inject</artifactId>
+                <version>1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-beans</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-tx</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+                <version>${spring.version}</version>
             </dependency>
 
             <dependency>
