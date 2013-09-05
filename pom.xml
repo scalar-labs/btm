@@ -8,12 +8,12 @@
     </parent>
     <groupId>org.codehaus.btm</groupId>
     <artifactId>btm-parent</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0RC</version>
     <packaging>pom</packaging>
 
     <name>Bitronix Transaction Manager</name>
     <inceptionYear>2006</inceptionYear>
-    <url>http://docs.codehaus.org/display/BTM/Home</url>
+    <url>https://github.com/bitronix/btm</url>
 
     <organization>
         <name>Bitronix Software</name>
@@ -21,8 +21,8 @@
     </organization>
 
     <issueManagement>
-        <system>jira</system>
-        <url>http://jira.codehaus.org/browse/BTM</url>
+        <system>github</system>
+        <url>https://github.com/bitronix/btm/issues</url>
     </issueManagement>
 
     <licenses>
@@ -34,12 +34,12 @@
     </licenses>
 
     <scm>
-        <url>http://git.codehaus.org/gitweb.cgi?p=btm-git.git</url>
+        <url>https://github.com/bitronix/btm.git</url>
         <connection>
-            scm:git:git://git.codehaus.org/btm-git.git
+            scm:git:git://github.com/bitronix/btm.git
         </connection>
         <developerConnection>
-            scm:git:ssh://git@git.codehaus.org/btm-git.git
+            scm:git:git@github.com:bitronix/btm.git
         </developerConnection>
     </scm>
 
