@@ -39,7 +39,7 @@
             scm:git:git://github.com/bitronix/btm.git
         </connection>
         <developerConnection>
-            scm:git:git@github.com:bitronix/btm.git
+            scm:git:git://git@github.com/bitronix/btm.git
         </developerConnection>
     </scm>
 
