@@ -200,7 +200,7 @@ public final class Version {
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine>"-Xbootclasspath/p:${project.basedir}/src/main/jar/jdbc-3.0.jar"</argLine>
+                    <argLine>"${surefire.jvm.settings} -Xbootclasspath/p:${project.basedir}/src/main/jar/jdbc-3.0.jar"</argLine>
                 </configuration>
             </plugin>
         </plugins>

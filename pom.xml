@@ -8,7 +8,7 @@
     </parent>
     <groupId>org.codehaus.btm</groupId>
     <artifactId>btm-parent</artifactId>
-    <version>3.0.0RC</version>
+    <version>3.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Bitronix Transaction Manager</name>
@@ -47,6 +47,8 @@
         <java.version>1.5</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <surefire.jvm.settings>-Xmx256m -Xss192k</surefire.jvm.settings>
     </properties>
 
     <modules>
@@ -183,7 +185,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.12.4</version>
                     <configuration>
-                        <argLine>-Xmx128m -Xss192k</argLine>
+                        <argLine>${surefire.jvm.settings}</argLine>
                     </configuration>
                 </plugin>
                 <plugin>
