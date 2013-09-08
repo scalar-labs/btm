@@ -48,7 +48,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <surefire.jvm.settings>-Xmx256m -Xss192k</surefire.jvm.settings>
+        <surefire.jvm.settings>-Xmx128m</surefire.jvm.settings>
     </properties>
 
     <modules>
