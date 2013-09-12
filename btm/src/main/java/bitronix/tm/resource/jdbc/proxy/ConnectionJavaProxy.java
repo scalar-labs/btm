@@ -63,7 +63,8 @@ public class ConnectionJavaProxy extends JavaProxyBase<Connection> implements Po
         }
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return "a ConnectionJavaProxy of " + jdbcPooledConnection + " on " + delegate;
     }
 

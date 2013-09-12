@@ -5,3 +5,6 @@
 target/
 *.tlog
 *.class
+.project
+.classpath
+.settings
