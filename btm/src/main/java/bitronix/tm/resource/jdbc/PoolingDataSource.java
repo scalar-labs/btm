@@ -287,7 +287,8 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         return getConnection();
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return "a PoolingDataSource containing " + pool;
     }
 
