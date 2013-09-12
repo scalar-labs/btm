@@ -20,8 +20,12 @@
  */
 package bitronix.tm.resource.jdbc;
 
+import java.lang.reflect.Proxy;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import bitronix.tm.utils.ClassLoaderUtils;
 
 public class JdbcUncachedPreparedStatementHandle extends BaseProxyHandlerClass {
 
@@ -59,4 +63,28 @@ public class JdbcUncachedPreparedStatementHandle extends BaseProxyHandlerClass {
         parentConnection.unregisterUncachedStatement(delegate);
         delegate.close();
     }
+    
+
+    public ResultSet executeQuery(String sql) throws SQLException {
+        
+        return (ResultSet) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[]{ResultSet.class}, new JdbcResultSetHandle(delegate.executeQuery(sql), this));
+    }
+
+    public ResultSet getGeneratedKeys() throws SQLException {
+        return (ResultSet) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[]{ResultSet.class}, new JdbcResultSetHandle(delegate.getGeneratedKeys(), this));
+    }
+
+    public ResultSet getResultSet() throws SQLException {
+        return (ResultSet) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[]{ResultSet.class}, new JdbcResultSetHandle(delegate.getResultSet(), this));
+    }
+
+    public ResultSet executeQuery() throws SQLException {
+        return (ResultSet) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[]{ResultSet.class}, new JdbcResultSetHandle(delegate.executeQuery(), this));
+    }
+    
+    public boolean equals(Object object) {
+        Object handler = Proxy.getInvocationHandler(object);
+        return super.equals(handler);
+    }
+
 }
