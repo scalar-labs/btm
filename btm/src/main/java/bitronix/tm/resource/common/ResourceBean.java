@@ -362,5 +362,4 @@ public abstract class ResourceBean implements Serializable {
     public int incCreatedResourcesCounter() {
         return this.createdResourcesCounter++;
     }
-
 }

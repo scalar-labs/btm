@@ -39,6 +39,8 @@ public class JdbcFailedPoolTest extends TestCase {
     protected void tearDown() throws Exception {
         TransactionManagerServices.getJournal().close();
         TransactionManagerServices.getTaskScheduler().shutdown();
+        
+        MockitoXADataSource.setStaticGetXAConnectionException(null);
     }
 
     public void testAcquiringConnectionAfterRecoveryDoesNotMarkAsFailed() throws Exception {
