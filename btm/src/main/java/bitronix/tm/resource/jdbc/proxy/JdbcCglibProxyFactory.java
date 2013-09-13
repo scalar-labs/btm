@@ -29,7 +29,6 @@ import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 
 import javax.sql.XAConnection;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.sql.CallableStatement;
 import java.sql.Connection;

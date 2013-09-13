@@ -15,7 +15,6 @@
  */
 package bitronix.tm.utils;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
