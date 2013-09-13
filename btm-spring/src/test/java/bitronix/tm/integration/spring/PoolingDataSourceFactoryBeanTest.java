@@ -1,6 +1,7 @@
 package bitronix.tm.integration.spring;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -10,6 +11,8 @@ import javax.inject.Named;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -17,6 +20,7 @@ import bitronix.tm.resource.jdbc.PoolingDataSource;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("classpath:test-context.xml")
+@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 public class PoolingDataSourceFactoryBeanTest {
 
     @Inject @Named("dataSource2")
