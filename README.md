@@ -1,4 +1,4 @@
-[![Build Status](https://www.travis-ci.org/bitronix/btm.png?branch=master)](https://www.travis-ci.org/bitronix/btm)
+[![Build Status](https://api.travis-ci.org/bitronix/btm.png?branch=master)](https://travis-ci.org/bitronix/btm)
 
 ### Home of BTM, the Bitronix JTA Transaction Manager ###
 
