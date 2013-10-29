@@ -15,9 +15,6 @@
  */
 package bitronix.tm.resource.jdbc;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Arrays;
@@ -26,6 +23,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Last Recently Used PreparedStatement cache with eviction listeners
@@ -77,10 +78,17 @@ public class LruStatementCache {
      */
     private int size;
 
+    /**
+     * A flag that is set during clear operations to prevent statements that
+     * are closing from coming back into the cache.
+     */
+    private AtomicBoolean clearInProgress;
+
     public LruStatementCache(int maxSize) {
         this.maxSize = maxSize;
         cache = new LinkedHashMap<CacheKey, StatementTracker>(maxSize, 0.75f, true /* access order */);
         evictionListners = new CopyOnWriteArrayList<LruEvictionListener>();
+        clearInProgress = new AtomicBoolean();
     }
 
     /**
@@ -122,6 +130,11 @@ public class LruStatementCache {
      * @return a prepared statement
      */
     public PreparedStatement put(CacheKey key, PreparedStatement statement) {
+    	if (clearInProgress.get())
+    	{
+    		return null;
+    	}
+
     	synchronized (cache) {
             if (maxSize < 1) {
 	            return null;
@@ -165,16 +178,24 @@ public class LruStatementCache {
      * connection close.
      */
     protected void clear() {
-    	synchronized (cache) {
-	        Iterator<Entry<CacheKey, StatementTracker>> it = cache.entrySet().iterator();
-	        while (it.hasNext()) {
-	            Entry<CacheKey, StatementTracker> entry = it.next();
-	            StatementTracker tracker = entry.getValue();
-	            it.remove();
-	            fireEvictionEvent(tracker.statement);
-	        }
-	        cache.clear();
-	        size = 0;
+    	if (clearInProgress.compareAndSet(false, true)) {
+    		try {
+		    	synchronized (cache) {
+			        Iterator<Entry<CacheKey, StatementTracker>> it = cache.entrySet().iterator();
+			        while (it.hasNext()) {
+			            Entry<CacheKey, StatementTracker> entry = it.next();
+			            StatementTracker tracker = entry.getValue();
+			            it.remove();
+			            fireEvictionEvent(tracker.statement);
+			        }
+			        cache.clear();
+			        size = 0;
+		    	}
+    		}
+    		finally
+    		{
+    			clearInProgress.set(false);
+    		}
     	}
     }
 
