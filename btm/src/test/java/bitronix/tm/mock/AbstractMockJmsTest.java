@@ -82,6 +82,7 @@ public abstract class AbstractMockJmsTest extends TestCase {
         }
         poolingConnectionFactory1.close();
         poolingConnectionFactory2.close();
-    }
 
+        TransactionManagerServices.getTransactionManager().shutdown();
+    }
 }
