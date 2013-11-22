@@ -60,7 +60,9 @@ public class PhaseException extends Exception {
                 errorMessage.append("(");
                 errorMessage.append(Decoder.decodeXAExceptionErrorCode(xaEx));
                 String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(xaEx);
-                if (extraErrorDetails != null) errorMessage.append(" - ").append(extraErrorDetails);
+                if (extraErrorDetails != null && extraErrorDetails.trim().length() > 0) {
+                    errorMessage.append(" - ").append(extraErrorDetails);
+                }
                 errorMessage.append(")");
             }
             errorMessage.append(" - ");
