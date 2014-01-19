@@ -17,6 +17,7 @@ package bitronix.tm.resource.common;
 
 import java.io.Serializable;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Abstract javabean container for all common properties of a {@link bitronix.tm.resource.common.XAResourceProducer} as configured in the
@@ -47,7 +48,7 @@ public abstract class ResourceBean implements Serializable {
     private volatile boolean disabled = false;
     private volatile boolean ignoreRecoveryFailures = false;
 
-    private volatile transient int createdResourcesCounter;
+    private volatile transient AtomicInteger createdResourcesCounter = new AtomicInteger();
 
     /**
      * Initialize all properties with their default values.
@@ -360,6 +361,6 @@ public abstract class ResourceBean implements Serializable {
      * @return the current value of the counter.
      */
     public int incCreatedResourcesCounter() {
-        return this.createdResourcesCounter++;
+        return this.createdResourcesCounter.incrementAndGet();
     }
 }
