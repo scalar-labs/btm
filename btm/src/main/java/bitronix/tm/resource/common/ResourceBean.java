@@ -22,7 +22,6 @@ import bitronix.tm.metric.MetricFactory;
 
 import java.io.Serializable;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Abstract javabean container for all common properties of a {@link bitronix.tm.resource.common.XAResourceProducer} as configured in the
@@ -53,7 +52,7 @@ public abstract class ResourceBean implements Serializable, MetricAware {
     private volatile boolean disabled = false;
     private volatile boolean ignoreRecoveryFailures = false;
 
-    private volatile transient AtomicInteger createdResourcesCounter = new AtomicInteger();
+    private volatile transient int createdResourcesCounter;
 
     private volatile transient Metric metric;
 
@@ -368,7 +367,7 @@ public abstract class ResourceBean implements Serializable, MetricAware {
      * @return the current value of the counter.
      */
     public int incCreatedResourcesCounter() {
-        return this.createdResourcesCounter.incrementAndGet();
+        return this.createdResourcesCounter++;
     }
 
     /**
