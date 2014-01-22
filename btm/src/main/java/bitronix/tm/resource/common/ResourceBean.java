@@ -15,8 +15,14 @@
  */
 package bitronix.tm.resource.common;
 
+import bitronix.tm.utils.ManagementRegistrar;
+import bitronix.tm.metric.Metric;
+import bitronix.tm.metric.MetricAware;
+import bitronix.tm.metric.MetricFactory;
+
 import java.io.Serializable;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Abstract javabean container for all common properties of a {@link bitronix.tm.resource.common.XAResourceProducer} as configured in the
@@ -25,7 +31,7 @@ import java.util.Properties;
  * @author Ludovic Orban
  */
 @SuppressWarnings("serial")
-public abstract class ResourceBean implements Serializable {
+public abstract class ResourceBean implements Serializable, MetricAware {
 
     private volatile String className;
     private volatile String uniqueName;
@@ -48,6 +54,8 @@ public abstract class ResourceBean implements Serializable {
     private volatile boolean ignoreRecoveryFailures = false;
 
     private volatile transient int createdResourcesCounter;
+
+    private volatile transient Metric metric;
 
     /**
      * Initialize all properties with their default values.
@@ -361,5 +369,23 @@ public abstract class ResourceBean implements Serializable {
      */
     public int incCreatedResourcesCounter() {
         return this.createdResourcesCounter++;
+    }
+
+    /**
+     * Initialize a resource metric, using the class and the unique name to build the metric domain.
+     */
+    public void initializeMetric() {
+        if(metric == null && MetricFactory.Instance.exists()) {
+            metric = MetricFactory.Instance.get()
+                    .metric(getClass(), ManagementRegistrar.makeValidName(getUniqueName()));
+        }
+    }
+
+    /**
+     * Get the current associated metric.
+     * @return current associated metric.
+     */
+    public Metric getMetric() {
+        return metric;
     }
 }

@@ -55,6 +55,11 @@ public class XAPool implements StateChangeListener {
 
     private final static Logger log = LoggerFactory.getLogger(XAPool.class);
 
+    public static interface Metrics {
+        String CONNECTION_ACQUIRING_TIME = "connectionAcquiringTime";
+        String POOL_SIZE_HISTOGRAM = "poolSizeHistogram";
+    }
+
     /**
      * The stateTransitionLock makes sure that transitions of XAStatefulHolders from one state to another
      * (movement from one pool to another) are atomic.  A ReentrantReadWriteLock allows any number of 
@@ -282,6 +287,9 @@ public class XAPool implements StateChangeListener {
         	}
         }
         finally {
+            if (bean.getMetric() != null) {
+                bean.getMetric().updateHistogram(Metrics.POOL_SIZE_HISTOGRAM, poolSize.longValue());
+            }
             stateTransitionLock.writeLock().unlock();
         }
     }
@@ -309,7 +317,12 @@ public class XAPool implements StateChangeListener {
         if (log.isDebugEnabled()) { log.debug("getting IN_POOL connection from " + this + ", waiting if necessary"); }
 
         try {
+            long start = MonotonicClock.currentTimeMillis();
             XAStatefulHolder xaStatefulHolder = availablePool.poll(remainingTimeMs, TimeUnit.MILLISECONDS);
+            long end = MonotonicClock.currentTimeMillis();
+            if(bean.getMetric() != null) {
+                bean.getMetric().updateTimer(Metrics.CONNECTION_ACQUIRING_TIME, end - start, TimeUnit.MILLISECONDS);
+            }
             if (xaStatefulHolder == null) {
                 if (TransactionManagerServices.isTransactionManagerRunning())
                     TransactionManagerServices.getTransactionManager().dumpTransactionContexts();
