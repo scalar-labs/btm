@@ -16,12 +16,17 @@
 package bitronix.tm.mock;
 
 import bitronix.tm.TransactionManagerServices;
+import bitronix.tm.metric.Metrics;
+import bitronix.tm.metric.MetricsFactory;
+import bitronix.tm.metric.MetricsFactoryTestUtil;
+import bitronix.tm.metric.MockitoMetricsFactory;
 import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.recovery.RecoveryException;
 import bitronix.tm.resource.ResourceConfigurationException;
 import bitronix.tm.resource.common.XAPool;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import junit.framework.TestCase;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +41,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.concurrent.TimeUnit;
+
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
 
 /**
  *
@@ -45,13 +54,17 @@ public class JdbcPoolTest extends TestCase {
 
     private final static Logger log = LoggerFactory.getLogger(JdbcPoolTest.class);
     private PoolingDataSource pds;
+    private Metrics mockMetrics;
 
     protected void setUp() throws Exception {
         TransactionManagerServices.getConfiguration().setJournal("null").setGracefulShutdownInterval(2);
         TransactionManagerServices.getTransactionManager();
 
+        MetricsFactoryTestUtil.initialize(MockitoMetricsFactory.class.getName());
+
         MockitoXADataSource.setStaticCloseXAConnectionException(null);
         MockitoXADataSource.setStaticGetXAConnectionException(null);
+        mockMetrics = initMockMetrics();
 
         pds = new PoolingDataSource();
         pds.setMinPoolSize(1);
@@ -68,7 +81,8 @@ public class JdbcPoolTest extends TestCase {
     protected void tearDown() throws Exception {
         pds.close();
 
-        TransactionManagerServices.getTransactionManager().shutdown();        
+        TransactionManagerServices.getTransactionManager().shutdown();
+        MetricsFactoryTestUtil.defaultInitialize();
     }
 
     public void testObjectProperties() throws Exception {
@@ -133,6 +147,7 @@ public class JdbcPoolTest extends TestCase {
     }
 
     public void testPoolGrowth() throws Exception {
+
         if (log.isDebugEnabled()) { log.debug("*** Starting testPoolGrowth"); }
         Field poolField = pds.getClass().getDeclaredField("pool");
         poolField.setAccessible(true);
@@ -140,14 +155,20 @@ public class JdbcPoolTest extends TestCase {
 
         assertEquals(1, pool.inPoolSize());
         assertEquals(1, pool.totalPoolSize());
+        verify(mockMetrics, never()).updateTimer(eq(XAPool.Metrics.CONNECTION_ACQUIRING_TIME), anyLong(), eq(TimeUnit.MILLISECONDS));
+        verify(mockMetrics, never()).updateHistogram(eq(XAPool.Metrics.CONNECTIONS_IN_USE_HISTOGRAM), anyLong());
 
         Connection c1 = pds.getConnection();
         assertEquals(0, pool.inPoolSize());
         assertEquals(1, pool.totalPoolSize());
+        verify(mockMetrics, times(1)).updateTimer(eq(XAPool.Metrics.CONNECTION_ACQUIRING_TIME), anyLong(), eq(TimeUnit.MILLISECONDS));
+        verify(mockMetrics, times(1)).updateHistogram(eq(XAPool.Metrics.CONNECTIONS_IN_USE_HISTOGRAM), anyLong());
 
         Connection c2 = pds.getConnection();
         assertEquals(0, pool.inPoolSize());
         assertEquals(2, pool.totalPoolSize());
+        verify(mockMetrics, times(2)).updateTimer(eq(XAPool.Metrics.CONNECTION_ACQUIRING_TIME), anyLong(), eq(TimeUnit.MILLISECONDS));
+        verify(mockMetrics, times(2)).updateHistogram(eq(XAPool.Metrics.CONNECTIONS_IN_USE_HISTOGRAM), anyLong());
 
         try {
             pds.getConnection();
@@ -155,11 +176,18 @@ public class JdbcPoolTest extends TestCase {
         } catch (SQLException ex) {
             assertEquals("unable to get a connection from pool of a PoolingDataSource containing an XAPool of resource pds with 2 connection(s) (0 still available)", ex.getMessage());
         }
+        verify(mockMetrics, times(3)).updateTimer(eq(XAPool.Metrics.CONNECTION_ACQUIRING_TIME), anyLong(), eq(TimeUnit.MILLISECONDS));
+        verify(mockMetrics, times(2)).updateHistogram(eq(XAPool.Metrics.CONNECTIONS_IN_USE_HISTOGRAM), anyLong());
 
         c1.close();
+        verify(mockMetrics, times(3)).updateTimer(eq(XAPool.Metrics.CONNECTION_ACQUIRING_TIME), anyLong(), eq(TimeUnit.MILLISECONDS));
+        verify(mockMetrics, times(3)).updateHistogram(eq(XAPool.Metrics.CONNECTIONS_IN_USE_HISTOGRAM), anyLong());
         c2.close();
+        verify(mockMetrics, times(3)).updateTimer(eq(XAPool.Metrics.CONNECTION_ACQUIRING_TIME), anyLong(), eq(TimeUnit.MILLISECONDS));
+        verify(mockMetrics, times(4)).updateHistogram(eq(XAPool.Metrics.CONNECTIONS_IN_USE_HISTOGRAM), anyLong());
         assertEquals(2, pool.inPoolSize());
         assertEquals(2, pool.totalPoolSize());
+
     }
 
     public void testPoolShrink() throws Exception {
@@ -452,6 +480,21 @@ public class JdbcPoolTest extends TestCase {
         assertTrue(isWrapperFor(cstmt, CallableStatement.class));
         Statement unwrappedCStmt = (Statement) unwrap(cstmt, CallableStatement.class);
         assertTrue(unwrappedCStmt.getClass().getName().contains("java.sql.CallableStatement") && unwrappedCStmt.getClass().getName().contains("EnhancerByMockito"));
+    }
+
+    public void testStartMetric() {
+        verify(mockMetrics, times(1)).start();
+        verify(mockMetrics, never()).stop();
+        pds.close();
+        verify(mockMetrics, times(1)).stop();
+    }
+
+    private Metrics initMockMetrics() {
+        MetricsFactory mockMetricsFactory = ((MockitoMetricsFactory) MetricsFactory.Instance.get()).getMockMetricsFactory();
+        Metrics mockMetrics = Mockito.mock(Metrics.class);
+        Mockito.reset(mockMetricsFactory, mockMetrics);
+        when(mockMetricsFactory.metrics(eq(PoolingDataSource.class), eq("pds"))).thenReturn(mockMetrics);
+        return mockMetrics;
     }
 
     private static boolean isWrapperFor(Object obj, Class param) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
