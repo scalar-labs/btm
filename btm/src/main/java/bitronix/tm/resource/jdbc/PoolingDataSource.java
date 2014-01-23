@@ -86,6 +86,10 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
             buildXAPool();
             this.jmxName = "bitronix.tm:type=JDBC,UniqueName=" + ManagementRegistrar.makeValidName(getUniqueName());
             ManagementRegistrar.register(jmxName, this);
+            initializeMetrics();
+            if (getMetrics() != null) {
+                getMetrics().start();
+            }
         } catch (Exception ex) {
             throw new ResourceConfigurationException("cannot create JDBC datasource named " + getUniqueName(), ex);
         }
@@ -355,6 +359,9 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
 
         ManagementRegistrar.unregister(jmxName);
         jmxName = null;
+        if (getMetrics() != null) {
+            getMetrics().stop();
+        }
 
         ResourceRegistrar.unregister(this);
     }
