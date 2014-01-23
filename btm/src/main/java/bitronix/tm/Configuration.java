@@ -77,6 +77,7 @@ public class Configuration implements Service {
     private volatile String resourceConfigurationFilename;
     private volatile boolean conservativeJournaling;
     private volatile String jdbcProxyFactoryClass;
+    private volatile String metricsFactoryClass;
 
     protected Configuration() {
         try {
@@ -125,6 +126,7 @@ public class Configuration implements Service {
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
             conservativeJournaling = getBoolean(properties, "bitronix.tm.conservativeJournaling", false);
             jdbcProxyFactoryClass = getString(properties, "bitronix.tm.jdbcProxyFactoryClass", "auto");
+            metricsFactoryClass = getString(properties, "bitronix.tm.metricsFactoryClass", "auto");
         } catch (IOException ex) {
             throw new InitializationException("error loading configuration", ex);
         }
@@ -683,6 +685,24 @@ public class Configuration implements Service {
         this.jdbcProxyFactoryClass = jdbcProxyFactoryClass;
     }
 
+    /**
+     * Get the factory class for creating metrics instances.
+     * The default value is "auto", set it to "none" if you don't want metrics.
+     *
+     * @return the name of the factory class
+     */
+    public String getMetricsFactoryClass() {
+        return metricsFactoryClass;
+    }
+
+    /**
+     * Set the name of the factory class for creating metrics instances.
+     *
+     * @param metricsFactoryClass the name of the metrics factory class
+     */
+    public void setMetricsFactoryClass(String metricsFactoryClass) {
+        this.metricsFactoryClass = metricsFactoryClass;
+    }
 
     /**
      * {@link bitronix.tm.resource.ResourceLoader} configuration file name. {@link bitronix.tm.resource.ResourceLoader}

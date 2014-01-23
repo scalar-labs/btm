@@ -55,6 +55,11 @@ public class XAPool implements StateChangeListener {
 
     private final static Logger log = LoggerFactory.getLogger(XAPool.class);
 
+    public static interface Metrics {
+        String CONNECTION_ACQUIRING_TIME = "connectionAcquiringTime";
+        String CONNECTIONS_IN_USE_HISTOGRAM = "connectionsInUseHistogram";
+    }
+
     /**
      * The stateTransitionLock makes sure that transitions of XAStatefulHolders from one state to another
      * (movement from one pool to another) are atomic.  A ReentrantReadWriteLock allows any number of 
@@ -241,6 +246,7 @@ public class XAPool implements StateChangeListener {
             case XAStatefulHolder.STATE_IN_POOL:
             	// no-op.  calling availablePool.remove(source) here is reduncant because it was
             	// already removed when availablePool.poll() was called.
+                updateConnectionsInUseHistogram();
                 break;
             case XAStatefulHolder.STATE_ACCESSIBLE:
                 if (log.isDebugEnabled()) { log.debug("removed " + source + " from the accessible pool"); }
@@ -266,6 +272,7 @@ public class XAPool implements StateChangeListener {
         	case XAStatefulHolder.STATE_IN_POOL:
                 if (log.isDebugEnabled()) { log.debug("added " + source + " to the available pool"); }
                 availablePool.add(source);
+                updateConnectionsInUseHistogram();
         		break;
         	case XAStatefulHolder.STATE_ACCESSIBLE:
         		if (log.isDebugEnabled()) { log.debug("added " + source + " to the accessible pool"); }
@@ -309,7 +316,12 @@ public class XAPool implements StateChangeListener {
         if (log.isDebugEnabled()) { log.debug("getting IN_POOL connection from " + this + ", waiting if necessary"); }
 
         try {
+            long start = MonotonicClock.currentTimeMillis();
             XAStatefulHolder xaStatefulHolder = availablePool.poll(remainingTimeMs, TimeUnit.MILLISECONDS);
+            if (bean.getMetrics() != null) {
+                long end = MonotonicClock.currentTimeMillis();
+                bean.getMetrics().updateTimer(Metrics.CONNECTION_ACQUIRING_TIME, end - start, TimeUnit.MILLISECONDS);
+            }
             if (xaStatefulHolder == null) {
                 if (TransactionManagerServices.isTransactionManagerRunning())
                     TransactionManagerServices.getTransactionManager().dumpTransactionContexts();
@@ -665,6 +677,15 @@ public class XAPool implements StateChangeListener {
         // Set the XAStatefulHolder on the ThreadLocal.  Even if we've already set it before,
         // it's safe -- checking would be more expensive than just setting it again.
         threadLocal.set(xaStatefulHolder);
+    }
+
+    /**
+     * Update pool size histogram.
+     */
+    private void updateConnectionsInUseHistogram() {
+        if (bean.getMetrics() != null) {
+            bean.getMetrics().updateHistogram(Metrics.CONNECTIONS_IN_USE_HISTOGRAM, (totalPoolSize() - inPoolSize()));
+        }
     }
 
     private final class SharedStatefulHolderCleanupSynchronization implements Synchronization {
