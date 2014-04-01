@@ -20,12 +20,14 @@ import bitronix.tm.journal.Journal;
 import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.resource.MockJournal;
 import bitronix.tm.mock.resource.jms.MockXAConnectionFactory;
+import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.jms.PoolingConnectionFactory;
 import junit.framework.TestCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -42,7 +44,14 @@ public abstract class AbstractMockJmsTest extends TestCase {
     protected static final String CONNECTION_FACTORY1_NAME = "pcf1";
     protected static final String CONNECTION_FACTORY2_NAME = "pcf2";
 
+    @Override
     protected void setUp() throws Exception {
+        Iterator<String> it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+        while (it.hasNext()) {
+            String name = it.next();
+            ResourceRegistrar.unregister(ResourceRegistrar.get(name));
+        }
+
         poolingConnectionFactory1 = new PoolingConnectionFactory();
         poolingConnectionFactory1.setClassName(MockXAConnectionFactory.class.getName());
         poolingConnectionFactory1.setUniqueName(CONNECTION_FACTORY1_NAME);
@@ -73,6 +82,8 @@ public abstract class AbstractMockJmsTest extends TestCase {
         // clear event recorder list
         EventRecorder.clear();
     }
+
+    @Override
     protected void tearDown() throws Exception {
         try {
             if (log.isDebugEnabled()) { log.debug("*** tearDown rollback"); }
