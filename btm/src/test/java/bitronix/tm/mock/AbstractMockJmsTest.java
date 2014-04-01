@@ -20,6 +20,7 @@ import bitronix.tm.journal.Journal;
 import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.resource.MockJournal;
 import bitronix.tm.mock.resource.jms.MockXAConnectionFactory;
+import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.jms.PoolingConnectionFactory;
 import org.junit.After;
 import org.junit.Before;
@@ -27,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -45,6 +47,12 @@ public abstract class AbstractMockJmsTest {
 
     @Before
     public void setUp() throws Exception {
+        Iterator<String> it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+        while (it.hasNext()) {
+            String name = it.next();
+            ResourceRegistrar.unregister(ResourceRegistrar.get(name));
+        }
+
         poolingConnectionFactory1 = new PoolingConnectionFactory();
         poolingConnectionFactory1.setClassName(MockXAConnectionFactory.class.getName());
         poolingConnectionFactory1.setUniqueName(CONNECTION_FACTORY1_NAME);
@@ -84,8 +92,13 @@ public abstract class AbstractMockJmsTest {
         } catch (Exception ex) {
             // ignore
         }
-        poolingConnectionFactory1.close();
-        poolingConnectionFactory2.close();
+
+        if (poolingConnectionFactory1 != null) {
+            poolingConnectionFactory1.close();
+        }
+        if (poolingConnectionFactory2 != null) {
+            poolingConnectionFactory2.close();
+        }
 
         TransactionManagerServices.getTransactionManager().shutdown();
 
