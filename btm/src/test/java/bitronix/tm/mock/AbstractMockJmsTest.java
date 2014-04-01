@@ -42,6 +42,7 @@ public abstract class AbstractMockJmsTest extends TestCase {
     protected static final String CONNECTION_FACTORY1_NAME = "pcf1";
     protected static final String CONNECTION_FACTORY2_NAME = "pcf2";
 
+    @Override
     protected void setUp() throws Exception {
         poolingConnectionFactory1 = new PoolingConnectionFactory();
         poolingConnectionFactory1.setClassName(MockXAConnectionFactory.class.getName());
@@ -73,6 +74,8 @@ public abstract class AbstractMockJmsTest extends TestCase {
         // clear event recorder list
         EventRecorder.clear();
     }
+
+    @Override
     protected void tearDown() throws Exception {
         try {
             if (log.isDebugEnabled()) { log.debug("*** tearDown rollback"); }
@@ -84,5 +87,14 @@ public abstract class AbstractMockJmsTest extends TestCase {
         poolingConnectionFactory2.close();
 
         TransactionManagerServices.getTransactionManager().shutdown();
+
+        // Wait up to one minute for the Transaction Manager to shut down.
+        waitForShutdown(60);
+    }
+
+    private void waitForShutdown(int seconds) throws InterruptedException {
+        while ((--seconds >= 0) && TransactionManagerServices.isTransactionManagerRunning()) {
+            Thread.sleep(1000);
+        }
     }
 }
