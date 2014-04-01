@@ -302,6 +302,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         } catch (SQLException e) {
             // This connection must be invalid, so revert the usage counter.
             // Note: Closing a handle with usageCount > 0 "should never happen".
+            setState(STATE_NOT_ACCESSIBLE);
             --usageCount;
             throw e;
         }
