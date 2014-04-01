@@ -50,9 +50,60 @@ public class PropertyUtilsTest extends TestCase {
         }
     }
 
+    public void testSetMultipleProperties() throws Exception {
+        Destination destination = new Destination();
+
+        PropertyUtils.setProperty(destination, "props.key1", "value1");
+        PropertyUtils.setProperty(destination, "props.key2", "value2");
+        assertEquals("value1", destination.getProps().getProperty("key1"));
+        assertEquals("value2", destination.getProps().getProperty("key2"));
+    }
+
+    public void testSetClonedProperties() throws Exception {
+        Destination destination = new Destination();
+
+        PropertyUtils.setProperty(destination, "clonedProps.key", "value");
+        assertEquals("value", destination.getClonedProps().getProperty("key"));
+    }
+
+    public void testSetMultipleClonedProperties() throws Exception {
+        Destination destination = new Destination();
+
+        PropertyUtils.setProperty(destination, "clonedProps.key1", "value1");
+        PropertyUtils.setProperty(destination, "clonedProps.key2", "value2");
+        assertEquals("value1", destination.getClonedProps().getProperty("key1"));
+        assertEquals("value2", destination.getClonedProps().getProperty("key2"));
+    }
+
+    public void testSetPropertiesDirectly() throws Exception {
+        Destination destination = new Destination();
+
+        Properties p = new Properties();
+        p.setProperty("key", "value");
+
+        PropertyUtils.setProperty(destination, "props", p);
+        assertEquals("value", destination.getProps().getProperty("key"));
+    }
+
+    public void testSetClonedPropertiesDirectly() throws Exception {
+        Destination destination = new Destination();
+
+        Properties p = new Properties();
+        p.setProperty("key", "value");
+
+        PropertyUtils.setProperty(destination, "clonedProps", p);
+        assertEquals("value", destination.getClonedProps().getProperty("key"));
+    }
+
+    public void testSettingKeyForPropertiesObject() throws Exception {
+        Properties p = new Properties();
+        PropertyUtils.setProperty(p, "key", "value");
+        assertEquals("value", p.getProperty("key"));
+    }
+
     public void testSetPropertiesObjectLongKey() throws Exception {
         PrivateDestination destination = new PrivateDestination();
-        
+
         PropertyUtils.setProperty(destination, "props.key", "value1");
         PropertyUtils.setProperty(destination, "props.a.dotted.key", "value2");
 
@@ -72,7 +123,7 @@ public class PropertyUtilsTest extends TestCase {
 
         Map map = PropertyUtils.getProperties(destination);
 
-        assertEquals(12, map.size());
+        assertEquals(13, map.size());
         assertEquals("one", map.get("props.number1"));
         assertEquals("two", map.get("props.number2"));
         assertEquals(new Integer(10), map.get("anInteger"));
@@ -126,6 +177,7 @@ public class PropertyUtilsTest extends TestCase {
 
     public static class Destination {
         private Properties props;
+        private Properties clonedProps;
         private Destination subDestination;
         private int anInteger;
         private int aWriteOnlyInt;
@@ -144,6 +196,14 @@ public class PropertyUtilsTest extends TestCase {
 
         public void setProps(Properties props) {
             this.props = props;
+        }
+
+        public Properties getClonedProps() {
+            return (clonedProps == null) ? null : (Properties) clonedProps.clone();
+        }
+
+        public void setClonedProps(Properties props) {
+            this.clonedProps = (props == null) ? null : (Properties) props.clone();
         }
 
         public Destination getSubDestination() {

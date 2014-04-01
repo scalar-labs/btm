@@ -264,41 +264,48 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         return jdbcVersionDetected;
     }
 
-    public Object getConnectionHandle() throws Exception {
+    public Object getConnectionHandle() throws SQLException {
         if (log.isDebugEnabled()) { log.debug("getting connection handle from " + this); }
         int oldState = getState();
 
         // Increment the usage count
         usageCount++;
-
-        // Only transition to STATE_ACCESSIBLE on the first usage.  If we're not sharing 
-        // connections (default behavior) usageCount is always 1 here, so this transition
-        // will always occur (current behavior unchanged).  If we _are_ sharing connections,
-        // and this is _not_ the first usage, it is valid for the state to already be 
-        // STATE_ACCESSIBLE.  Calling setState() with STATE_ACCESSIBLE when the state is
-        // already STATE_ACCESSIBLE fails the sanity check in AbstractXAStatefulHolder.
-        // Even if the connection is shared (usageCount > 1), if the state was STATE_NOT_ACCESSIBLE
-        // we transition back to STATE_ACCESSIBLE.
-        if (usageCount == 1 || oldState == STATE_NOT_ACCESSIBLE) {
-            setState(STATE_ACCESSIBLE);
-        }
-
-        if (oldState == STATE_IN_POOL) {
-            if (log.isDebugEnabled()) { log.debug("connection " + xaConnection + " was in state IN_POOL, testing it"); }
-            testConnection(connection);
-            applyIsolationLevel();
-            applyCursorHoldabilty();
-            if (TransactionContextHelper.currentTransaction() == null) {
-                // it is safe to set the auto-commit flag outside of a global transaction
-                applyLocalAutoCommit();
+        try {
+            // Only transition to STATE_ACCESSIBLE on the first usage.  If we're not sharing
+            // connections (default behavior) usageCount is always 1 here, so this transition
+            // will always occur (current behavior unchanged).  If we _are_ sharing connections,
+            // and this is _not_ the first usage, it is valid for the state to already be
+            // STATE_ACCESSIBLE.  Calling setState() with STATE_ACCESSIBLE when the state is
+            // already STATE_ACCESSIBLE fails the sanity check in AbstractXAStatefulHolder.
+            // Even if the connection is shared (usageCount > 1), if the state was STATE_NOT_ACCESSIBLE
+            // we transition back to STATE_ACCESSIBLE.
+            if (usageCount == 1 || oldState == STATE_NOT_ACCESSIBLE) {
+                setState(STATE_ACCESSIBLE);
             }
-        }
-        else {
-            if (log.isDebugEnabled()) { log.debug("connection " + xaConnection + " was in state " + Decoder.decodeXAStatefulHolderState(oldState) + ", no need to test it"); }
-        }
 
-        if (log.isDebugEnabled()) { log.debug("got connection handle from " + this); }
-        return getConnectionHandle(connection);
+            if (oldState == STATE_IN_POOL) {
+                if (log.isDebugEnabled()) { log.debug("connection " + xaConnection + " was in state IN_POOL, testing it"); }
+                testConnection(connection);
+                applyIsolationLevel();
+                applyCursorHoldabilty();
+                if (TransactionContextHelper.currentTransaction() == null) {
+                    // it is safe to set the auto-commit flag outside of a global transaction
+                    applyLocalAutoCommit();
+                }
+            }
+            else {
+                if (log.isDebugEnabled()) { log.debug("connection " + xaConnection + " was in state " + Decoder.decodeXAStatefulHolderState(oldState) + ", no need to test it"); }
+            }
+
+            if (log.isDebugEnabled()) { log.debug("got connection handle from " + this); }
+            return getConnectionHandle(connection);
+        } catch (SQLException e) {
+            // This connection must be invalid, so revert the usage counter.
+            // Note: Closing a handle with usageCount > 0 "should never happen".
+            setState(STATE_NOT_ACCESSIBLE);
+            --usageCount;
+            throw e;
+        }
     }
 
     public void stateChanged(XAStatefulHolder source, int oldState, int newState) {

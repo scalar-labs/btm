@@ -37,6 +37,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyObject;
@@ -57,7 +58,8 @@ public class MockitoXADataSource implements XADataSource {
     private String password;
     private String database;
     private Object uselessThing;
-    private List inDoubtXids = new ArrayList();
+    private Properties clonedProperties;
+    private final List inDoubtXids = new ArrayList();
     private SQLException getXAConnectionException;
     private static SQLException staticGetXAConnectionException;
     private static SQLException staticCloseXAConnectionException;
@@ -143,6 +145,14 @@ public class MockitoXADataSource implements XADataSource {
 
     public void setDatabase(String database) {
         this.database = database;
+    }
+
+    public Properties getClonedProperties() {
+        return (clonedProperties == null) ? null : (Properties) clonedProperties.clone();
+    }
+
+    public void setClonedProperties(Properties properties) {
+        this.clonedProperties = (properties == null) ? null : (Properties) properties.clone();
     }
 
     public void addInDoubtXid(Xid xid) {

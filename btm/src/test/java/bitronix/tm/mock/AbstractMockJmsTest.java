@@ -20,19 +20,22 @@ import bitronix.tm.journal.Journal;
 import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.resource.MockJournal;
 import bitronix.tm.mock.resource.jms.MockXAConnectionFactory;
+import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.jms.PoolingConnectionFactory;
-import junit.framework.TestCase;
+import org.junit.After;
+import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
  * @author Ludovic Orban
  */
-public abstract class AbstractMockJmsTest extends TestCase {
+public abstract class AbstractMockJmsTest {
 
     private final static Logger log = LoggerFactory.getLogger(AbstractMockJmsTest.class);
 
@@ -42,7 +45,14 @@ public abstract class AbstractMockJmsTest extends TestCase {
     protected static final String CONNECTION_FACTORY1_NAME = "pcf1";
     protected static final String CONNECTION_FACTORY2_NAME = "pcf2";
 
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
+        Iterator<String> it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+        while (it.hasNext()) {
+            String name = it.next();
+            ResourceRegistrar.unregister(ResourceRegistrar.get(name));
+        }
+
         poolingConnectionFactory1 = new PoolingConnectionFactory();
         poolingConnectionFactory1.setClassName(MockXAConnectionFactory.class.getName());
         poolingConnectionFactory1.setUniqueName(CONNECTION_FACTORY1_NAME);
@@ -73,16 +83,32 @@ public abstract class AbstractMockJmsTest extends TestCase {
         // clear event recorder list
         EventRecorder.clear();
     }
-    protected void tearDown() throws Exception {
+
+    @After
+    public void tearDown() throws Exception {
         try {
             if (log.isDebugEnabled()) { log.debug("*** tearDown rollback"); }
             TransactionManagerServices.getTransactionManager().rollback();
         } catch (Exception ex) {
             // ignore
         }
-        poolingConnectionFactory1.close();
-        poolingConnectionFactory2.close();
+
+        if (poolingConnectionFactory1 != null) {
+            poolingConnectionFactory1.close();
+        }
+        if (poolingConnectionFactory2 != null) {
+            poolingConnectionFactory2.close();
+        }
 
         TransactionManagerServices.getTransactionManager().shutdown();
+
+        // Wait up to one minute for the Transaction Manager to shut down.
+        waitForShutdown(60);
+    }
+
+    private void waitForShutdown(int seconds) throws InterruptedException {
+        while ((--seconds >= 0) && TransactionManagerServices.isTransactionManagerRunning()) {
+            Thread.sleep(1000);
+        }
     }
 }
