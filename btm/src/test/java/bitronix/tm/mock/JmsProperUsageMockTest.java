@@ -23,6 +23,8 @@ import bitronix.tm.mock.events.XAResourceCommitEvent;
 import bitronix.tm.mock.events.XAResourceEndEvent;
 import bitronix.tm.mock.events.XAResourceStartEvent;
 import bitronix.tm.resource.jms.PoolingConnectionFactory;
+import static org.junit.Assert.*;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +48,7 @@ public class JmsProperUsageMockTest extends AbstractMockJmsTest {
 
     private final static Logger log = LoggerFactory.getLogger(JmsProperUsageMockTest.class);
 
+    @Test
     public void testSimpleWorkingCase() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
@@ -93,6 +96,7 @@ public class JmsProperUsageMockTest extends AbstractMockJmsTest {
         assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
     }
 
+    @Test
     public void testSerialization() throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);

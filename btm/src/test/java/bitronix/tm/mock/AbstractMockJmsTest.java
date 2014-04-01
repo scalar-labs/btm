@@ -21,7 +21,8 @@ import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.resource.MockJournal;
 import bitronix.tm.mock.resource.jms.MockXAConnectionFactory;
 import bitronix.tm.resource.jms.PoolingConnectionFactory;
-import junit.framework.TestCase;
+import org.junit.After;
+import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Ludovic Orban
  */
-public abstract class AbstractMockJmsTest extends TestCase {
+public abstract class AbstractMockJmsTest {
 
     private final static Logger log = LoggerFactory.getLogger(AbstractMockJmsTest.class);
 
@@ -42,8 +43,8 @@ public abstract class AbstractMockJmsTest extends TestCase {
     protected static final String CONNECTION_FACTORY1_NAME = "pcf1";
     protected static final String CONNECTION_FACTORY2_NAME = "pcf2";
 
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         poolingConnectionFactory1 = new PoolingConnectionFactory();
         poolingConnectionFactory1.setClassName(MockXAConnectionFactory.class.getName());
         poolingConnectionFactory1.setUniqueName(CONNECTION_FACTORY1_NAME);
@@ -75,8 +76,8 @@ public abstract class AbstractMockJmsTest extends TestCase {
         EventRecorder.clear();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         try {
             if (log.isDebugEnabled()) { log.debug("*** tearDown rollback"); }
             TransactionManagerServices.getTransactionManager().rollback();
