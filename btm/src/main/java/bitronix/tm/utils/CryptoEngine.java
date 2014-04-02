@@ -965,6 +965,7 @@ public class CryptoEngine {
              * @param theByte the byte to write
              * @since 1.3
              */
+            @Override
             public void write(int theByte) throws java.io.IOException {
                 // Encoding suspended?
                 if (suspendEncoding) {
@@ -1016,6 +1017,7 @@ public class CryptoEngine {
              * @param len      max number of bytes to read into array
              * @since 1.3
              */
+            @Override
             public void write(byte[] theBytes, int off, int len) throws java.io.IOException {
                 // Encoding suspended?
                 if (suspendEncoding) {
@@ -1054,7 +1056,8 @@ public class CryptoEngine {
              *
              * @since 1.3
              */
-            public void close() throws java.io.IOException {
+             @Override
+             public void close() throws java.io.IOException {
                 // 1. Ensure that pending characters are written
                 flushBase64();
 

@@ -28,14 +28,15 @@ import java.awt.event.MouseEvent;
  */
 public class TransactionTableMouseListener extends MouseAdapter {
 
-    private JFrame frame;
-    private JTable table;
+    private final JFrame frame;
+    private final JTable table;
 
     public TransactionTableMouseListener(JFrame frame, JTable table) {
         this.frame = frame;
         this.table = table;
     }
 
+    @Override
     public void mouseClicked(MouseEvent evt) {
         if (evt.getClickCount() == 2) {
             showDetails();

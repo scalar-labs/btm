@@ -39,6 +39,7 @@ public class DeferredReleaseSynchronization implements Synchronization {
         return xaStatefulHolder;
     }
 
+    @Override
     public void afterCompletion(int status) {
         if (log.isDebugEnabled()) { log.debug("DeferredReleaseSynchronization requeuing " + xaStatefulHolder); }
 
@@ -48,9 +49,11 @@ public class DeferredReleaseSynchronization implements Synchronization {
         if (log.isDebugEnabled()) { log.debug("DeferredReleaseSynchronization requeued " + xaStatefulHolder); }
     }
 
+    @Override
     public void beforeCompletion() {
     }
 
+    @Override
     public String toString() {
         return "a DeferredReleaseSynchronization of " + xaStatefulHolder;
     }

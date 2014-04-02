@@ -51,6 +51,7 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
         this.pretendClosed = false;
     }
 
+    @Override
     public String toString() {
         return "a PreparedStatementJavaProxy wrapping [" + delegate + "]";
     }
@@ -72,7 +73,7 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
 	        // Clear the parameters so the next use of this cached statement
 	        // doesn't pick up unexpected values.
 	        delegate.clearParameters();
-	
+
 	        // Return to cache so the usage count can be updated
 	        jdbcPooledConnection.putCachedStatement(cacheKey, delegate);
         }
@@ -113,7 +114,7 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
     	}
     	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), generatedKeys);
     }
-    
+
     /* java.sql.Wrapper implementation */
 
     public boolean isWrapperFor(Class<?> iface) throws SQLException {

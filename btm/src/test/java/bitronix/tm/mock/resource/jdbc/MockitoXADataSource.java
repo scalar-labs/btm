@@ -62,20 +62,25 @@ public class MockitoXADataSource implements XADataSource {
     private static SQLException staticGetXAConnectionException;
     private static SQLException staticCloseXAConnectionException;
 
+    @Override
     public int getLoginTimeout() throws SQLException {
         return 0;
     }
 
+    @Override
     public void setLoginTimeout(int seconds) throws SQLException {
     }
 
+    @Override
     public PrintWriter getLogWriter() throws SQLException {
         return null;
     }
 
+    @Override
     public void setLogWriter(PrintWriter out) throws SQLException {
     }
 
+    @Override
     public XAConnection getXAConnection() throws SQLException {
         if (staticGetXAConnectionException != null)
             throw staticGetXAConnectionException;
@@ -90,6 +95,7 @@ public class MockitoXADataSource implements XADataSource {
         final XAConnection mockXAConnection = mock(XAConnection.class);
         // Handle XAConnection.close(), first time we answer, after that we throw
         doAnswer(new Answer<Object>() {
+            @Override
 			public Object answer(InvocationOnMock invocation) throws Throwable {
 				EventRecorder eventRecorder = EventRecorder.getEventRecorder(mockXAConnection);
 				eventRecorder.addEvent(new XAConnectionCloseEvent(mockXAConnection));
@@ -101,6 +107,7 @@ public class MockitoXADataSource implements XADataSource {
 //        Connection mockConnection = createMockConnection();
 //        when(mockXAConnection.getConnection()).thenReturn(mockConnection);
         doAnswer(new Answer<Connection>() {
+            @Override
 			public Connection answer(InvocationOnMock invocation) throws Throwable {
 				return createMockConnection();
 			}
@@ -113,6 +120,7 @@ public class MockitoXADataSource implements XADataSource {
         return mockXAConnection;
     }
 
+    @Override
     public XAConnection getXAConnection(String user, String password) throws SQLException {
         return getXAConnection();
     }
@@ -206,6 +214,7 @@ public class MockitoXADataSource implements XADataSource {
 
         // Handle Connection.close()
         doAnswer(new Answer() {
+            @Override
 			public Object answer(InvocationOnMock invocation) throws Throwable {
 				EventRecorder eventRecorder = EventRecorder.getEventRecorder(mockConnection);
 				eventRecorder.addEvent(new ConnectionCloseEvent(mockConnection));
@@ -215,6 +224,7 @@ public class MockitoXADataSource implements XADataSource {
 
         // Handle Connection.commit()
         doAnswer(new Answer() {
+            @Override
 			public Object answer(InvocationOnMock invocation) throws Throwable {
 				EventRecorder eventRecorder = EventRecorder.getEventRecorder(mockConnection);
 				eventRecorder.addEvent(new LocalCommitEvent(mockConnection, new Exception()));
@@ -224,6 +234,7 @@ public class MockitoXADataSource implements XADataSource {
 
         // Handle Connection.rollback()
         doAnswer(new Answer() {
+            @Override
 			public Object answer(InvocationOnMock invocation) throws Throwable {
 				EventRecorder eventRecorder = EventRecorder.getEventRecorder(mockConnection);
 				eventRecorder.addEvent(new LocalRollbackEvent(mockConnection, new Exception()));

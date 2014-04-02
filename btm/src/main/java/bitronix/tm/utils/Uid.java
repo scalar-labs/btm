@@ -61,6 +61,7 @@ public final class Uid {
     	return array.length;
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof Uid) {
             Uid otherUid = (Uid) obj;
@@ -74,10 +75,12 @@ public final class Uid {
         return false;
     }
 
+    @Override
     public int hashCode() {
         return hashCodeValue;
     }
 
+    @Override
     public String toString() {
         return toStringValue;
     }

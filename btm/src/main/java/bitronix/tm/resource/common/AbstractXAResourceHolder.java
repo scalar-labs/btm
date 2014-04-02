@@ -44,7 +44,7 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
     private final Map<Uid, Map<Uid, XAResourceHolderState>> xaResourceHolderStates = new HashMap<Uid, Map<Uid, XAResourceHolderState>>();
     private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-    // This method is only used by tests.  It is (and always was) potentially thread-unsafe depending on what callers do with the returned map. 
+    // This method is only used by tests.  It is (and always was) potentially thread-unsafe depending on what callers do with the returned map.
     protected Map<Uid, XAResourceHolderState> getXAResourceHolderStatesForGtrid(Uid gtrid) {
         rwLock.readLock().lock();
         try {
@@ -54,6 +54,7 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
         }
     }
 
+    @Override
     public boolean isExistXAResourceHolderStatesForGtrid(Uid gtrid) {
         rwLock.readLock().lock();
         try {
@@ -63,6 +64,7 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
         }
     }
 
+    @Override
     public int getXAResourceHolderStateCountForGtrid(Uid gtrid) {
         rwLock.readLock().lock();
         try {
@@ -76,6 +78,7 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
         }
     }
 
+    @Override
     public void acceptVisitorForXAResourceHolderStates(Uid gtrid, XAResourceHolderStateVisitor visitor) {
         rwLock.readLock().lock();
         try {
@@ -92,10 +95,11 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
         }
     }
 
+    @Override
     public void putXAResourceHolderState(BitronixXid xid, XAResourceHolderState xaResourceHolderState) {
     	Uid gtrid = xid.getGlobalTransactionIdUid();
     	Uid bqual = xid.getBranchQualifierUid();
-    	
+
     	rwLock.writeLock().lock();
         try {
         	if (log.isDebugEnabled()) { log.debug("putting XAResourceHolderState [" + xaResourceHolderState + "] on " + this); }
@@ -119,6 +123,7 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
         }
     }
 
+    @Override
     public void removeXAResourceHolderState(BitronixXid xid) {
     	Uid gtrid = xid.getGlobalTransactionIdUid();
     	Uid bqual = xid.getBranchQualifierUid();
@@ -148,6 +153,7 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
         }
     }
 
+    @Override
     public boolean hasStateForXAResource(XAResourceHolder xaResourceHolder) {
         rwLock.readLock().lock();
         try {

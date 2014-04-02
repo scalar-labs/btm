@@ -93,9 +93,11 @@ public final class TransactionContextHelper {
         // End resource as eagerly as possible. This allows to release connections to the pool much earlier
         // with resources fully supporting transaction interleaving.
         if (isInEnlistingGlobalTransactionContext(xaResourceHolder, currentTransaction) && !bean.getDeferConnectionRelease()) {
-            
+
             class LocalVisitor implements XAResourceHolderStateVisitor {
                 private SystemException systemException = null;
+
+                @Override
                 public boolean visit(XAResourceHolderState xaResourceHolderState) {
                     if (!xaResourceHolderState.isEnded()) {
                         if (log.isDebugEnabled()) { log.debug("delisting resource " + xaResourceHolderState + " from " + currentTransaction); }
@@ -111,7 +113,7 @@ public final class TransactionContextHelper {
                     else if (log.isDebugEnabled()) { log.debug("avoiding delistment of not enlisted resource " + xaResourceHolderState); }
                     return true; // continue visitation
                 }
-            };
+            }
 
             LocalVisitor xaResourceHolderStateVisitor = new LocalVisitor();
             xaResourceHolder.acceptVisitorForXAResourceHolderStates(currentTransaction.getResourceManager().getGtrid(), xaResourceHolderStateVisitor);
@@ -266,6 +268,8 @@ public final class TransactionContextHelper {
 
         class LocalVisitor implements XAResourceHolderStateVisitor {
             private XAResourceHolderState latestEnlistedHolder;
+
+            @Override
             public boolean visit(XAResourceHolderState xaResourceHolderState) {
                 if (xaResourceHolderState != null && xaResourceHolderState.getXid() != null) {
                     BitronixXid bitronixXid = xaResourceHolderState.getXid();

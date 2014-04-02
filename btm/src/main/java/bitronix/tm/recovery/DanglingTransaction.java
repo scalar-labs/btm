@@ -44,10 +44,12 @@ public final class DanglingTransaction {
         return xid;
     }
 
+    @Override
     public int hashCode() {
         return uniqueName.hashCode() + xid.hashCode();
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof DanglingTransaction) {
             DanglingTransaction otherDanglingTransaction = (DanglingTransaction) obj;

@@ -38,10 +38,12 @@ public class TransactionTimeoutTask extends Task {
         this.transaction = transaction;
     }
 
+    @Override
     public Object getObject() {
         return transaction;
     }
 
+    @Override
     public void execute() throws TaskException {
         try {
             if (log.isDebugEnabled()) { log.debug("marking " + transaction + " as timed out"); }
@@ -51,6 +53,7 @@ public class TransactionTimeoutTask extends Task {
         }
     }
 
+    @Override
     public String toString() {
         return "a TransactionTimeoutTask on " + transaction + " scheduled for " + getExecutionTime();
     }

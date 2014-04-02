@@ -36,14 +36,17 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
     private final List<StateChangeListener> stateChangeEventListeners = new CopyOnWriteArrayList<StateChangeListener>();
     private final Date creationDate = new Date();
 
+    @Override
     public Date getCreationDate() {
         return creationDate;
     }
 
+    @Override
     public int getState() {
         return state;
     }
 
+    @Override
     public void setState(int state) {
         int oldState = this.state;
         fireStateChanging(oldState, state);
@@ -60,10 +63,12 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
         fireStateChanged(oldState, state);
     }
 
+    @Override
     public void addStateChangeEventListener(StateChangeListener listener) {
         stateChangeEventListeners.add(listener);
     }
 
+    @Override
     public void removeStateChangeEventListener(StateChangeListener listener) {
         stateChangeEventListeners.remove(listener);
     }

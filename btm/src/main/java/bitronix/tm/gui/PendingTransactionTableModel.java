@@ -45,22 +45,27 @@ public class PendingTransactionTableModel extends TransactionTableModel {
         }
     }
 
+    @Override
     public int getColumnCount() {
         return 8;
     }
 
+    @Override
     public int getRowCount() {
         return tLogs.size();
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return false;
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
         return String.class;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         TransactionLogRecord tlog = (TransactionLogRecord) tLogs.get(rowIndex);
         switch (columnIndex) {
@@ -85,9 +90,11 @@ public class PendingTransactionTableModel extends TransactionTableModel {
         }
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
         switch (columnIndex) {
             case 0:
@@ -111,20 +118,24 @@ public class PendingTransactionTableModel extends TransactionTableModel {
         }
     }
 
+    @Override
     public void addTableModelListener(TableModelListener l) {
     }
 
+    @Override
     public void removeTableModelListener(TableModelListener l) {
     }
 
 
     private Map pendingTLogs = new HashMap();
 
+    @Override
     protected void readFullTransactionLog(File filename) throws IOException {
         super.readFullTransactionLog(filename);
         pendingTLogs.clear();
     }
 
+    @Override
     public boolean acceptLog(JournalRecord tlog) {
         if (tlog.getStatus() == Status.STATUS_COMMITTING) {
             pendingTLogs.put(tlog.getGtrid(), tlog);
@@ -136,6 +147,7 @@ public class PendingTransactionTableModel extends TransactionTableModel {
         return false;
     }
 
+    @Override
     public TransactionLogRecord getRow(int row) {
         return (TransactionLogRecord) tLogs.get(row);
     }

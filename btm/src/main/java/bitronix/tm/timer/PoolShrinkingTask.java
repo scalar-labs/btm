@@ -33,10 +33,12 @@ public class PoolShrinkingTask extends Task {
         this.xaPool = xaPool;
     }
 
+    @Override
     public Object getObject() {
         return xaPool;
     }
 
+    @Override
     public void execute() throws TaskException {
         try {
             xaPool.shrink();
@@ -47,6 +49,7 @@ public class PoolShrinkingTask extends Task {
         }
     }
 
+    @Override
     public String toString() {
         return "a PoolShrinkingTask scheduled for " + getExecutionTime() + " on " + xaPool;
     }

@@ -227,6 +227,7 @@ public final class ResourceRegistrar {
             super(producer);
         }
 
+        @Override
         boolean isInitialized() {
             return initialized;
         }

@@ -147,6 +147,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return xaSession.getSession();
     }
 
+    @Override
     public String toString() {
         return "a DualSessionWrapper in state " + Decoder.decodeXAStatefulHolderState(getState()) + " of " + pooledConnection;
     }
@@ -154,6 +155,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
     /* wrapped Session methods that have special XA semantics */
 
+    @Override
     public void close() throws JMSException {
         if (getState() != STATE_ACCESSIBLE) {
             if (log.isDebugEnabled()) { log.debug("not closing already closed " + this); }
@@ -187,6 +189,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
     }
 
+    @Override
     public Date getLastReleaseDate() {
         return null;
     }
@@ -196,6 +199,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
      * There is no such state for JMS sessions, this just means that it has been closed -> force a
      * state switch to CLOSED then clean up.
      */
+    @Override
     public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
         if (newState == STATE_IN_POOL) {
             setState(STATE_CLOSED);
@@ -249,9 +253,11 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         } // if newState == STATE_CLOSED
     }
 
+    @Override
     public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
     }
 
+    @Override
     public MessageProducer createProducer(Destination destination) throws JMSException {
         MessageProducerConsumerKey key = new MessageProducerConsumerKey(destination);
         if (log.isDebugEnabled()) { log.debug("looking for producer based on " + key); }
@@ -269,6 +275,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return messageProducer;
     }
 
+    @Override
     public MessageConsumer createConsumer(Destination destination) throws JMSException {
         MessageProducerConsumerKey key = new MessageProducerConsumerKey(destination);
         if (log.isDebugEnabled()) { log.debug("looking for consumer based on " + key); }
@@ -303,6 +310,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return messageConsumer;
     }
 
+    @Override
     public MessageConsumer createConsumer(Destination destination, String messageSelector, boolean noLocal) throws JMSException {
         MessageProducerConsumerKey key = new MessageProducerConsumerKey(destination, messageSelector, noLocal);
         if (log.isDebugEnabled()) { log.debug("looking for consumer based on " + key); }
@@ -320,6 +328,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return messageConsumer;
     }
 
+    @Override
     public TopicSubscriber createDurableSubscriber(Topic topic, String name) throws JMSException {
         MessageProducerConsumerKey key = new MessageProducerConsumerKey(topic);
         if (log.isDebugEnabled()) { log.debug("looking for durable subscriber based on " + key); }
@@ -337,6 +346,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return topicSubscriber;
     }
 
+    @Override
     public TopicSubscriber createDurableSubscriber(Topic topic, String name, String messageSelector, boolean noLocal) throws JMSException {
         MessageProducerConsumerKey key = new MessageProducerConsumerKey(topic, messageSelector, noLocal);
         if (log.isDebugEnabled()) { log.debug("looking for durable subscriber based on " + key); }
@@ -354,10 +364,12 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return topicSubscriber;
     }
 
+    @Override
     public MessageListener getMessageListener() throws JMSException {
         return listener;
     }
 
+    @Override
     public void setMessageListener(MessageListener listener) throws JMSException {
         if (getState() == STATE_CLOSED)
             throw new IllegalStateException("session handle is closed");
@@ -370,6 +382,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         this.listener = listener;
     }
 
+    @Override
     public void run() {
         try {
             Session session = getSession(true);
@@ -382,16 +395,19 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
     /* XAResourceHolder implementation */
 
+    @Override
     public XAResource getXAResource() {
         return xaResource;
     }
 
+    @Override
     public ResourceBean getResourceBean() {
         return getPoolingConnectionFactory();
     }
 
     /* XAStatefulHolder implementation */
 
+    @Override
     public List<XAResourceHolder> getXAResourceHolders() {
         return Arrays.asList((XAResourceHolder) this);
     }
@@ -403,12 +419,14 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return null;
     }
 
+    @Override
     public Object getConnectionHandle() throws Exception {
         return null;
     }
 
     /* XA-enhanced methods */
 
+    @Override
     public boolean getTransacted() throws JMSException {
         if (isParticipatingInActiveGlobalTransaction())
             return true; // for consistency with EJB 2.1 spec (17.3.5)
@@ -416,6 +434,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return getSession().getTransacted();
     }
 
+    @Override
     public int getAcknowledgeMode() throws JMSException {
         if (isParticipatingInActiveGlobalTransaction())
             return 0; // for consistency with EJB 2.1 spec (17.3.5)
@@ -423,6 +442,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return getSession().getAcknowledgeMode();
     }
 
+    @Override
     public void commit() throws JMSException {
         if (isParticipatingInActiveGlobalTransaction())
             throw new TransactionInProgressException("cannot commit a resource enlisted in a global transaction");
@@ -430,6 +450,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         getSession().commit();
     }
 
+    @Override
     public void rollback() throws JMSException {
         if (isParticipatingInActiveGlobalTransaction())
             throw new TransactionInProgressException("cannot rollback a resource enlisted in a global transaction");
@@ -437,6 +458,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         getSession().rollback();
     }
 
+    @Override
     public void recover() throws JMSException {
         if (isParticipatingInActiveGlobalTransaction())
             throw new TransactionInProgressException("cannot recover a resource enlisted in a global transaction");
@@ -444,11 +466,13 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         getSession().recover();
     }
 
+    @Override
     public QueueBrowser createBrowser(javax.jms.Queue queue) throws JMSException {
         enlistResource();
         return getSession().createBrowser(queue);
     }
 
+    @Override
     public QueueBrowser createBrowser(javax.jms.Queue queue, String messageSelector) throws JMSException {
         enlistResource();
         return getSession().createBrowser(queue, messageSelector);
@@ -456,54 +480,67 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
     /* dumb wrapping of Session methods */
 
+    @Override
     public BytesMessage createBytesMessage() throws JMSException {
         return getSession().createBytesMessage();
     }
 
+    @Override
     public MapMessage createMapMessage() throws JMSException {
         return getSession().createMapMessage();
     }
 
+    @Override
     public Message createMessage() throws JMSException {
         return getSession().createMessage();
     }
 
+    @Override
     public ObjectMessage createObjectMessage() throws JMSException {
         return getSession().createObjectMessage();
     }
 
+    @Override
     public ObjectMessage createObjectMessage(Serializable serializable) throws JMSException {
         return getSession().createObjectMessage(serializable);
     }
 
+    @Override
     public StreamMessage createStreamMessage() throws JMSException {
         return getSession().createStreamMessage();
     }
 
+    @Override
     public TextMessage createTextMessage() throws JMSException {
         return getSession().createTextMessage();
     }
 
+    @Override
     public TextMessage createTextMessage(String text) throws JMSException {
         return getSession().createTextMessage(text);
     }
 
+    @Override
     public javax.jms.Queue createQueue(String queueName) throws JMSException {
         return getSession().createQueue(queueName);
     }
 
+    @Override
     public Topic createTopic(String topicName) throws JMSException {
         return getSession().createTopic(topicName);
     }
 
+    @Override
     public TemporaryQueue createTemporaryQueue() throws JMSException {
         return getSession().createTemporaryQueue();
     }
 
+    @Override
     public TemporaryTopic createTemporaryTopic() throws JMSException {
         return getSession().createTemporaryTopic();
     }
 
+    @Override
     public void unsubscribe(String name) throws JMSException {
         getSession().unsubscribe(name);
     }

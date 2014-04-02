@@ -42,7 +42,7 @@ public class LruStatementCache {
 
     /**
      * The <i>target</i> maxSize of the cache.  The cache may drift slightly
-     * higher in size in the case that every statement in the cache is 
+     * higher in size in the case that every statement in the cache is
      * in use and therefore nothing can be evicted.  But eventually
      * (probably quickly) the cache will return to maxSize.
      */
@@ -127,6 +127,7 @@ public class LruStatementCache {
      * usage counter decremented in the cache.
      *
      * @param key a prepared statement handle
+     * @param statement
      * @return a prepared statement
      */
     public PreparedStatement put(CacheKey key, PreparedStatement statement) {
@@ -233,7 +234,7 @@ public class LruStatementCache {
     public static final class CacheKey {
         // All of these attributes must match a proposed statement before the
         // statement can be considered "the same" and delivered from the cache.
-        private String sql;
+        private final String sql;
         private int resultSetType = ResultSet.TYPE_FORWARD_ONLY;
         private int resultSetConcurrency = ResultSet.CONCUR_READ_ONLY;
         private Integer resultSetHoldability;
@@ -279,6 +280,7 @@ public class LruStatementCache {
          * Overridden equals() that takes all PreparedStatement attributes into
          * account.
          */
+        @Override
         public boolean equals(Object obj) {
             if (!(obj instanceof CacheKey)) {
                 return false;
@@ -306,6 +308,7 @@ public class LruStatementCache {
             return true;
         }
 
+        @Override
         public int hashCode() {
             return sql != null ? sql.hashCode() : System.identityHashCode(this);
         }

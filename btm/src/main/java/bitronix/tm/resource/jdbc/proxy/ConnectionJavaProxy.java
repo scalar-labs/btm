@@ -70,10 +70,12 @@ public class ConnectionJavaProxy extends JavaProxyBase<Connection> implements Po
 
     /* PooledConnectionProxy interface methods */
 
+    @Override
     public JdbcPooledConnection getPooledConnection() {
         return jdbcPooledConnection;
     }
 
+    @Override
     public Connection getProxiedDelegate() {
         return delegate;
     }
@@ -238,7 +240,7 @@ public class ConnectionJavaProxy extends JavaProxyBase<Connection> implements Po
                 cachedStmt = JdbcProxyFactory.INSTANCE.getProxyPreparedStatement(jdbcPooledConnection, stmt, cacheKey);
                 jdbcPooledConnection.putCachedStatement(cacheKey, cachedStmt);
             }
-            
+
             return cachedStmt;
         }
         else {
@@ -379,7 +381,7 @@ public class ConnectionJavaProxy extends JavaProxyBase<Connection> implements Po
     /**
      * Enlist this connection into the current transaction if automaticEnlistingEnabled = true for this resource.
      * If no transaction is running then this method does nothing.
-     * @throws SQLException thrown when an error occurs during elistment.
+     * @throws SQLException thrown when an error occurs during enlistment.
      */
     private void enlistResource() throws SQLException {
         if (jdbcPooledConnection == null)
@@ -389,9 +391,9 @@ public class ConnectionJavaProxy extends JavaProxyBase<Connection> implements Po
             try {
                 TransactionContextHelper.enlistInCurrentTransaction(jdbcPooledConnection);
             } catch (SystemException ex) {
-                throw (SQLException) new SQLException("error enlisting " + this).initCause(ex);
+                throw new SQLException("error enlisting " + this, ex);
             } catch (RollbackException ex) {
-                throw (SQLException) new SQLException("error enlisting " + this).initCause(ex);
+                throw new SQLException("error enlisting " + this, ex);
             }
         } // if getAutomaticEnlistingEnabled
     }

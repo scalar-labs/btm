@@ -53,6 +53,7 @@ public class Activator implements BundleActivator {
 	private ServiceRegistration utRegistration;
 	private Map<String, ServiceRegistration> dsRegistrations;
 
+    @Override
 	public void start(BundleContext context) throws Exception {
 		dsRegistrations = new HashMap<String, ServiceRegistration>();
 
@@ -130,7 +131,7 @@ public class Activator implements BundleActivator {
             reg.unregister();
         }
         dsRegistrations.clear();
-       
+
         Configuration conf = TransactionManagerServices.getConfiguration();
         log.info(String.format("Stopped JTA for server ID '%s'.", conf.getServerId()));
 	}

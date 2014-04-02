@@ -219,6 +219,7 @@ public class JndiXAConnectionFactory implements XAConnectionFactory {
         }
     }
 
+    @Override
     public XAConnection createXAConnection() throws JMSException {
         try {
             init();
@@ -228,6 +229,7 @@ public class JndiXAConnectionFactory implements XAConnectionFactory {
         }
     }
 
+    @Override
     public XAConnection createXAConnection(String userName, String password) throws JMSException {
         try {
             init();

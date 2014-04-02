@@ -80,7 +80,7 @@ public class TransactionLogRecord implements JournalRecord {
 
     private final int status;
     private int recordLength;
-    private int headerLength;
+    private final int headerLength;
     private final long time;
     private final int sequenceNumber;
     private int crc32;
@@ -132,6 +132,7 @@ public class TransactionLogRecord implements JournalRecord {
         refresh();
     }
 
+    @Override
     public int getStatus() {
         return status;
     }
@@ -144,6 +145,7 @@ public class TransactionLogRecord implements JournalRecord {
         return headerLength;
     }
 
+    @Override
     public long getTime() {
         return time;
     }
@@ -156,6 +158,7 @@ public class TransactionLogRecord implements JournalRecord {
         return crc32;
     }
 
+    @Override
     public Uid getGtrid() {
         return gtrid;
     }
@@ -168,6 +171,7 @@ public class TransactionLogRecord implements JournalRecord {
         writePosition = position;
     }
 
+    @Override
     public Set<String> getUniqueNames() {
         return Collections.unmodifiableSortedSet(uniqueNames);
     }
@@ -195,6 +199,7 @@ public class TransactionLogRecord implements JournalRecord {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean isValid() {
         return isCrc32Correct();
     }
@@ -202,6 +207,7 @@ public class TransactionLogRecord implements JournalRecord {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Map<String, ?> getRecordProperties() {
         Map<String, Object> props = new LinkedHashMap<String, Object>(4);
         props.put("recordLength", recordLength);
@@ -247,6 +253,7 @@ public class TransactionLogRecord implements JournalRecord {
         return (int) crc32.getValue();
     }
 
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder(128);
 
@@ -294,6 +301,7 @@ public class TransactionLogRecord implements JournalRecord {
         private NullOutputStream() {
         }
 
+        @Override
         public void write(int b) throws IOException {
         }
     }

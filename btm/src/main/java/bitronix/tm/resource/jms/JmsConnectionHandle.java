@@ -52,10 +52,12 @@ public class JmsConnectionHandle implements Connection {
         return pooledConnection;
     }
 
+    @Override
     public Session createSession(boolean transacted, int acknowledgeMode) throws JMSException {
         return pooledConnection.createSession(transacted, acknowledgeMode);
     }
 
+    @Override
     public void close() throws JMSException {
         if (closed)
             return;
@@ -64,6 +66,7 @@ public class JmsConnectionHandle implements Connection {
         pooledConnection.release();
     }
 
+    @Override
     public String toString() {
         return "a JmsConnectionHandle of " + pooledConnection;
     }
@@ -71,38 +74,47 @@ public class JmsConnectionHandle implements Connection {
 
     /* Connection implementation */
 
+    @Override
     public String getClientID() throws JMSException {
         return getXAConnection().getClientID();
     }
 
+    @Override
     public void setClientID(String jndiName) throws JMSException {
         getXAConnection().setClientID(jndiName);
     }
 
+    @Override
     public ConnectionMetaData getMetaData() throws JMSException {
         return getXAConnection().getMetaData();
     }
 
+    @Override
     public ExceptionListener getExceptionListener() throws JMSException {
         return getXAConnection().getExceptionListener();
     }
 
+    @Override
     public void setExceptionListener(ExceptionListener listener) throws JMSException {
         getXAConnection().setExceptionListener(listener);
     }
 
+    @Override
     public void start() throws JMSException {
         getXAConnection().start();
     }
 
+    @Override
     public void stop() throws JMSException {
         getXAConnection().stop();
     }
 
+    @Override
     public ConnectionConsumer createConnectionConsumer(Destination destination, String messageSelector, ServerSessionPool sessionPool, int maxMessages) throws JMSException {
         return getXAConnection().createConnectionConsumer(destination, messageSelector, sessionPool, maxMessages);
     }
 
+    @Override
     public ConnectionConsumer createDurableConnectionConsumer(Topic topic, String subscriptionName, String messageSelector, ServerSessionPool sessionPool, int maxMessages) throws JMSException {
         return getXAConnection().createDurableConnectionConsumer(topic, subscriptionName, messageSelector, sessionPool, maxMessages);
     }

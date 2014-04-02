@@ -29,13 +29,14 @@ import java.util.Map;
  */
 public class DuplicatedGtridTableModel extends DefaultTableModel {
 
-    private Map duplicatedGtrids;
+    private final Map duplicatedGtrids;
 
     public DuplicatedGtridTableModel(Map map) {
         super(map.size(), 2);
         this.duplicatedGtrids = map;
     }
 
+    @Override
     public String getColumnName(int column) {
         switch (column) {
             case 0: return "Sequence number";
@@ -44,6 +45,7 @@ public class DuplicatedGtridTableModel extends DefaultTableModel {
         }
     }
 
+    @Override
     public Object getValueAt(int row, int column) {
         Iterator it = duplicatedGtrids.entrySet().iterator();
         List tlogs = null;

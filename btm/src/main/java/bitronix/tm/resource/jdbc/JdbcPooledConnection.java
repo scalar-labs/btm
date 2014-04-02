@@ -82,6 +82,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         this.uncachedStatements = Collections.synchronizedList(new ArrayList<Statement>());
         this.lastReleaseDate = new Date(MonotonicClock.currentTimeMillis());
         statementsCache.addEvictionListener(new LruEvictionListener() {
+            @Override
             public void onEviction(Object value) {
                 PreparedStatement stmt = (PreparedStatement) value;
                 try {
@@ -138,6 +139,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         return -1;
     }
 
+    @Override
     public void close() throws SQLException {
         // this should never happen, should we throw an exception or log at warn/error?
         if (usageCount > 0) {
@@ -208,10 +210,10 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             TransactionContextHelper.delistFromCurrentTransaction(this);
         }
         catch (BitronixRollbackSystemException ex) {
-            throw (SQLException) new SQLException("unilateral rollback of " + this).initCause(ex);
+            throw new SQLException("unilateral rollback of " + this, ex);
         }
         catch (SystemException ex) {
-            throw (SQLException) new SQLException("error delisting " + this).initCause(ex);
+            throw new SQLException("error delisting " + this, ex);
         }
         finally {
             // Only requeue a connection if it is no longer in use.  In the case of non-shared connections,
@@ -229,7 +231,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
                     // this may hide the exception thrown by delistFromCurrentTransaction() but
                     // an error requeuing must absolutely be reported as an exception.
                     // Too bad if this happens... See DualSessionWrapper.close() as well.
-                    throw (SQLException) new SQLException("error requeuing " + this).initCause(ex);
+                    throw new SQLException("error requeuing " + this, ex);
                 }
 
                 if (log.isDebugEnabled()) { log.debug("released to pool " + this); }
@@ -242,10 +244,12 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         return usageCount == 0;
     }
 
+    @Override
     public XAResource getXAResource() {
         return xaResource;
     }
 
+    @Override
     public ResourceBean getResourceBean() {
         return getPoolingDataSource();
     }
@@ -254,6 +258,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         return poolingDataSource;
     }
 
+    @Override
     public List<XAResourceHolder> getXAResourceHolders() {
         List<XAResourceHolder> xaResourceHolders = new ArrayList<XAResourceHolder>();
         xaResourceHolders.add(this);
@@ -264,6 +269,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         return jdbcVersionDetected;
     }
 
+    @Override
     public Object getConnectionHandle() throws Exception {
         if (log.isDebugEnabled()) { log.debug("getting connection handle from " + this); }
         int oldState = getState();
@@ -271,10 +277,10 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         // Increment the usage count
         usageCount++;
 
-        // Only transition to STATE_ACCESSIBLE on the first usage.  If we're not sharing 
+        // Only transition to STATE_ACCESSIBLE on the first usage.  If we're not sharing
         // connections (default behavior) usageCount is always 1 here, so this transition
         // will always occur (current behavior unchanged).  If we _are_ sharing connections,
-        // and this is _not_ the first usage, it is valid for the state to already be 
+        // and this is _not_ the first usage, it is valid for the state to already be
         // STATE_ACCESSIBLE.  Calling setState() with STATE_ACCESSIBLE when the state is
         // already STATE_ACCESSIBLE fails the sanity check in AbstractXAStatefulHolder.
         // Even if the connection is shared (usageCount > 1), if the state was STATE_NOT_ACCESSIBLE
@@ -301,6 +307,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         return getConnectionHandle(connection);
     }
 
+    @Override
     public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
         if (newState == STATE_IN_POOL) {
             lastReleaseDate = new Date(MonotonicClock.currentTimeMillis());
@@ -313,6 +320,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         }
     }
 
+    @Override
     public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
         if (futureState == STATE_IN_POOL && usageCount > 0) {
             log.warn("usage count too high (" + usageCount + ") on connection returned to pool " + source);
@@ -373,6 +381,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         uncachedStatements.remove(stmt);
     }
 
+    @Override
     public String toString() {
         return "a JdbcPooledConnection from datasource " + poolingDataSource.getUniqueName() + " in state " + Decoder.decodeXAStatefulHolderState(getState()) + " with usage count " + usageCount + " wrapping " + xaConnection;
     }
@@ -421,18 +430,22 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     /* management */
 
+    @Override
     public String getStateDescription() {
         return Decoder.decodeXAStatefulHolderState(getState());
     }
 
+    @Override
     public Date getAcquisitionDate() {
         return acquisitionDate;
     }
 
+    @Override
     public Date getLastReleaseDate() {
         return lastReleaseDate;
     }
 
+    @Override
     public Collection<String> getTransactionGtridsCurrentlyHoldingThis() {
         return getXAResourceHolderStateGtrids();
     }
