@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
+import java.nio.charset.Charset;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -49,7 +49,7 @@ public class Configuration implements Service {
     private final static Logger log = LoggerFactory.getLogger(Configuration.class);
 
     private final static int MAX_SERVER_ID_LENGTH = 51;
-    private final static String SERVER_ID_CHARSET_NAME = "US-ASCII";
+    private final static Charset SERVER_ID_CHARSET = Charset.forName("US-ASCII");
 
     private volatile String serverId;
     private final AtomicReference<byte[]> serverIdArray = new AtomicReference<byte[]>();
@@ -719,18 +719,18 @@ public class Configuration implements Service {
             synchronized (this) {
                 while ((id = serverIdArray.get()) == null) {
                     try {
-                        id = serverId.getBytes(SERVER_ID_CHARSET_NAME);
+                        id = serverId.getBytes(SERVER_ID_CHARSET);
 
-                        String transcodedId = new String(id, SERVER_ID_CHARSET_NAME);
+                        String transcodedId = new String(id, SERVER_ID_CHARSET);
                         if (!transcodedId.equals(serverId)) {
-                            log.warn("The given server ID '" + serverId + "' is not compatible with the ID charset '" + SERVER_ID_CHARSET_NAME + "' as it transcodes to '" + transcodedId + "'. " +
+                            log.warn("The given server ID '" + serverId + "' is not compatible with the ID charset '" + SERVER_ID_CHARSET.displayName() + "' as it transcodes to '" + transcodedId + "'. " +
                                     "It is highly recommended that you specify a compatible server ID using only characters that are allowed in the ID charset.");
                         }
                     } catch (Exception ex) {
-                        log.warn("Cannot get the unique server ID for this JVM ('bitronix.tm.serverId'). Make sure it is configured and you use only " + SERVER_ID_CHARSET_NAME + " characters. " +
+                        log.warn("Cannot get the unique server ID for this JVM ('bitronix.tm.serverId'). Make sure it is configured and you use only " + SERVER_ID_CHARSET.displayName() + " characters. " +
                                 "Will use IP address instead (unsafe for production usage!).");
                         try {
-                            id = InetAddress.getLocalHost().getHostAddress().getBytes(SERVER_ID_CHARSET_NAME);
+                            id = InetAddress.getLocalHost().getHostAddress().getBytes(SERVER_ID_CHARSET);
                         } catch (Exception ex2) {
                             final String unknownServerId = "unknown-server-id";
                             log.warn("Cannot get the local IP address. Please verify your network configuration. Will use the constant '" + unknownServerId + "' as server ID (highly unsafe!).", ex2);
@@ -747,16 +747,11 @@ public class Configuration implements Service {
                     }
 
                     if (serverIdArray.compareAndSet(null, id)) {
-                        String idAsString;
-                        try {
-                            idAsString = new String(id, SERVER_ID_CHARSET_NAME);
-                            if (serverId == null)
-                                serverId = idAsString;
+                        String idAsString = new String(id, SERVER_ID_CHARSET);
+                        if (serverId == null)
+                            serverId = idAsString;
 
-                            log.info("JVM unique ID: <" + idAsString + "> - Using this server ID to ensure uniqueness of transaction IDs across the network.");
-                        } catch (UnsupportedEncodingException e) {
-                            log.error("Unable to translate server is into " + SERVER_ID_CHARSET_NAME + " character set", e);
-                        }
+                        log.info("JVM unique ID: <" + idAsString + "> - Using this server ID to ensure uniqueness of transaction IDs across the network.");
                     }
                 }
             }

@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.transaction.xa.XAResource;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -48,7 +48,7 @@ public final class ResourceRegistrar {
     /**
      * Specifies the charset that unique names of resources must be encodable with to be storeable in a TX journal.
      */
-    public final static String UNIQUE_NAME_CHARSET = "US-ASCII";
+    public final static Charset UNIQUE_NAME_CHARSET = Charset.forName("US-ASCII");
 
     private final static Set<ProducerHolder> resources = new CopyOnWriteArraySet<ProducerHolder>();
 
@@ -172,15 +172,11 @@ public final class ResourceRegistrar {
             if (uniqueName == null || uniqueName.length() == 0)
                 throw new IllegalArgumentException("The given XAResourceProducer '" + producer + "' does not specify a uniqueName.");
 
-            try {
-	            final String transcodedUniqueName = new String(uniqueName.getBytes(UNIQUE_NAME_CHARSET), UNIQUE_NAME_CHARSET);
-	            if (!transcodedUniqueName.equals(uniqueName)) {
-	                throw new IllegalArgumentException("The given XAResourceProducer's uniqueName '" + uniqueName + "' is not compatible with the charset " +
-	                        "'US-ASCII' (transcoding results in '" + transcodedUniqueName + "'). " + System.getProperty("line.separator") +
-	                        "BTM requires unique names to be compatible with US-ASCII when used with a transaction journal.");
-	            }
-            } catch (UnsupportedEncodingException e) {
-            	log.error(UNIQUE_NAME_CHARSET + " encoding character set not found", e);
+            final String transcodedUniqueName = new String(uniqueName.getBytes(UNIQUE_NAME_CHARSET), UNIQUE_NAME_CHARSET);
+            if (!transcodedUniqueName.equals(uniqueName)) {
+                throw new IllegalArgumentException("The given XAResourceProducer's uniqueName '" + uniqueName + "' is not compatible with the charset " +
+                        "'US-ASCII' (transcoding results in '" + transcodedUniqueName + "'). " + System.getProperty("line.separator") +
+                        "BTM requires unique names to be compatible with US-ASCII when used with a transaction journal.");
             }
 
             this.producer = producer;

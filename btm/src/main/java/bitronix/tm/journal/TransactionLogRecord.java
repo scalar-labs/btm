@@ -23,8 +23,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -75,6 +75,8 @@ public class TransactionLogRecord implements JournalRecord {
 
     // status + record length + record header length + current time + sequence number + checksum
     private final static int RECORD_HEADER_LENGTH = 4 + 4 + 4 + 8 + 4 + 4;
+
+    private static final Charset US_ASCII = Charset.forName("US-ASCII");
 
     private final static AtomicInteger sequenceGenerator = new AtomicInteger();
 
@@ -238,12 +240,8 @@ public class TransactionLogRecord implements JournalRecord {
     	buf.putInt(uniqueNames.size());  // offset: 24 + gtridArray.length
 
         for (String name : uniqueNames) {
-        	buf.putShort((short) name.length());
-            try {
-            	buf.put(name.getBytes("US-ASCII"));
-            } catch (UnsupportedEncodingException ex) {
-                log.error("unable to convert unique name bytes to US-ASCII", ex);
-            }
+            buf.putShort((short) name.length());
+            buf.put(name.getBytes(US_ASCII));
         }
 
         buf.putInt(endRecord);
