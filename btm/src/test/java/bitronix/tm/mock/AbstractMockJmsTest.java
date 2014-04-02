@@ -42,6 +42,7 @@ public abstract class AbstractMockJmsTest extends TestCase {
     protected static final String CONNECTION_FACTORY1_NAME = "pcf1";
     protected static final String CONNECTION_FACTORY2_NAME = "pcf2";
 
+    @Override
     protected void setUp() throws Exception {
         poolingConnectionFactory1 = new PoolingConnectionFactory();
         poolingConnectionFactory1.setClassName(MockXAConnectionFactory.class.getName());
@@ -62,6 +63,7 @@ public abstract class AbstractMockJmsTest extends TestCase {
         // change disk journal into mock journal
         Field field = TransactionManagerServices.class.getDeclaredField("journalRef");
         field.setAccessible(true);
+        @SuppressWarnings("unchecked")
         AtomicReference<Journal> journalRef = (AtomicReference<Journal>) field.get(TransactionManagerServices.class);
         journalRef.set(new MockJournal());
 
@@ -73,6 +75,8 @@ public abstract class AbstractMockJmsTest extends TestCase {
         // clear event recorder list
         EventRecorder.clear();
     }
+
+    @Override
     protected void tearDown() throws Exception {
         try {
             if (log.isDebugEnabled()) { log.debug("*** tearDown rollback"); }

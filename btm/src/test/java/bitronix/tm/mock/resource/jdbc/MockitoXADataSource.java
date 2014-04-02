@@ -52,12 +52,12 @@ import static org.mockito.Mockito.when;
  */
 public class MockitoXADataSource implements XADataSource {
 
-    private List xaConnections = new ArrayList();
+    private List<XAConnection> xaConnections = new ArrayList<XAConnection>();
     private String userName;
     private String password;
     private String database;
     private Object uselessThing;
-    private List inDoubtXids = new ArrayList();
+    private List<Xid> inDoubtXids = new ArrayList<Xid>();
     private SQLException getXAConnectionException;
     private static SQLException staticGetXAConnectionException;
     private static SQLException staticCloseXAConnectionException;
@@ -125,7 +125,7 @@ public class MockitoXADataSource implements XADataSource {
         return getXAConnection();
     }
 
-    public void setXaConnections(List xaConnections) {
+    public void setXaConnections(List<XAConnection> xaConnections) {
         this.xaConnections = xaConnections;
     }
 

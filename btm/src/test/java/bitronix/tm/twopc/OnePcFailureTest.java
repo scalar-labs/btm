@@ -127,10 +127,11 @@ public class OnePcFailureTest extends TestCase {
         assertEquals("TM haven't properly tried to commit", 1, commitEventCount);
     }
 
+    @Override
     protected void setUp() throws Exception {
-        Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+        Iterator<String> it = ResourceRegistrar.getResourcesUniqueNames().iterator();
         while (it.hasNext()) {
-            String name = (String) it.next();
+            String name = it.next();
             ResourceRegistrar.unregister(ResourceRegistrar.get(name));
         }
 
@@ -139,6 +140,7 @@ public class OnePcFailureTest extends TestCase {
         // change disk journal into mock journal
         Field field = TransactionManagerServices.class.getDeclaredField("journalRef");
         field.setAccessible(true);
+        @SuppressWarnings("unchecked")
         AtomicReference<Journal> journalRef = (AtomicReference<Journal>) field.get(TransactionManagerServices.class);
         journalRef.set(new MockJournal());
 
@@ -154,6 +156,7 @@ public class OnePcFailureTest extends TestCase {
         tm = TransactionManagerServices.getTransactionManager();
     }
 
+    @Override
     protected void tearDown() throws Exception {
         poolingDataSource1.close();
         tm.shutdown();

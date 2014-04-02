@@ -18,6 +18,7 @@ package bitronix.tm.gui;
 import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.utils.Decoder;
+import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,7 +128,7 @@ public class PendingTransactionTableModel extends TransactionTableModel {
     }
 
 
-    private Map pendingTLogs = new HashMap();
+    private Map<Uid, TransactionLogRecord> pendingTLogs = new HashMap<Uid, TransactionLogRecord>();
 
     @Override
     protected void readFullTransactionLog(File filename) throws IOException {
@@ -136,12 +137,12 @@ public class PendingTransactionTableModel extends TransactionTableModel {
     }
 
     @Override
-    public boolean acceptLog(JournalRecord tlog) {
+    public boolean acceptLog(TransactionLogRecord tlog) {
         if (tlog.getStatus() == Status.STATUS_COMMITTING) {
             pendingTLogs.put(tlog.getGtrid(), tlog);
             return true;
         }
-        if (tlog.getStatus() == Status.STATUS_COMMITTED  ||  tlog.getStatus() == Status.STATUS_ROLLEDBACK  &&  pendingTLogs.containsKey(tlog.getGtrid().toString())) {
+        if (tlog.getStatus() == Status.STATUS_COMMITTED  ||  tlog.getStatus() == Status.STATUS_ROLLEDBACK  &&  pendingTLogs.containsKey(tlog.getGtrid())) {
             tLogs.remove(pendingTLogs.get(tlog.getGtrid()));
         }
         return false;
@@ -149,6 +150,6 @@ public class PendingTransactionTableModel extends TransactionTableModel {
 
     @Override
     public TransactionLogRecord getRow(int row) {
-        return (TransactionLogRecord) tLogs.get(row);
+        return tLogs.get(row);
     }
 }

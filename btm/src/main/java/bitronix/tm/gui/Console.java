@@ -19,6 +19,7 @@ import bitronix.tm.BitronixXid;
 import bitronix.tm.Configuration;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.journal.JournalRecord;
+import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -264,20 +265,20 @@ public class Console extends JFrame {
     private void countDuplicatedGtrids() {
         TransactionTableModel transactionTableModel = (TransactionTableModel) rawViewTransactionsTable.getModel();
 
-        HashMap gtrids = new HashMap();
-        HashMap redundantGtrids = new HashMap();
+        HashMap<Uid, java.util.List<TransactionLogRecord>> gtrids = new HashMap<Uid, java.util.List<TransactionLogRecord>>();
+        HashMap<Uid, java.util.List<TransactionLogRecord>> redundantGtrids = new HashMap<Uid, java.util.List<TransactionLogRecord>>();
 
         for (int i = 0; i < transactionTableModel.getRowCount(); i++) {
-            JournalRecord tlog = transactionTableModel.getRow(i);
+            TransactionLogRecord tlog = transactionTableModel.getRow(i);
             if (tlog.getStatus() == Status.STATUS_COMMITTING) {
                 Uid gtrid = tlog.getGtrid();
                 if (gtrids.containsKey(gtrid)) {
-                    java.util.List tlogs = (java.util.List) gtrids.get(gtrid);
+                    java.util.List<TransactionLogRecord> tlogs = gtrids.get(gtrid);
                     tlogs.add(tlog);
                     redundantGtrids.put(gtrid, tlogs);
                 }
                 else {
-                    java.util.List tlogs = new ArrayList();
+                    java.util.List<TransactionLogRecord> tlogs = new ArrayList<TransactionLogRecord>();
                     tlogs.add(tlog);
                     gtrids.put(gtrid, tlogs);
                 }
