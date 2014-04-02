@@ -35,7 +35,7 @@ public class RecoveryXAResourceHolder extends AbstractXAResourceHolder {
 
     @Override
     public void close() throws Exception {
-        xaResourceHolder.setState(STATE_IN_POOL);
+        xaResourceHolder.setState(State.IN_POOL);
     }
 
     @Override

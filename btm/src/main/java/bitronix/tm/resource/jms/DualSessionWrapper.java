@@ -24,7 +24,6 @@ import bitronix.tm.resource.common.StateChangeListener;
 import bitronix.tm.resource.common.TransactionContextHelper;
 import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.resource.common.XAStatefulHolder;
-import bitronix.tm.utils.Decoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +90,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         this.acknowledgeMode = acknowledgeMode;
 
         if (log.isDebugEnabled()) { log.debug("getting session handle from " + pooledConnection); }
-        setState(STATE_ACCESSIBLE);
+        setState(State.ACCESSIBLE);
         addStateChangeEventListener(this);
     }
 
@@ -104,7 +103,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
     }
 
     public Session getSession(boolean forceXa) throws JMSException {
-        if (getState() == STATE_CLOSED)
+        if (getState() == State.CLOSED)
             throw new IllegalStateException("session handle is closed");
 
         if (forceXa) {
@@ -149,7 +148,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
     @Override
     public String toString() {
-        return "a DualSessionWrapper in state " + Decoder.decodeXAStatefulHolderState(getState()) + " of " + pooledConnection;
+        return "a DualSessionWrapper in state " + getState() + " of " + pooledConnection;
     }
 
 
@@ -157,7 +156,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
     @Override
     public void close() throws JMSException {
-        if (getState() != STATE_ACCESSIBLE) {
+        if (getState() != State.ACCESSIBLE) {
             if (log.isDebugEnabled()) { log.debug("not closing already closed " + this); }
             return;
         }
@@ -200,11 +199,11 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
      * state switch to CLOSED then clean up.
      */
     @Override
-    public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
-        if (newState == STATE_IN_POOL) {
-            setState(STATE_CLOSED);
+    public void stateChanged(XAStatefulHolder source, State oldState, State newState) {
+        if (newState == State.IN_POOL) {
+            setState(State.CLOSED);
         }
-        else if (newState == STATE_CLOSED) {
+        else if (newState == State.CLOSED) {
             if (log.isDebugEnabled()) { log.debug("session state changing to CLOSED, cleaning it up: " + this); }
 
             if (xaSession != null) {
@@ -254,7 +253,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
     }
 
     @Override
-    public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
+    public void stateChanging(XAStatefulHolder source, State currentState, State futureState) {
     }
 
     @Override
@@ -293,6 +292,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
         return messageConsumer;
     }
 
+    @Override
     public MessageConsumer createConsumer(Destination destination, String messageSelector) throws JMSException {
         MessageProducerConsumerKey key = new MessageProducerConsumerKey(destination, messageSelector);
         if (log.isDebugEnabled()) { log.debug("looking for consumer based on " + key); }
@@ -371,7 +371,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
 
     @Override
     public void setMessageListener(MessageListener listener) throws JMSException {
-        if (getState() == STATE_CLOSED)
+        if (getState() == State.CLOSED)
             throw new IllegalStateException("session handle is closed");
 
         if (session != null)

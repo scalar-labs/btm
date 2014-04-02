@@ -27,7 +27,6 @@ import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
 import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
 import bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory;
-import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.ManagementRegistrar;
 import bitronix.tm.utils.MonotonicClock;
 import bitronix.tm.utils.Scheduler;
@@ -146,7 +145,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             log.warn("close connection with usage count > 0, " + this);
         }
 
-        setState(STATE_CLOSED);
+        setState(State.CLOSED);
 
         // cleanup of pooled resources
         statementsCache.clear();
@@ -272,7 +271,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     @Override
     public Object getConnectionHandle() throws Exception {
         if (log.isDebugEnabled()) { log.debug("getting connection handle from " + this); }
-        int oldState = getState();
+        State oldState = getState();
 
         // Increment the usage count
         usageCount++;
@@ -285,11 +284,11 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         // already STATE_ACCESSIBLE fails the sanity check in AbstractXAStatefulHolder.
         // Even if the connection is shared (usageCount > 1), if the state was STATE_NOT_ACCESSIBLE
         // we transition back to STATE_ACCESSIBLE.
-        if (usageCount == 1 || oldState == STATE_NOT_ACCESSIBLE) {
-            setState(STATE_ACCESSIBLE);
+        if (usageCount == 1 || oldState == State.NOT_ACCESSIBLE) {
+            setState(State.ACCESSIBLE);
         }
 
-        if (oldState == STATE_IN_POOL) {
+        if (oldState == State.IN_POOL) {
             if (log.isDebugEnabled()) { log.debug("connection " + xaConnection + " was in state IN_POOL, testing it"); }
             testConnection(connection);
             applyIsolationLevel();
@@ -300,7 +299,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             }
         }
         else {
-            if (log.isDebugEnabled()) { log.debug("connection " + xaConnection + " was in state " + Decoder.decodeXAStatefulHolderState(oldState) + ", no need to test it"); }
+            if (log.isDebugEnabled()) { log.debug("connection " + xaConnection + " was in state " + oldState + ", no need to test it"); }
         }
 
         if (log.isDebugEnabled()) { log.debug("got connection handle from " + this); }
@@ -308,25 +307,25 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     }
 
     @Override
-    public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
-        if (newState == STATE_IN_POOL) {
+    public void stateChanged(XAStatefulHolder source, State oldState, State newState) {
+        if (newState == State.IN_POOL) {
             lastReleaseDate = new Date(MonotonicClock.currentTimeMillis());
         }
-        else if (oldState == STATE_IN_POOL && newState == STATE_ACCESSIBLE) {
+        else if (oldState == State.IN_POOL && newState == State.ACCESSIBLE) {
             acquisitionDate = new Date(MonotonicClock.currentTimeMillis());
         }
-        else if (oldState == STATE_NOT_ACCESSIBLE && newState == STATE_ACCESSIBLE) {
+        else if (oldState == State.NOT_ACCESSIBLE && newState == State.ACCESSIBLE) {
             TransactionContextHelper.recycle(this);
         }
     }
 
     @Override
-    public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
-        if (futureState == STATE_IN_POOL && usageCount > 0) {
+    public void stateChanging(XAStatefulHolder source, State currentState, State futureState) {
+        if (futureState == State.IN_POOL && usageCount > 0) {
             log.warn("usage count too high (" + usageCount + ") on connection returned to pool " + source);
         }
 
-        if (futureState == STATE_IN_POOL || futureState == STATE_NOT_ACCESSIBLE) {
+        if (futureState == State.IN_POOL || futureState == State.NOT_ACCESSIBLE) {
             // close all uncached statements
             if (log.isDebugEnabled()) { log.debug("closing " + uncachedStatements.size() + " dangling uncached statement(s)"); }
             for (Statement statement : uncachedStatements) {
@@ -383,7 +382,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     @Override
     public String toString() {
-        return "a JdbcPooledConnection from datasource " + poolingDataSource.getUniqueName() + " in state " + Decoder.decodeXAStatefulHolderState(getState()) + " with usage count " + usageCount + " wrapping " + xaConnection;
+        return "a JdbcPooledConnection from datasource " + poolingDataSource.getUniqueName() + " in state " + getState() + " with usage count " + usageCount + " wrapping " + xaConnection;
     }
 
     private void applyCursorHoldabilty() throws SQLException {
@@ -432,7 +431,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
     @Override
     public String getStateDescription() {
-        return Decoder.decodeXAStatefulHolderState(getState());
+        return getState().toString();
     }
 
     @Override

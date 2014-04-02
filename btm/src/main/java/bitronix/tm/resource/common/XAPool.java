@@ -22,7 +22,7 @@ import bitronix.tm.internal.BitronixRuntimeException;
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.recovery.IncrementalRecoverer;
 import bitronix.tm.recovery.RecoveryException;
-import bitronix.tm.utils.Decoder;
+import bitronix.tm.resource.common.XAStatefulHolder.State;
 import bitronix.tm.utils.MonotonicClock;
 import bitronix.tm.utils.Uid;
 import org.slf4j.Logger;
@@ -181,7 +181,7 @@ public class XAPool implements StateChangeListener {
                 xaStatefulHolder = getInPool(remainingTimeMs);
             }
 
-            if (log.isDebugEnabled()) { log.debug("found " + Decoder.decodeXAStatefulHolderState(xaStatefulHolder.getState()) + " connection " + xaStatefulHolder + " from " + this); }
+            if (log.isDebugEnabled()) { log.debug("found " + xaStatefulHolder.getState() + " connection " + xaStatefulHolder + " from " + this); }
 
             try {
                 // getConnectionHandle() here could throw an exception, if it doesn't the connection is
@@ -201,8 +201,8 @@ public class XAPool implements StateChangeListener {
                 }
                 finally {
                     if (log.isDebugEnabled()) { log.debug("removed invalid connection " + xaStatefulHolder + " from " + this); }
-                    if (xaStatefulHolder.getState() != XAStatefulHolder.STATE_CLOSED) {
-                        stateChanged(xaStatefulHolder, xaStatefulHolder.getState(), XAStatefulHolder.STATE_CLOSED);
+                    if (xaStatefulHolder.getState() != State.CLOSED) {
+                        stateChanged(xaStatefulHolder, xaStatefulHolder.getState(), State.CLOSED);
                     }
 
                     if (log.isDebugEnabled()) { log.debug("waiting " + bean.getAcquisitionInterval() + "s before trying to acquire a connection again from " + this); }
@@ -235,23 +235,23 @@ public class XAPool implements StateChangeListener {
      * ----------------------------------------------------------------------------------*/
 
     @Override
-    public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
+    public void stateChanging(XAStatefulHolder source, State currentState, State futureState) {
         stateTransitionLock.writeLock().lock();
         try {
             switch (currentState) {
-            case XAStatefulHolder.STATE_IN_POOL:
+            case IN_POOL:
             	// no-op.  calling availablePool.remove(source) here is reduncant because it was
             	// already removed when availablePool.poll() was called.
                 break;
-            case XAStatefulHolder.STATE_ACCESSIBLE:
+            case ACCESSIBLE:
                 if (log.isDebugEnabled()) { log.debug("removed " + source + " from the accessible pool"); }
                 accessiblePool.remove(source);
                 break;
-            case XAStatefulHolder.STATE_NOT_ACCESSIBLE:
+            case NOT_ACCESSIBLE:
                 if (log.isDebugEnabled()) { log.debug("removed " + source + " from the inaccessible pool"); }
                 inaccessiblePool.remove(source);
                 break;
-            case XAStatefulHolder.STATE_CLOSED:
+            case CLOSED:
                 break;
             }
         }
@@ -261,23 +261,23 @@ public class XAPool implements StateChangeListener {
     }
 
     @Override
-    public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
+    public void stateChanged(XAStatefulHolder source, State oldState, State newState) {
         stateTransitionLock.writeLock().lock();
         try {
         	switch (newState) {
-        	case XAStatefulHolder.STATE_IN_POOL:
+        	case IN_POOL:
                 if (log.isDebugEnabled()) { log.debug("added " + source + " to the available pool"); }
                 availablePool.add(source);
         		break;
-        	case XAStatefulHolder.STATE_ACCESSIBLE:
+        	case ACCESSIBLE:
         		if (log.isDebugEnabled()) { log.debug("added " + source + " to the accessible pool"); }
         		accessiblePool.add(source);
         		break;
-        	case XAStatefulHolder.STATE_NOT_ACCESSIBLE:
+        	case NOT_ACCESSIBLE:
         		if (log.isDebugEnabled()) { log.debug("added " + source + " to the inaccessible pool"); }
         		inaccessiblePool.add(source);
         		break;
-        	case XAStatefulHolder.STATE_CLOSED:
+        	case CLOSED:
                 source.removeStateChangeEventListener(this);
                 poolSize.decrementAndGet();
         		break;
@@ -384,8 +384,8 @@ public class XAPool implements StateChangeListener {
             XAStatefulHolder xaStatefulHolder = (XAStatefulHolder) threadLocal.get();
             // Additional sanity checks...
             if (xaStatefulHolder != null &&
-                xaStatefulHolder.getState() != XAStatefulHolder.STATE_IN_POOL &&
-                xaStatefulHolder.getState() != XAStatefulHolder.STATE_CLOSED) {
+                xaStatefulHolder.getState() != State.IN_POOL &&
+                xaStatefulHolder.getState() != State.CLOSED) {
 
                 if (log.isDebugEnabled()) { log.debug("sharing connection " + xaStatefulHolder + " in transaction " + currentTxGtrid); }
                 return xaStatefulHolder;
