@@ -21,10 +21,10 @@ package bitronix.tm.mock.events;
  */
 public abstract class Event {
 
-    private Exception callStack;
-    private Object source;
-    private Exception exception;
-    private long timestamp;
+    private final Exception callStack;
+    private final Object source;
+    private final Exception exception;
+    private final long timestamp;
 
     protected Event(Object source, Exception ex) {
         this.callStack = new Exception();

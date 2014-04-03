@@ -103,6 +103,7 @@ public class TaskScheduler extends Thread implements Service {
         }
     }
 
+    @Override
     public void shutdown() {
         boolean wasActive = setActive(false);
 

@@ -37,6 +37,7 @@ public class JmsPoolTest extends TestCase {
 
     private PoolingConnectionFactory pcf;
 
+    @Override
     protected void setUp() throws Exception {
         TransactionManagerServices.getConfiguration().setJournal("null").setGracefulShutdownInterval(2);
         TransactionManagerServices.getTransactionManager();
@@ -55,7 +56,7 @@ public class JmsPoolTest extends TestCase {
         pcf.init();
     }
 
-
+    @Override
     protected void tearDown() throws Exception {
         pcf.close();
 
@@ -248,5 +249,5 @@ public class JmsPoolTest extends TestCase {
         pcf.reset();
         assertEquals(1, pool.inPoolSize());
     }
-    
+
 }
