@@ -37,7 +37,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @author Ludovic Orban
  */
-public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder implements XAResourceHolder {
+public abstract class AbstractXAResourceHolder<T extends XAResourceHolder<T>> extends AbstractXAStatefulHolder<T> implements XAResourceHolder<T> {
 
     private final static Logger log = LoggerFactory.getLogger(AbstractXAResourceHolder.class);
 
@@ -154,7 +154,7 @@ public abstract class AbstractXAResourceHolder extends AbstractXAStatefulHolder 
     }
 
     @Override
-    public boolean hasStateForXAResource(XAResourceHolder xaResourceHolder) {
+    public boolean hasStateForXAResource(XAResourceHolder<? extends XAResourceHolder> xaResourceHolder) {
         rwLock.readLock().lock();
         try {
             for (Map<Uid, XAResourceHolderState> statesForGtrid : xaResourceHolderStates.values()) {

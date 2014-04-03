@@ -22,8 +22,6 @@ import bitronix.tm.resource.common.AbstractXAResourceHolder;
 import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.resource.common.StateChangeListener;
 import bitronix.tm.resource.common.TransactionContextHelper;
-import bitronix.tm.resource.common.XAResourceHolder;
-import bitronix.tm.resource.common.XAStatefulHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +50,7 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.xa.XAResource;
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -66,7 +64,7 @@ import java.util.Map.Entry;
  *
  * @author Ludovic Orban
  */
-public class DualSessionWrapper extends AbstractXAResourceHolder implements Session, StateChangeListener {
+public class DualSessionWrapper extends AbstractXAResourceHolder<DualSessionWrapper> implements Session, StateChangeListener<DualSessionWrapper> {
 
     private final static Logger log = LoggerFactory.getLogger(DualSessionWrapper.class);
 
@@ -199,7 +197,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
      * state switch to CLOSED then clean up.
      */
     @Override
-    public void stateChanged(XAStatefulHolder source, State oldState, State newState) {
+    public void stateChanged(DualSessionWrapper source, State oldState, State newState) {
         if (newState == State.IN_POOL) {
             setState(State.CLOSED);
         }
@@ -253,7 +251,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
     }
 
     @Override
-    public void stateChanging(XAStatefulHolder source, State currentState, State futureState) {
+    public void stateChanging(DualSessionWrapper source, State currentState, State futureState) {
     }
 
     @Override
@@ -408,11 +406,11 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
     /* XAStatefulHolder implementation */
 
     @Override
-    public List<XAResourceHolder> getXAResourceHolders() {
-        return Arrays.asList((XAResourceHolder) this);
+    public List<DualSessionWrapper> getXAResourceHolders() {
+        return Collections.singletonList(this);
     }
 
-    public XAResourceHolder getXAResourceHolderForXaResource(XAResource xaResource) {
+    public DualSessionWrapper getXAResourceHolderForXaResource(XAResource xaResource) {
         if (xaResource == this.xaResource) {
             return this;
         }

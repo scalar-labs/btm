@@ -22,9 +22,7 @@ import bitronix.tm.resource.ResourceObjectFactory;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.RecoveryXAResourceHolder;
 import bitronix.tm.resource.common.ResourceBean;
-import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.resource.common.XAResourceProducer;
-import bitronix.tm.resource.common.XAStatefulHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Ludovic Orban
  */
 @SuppressWarnings("serial")
-public final class EhCacheXAResourceProducer extends ResourceBean implements XAResourceProducer {
+public final class EhCacheXAResourceProducer extends ResourceBean implements XAResourceProducer<EhCacheXAResourceHolder, EhCacheXAResourceHolder> {
 
     private static final Logger log = LoggerFactory.getLogger(EhCacheXAResourceProducer.class.getName());
 
@@ -165,7 +163,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
      * {@inheritDoc}
      */
     @Override
-    public XAResourceHolder findXAResourceHolder(XAResource xaResource) {
+    public EhCacheXAResourceHolder findXAResourceHolder(XAResource xaResource) {
         for (EhCacheXAResourceHolder xaResourceHolder : xaResourceHolders.values()) {
             if (xaResource == xaResourceHolder.getXAResource()) {
                 return xaResourceHolder;
@@ -201,7 +199,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
      * {@inheritDoc}
      */
     @Override
-    public XAStatefulHolder createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
+    public EhCacheXAResourceHolder createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
         throw new UnsupportedOperationException("Ehcache is not connection-oriented");
     }
 

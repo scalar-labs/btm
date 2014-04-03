@@ -22,8 +22,6 @@ import bitronix.tm.resource.common.RecoveryXAResourceHolder;
 import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.resource.common.StateChangeListener;
 import bitronix.tm.resource.common.TransactionContextHelper;
-import bitronix.tm.resource.common.XAResourceHolder;
-import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.resource.jdbc.LruStatementCache.CacheKey;
 import bitronix.tm.resource.jdbc.lrc.LrcXADataSource;
 import bitronix.tm.resource.jdbc.proxy.JdbcProxyFactory;
@@ -54,7 +52,7 @@ import java.util.List;
  * @author Ludovic Orban
  * @author Brett Wooldridge
  */
-public class JdbcPooledConnection extends AbstractXAResourceHolder implements StateChangeListener, JdbcPooledConnectionMBean {
+public class JdbcPooledConnection extends AbstractXAResourceHolder<JdbcPooledConnection> implements StateChangeListener<JdbcPooledConnection>, JdbcPooledConnectionMBean {
 
     private final static Logger log = LoggerFactory.getLogger(JdbcPooledConnection.class);
 
@@ -80,10 +78,9 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         this.statementsCache = new LruStatementCache(poolingDataSource.getPreparedStatementCacheSize());
         this.uncachedStatements = Collections.synchronizedList(new ArrayList<Statement>());
         this.lastReleaseDate = new Date(MonotonicClock.currentTimeMillis());
-        statementsCache.addEvictionListener(new LruEvictionListener() {
+        statementsCache.addEvictionListener(new LruEvictionListener<PreparedStatement>() {
             @Override
-            public void onEviction(Object value) {
-                PreparedStatement stmt = (PreparedStatement) value;
+            public void onEviction(PreparedStatement stmt) {
                 try {
                     stmt.close();
                 } catch (SQLException ex) {
@@ -263,10 +260,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     }
 
     @Override
-    public List<XAResourceHolder> getXAResourceHolders() {
-        List<XAResourceHolder> xaResourceHolders = new ArrayList<XAResourceHolder>();
-        xaResourceHolders.add(this);
-        return xaResourceHolders;
+    public List<JdbcPooledConnection> getXAResourceHolders() {
+        return Collections.singletonList(this);
     }
 
     public int getJdbcVersion() {
@@ -312,7 +307,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     }
 
     @Override
-    public void stateChanged(XAStatefulHolder source, State oldState, State newState) {
+    public void stateChanged(JdbcPooledConnection source, State oldState, State newState) {
         if (newState == State.IN_POOL) {
             lastReleaseDate = new Date(MonotonicClock.currentTimeMillis());
         }
@@ -325,7 +320,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
     }
 
     @Override
-    public void stateChanging(XAStatefulHolder source, State currentState, State futureState) {
+    public void stateChanging(JdbcPooledConnection source, State currentState, State futureState) {
         if (futureState == State.IN_POOL && usageCount > 0) {
             log.warn("usage count too high (" + usageCount + ") on connection returned to pool " + source);
         }

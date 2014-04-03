@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package bitronix.tm.resource.jdbc;
+package bitronix.tm.integration.jetty9;
 
-/**
- * Eviction listener interface for {@link LruStatementCache}.
- *
- * @author Ludovic Orban
- * @param <T>
- */
-public interface LruEvictionListener<T> {
+import bitronix.tm.TransactionManagerServices;
+import org.eclipse.jetty.util.component.AbstractLifeCycle;
+import org.eclipse.jetty.util.log.Log;
 
-    public void onEviction(T value);
+public class BTMLifeCycle extends AbstractLifeCycle {
+
+    protected void doStart() throws Exception {
+        Log.getLog().info("Starting Bitronix Transaction Manager");
+        TransactionManagerServices.getTransactionManager();
+    }
+
+    protected void doStop() throws Exception {
+        Log.getLog().info("Shutting down Bitronix Transaction Manager");
+        TransactionManagerServices.getTransactionManager().shutdown();
+    }
 
 }

@@ -67,7 +67,7 @@ public class LruStatementCache {
      * A list of listeners concerned with prepared statement cache
      * evictions.
      */
-    private final List<LruEvictionListener> evictionListners;
+    private final List<LruEvictionListener<PreparedStatement>> evictionListeners;
 
     /**
      * See the LinkedHashMap documentation.  We maintain our own size
@@ -87,7 +87,7 @@ public class LruStatementCache {
     public LruStatementCache(int maxSize) {
         this.maxSize = maxSize;
         cache = new LinkedHashMap<CacheKey, StatementTracker>(maxSize, 0.75f, true /* access order */);
-        evictionListners = new CopyOnWriteArrayList<LruEvictionListener>();
+        evictionListeners = new CopyOnWriteArrayList<LruEvictionListener<PreparedStatement>>();
         clearInProgress = new AtomicBoolean();
     }
 
@@ -166,12 +166,12 @@ public class LruStatementCache {
     	}
     }
 
-    public void addEvictionListener(LruEvictionListener listener) {
-        evictionListners.add(listener);
+    public void addEvictionListener(LruEvictionListener<PreparedStatement> listener) {
+        evictionListeners.add(listener);
     }
 
-    public void removeEvictionListener(LruEvictionListener listener) {
-        evictionListners.remove(listener);
+    public void removeEvictionListener(LruEvictionListener<PreparedStatement> listener) {
+        evictionListeners.remove(listener);
     }
 
     /**
@@ -225,9 +225,9 @@ public class LruStatementCache {
         }
     }
 
-    private void fireEvictionEvent(Object value) {
-        for (LruEvictionListener listener : evictionListners) {
-            listener.onEviction(value);
+    private void fireEvictionEvent(PreparedStatement stmt) {
+        for (LruEvictionListener<PreparedStatement> listener : evictionListeners) {
+            listener.onEviction(stmt);
         }
     }
 
@@ -279,6 +279,7 @@ public class LruStatementCache {
         /**
          * Overridden equals() that takes all PreparedStatement attributes into
          * account.
+         * @return
          */
         @Override
         public boolean equals(Object obj) {

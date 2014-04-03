@@ -27,12 +27,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @author Ludovic Orban
  */
-public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
+public abstract class AbstractXAStatefulHolder<T extends XAStatefulHolder<T>> implements XAStatefulHolder<T> {
 
     private final static Logger log = LoggerFactory.getLogger(AbstractXAStatefulHolder.class);
 
     private volatile State state = State.IN_POOL;
-    private final List<StateChangeListener> stateChangeEventListeners = new CopyOnWriteArrayList<StateChangeListener>();
+    private final List<StateChangeListener<T>> stateChangeEventListeners = new CopyOnWriteArrayList<StateChangeListener<T>>();
     private final Date creationDate = new Date();
 
     @Override
@@ -63,32 +63,34 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
     }
 
     @Override
-    public void addStateChangeEventListener(StateChangeListener listener) {
+    public void addStateChangeEventListener(StateChangeListener<T> listener) {
         stateChangeEventListeners.add(listener);
     }
 
     @Override
-    public void removeStateChangeEventListener(StateChangeListener listener) {
+    public void removeStateChangeEventListener(StateChangeListener<T> listener) {
         stateChangeEventListeners.remove(listener);
     }
 
+    @SuppressWarnings("unchecked")
     private void fireStateChanging(State currentState, State futureState) {
         if (log.isDebugEnabled()) log.debug("notifying " + stateChangeEventListeners.size() +
                 " stateChangeEventListener(s) about state changing from " + currentState +
                 " to " + futureState + " in " + this);
 
-        for (StateChangeListener stateChangeListener : stateChangeEventListeners) {
-            stateChangeListener.stateChanging(this, currentState, futureState);
+        for (StateChangeListener<T> stateChangeListener : stateChangeEventListeners) {
+            stateChangeListener.stateChanging((T) this, currentState, futureState);
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void fireStateChanged(State oldState, State newState) {
         if (log.isDebugEnabled()) log.debug("notifying " + stateChangeEventListeners.size() +
                 " stateChangeEventListener(s) about state changed from " + oldState +
                 " to " + newState + " in " + this);
 
-        for (StateChangeListener stateChangeListener : stateChangeEventListeners) {
-            stateChangeListener.stateChanged(this, oldState, newState);
+        for (StateChangeListener<T> stateChangeListener : stateChangeEventListeners) {
+            stateChangeListener.stateChanged((T) this, oldState, newState);
         }
     }
 }

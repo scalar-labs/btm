@@ -47,6 +47,8 @@ public final class PropertyUtils {
 
         StringBuilder visitedPropertyName = new StringBuilder();
         Object currentTarget = target;
+        Object parentTarget = target;
+        String parentName = null;
         int i = 0;
         while (i < propertyNames.length -1) {
             String name = propertyNames[i];
@@ -64,14 +66,16 @@ public final class PropertyUtils {
                 callSetter(currentTarget, name, result);
             }
 
+            parentTarget = currentTarget;
             currentTarget = result;
             visitedPropertyName.append(name);
             visitedPropertyName.append('.');
             i++;
 
             // if it's a Map object -> the non-visited part of the key should be used
-            // as this Map' object key so stop iterating over the dotted properties.
+            // as this Map's object key so stop iterating over the dotted properties.
             if (currentTarget instanceof Map) {
+                parentName = name;
                 break;
             }
         }
@@ -81,6 +85,9 @@ public final class PropertyUtils {
             @SuppressWarnings("unchecked")
             Map<String, Object> p = (Map<String, Object>) currentTarget;
             p.put(lastPropertyName, propertyValue.toString());
+            if (parentName != null) {
+                callSetter(parentTarget, parentName, p);
+            }
         } else {
             setDirectProperty(currentTarget, lastPropertyName, propertyValue);
         }

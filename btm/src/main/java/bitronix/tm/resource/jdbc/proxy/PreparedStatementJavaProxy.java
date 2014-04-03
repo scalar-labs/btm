@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Map;
 
 import bitronix.tm.resource.jdbc.JdbcPooledConnection;
@@ -76,8 +77,8 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
             delegate.clearWarnings();
             try {
                 delegate.clearBatch();
-            } catch (SQLException e) {
-                // Driver probably doesn't support batch updates.
+            } catch (SQLFeatureNotSupportedException e) {
+                // Driver doesn't support batch updates.
             }
 
             // Return to cache so the usage count can be updated

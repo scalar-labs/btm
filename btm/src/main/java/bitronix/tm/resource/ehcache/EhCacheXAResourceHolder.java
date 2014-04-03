@@ -17,10 +17,9 @@ package bitronix.tm.resource.ehcache;
 
 import bitronix.tm.resource.common.AbstractXAResourceHolder;
 import bitronix.tm.resource.common.ResourceBean;
-import bitronix.tm.resource.common.XAResourceHolder;
 
 import javax.transaction.xa.XAResource;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -31,7 +30,7 @@ import java.util.List;
  * </p>
  * @author Ludovic Orban
  */
-public class EhCacheXAResourceHolder extends AbstractXAResourceHolder {
+public class EhCacheXAResourceHolder extends AbstractXAResourceHolder<EhCacheXAResourceHolder> {
 
     private final XAResource resource;
     private final ResourceBean bean;
@@ -90,13 +89,11 @@ public class EhCacheXAResourceHolder extends AbstractXAResourceHolder {
      * {@inheritDoc}
      */
     @Override
-    public List<XAResourceHolder> getXAResourceHolders() {
-        List<XAResourceHolder> xaResourceHolders = new ArrayList<XAResourceHolder>(1);
-        xaResourceHolders.add(this);
-        return xaResourceHolders;
+    public List<EhCacheXAResourceHolder> getXAResourceHolders() {
+        return Collections.singletonList(this);
     }
 
-    public XAResourceHolder getXAResourceHolderForXaResource(XAResource xaResource) {
+    public EhCacheXAResourceHolder getXAResourceHolderForXaResource(XAResource xaResource) {
         if (xaResource == resource) {
             return this;
         }

@@ -46,6 +46,8 @@ public class ResourceLoaderTest extends TestCase {
         p.setProperty("resource.ds1.driverProperties.userName", "java");
         p.setProperty("resource.ds1.driverProperties.password", "java");
         p.setProperty("resource.ds1.driverProperties.database", "users1");
+        p.setProperty("resource.ds1.driverProperties.clonedProperties.a.key", "1000");
+        p.setProperty("resource.ds1.driverProperties.clonedProperties.b.key", "2000");
 
 
         loader.initXAResourceProducers(p);
@@ -58,8 +60,16 @@ public class ResourceLoaderTest extends TestCase {
         assertEquals("bitronix.tm.mock.resource.jdbc.MockitoXADataSource", pds.getClassName());
         assertEquals("dataSource1", pds.getUniqueName());
         assertEquals(123, pds.getMaxPoolSize());
-        assertEquals(3, pds.getDriverProperties().size());
+        assertEquals(5, pds.getDriverProperties().size());
 
+        MockitoXADataSource mockXA = pds.unwrap(MockitoXADataSource.class);
+        assertNotNull(mockXA);
+
+        Properties clonedProperties = mockXA.getClonedProperties();
+        assertNotNull(clonedProperties);
+        assertEquals(2, clonedProperties.size());
+        assertEquals("1000", clonedProperties.getProperty("a.key"));
+        assertEquals("2000", clonedProperties.getProperty("b.key"));
     }
 
 
