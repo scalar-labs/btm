@@ -23,7 +23,6 @@ import bitronix.tm.resource.common.TransactionContextHelper;
 import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.resource.jms.lrc.LrcXAConnectionFactory;
-import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.ManagementRegistrar;
 import bitronix.tm.utils.MonotonicClock;
 import bitronix.tm.utils.Scheduler;
@@ -244,7 +243,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
 
     /**
      * {@link JmsPooledConnection} {@link bitronix.tm.resource.common.StateChangeListener}.
-     * When state changes to STATE_CLOSED, the conenction is unregistered from
+     * When state changes to State.CLOSED, the connection is unregistered from
      * {@link bitronix.tm.utils.ManagementRegistrar}.
      */
     private final class JmsPooledConnectionStateChangeListener implements StateChangeListener {
@@ -269,7 +268,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
 
     /**
      * {@link JmsConnectionHandle} {@link bitronix.tm.resource.common.StateChangeListener}.
-     * When state changes to STATE_CLOSED, the session is removed from the list of opened sessions.
+     * When state changes to State.CLOSED, the session is removed from the list of opened sessions.
      */
     private final class JmsConnectionHandleStateChangeListener implements StateChangeListener {
         @Override
