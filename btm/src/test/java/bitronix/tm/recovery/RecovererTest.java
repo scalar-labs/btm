@@ -380,13 +380,13 @@ public class RecovererTest extends TestCase {
 
         //start
         for (int i=0; i< THREAD_COUNT;i++) {
-            Thread t = (Thread) threads.get(i);
+            Thread t = threads.get(i);
             t.start();
         }
 
         //join
         for (int i=0; i< THREAD_COUNT;i++) {
-            Thread t = (Thread) threads.get(i);
+            Thread t = threads.get(i);
             t.join();
         }
 

@@ -432,6 +432,7 @@ public class Configuration implements Service {
      * @return the interval in minutes.
      * @deprecated superceded by #getBackgroundRecoveryIntervalSeconds().
      */
+    @Deprecated
     public int getBackgroundRecoveryInterval() {
         return getBackgroundRecoveryIntervalSeconds() / 60;
     }
@@ -443,6 +444,7 @@ public class Configuration implements Service {
      * @deprecated superceded by #setBackgroundRecoveryIntervalSeconds(int).
      * @return this.
      */
+    @Deprecated
     public Configuration setBackgroundRecoveryInterval(int backgroundRecoveryInterval) {
         log.warn("setBackgroundRecoveryInterval() is deprecated, consider using setBackgroundRecoveryIntervalSeconds() instead.");
         setBackgroundRecoveryIntervalSeconds(backgroundRecoveryInterval * 60);

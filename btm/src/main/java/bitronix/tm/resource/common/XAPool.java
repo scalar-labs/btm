@@ -381,7 +381,7 @@ public class XAPool implements StateChangeListener {
 
         StatefulHolderThreadLocal threadLocal = statefulHolderTransactionMap.get(currentTxGtrid);
         if (threadLocal != null) {
-            XAStatefulHolder xaStatefulHolder = (XAStatefulHolder) threadLocal.get();
+            XAStatefulHolder xaStatefulHolder = threadLocal.get();
             // Additional sanity checks...
             if (xaStatefulHolder != null &&
                 xaStatefulHolder.getState() != State.IN_POOL &&

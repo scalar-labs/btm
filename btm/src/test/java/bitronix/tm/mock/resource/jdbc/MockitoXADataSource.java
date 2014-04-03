@@ -159,7 +159,7 @@ public class MockitoXADataSource implements XADataSource {
 
     public boolean removeInDoubtXid(Xid xid) {
         for (int i = 0; i < inDoubtXids.size(); i++) {
-            Xid xid1 = (Xid) inDoubtXids.get(i);
+            Xid xid1 = inDoubtXids.get(i);
             if (Arrays.equals(xid1.getGlobalTransactionId(), xid.getGlobalTransactionId()) && Arrays.equals(xid1.getBranchQualifier(), xid.getBranchQualifier()) ) {
                 inDoubtXids.remove(xid1);
                 return true;
@@ -169,7 +169,7 @@ public class MockitoXADataSource implements XADataSource {
     }
 
     public Xid[] getInDoubtXids() {
-        return (Xid[]) inDoubtXids.toArray(new Xid[inDoubtXids.size()]);
+        return inDoubtXids.toArray(new Xid[inDoubtXids.size()]);
     }
 
     public void setGetXAConnectionException(SQLException ex) {

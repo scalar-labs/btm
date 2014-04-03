@@ -287,8 +287,8 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         Iterator<Map.Entry<Uid, JournalRecord>> it = danglingRecords.entrySet().iterator();
         while (it.hasNext()) {
             Entry<Uid, JournalRecord> entry = it.next();
-            Uid gtrid = (Uid) entry.getKey();
-            JournalRecord tlog = (JournalRecord) entry.getValue();
+            Uid gtrid = entry.getKey();
+            JournalRecord tlog = entry.getValue();
 
             Set<String> uniqueNames = tlog.getUniqueNames();
             Set<DanglingTransaction> danglingTransactions = getDanglingTransactionsInRecoveredXids(uniqueNames, tlog.getGtrid());

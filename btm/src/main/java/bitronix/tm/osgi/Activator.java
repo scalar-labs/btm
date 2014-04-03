@@ -49,7 +49,9 @@ public class Activator implements BundleActivator {
 
 	private final static Logger log = LoggerFactory.getLogger(Activator.class);
 
-	private ServiceRegistration tmRegistration;
+    private static final Pattern UNIQUE_NAME = Pattern.compile("^\\s*resource\\.[^\\.]*\\.uniqueName\\s*=\\s*([^\\s]+)\\s*$");
+
+    private ServiceRegistration tmRegistration;
 	private ServiceRegistration utRegistration;
 	private Map<String, ServiceRegistration> dsRegistrations;
 
@@ -120,8 +122,9 @@ public class Activator implements BundleActivator {
         log.info(String.format("Started JTA for server ID '%s'.", conf.getServerId()));
 	}
 
+    @Override
 	public void stop(BundleContext context) throws Exception {
-		BitronixTransactionManager tm = (BitronixTransactionManager) TransactionManagerServices.getTransactionManager();
+		BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         tm.shutdown();
 
         tmRegistration.unregister();
@@ -138,13 +141,11 @@ public class Activator implements BundleActivator {
 
 	private Map<String, Integer> rankingOfUniqueNameProperties(File file) throws FileNotFoundException, IOException
     {
-        Pattern uniqueName = Pattern.compile("^\\s*resource\\.[^\\.]*\\.uniqueName\\s*=\\s*([^\\s]+)\\s*$");
-
         Map<String, Integer> lineNumbers = new HashMap<String, Integer>();
         BufferedReader reader = new BufferedReader(new FileReader(file));
         int ranking = 1;
         for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-            Matcher matcher = uniqueName.matcher(line);
+            Matcher matcher = UNIQUE_NAME.matcher(line);
             if (matcher.matches()) {
                 lineNumbers.put(matcher.group(1), ranking);
                 ranking++;

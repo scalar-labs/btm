@@ -205,6 +205,8 @@
                     <configuration>
                         <source>${java.version}</source>
                         <target>${java.version}</target>
+                        <showDeprecation>true</showDeprecation>
+                        <showWarnings>true</showWarnings>
                         <compilerArgs>
                             <arg>-Xlint:unchecked</arg>
                             <arg>-Xlint:deprecation</arg>

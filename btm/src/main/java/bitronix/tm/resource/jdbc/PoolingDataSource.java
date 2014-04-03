@@ -231,7 +231,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     public void removeConnectionCustomizer(ConnectionCustomizer connectionCustomizer) {
         Iterator<ConnectionCustomizer> it = connectionCustomizers.iterator();
         while (it.hasNext()) {
-            ConnectionCustomizer customizer = (ConnectionCustomizer)it.next();
+            ConnectionCustomizer customizer = it.next();
             if (customizer == connectionCustomizer) {
                 it.remove();
                 return;

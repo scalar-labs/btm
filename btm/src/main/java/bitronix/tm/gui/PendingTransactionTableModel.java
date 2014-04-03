@@ -15,7 +15,6 @@
  */
 package bitronix.tm.gui;
 
-import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.Uid;
@@ -68,22 +67,22 @@ public class PendingTransactionTableModel extends TransactionTableModel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        TransactionLogRecord tlog = (TransactionLogRecord) tLogs.get(rowIndex);
+        TransactionLogRecord tlog = tLogs.get(rowIndex);
         switch (columnIndex) {
             case 0:
                 return Decoder.decodeStatus(tlog.getStatus());
             case 1:
-                return "" + tlog.getRecordLength();
+                return Integer.toString(tlog.getRecordLength());
             case 2:
-                return "" + tlog.getHeaderLength();
+                return Integer.toString(tlog.getHeaderLength());
             case 3:
-                return "" + tlog.getTime();
+                return Long.toString(tlog.getTime());
             case 4:
-                return "" + tlog.getSequenceNumber();
+                return Integer.toString(tlog.getSequenceNumber());
             case 5:
-                return "" + tlog.getCrc32();
+                return Integer.toString(tlog.getCrc32());
             case 6:
-                return "" + tlog.getUniqueNames().size();
+                return Integer.toString(tlog.getUniqueNames().size());
             case 7:
                 return tlog.getGtrid().toString();
             default:
