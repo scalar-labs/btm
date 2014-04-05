@@ -25,7 +25,6 @@ import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.StateChangeListener;
 import bitronix.tm.resource.common.XAPool;
-import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.resource.common.XAStatefulHolder.State;
 import bitronix.tm.resource.jdbc.JdbcPooledConnection;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
@@ -53,9 +52,9 @@ public abstract class AbstractMockJdbcTest extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
-        Iterator<?> it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+        Iterator<String> it = ResourceRegistrar.getResourcesUniqueNames().iterator();
         while (it.hasNext()) {
-            String name = (String) it.next();
+            String name = it.next();
             ResourceRegistrar.unregister(ResourceRegistrar.get(name));
         }
 
@@ -87,9 +86,9 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         journalRef.set(new MockJournal());
 
         // change connection pools into mock pools
-        XAPool p1 = getPool(this.poolingDataSource1);
+        XAPool<JdbcPooledConnection, JdbcPooledConnection> p1 = getPool(this.poolingDataSource1);
         registerPoolEventListener(p1);
-        XAPool p2 = getPool(this.poolingDataSource2);
+        XAPool<JdbcPooledConnection, JdbcPooledConnection> p2 = getPool(this.poolingDataSource2);
         registerPoolEventListener(p2);
 
         TransactionManagerServices.getConfiguration().setGracefulShutdownInterval(2);
@@ -101,27 +100,28 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         EventRecorder.clear();
     }
 
-    protected XAPool getPool(PoolingDataSource poolingDataSource) throws NoSuchFieldException, IllegalAccessException {
+    @SuppressWarnings("unchecked")
+    protected XAPool<JdbcPooledConnection, JdbcPooledConnection> getPool(PoolingDataSource poolingDataSource) throws NoSuchFieldException, IllegalAccessException {
         Field poolField = PoolingDataSource.class.getDeclaredField("pool");
         poolField.setAccessible(true);
-        return (XAPool) poolField.get(poolingDataSource);
+        return (XAPool<JdbcPooledConnection, JdbcPooledConnection>) poolField.get(poolingDataSource);
     }
 
-    private void registerPoolEventListener(XAPool pool) throws Exception {
-        Iterator<?> iterator = pool.getXAResourceHolders().iterator();
+    private void registerPoolEventListener(XAPool<JdbcPooledConnection, JdbcPooledConnection> pool) throws Exception {
+        Iterator<JdbcPooledConnection> iterator = pool.getXAResourceHolders().iterator();
         while (iterator.hasNext()) {
-        	JdbcPooledConnection jdbcPooledConnection = (JdbcPooledConnection) iterator.next();
-            jdbcPooledConnection.addStateChangeEventListener(new StateChangeListener() {
+        	JdbcPooledConnection jdbcPooledConnection = iterator.next();
+            jdbcPooledConnection.addStateChangeEventListener(new StateChangeListener<JdbcPooledConnection>() {
                 @Override
-                public void stateChanged(XAStatefulHolder source, State oldState, State newState) {
+                public void stateChanged(JdbcPooledConnection source, State oldState, State newState) {
                     if (newState == State.IN_POOL)
-                        EventRecorder.getEventRecorder(this).addEvent(new ConnectionQueuedEvent(this, (JdbcPooledConnection) source));
+                        EventRecorder.getEventRecorder(this).addEvent(new ConnectionQueuedEvent(this, source));
                     if (newState == State.ACCESSIBLE)
-                        EventRecorder.getEventRecorder(this).addEvent(new ConnectionDequeuedEvent(this, (JdbcPooledConnection) source));
+                        EventRecorder.getEventRecorder(this).addEvent(new ConnectionDequeuedEvent(this, source));
                 }
 
                 @Override
-                public void stateChanging(XAStatefulHolder source, State currentState, State futureState) {
+                public void stateChanging(JdbcPooledConnection source, State currentState, State futureState) {
                 }
             });
         }

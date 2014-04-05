@@ -25,11 +25,11 @@ import java.util.List;
  *
  * @author Ludovic Orban
  */
-public class RecoveryXAResourceHolder extends AbstractXAResourceHolder {
+public class RecoveryXAResourceHolder extends AbstractXAResourceHolder<RecoveryXAResourceHolder> {
 
-    private final XAResourceHolder xaResourceHolder;
+    private final XAResourceHolder<? extends XAStatefulHolder> xaResourceHolder;
 
-    public RecoveryXAResourceHolder(XAResourceHolder xaResourceHolder) {
+    public RecoveryXAResourceHolder(XAResourceHolder<? extends XAStatefulHolder> xaResourceHolder) {
         this.xaResourceHolder = xaResourceHolder;
     }
 
@@ -54,7 +54,7 @@ public class RecoveryXAResourceHolder extends AbstractXAResourceHolder {
     }
 
     @Override
-    public List<XAResourceHolder> getXAResourceHolders() {
+    public List<RecoveryXAResourceHolder> getXAResourceHolders() {
         return null;
     }
 
