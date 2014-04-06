@@ -45,7 +45,7 @@ public class DummyStatefulHolder implements XAStatefulHolder<DummyStatefulHolder
     }
 
     @Override
-    public List<? extends XAResourceHolder<? extends XAStatefulHolder>> getXAResourceHolders() {
+    public List<? extends XAResourceHolder<? extends XAResourceHolder>> getXAResourceHolders() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

@@ -59,7 +59,7 @@ public class DummyResourceHolder implements XAResourceHolder<DummyResourceHolder
     }
 
     @Override
-    public boolean hasStateForXAResource(XAResourceHolder<? extends XAStatefulHolder> xaResourceHolder) {
+    public boolean hasStateForXAResource(XAResourceHolder<? extends XAResourceHolder> xaResourceHolder) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
@@ -89,7 +89,7 @@ public class DummyResourceHolder implements XAResourceHolder<DummyResourceHolder
     }
 
     @Override
-    public List<? extends XAResourceHolder<? extends XAStatefulHolder>> getXAResourceHolders() {
+    public List<? extends XAResourceHolder<? extends XAResourceHolder>> getXAResourceHolders() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

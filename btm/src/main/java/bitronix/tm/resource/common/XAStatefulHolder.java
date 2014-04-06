@@ -82,7 +82,7 @@ public interface XAStatefulHolder<T extends XAStatefulHolder<T>> {
      * @return the list of {@link XAResourceHolder}s created by this
      *         {@link bitronix.tm.resource.common.XAStatefulHolder} that are still open.
      */
-    public List<? extends XAResourceHolder<? extends XAStatefulHolder>> getXAResourceHolders();
+    public List<? extends XAResourceHolder<? extends XAResourceHolder>> getXAResourceHolders();
 
     /**
      * Create a disposable handler used to drive a pooled instance of

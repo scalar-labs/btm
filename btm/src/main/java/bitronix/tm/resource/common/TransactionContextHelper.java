@@ -52,7 +52,7 @@ public final class TransactionContextHelper {
      * @throws SystemException if an internal error happens.
      * @throws RollbackException if the current transaction has been marked as rollback only.
      */
-    public static void enlistInCurrentTransaction(XAResourceHolder<? extends XAStatefulHolder> xaResourceHolder) throws SystemException, RollbackException {
+    public static void enlistInCurrentTransaction(XAResourceHolder<? extends XAResourceHolder> xaResourceHolder) throws SystemException, RollbackException {
         BitronixTransaction currentTransaction = currentTransaction();
         ResourceBean bean = xaResourceHolder.getResourceBean();
         if (log.isDebugEnabled()) { log.debug("enlisting " + xaResourceHolder + " into " + currentTransaction); }
@@ -86,7 +86,7 @@ public final class TransactionContextHelper {
      * @param xaResourceHolder the {@link XAResourceHolder} to delist.
      * @throws SystemException if an internal error happens.
      */
-    public static void delistFromCurrentTransaction(XAResourceHolder<? extends XAStatefulHolder> xaResourceHolder) throws SystemException {
+    public static void delistFromCurrentTransaction(XAResourceHolder<? extends XAResourceHolder> xaResourceHolder) throws SystemException {
         final BitronixTransaction currentTransaction = currentTransaction();
         ResourceBean bean = xaResourceHolder.getResourceBean();
         if (log.isDebugEnabled()) { log.debug("delisting " + xaResourceHolder + " from " + currentTransaction); }
@@ -216,7 +216,7 @@ public final class TransactionContextHelper {
         return null;
     }
 
-    private static boolean isEnlistedInSomeTransaction(XAResourceHolder<? extends XAStatefulHolder> xaResourceHolder) throws BitronixSystemException {
+    private static boolean isEnlistedInSomeTransaction(XAResourceHolder<? extends XAResourceHolder> xaResourceHolder) throws BitronixSystemException {
         if (log.isDebugEnabled()) { log.debug("looking in in-flight transactions for XAResourceHolderState of " + xaResourceHolder); }
 
         if (!TransactionManagerServices.isTransactionManagerRunning()) {
@@ -228,11 +228,11 @@ public final class TransactionContextHelper {
     }
 
     private static boolean isEnlistedInSomeTransaction(XAStatefulHolder<? extends XAStatefulHolder> xaStatefulHolder) throws BitronixSystemException {
-        List<? extends XAResourceHolder<? extends XAStatefulHolder>> xaResourceHolders = xaStatefulHolder.getXAResourceHolders();
+        List<? extends XAResourceHolder<? extends XAResourceHolder>> xaResourceHolders = xaStatefulHolder.getXAResourceHolders();
         if (xaResourceHolders == null || xaResourceHolders.isEmpty())
             return false;
 
-        for (XAResourceHolder<? extends XAStatefulHolder> xaResourceHolder : xaResourceHolders) {
+        for (XAResourceHolder<? extends XAResourceHolder> xaResourceHolder : xaResourceHolders) {
             if (isEnlistedInSomeTransaction(xaResourceHolder))
                 return true;
         }
@@ -241,7 +241,7 @@ public final class TransactionContextHelper {
     }
 
 
-    private static boolean isInEnlistingGlobalTransactionContext(XAResourceHolder<? extends XAStatefulHolder> xaResourceHolder, BitronixTransaction currentTransaction) {
+    private static boolean isInEnlistingGlobalTransactionContext(XAResourceHolder<? extends XAResourceHolder> xaResourceHolder, BitronixTransaction currentTransaction) {
         boolean globalTransactionMode = false;
         if (currentTransaction != null && xaResourceHolder.isExistXAResourceHolderStatesForGtrid(currentTransaction.getResourceManager().getGtrid())) {
             globalTransactionMode = true;
@@ -251,11 +251,11 @@ public final class TransactionContextHelper {
     }
 
     private static boolean isInEnlistingGlobalTransactionContext(XAStatefulHolder<? extends XAStatefulHolder> xaStatefulHolder, BitronixTransaction currentTransaction) {
-        List<? extends XAResourceHolder<? extends XAStatefulHolder>> xaResourceHolders = xaStatefulHolder.getXAResourceHolders();
+        List<? extends XAResourceHolder<? extends XAResourceHolder>> xaResourceHolders = xaStatefulHolder.getXAResourceHolders();
         if (xaResourceHolders == null || xaResourceHolders.isEmpty())
             return false;
 
-        for (XAResourceHolder<? extends XAStatefulHolder> xaResourceHolder : xaResourceHolders) {
+        for (XAResourceHolder<? extends XAResourceHolder> xaResourceHolder : xaResourceHolders) {
             if (isInEnlistingGlobalTransactionContext(xaResourceHolder, currentTransaction))
                 return true;
         }

@@ -27,9 +27,9 @@ import java.util.List;
  */
 public class RecoveryXAResourceHolder extends AbstractXAResourceHolder<RecoveryXAResourceHolder> {
 
-    private final XAResourceHolder<? extends XAStatefulHolder> xaResourceHolder;
+    private final XAResourceHolder<? extends XAResourceHolder> xaResourceHolder;
 
-    public RecoveryXAResourceHolder(XAResourceHolder<? extends XAStatefulHolder> xaResourceHolder) {
+    public RecoveryXAResourceHolder(XAResourceHolder<? extends XAResourceHolder> xaResourceHolder) {
         this.xaResourceHolder = xaResourceHolder;
     }
 

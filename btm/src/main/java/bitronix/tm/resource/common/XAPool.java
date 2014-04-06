@@ -396,7 +396,7 @@ public class XAPool<R extends XAResourceHolder<R>, T extends XAStatefulHolder<T>
     }
 
     private boolean containsXAResourceHolderMatchingGtrid(T xaStatefulHolder, final Uid currentTxGtrid) {
-        List<? extends XAResourceHolder<? extends XAStatefulHolder>> xaResourceHolders = xaStatefulHolder.getXAResourceHolders();
+        List<? extends XAResourceHolder<? extends XAResourceHolder>> xaResourceHolders = xaStatefulHolder.getXAResourceHolders();
         if (log.isDebugEnabled()) { log.debug(xaResourceHolders.size() + " xa resource(s) created by connection in NOT_ACCESSIBLE state: " + xaStatefulHolder); }
 
         class LocalVisitor implements XAResourceHolderStateVisitor {
@@ -416,7 +416,7 @@ public class XAPool<R extends XAResourceHolder<R>, T extends XAStatefulHolder<T>
             }
         }
 
-        for (XAResourceHolder<? extends XAStatefulHolder> xaResourceHolder : xaResourceHolders) {
+        for (XAResourceHolder<? extends XAResourceHolder> xaResourceHolder : xaResourceHolders) {
             LocalVisitor xaResourceHolderStateVisitor = new LocalVisitor();
             xaResourceHolder.acceptVisitorForXAResourceHolderStates(currentTxGtrid, xaResourceHolderStateVisitor);
             if (xaResourceHolderStateVisitor.found) {
