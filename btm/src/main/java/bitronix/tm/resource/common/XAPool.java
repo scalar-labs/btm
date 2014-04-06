@@ -51,7 +51,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Ludovic Orban
  * @author Brett Wooldridge
  */
-public class XAPool<R extends XAResourceHolder, T extends XAStatefulHolder<T>> implements StateChangeListener<T> {
+public class XAPool<R extends XAResourceHolder<R>, T extends XAStatefulHolder<T>> implements StateChangeListener<T> {
 
     private final static Logger log = LoggerFactory.getLogger(XAPool.class);
 

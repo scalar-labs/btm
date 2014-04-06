@@ -20,8 +20,6 @@ import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import bitronix.tm.utils.CryptoEngine;
-import java.util.Date;
-import java.util.List;
 import junit.framework.TestCase;
 
 /**
@@ -38,7 +36,7 @@ public class XAPoolTest extends TestCase {
         rb.getDriverProperties().setProperty("userName", "java");
         rb.getDriverProperties().setProperty("password", "{DES}" + CryptoEngine.crypt("DES", "java"));
 
-        XAPool<XAResourceHolder, DummyStatefulHolder> xaPool = new XAPool<XAResourceHolder, DummyStatefulHolder>(null, rb, null);
+        XAPool<DummyResourceHolder, DummyStatefulHolder> xaPool = new XAPool<DummyResourceHolder, DummyStatefulHolder>(null, rb, null);
         assertEquals(0, xaPool.totalPoolSize());
         assertEquals(0, xaPool.inPoolSize());
 
@@ -62,55 +60,4 @@ public class XAPoolTest extends TestCase {
         assertFalse(TransactionManagerServices.isTaskSchedulerRunning());
     }
 
-    /**
-     * Dummy XAStatefulHolder class, to get the generics right.
-     */
-    private static class DummyStatefulHolder implements XAStatefulHolder<DummyStatefulHolder> {
-
-        @Override
-        public State getState() {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public void setState(State state) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public void addStateChangeEventListener(StateChangeListener<DummyStatefulHolder> listener) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public void removeStateChangeEventListener(StateChangeListener<DummyStatefulHolder> listener) {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public List<XAResourceHolder<DummyStatefulHolder>> getXAResourceHolders() {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public Object getConnectionHandle() throws Exception {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public void close() throws Exception {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public Date getLastReleaseDate() {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
-        public Date getCreationDate() {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-    }
 }

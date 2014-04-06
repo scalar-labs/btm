@@ -27,7 +27,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @author Ludovic Orban
  */
-public abstract class AbstractXAStatefulHolder<T extends XAStatefulHolder> implements XAStatefulHolder<T> {
+public abstract class AbstractXAStatefulHolder<T extends XAStatefulHolder<T>> implements XAStatefulHolder<T> {
 
     private final static Logger log = LoggerFactory.getLogger(AbstractXAStatefulHolder.class);
 

@@ -25,7 +25,7 @@ import java.util.List;
  *
  * @author Ludovic Orban
  */
-public interface XAStatefulHolder<T extends XAStatefulHolder> {
+public interface XAStatefulHolder<T extends XAStatefulHolder<T>> {
 
     enum State {
         /**

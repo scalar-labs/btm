@@ -22,7 +22,7 @@ import bitronix.tm.resource.common.XAStatefulHolder.State;
  *
  * @author Ludovic Orban
  */
-public interface StateChangeListener<T extends XAStatefulHolder> {
+public interface StateChangeListener<T extends XAStatefulHolder<T>> {
 
     /**
      * Fired when the internal state of a {@link XAStatefulHolder} has changed.

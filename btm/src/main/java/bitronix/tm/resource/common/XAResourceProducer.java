@@ -28,7 +28,7 @@ import java.io.Serializable;
  *
  * @author Ludovic Orban
  */
-public interface XAResourceProducer<R extends XAResourceHolder, T extends XAStatefulHolder<T>> extends Referenceable, Serializable {
+public interface XAResourceProducer<R extends XAResourceHolder<R>, T extends XAStatefulHolder<T>> extends Referenceable, Serializable {
 
     /**
      * Get the resource name as registered in the transactions journal.
