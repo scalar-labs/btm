@@ -81,6 +81,7 @@ public class RecovererTest extends TestCase {
 
         new File(TransactionManagerServices.getConfiguration().getLogPart1Filename()).delete();
         new File(TransactionManagerServices.getConfiguration().getLogPart2Filename()).delete();
+        EventRecorder.clear();
 
         Connection connection1 = pds.getConnection();
         PooledConnectionProxy handle = (PooledConnectionProxy) connection1;
