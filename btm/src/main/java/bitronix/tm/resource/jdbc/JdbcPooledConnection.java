@@ -78,10 +78,9 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder<JdbcPooledCon
         this.statementsCache = new LruStatementCache(poolingDataSource.getPreparedStatementCacheSize());
         this.uncachedStatements = Collections.synchronizedList(new ArrayList<Statement>());
         this.lastReleaseDate = new Date(MonotonicClock.currentTimeMillis());
-        statementsCache.addEvictionListener(new LruEvictionListener() {
+        statementsCache.addEvictionListener(new LruEvictionListener<PreparedStatement>() {
             @Override
-            public void onEviction(Object value) {
-                PreparedStatement stmt = (PreparedStatement) value;
+            public void onEviction(PreparedStatement stmt) {
                 try {
                     stmt.close();
                 } catch (SQLException ex) {
