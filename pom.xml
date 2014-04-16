@@ -67,7 +67,7 @@
         <module>btm</module>
         <module>btm-jetty6-lifecycle</module>
         <module>btm-jetty7-lifecycle</module>
-		<module>btm-jetty9-lifecycle</module>
+        <module>btm-jetty9-lifecycle</module>
         <module>btm-tomcat55-lifecycle</module>
         <module>btm-spring</module>
     </modules>
