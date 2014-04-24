@@ -172,7 +172,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder<JdbcPooledCon
             try {
                 if (log.isDebugEnabled()) { log.debug("testing with JDBC4 isValid() method, connection of " + this); }
                 Method isValidMethod = JdbcClassHelper.getIsValidMethod(connection);
-                isValid = (Boolean) isValidMethod.invoke(connection, new Object[]{new Integer(poolingDataSource.getAcquisitionTimeout())});
+                isValid = (Boolean) isValidMethod.invoke(connection, new Object[]{new Integer(poolingDataSource.getEffectiveJdbc4ConnectionTestTimeout())});
             } catch (Exception e) {
                 log.warn("dysfunctional JDBC4 Connection.isValid() method, or negative acquisition timeout, in call to test connection of " + this + ".  Falling back to test query.");
                 jdbcVersionDetected = 3;
