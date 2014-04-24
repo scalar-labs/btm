@@ -169,7 +169,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             try {
                 if (log.isDebugEnabled()) { log.debug("testing with JDBC4 isValid() method, connection of " + this); }
                 Method isValidMethod = JdbcClassHelper.getIsValidMethod(connection);
-                isValid = (Boolean) isValidMethod.invoke(connection, new Object[]{new Integer(poolingDataSource.getAcquisitionTimeout())});
+                isValid = (Boolean) isValidMethod.invoke(connection, new Object[]{new Integer(poolingDataSource.getEffectiveJdbc4ConnectionTestTimeout())});
             } catch (Exception e) {
                 log.warn("dysfunctional JDBC4 Connection.isValid() method, or negative acquisition timeout, in call to test connection of " + this + ".  Falling back to test query.");
                 jdbcVersionDetected = 3;
@@ -271,10 +271,10 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         // Increment the usage count
         usageCount++;
 
-        // Only transition to STATE_ACCESSIBLE on the first usage.  If we're not sharing 
+        // Only transition to STATE_ACCESSIBLE on the first usage.  If we're not sharing
         // connections (default behavior) usageCount is always 1 here, so this transition
         // will always occur (current behavior unchanged).  If we _are_ sharing connections,
-        // and this is _not_ the first usage, it is valid for the state to already be 
+        // and this is _not_ the first usage, it is valid for the state to already be
         // STATE_ACCESSIBLE.  Calling setState() with STATE_ACCESSIBLE when the state is
         // already STATE_ACCESSIBLE fails the sanity check in AbstractXAStatefulHolder.
         // Even if the connection is shared (usageCount > 1), if the state was STATE_NOT_ACCESSIBLE
