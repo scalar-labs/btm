@@ -68,7 +68,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
         this.xaConnection = connection;
         this.lastReleaseDate = new Date(MonotonicClock.currentTimeMillis());
         addStateChangeEventListener(new JmsPooledConnectionStateChangeListener());
-        
+
         if (LrcXAConnectionFactory.class.getName().equals(poolingConnectionFactory.getClassName())) {
             if (log.isDebugEnabled()) { log.debug("emulating XA for resource " + poolingConnectionFactory.getUniqueName() + " - changing twoPcOrderingPosition to ALWAYS_LAST_POSITION"); }
             poolingConnectionFactory.setTwoPcOrderingPosition(Scheduler.ALWAYS_LAST_POSITION);
@@ -77,7 +77,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
             if (log.isDebugEnabled()) { log.debug("emulating XA for resource " + poolingConnectionFactory.getUniqueName() + " - changing useTmJoin to true"); }
             poolingConnectionFactory.setUseTmJoin(true);
         }
-        
+
         this.jmxName = "bitronix.tm:type=JMS,UniqueName=" + ManagementRegistrar.makeValidName(poolingConnectionFactory.getUniqueName()) + ",Id=" + poolingConnectionFactory.incCreatedResourcesCounter();
         ManagementRegistrar.register(jmxName, this);
     }
@@ -100,9 +100,12 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
         if (xaConnection != null) {
             poolingConnectionFactory.unregister(this);
             setState(STATE_CLOSED);
-            xaConnection.close();
+            try {
+                xaConnection.close();
+            } finally {
+                xaConnection = null;
+            }
         }
-        xaConnection = null;
     }
 
     public List<XAResourceHolder> getXAResourceHolders() {
