@@ -153,10 +153,15 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
         poolingDataSource.unregister(this);
 
-        connection.close();
-        xaConnection.close();
-
-        poolingDataSource.fireOnDestroy(connection);
+        try {
+            connection.close();
+        } finally {
+            try {
+                xaConnection.close();
+            } finally {
+                poolingDataSource.fireOnDestroy(connection);
+            }
+        }
     }
 
     public RecoveryXAResourceHolder createRecoveryXAResourceHolder() {
@@ -271,10 +276,10 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
         // Increment the usage count
         usageCount++;
 
-        // Only transition to STATE_ACCESSIBLE on the first usage.  If we're not sharing 
+        // Only transition to STATE_ACCESSIBLE on the first usage.  If we're not sharing
         // connections (default behavior) usageCount is always 1 here, so this transition
         // will always occur (current behavior unchanged).  If we _are_ sharing connections,
-        // and this is _not_ the first usage, it is valid for the state to already be 
+        // and this is _not_ the first usage, it is valid for the state to already be
         // STATE_ACCESSIBLE.  Calling setState() with STATE_ACCESSIBLE when the state is
         // already STATE_ACCESSIBLE fails the sanity check in AbstractXAStatefulHolder.
         // Even if the connection is shared (usageCount > 1), if the state was STATE_NOT_ACCESSIBLE
