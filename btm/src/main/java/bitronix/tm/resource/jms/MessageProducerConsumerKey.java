@@ -52,6 +52,7 @@ public class MessageProducerConsumerKey {
         this.noLocal = noLocal;
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof MessageProducerConsumerKey) {
             MessageProducerConsumerKey otherKey = (MessageProducerConsumerKey) obj;
@@ -99,6 +100,7 @@ public class MessageProducerConsumerKey {
         else throw new IllegalArgumentException("unsupported destination: " + destination);
     }
 
+    @Override
     public int hashCode() {
         return hash(getDestinationName()) + hash(messageSelector) + hash(noLocal);
     }
@@ -109,6 +111,7 @@ public class MessageProducerConsumerKey {
         return o.hashCode();
     }
 
+    @Override
     public String toString() {
         return "a MessageProducerConsumerKey on " + destination +
                 (messageSelector == null ? "" : (" with selector '" + messageSelector) + "'") +

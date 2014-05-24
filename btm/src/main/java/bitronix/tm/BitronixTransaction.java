@@ -100,10 +100,12 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         this.threadName = Thread.currentThread().getName();
     }
 
+    @Override
     public int getStatus() throws SystemException {
         return status;
     }
 
+    @Override
     public boolean enlistResource(XAResource xaResource) throws RollbackException, IllegalStateException, SystemException {
         if (status == Status.STATUS_NO_TRANSACTION)
             throw new IllegalStateException("transaction hasn't started yet");
@@ -139,6 +141,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         return true;
     }
 
+    @Override
     public boolean delistResource(final XAResource xaResource, final int flag) throws IllegalStateException, SystemException {
         if (status == Status.STATUS_NO_TRANSACTION)
             throw new IllegalStateException("transaction hasn't started yet");
@@ -153,8 +156,9 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
         class LocalVisitor implements XAResourceHolderStateVisitor {
             private boolean result = true;
-            private List<BitronixSystemException> exceptions = new ArrayList<BitronixSystemException>();
-            private List<XAResourceHolderState> resourceStates = new ArrayList<XAResourceHolderState>();
+            private final List<BitronixSystemException> exceptions = new ArrayList<BitronixSystemException>();
+            private final List<XAResourceHolderState> resourceStates = new ArrayList<XAResourceHolderState>();
+            @Override
             public boolean visit(XAResourceHolderState xaResourceHolderState) {
                 try {
                     result &= delistResource(xaResourceHolderState, flag);
@@ -205,6 +209,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         }
     }
 
+    @Override
     public void registerSynchronization(Synchronization synchronization) throws RollbackException, IllegalStateException, SystemException {
         if (status == Status.STATUS_NO_TRANSACTION)
             throw new IllegalStateException("transaction hasn't started yet");
@@ -221,6 +226,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         return synchronizationScheduler;
     }
 
+    @Override
     public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, SystemException {
         if (status == Status.STATUS_NO_TRANSACTION)
             throw new IllegalStateException("transaction hasn't started yet");
@@ -299,6 +305,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         }
     }
 
+    @Override
     public void rollback() throws IllegalStateException, SystemException {
         if (status == Status.STATUS_NO_TRANSACTION)
             throw new IllegalStateException("transaction hasn't started yet");
@@ -337,6 +344,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         }
     }
 
+    @Override
     public void setRollbackOnly() throws IllegalStateException, SystemException {
         if (status == Status.STATUS_NO_TRANSACTION)
             throw new IllegalStateException("transaction hasn't started yet");
@@ -405,7 +413,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
     private void fireTransactionStatusChangedEvent(int oldStatus, int newStatus) {
         if (log.isDebugEnabled()) log.debug("transaction status is changing from " + Decoder.decodeStatus(oldStatus) + " to " +
                 Decoder.decodeStatus(newStatus) + " - executing " + transactionStatusListeners.size() + " listener(s)");
-        
+
         for (TransactionStatusChangeListener listener : transactionStatusListeners) {
             if (log.isDebugEnabled()) { log.debug("executing TransactionStatusChangeListener " + listener); }
             listener.statusChanged(oldStatus, newStatus);
@@ -417,10 +425,12 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         transactionStatusListeners.add(listener);
     }
 
+    @Override
     public int hashCode() {
         return resourceManager.getGtrid().hashCode();
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof BitronixTransaction) {
             BitronixTransaction tx = (BitronixTransaction) obj;
@@ -429,6 +439,7 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
         return false;
     }
 
+    @Override
     public String toString() {
         return "a Bitronix Transaction with GTRID [" + resourceManager.getGtrid() + "], status=" + Decoder.decodeStatus(status) + ", " + resourceManager.size() + " resource(s) enlisted (started " + startDate + ")";
     }
@@ -592,22 +603,27 @@ public class BitronixTransaction implements Transaction, BitronixTransactionMBea
 
     /* management */
 
+    @Override
     public String getGtrid() {
         return resourceManager.getGtrid().toString();
     }
 
+    @Override
     public String getStatusDescription() {
         return Decoder.decodeStatus(status);
     }
 
+    @Override
     public Collection<String> getEnlistedResourcesUniqueNames() {
         return resourceManager.collectUniqueNames();
     }
 
+    @Override
     public String getThreadName() {
         return threadName;
     }
 
+    @Override
     public Date getStartDate() {
         return startDate;
     }

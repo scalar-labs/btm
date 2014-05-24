@@ -53,7 +53,7 @@ public class DelistmentTest extends TestCase {
     private PoolingDataSource poolingDataSource2;
     private BitronixTransactionManager btm;
 
-
+    @Override
     protected void setUp() throws Exception {
         EventRecorder.clear();
 
@@ -66,6 +66,7 @@ public class DelistmentTest extends TestCase {
         // change disk journal into mock journal
         Field field = TransactionManagerServices.class.getDeclaredField("journalRef");
         field.setAccessible(true);
+        @SuppressWarnings("unchecked")
         AtomicReference<Journal> journalRef = (AtomicReference<Journal>) field.get(TransactionManagerServices.class);
         journalRef.set(new MockJournal());
 
@@ -90,6 +91,7 @@ public class DelistmentTest extends TestCase {
         btm = TransactionManagerServices.getTransactionManager();
     }
 
+    @Override
     protected void tearDown() throws Exception {
         poolingDataSource1.close();
         poolingDataSource2.close();

@@ -15,6 +15,7 @@
  */
 package bitronix.tm.resource.common;
 
+import bitronix.tm.resource.common.XAStatefulHolder.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,18 +40,21 @@ public class DeferredReleaseSynchronization implements Synchronization {
         return xaStatefulHolder;
     }
 
+    @Override
     public void afterCompletion(int status) {
         if (log.isDebugEnabled()) { log.debug("DeferredReleaseSynchronization requeuing " + xaStatefulHolder); }
 
         // set this connection's state back to IN_POOL
-        xaStatefulHolder.setState(XAResourceHolder.STATE_IN_POOL);
+        xaStatefulHolder.setState(State.IN_POOL);
 
         if (log.isDebugEnabled()) { log.debug("DeferredReleaseSynchronization requeued " + xaStatefulHolder); }
     }
 
+    @Override
     public void beforeCompletion() {
     }
 
+    @Override
     public String toString() {
         return "a DeferredReleaseSynchronization of " + xaStatefulHolder;
     }

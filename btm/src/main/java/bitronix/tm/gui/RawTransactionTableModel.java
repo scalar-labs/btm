@@ -15,7 +15,6 @@
  */
 package bitronix.tm.gui;
 
-import bitronix.tm.journal.JournalRecord;
 import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.utils.Decoder;
 import org.slf4j.Logger;
@@ -34,7 +33,7 @@ import java.util.List;
  */
 public class RawTransactionTableModel extends TransactionTableModel {
 
-    private List displayedRows;
+    private List<TransactionLogRecord> displayedRows;
 
     private final static Logger log = LoggerFactory.getLogger(RawTransactionTableModel.class);
     public static final int GTRID_COL = 7;
@@ -45,27 +44,32 @@ public class RawTransactionTableModel extends TransactionTableModel {
         } catch (Exception ex) {
             log.error("corrupted log file", ex);
         }
-        displayedRows = new ArrayList(tLogs);
+        displayedRows = new ArrayList<TransactionLogRecord>(tLogs);
     }
 
+    @Override
     public int getColumnCount() {
         return 8;
     }
 
+    @Override
     public int getRowCount() {
         return displayedRows.size();
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         return false;
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
         return String.class;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        TransactionLogRecord tlog = (TransactionLogRecord) displayedRows.get(rowIndex);
+        TransactionLogRecord tlog = displayedRows.get(rowIndex);
         switch (columnIndex) {
             case 0:
                 return Decoder.decodeStatus(tlog.getStatus());
@@ -88,9 +92,11 @@ public class RawTransactionTableModel extends TransactionTableModel {
         }
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
         switch (columnIndex) {
             case 0:
@@ -114,28 +120,32 @@ public class RawTransactionTableModel extends TransactionTableModel {
         }
     }
 
+    @Override
     public void addTableModelListener(TableModelListener l) {
     }
 
+    @Override
     public void removeTableModelListener(TableModelListener l) {
     }
 
-    public boolean acceptLog(JournalRecord tlog) {
+    @Override
+    public boolean acceptLog(TransactionLogRecord tlog) {
         return true;
     }
 
+    @Override
     public TransactionLogRecord getRow(int row) {
-        return (TransactionLogRecord) displayedRows.get(row);
+        return displayedRows.get(row);
     }
 
     public void filterByGtrid(String gtrid) {
         if (gtrid == null) {
-            displayedRows = new ArrayList(tLogs);
+            displayedRows = new ArrayList<TransactionLogRecord>(tLogs);
         }
         else {
-            List newDis = new ArrayList();
+            List<TransactionLogRecord> newDis = new ArrayList<TransactionLogRecord>();
             for (int i = 0; i < displayedRows.size(); i++) {
-                JournalRecord transactionLogRecord = (JournalRecord) displayedRows.get(i);
+                TransactionLogRecord transactionLogRecord = displayedRows.get(i);
                 if (transactionLogRecord.getGtrid().toString().equals(gtrid))
                     newDis.add(transactionLogRecord);
             }

@@ -50,7 +50,7 @@ public class UidGeneratorTest extends TestCase {
 
     public void testUniqueness() throws Exception {
         final int count = 10000;
-        HashSet uids = new HashSet(2048);
+        HashSet<String> uids = new HashSet<String>(2048);
 
         for (int i = 0; i < count; i++) {
             Uid uid = UidGenerator.generateUid();
@@ -65,6 +65,7 @@ public class UidGeneratorTest extends TestCase {
         try {
             for (int i = 0; i < concurrency; i++) {
                 handles.add(executorService.submit(new Callable<Set<Uid>>() {
+                    @Override
                     public Set<Uid> call() throws Exception {
                         Set<Uid> ids = new HashSet<Uid>(callsPerThread);
                         for (int i = 0; i < callsPerThread; i++)

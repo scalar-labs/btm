@@ -40,13 +40,15 @@ public class ExceptionAnalyzerTest extends TestCase {
         TransactionManagerServices.getConfiguration().setExceptionAnalyzer(TestExceptionAnalyzer.class.getName());
         assertEquals(TestExceptionAnalyzer.class, TransactionManagerServices.getExceptionAnalyzer().getClass());
     }
-    
+
     public static class TestExceptionAnalyzer implements ExceptionAnalyzer {
 
+        @Override
         public String extractExtraXAExceptionDetails(XAException ex) {
             return "";
         }
 
+        @Override
         public void shutdown() {
         }
     }

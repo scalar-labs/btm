@@ -33,10 +33,10 @@ import java.util.Map;
  */
 public class ResourcesPanel extends JPanel {
 
-    private JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+    private final JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 
-    private JTree resourcesTree = new JTree();
-    private JScrollPane resourcesTreeScrollpane = new JScrollPane(resourcesTree);
+    private final JTree resourcesTree = new JTree();
+    private final JScrollPane resourcesTreeScrollpane = new JScrollPane(resourcesTree);
 
     private JTextArea activeResource = new JTextArea();
 
@@ -45,6 +45,7 @@ public class ResourcesPanel extends JPanel {
         resourcesTree.setModel(new ResourcesTreeModel());
 
         resourcesTree.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseClicked(MouseEvent evt) {
                 JTree tree = (JTree) evt.getSource();
                 int selectedRow = tree.getSelectionRows()[0] -1;

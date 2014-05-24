@@ -49,6 +49,7 @@ public class EhCacheXAResourceHolder extends AbstractXAResourceHolder {
     /**
      * {@inheritDoc}
      */
+    @Override
     public XAResource getXAResource() {
         return resource;
     }
@@ -56,6 +57,7 @@ public class EhCacheXAResourceHolder extends AbstractXAResourceHolder {
     /**
      * {@inheritDoc}
      */
+    @Override
     public ResourceBean getResourceBean() {
         return bean;
     }
@@ -63,6 +65,7 @@ public class EhCacheXAResourceHolder extends AbstractXAResourceHolder {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void close() throws Exception {
         throw new UnsupportedOperationException("EhCacheXAResourceHolder cannot be used with an XAPool");
     }
@@ -70,6 +73,7 @@ public class EhCacheXAResourceHolder extends AbstractXAResourceHolder {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Object getConnectionHandle() throws Exception {
         throw new UnsupportedOperationException("EhCacheXAResourceHolder cannot be used with an XAPool");
     }
@@ -77,6 +81,7 @@ public class EhCacheXAResourceHolder extends AbstractXAResourceHolder {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Date getLastReleaseDate() {
         throw new UnsupportedOperationException("EhCacheXAResourceHolder cannot be used with an XAPool");
     }
@@ -84,6 +89,7 @@ public class EhCacheXAResourceHolder extends AbstractXAResourceHolder {
     /**
      * {@inheritDoc}
      */
+    @Override
     public List<XAResourceHolder> getXAResourceHolders() {
         List<XAResourceHolder> xaResourceHolders = new ArrayList<XAResourceHolder>(1);
         xaResourceHolders.add(this);

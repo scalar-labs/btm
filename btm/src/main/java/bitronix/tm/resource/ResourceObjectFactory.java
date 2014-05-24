@@ -37,6 +37,7 @@ public class ResourceObjectFactory implements ObjectFactory {
 
     private final static Logger log = LoggerFactory.getLogger(ResourceObjectFactory.class);
 
+    @Override
     public Object getObjectInstance(Object obj, Name jndiNameObject, Context nameCtx, Hashtable<?,?> environment) throws Exception {
         Reference ref = (Reference) obj;
         if (log.isDebugEnabled()) { log.debug("referencing resource with reference of type " + ref.getClass()); }

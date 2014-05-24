@@ -34,25 +34,32 @@ public class NullJournal implements Journal {
     public NullJournal() {
     }
 
+    @Override
     public void log(int status, Uid gtrid, Set<String> uniqueNames) throws IOException {
     }
 
+    @Override
     public void open() throws IOException {
     }
 
+    @Override
     public void close() throws IOException {
     }
 
+    @Override
     public void force() throws IOException {
     }
 
+    @Override
     public Map<Uid, JournalRecord> collectDanglingRecords() throws IOException {
         return Collections.emptyMap();
     }
 
+    @Override
     public void shutdown() {
     }
 
+    @Override
     public String toString() {
         return "a NullJournal";
     }

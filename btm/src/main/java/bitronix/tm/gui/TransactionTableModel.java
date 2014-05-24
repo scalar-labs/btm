@@ -36,7 +36,7 @@ public abstract class TransactionTableModel implements TableModel {
 
     private final static Logger log = LoggerFactory.getLogger(TransactionTableModel.class);
 
-    protected List tLogs = new ArrayList();
+    protected List<TransactionLogRecord> tLogs = new ArrayList<TransactionLogRecord>();
 
     protected void readFullTransactionLog(File filename) throws IOException {
         TransactionLogCursor tlis = new TransactionLogCursor(filename);
@@ -44,7 +44,7 @@ public abstract class TransactionTableModel implements TableModel {
         int count=0;
         try {
             while (true) {
-                JournalRecord tlog = tlis.readLog(true);
+                TransactionLogRecord tlog = tlis.readLog(true);
                 if (tlog == null)
                     break;
                 if (!acceptLog(tlog))
@@ -59,7 +59,7 @@ public abstract class TransactionTableModel implements TableModel {
         }
     }
 
-    public abstract boolean acceptLog(JournalRecord tlog);
+    public abstract boolean acceptLog(TransactionLogRecord tlog);
 
     public abstract TransactionLogRecord getRow(int row);
 

@@ -40,6 +40,7 @@ public abstract class Task implements Comparable<Task> {
         return taskScheduler;
     }
 
+    @Override
     public int compareTo(Task otherTask) {
         return this.executionTime.compareTo(otherTask.executionTime);
     }

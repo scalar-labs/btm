@@ -33,7 +33,8 @@ public class ThreadContext {
     private volatile BitronixTransaction transaction;
     private volatile int timeout = TransactionManagerServices.getConfiguration().getDefaultTransactionTimeout();;
 
-    private static ThreadLocal<ThreadContext> threadContext = new ThreadLocal<ThreadContext>() {
+    private static final ThreadLocal<ThreadContext> threadContext = new ThreadLocal<ThreadContext>() {
+        @Override
         protected ThreadContext initialValue() {
             return new ThreadContext();
         }
@@ -51,7 +52,7 @@ public class ThreadContext {
      * the only way to access the ThreadContext. The get() call will
      * automatically construct a ThreadContext if this thread doesn't have one
      * (see initialValue() above).
-     * 
+     *
      * @return the calling thread's ThreadContext
      */
     public static ThreadContext getThreadContext() {
@@ -60,7 +61,7 @@ public class ThreadContext {
 
     /**
      * Return the transaction linked with this ThreadContext.
-     * 
+     *
      * @return the transaction linked to this ThreadContext or null if there is none.
      */
     public BitronixTransaction getTransaction() {
@@ -69,7 +70,7 @@ public class ThreadContext {
 
     /**
      * Link a transaction with this ThreadContext.
-     * 
+     *
      * @param transaction the transaction to link.
      */
     public void setTransaction(BitronixTransaction transaction) {
@@ -88,7 +89,7 @@ public class ThreadContext {
 
     /**
      * Return this context's default timeout.
-     * 
+     *
      * @return this context's default timeout.
      */
     public int getTimeout() {
@@ -99,7 +100,7 @@ public class ThreadContext {
      * Set this context's default timeout. All transactions started by the
      * thread linked to this context will get this value as their default
      * timeout.
-     * 
+     *
      * @param timeout the new default timeout value in seconds.
      */
     public void setTimeout(int timeout) {
@@ -108,7 +109,7 @@ public class ThreadContext {
             if (log.isDebugEnabled()) { log.debug("resetting default timeout of thread context to default value of " + defaultValue + "s"); }
             this.timeout = defaultValue;
         }
-        else {    
+        else {
             if (log.isDebugEnabled()) { log.debug("changing default timeout of thread context to " + timeout + "s"); }
             this.timeout = timeout;
         }
@@ -116,9 +117,10 @@ public class ThreadContext {
 
     /**
      * Return a human-readable representation.
-     * 
+     *
      * @return a human-readable representation.
      */
+    @Override
     public String toString() {
         return "a ThreadContext (" + System.identityHashCode(this) + ") with transaction " + transaction + ", default timeout " + timeout + "s";
     }

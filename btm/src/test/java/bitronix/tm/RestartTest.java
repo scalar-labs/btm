@@ -29,11 +29,11 @@ import java.util.Iterator;
  */
 public class RestartTest extends TestCase {
 
-
+    @Override
     protected void setUp() throws Exception {
-        Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+        Iterator<String> it = ResourceRegistrar.getResourcesUniqueNames().iterator();
         while (it.hasNext()) {
-            String name = (String) it.next();
+            String name = it.next();
             ResourceRegistrar.unregister(ResourceRegistrar.get(name));
         }
     }

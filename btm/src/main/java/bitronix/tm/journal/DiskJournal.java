@@ -103,6 +103,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * this transaction.
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
+    @Override
     public void log(int status, Uid gtrid, Set<String> uniqueNames) throws IOException {
         if (activeTla.get() == null)
             throw new IOException("cannot write log, disk logger is not open");
@@ -159,6 +160,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      *
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
+    @Override
     public void force() throws IOException {
         if (activeTla.get() == null)
             throw new IOException("cannot force log writing, disk logger is not open");
@@ -181,6 +183,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      *
      * @throws java.io.IOException in case of disk IO failure.
      */
+    @Override
     public synchronized void open() throws IOException {
         if (activeTla.get() != null) {
             log.warn("disk journal already open");
@@ -228,6 +231,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      *
      * @throws java.io.IOException in case of disk IO failure.
      */
+    @Override
     public synchronized void close() throws IOException {
         if (activeTla.get() == null) {
             return;
@@ -250,6 +254,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         if (log.isDebugEnabled()) { log.debug("disk journal closed"); }
     }
 
+    @Override
     public void shutdown() {
         try {
             close();
@@ -264,6 +269,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
      * @return a Map using Uid objects GTRID as key and {@link TransactionLogRecord} as value
      * @throws java.io.IOException in case of disk IO failure or if the disk journal is not open.
      */
+    @Override
     public Map<Uid, JournalRecord> collectDanglingRecords() throws IOException {
         if (activeTla.get() == null)
             throw new IOException("cannot collect dangling records, disk logger is not open");
@@ -273,6 +279,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
     /**
      * {@inheritDoc}
      */
+    @Override
     public void migrateTo(Journal other) throws IOException, IllegalArgumentException {
         if (other == this)
             throw new IllegalArgumentException("cannot migrate a journal to itself (this == otherJournal)");
@@ -288,6 +295,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
     /**
      * {@inheritDoc}
      */
+    @Override
     public synchronized void unsafeReadRecordsInto(Collection<JournalRecord> target, boolean includeInvalid) throws IOException {
         if (activeTla.get() == null)
             throw new IOException("cannot read records, disk logger is not open");
@@ -400,7 +408,7 @@ public class DiskJournal implements Journal, MigratableJournal, ReadableJournal 
         }
 
         if (log.isDebugEnabled()) { log.debug(danglingLogs.size() + " dangling record(s) copied to passive log file"); }
-        
+
         activeTla.get().clearDanglingLogs();
 
         //step 3

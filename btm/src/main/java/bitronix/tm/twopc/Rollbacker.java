@@ -123,7 +123,7 @@ public final class Rollbacker extends AbstractPhaseEngine {
                     case XAException.XA_HEURMIX:
                         heuristicResources.add(resourceHolder);
                         break;
-                    
+
                     default:
                         errorResources.add(resourceHolder);
                 }
@@ -143,10 +143,12 @@ public final class Rollbacker extends AbstractPhaseEngine {
                     (heuristicResources.size() > 0 ? " resource(s) " + Decoder.collectResourcesNames(heuristicResources) + " improperly unilaterally committed" + (hazard ? " (or hazard happened)" : "") : ""), phaseException);
     }
 
+    @Override
     protected Job createJob(XAResourceHolderState resourceHolder) {
         return new RollbackJob(resourceHolder);
     }
 
+    @Override
     protected boolean isParticipating(XAResourceHolderState xaResourceHolderState) {
         for (XAResourceHolderState resourceHolderState : interestedResources) {
             if (xaResourceHolderState == resourceHolderState)
@@ -161,6 +163,7 @@ public final class Rollbacker extends AbstractPhaseEngine {
             super(resourceHolder);
         }
 
+        @Override
         public void execute() {
             try {
                 rollbackResource(getResource());
@@ -214,6 +217,7 @@ public final class Rollbacker extends AbstractPhaseEngine {
             }
         }
 
+        @Override
         public String toString() {
             return "a RollbackJob with " + getResource();
         }

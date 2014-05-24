@@ -27,10 +27,10 @@ import java.util.Map;
  */
 public class EventRecorder {
 
-    private static Map eventRecorders = new HashMap();
+    private static final Map<Object, EventRecorder> eventRecorders = new HashMap<Object, EventRecorder>();
 
     public synchronized static EventRecorder getEventRecorder(Object key) {
-        EventRecorder er = (EventRecorder) eventRecorders.get(key);
+        EventRecorder er = eventRecorders.get(key);
         if (er == null) {
             er = new EventRecorder();
             eventRecorders.put(key, er);
@@ -38,31 +38,31 @@ public class EventRecorder {
         return er;
     }
 
-    public static Map getEventRecorders() {
+    public static Map<Object, EventRecorder> getEventRecorders() {
         return eventRecorders;
     }
 
-    public static Iterator iterateEvents() {
+    public static Iterator<? extends Event> iterateEvents() {
         return new EventsIterator(eventRecorders);
     }
 
-    public static List getOrderedEvents() {
-        Iterator iterator = iterateEvents();
-        List orderedEvents = new ArrayList();
+    public static List<? extends Event> getOrderedEvents() {
+        Iterator<? extends Event> iterator = iterateEvents();
+        List<Event> orderedEvents = new ArrayList<Event>();
         while (iterator.hasNext()) {
-            Object o = iterator.next();
-            orderedEvents.add(o);
+            Event ev = iterator.next();
+            orderedEvents.add(ev);
         }
         return orderedEvents;
     }
 
     public static String dumpToString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         int i = 0;
-        Iterator it = iterateEvents();
+        Iterator<? extends Event> it = iterateEvents();
         while (it.hasNext()) {
-            Event event = (Event) it.next();
+            Event event = it.next();
             sb.append(i++);
             sb.append(" - ");
             sb.append(event.toString());
@@ -76,7 +76,7 @@ public class EventRecorder {
         eventRecorders.clear();
     }
 
-    private List events = new ArrayList();
+    private final List<Event> events = new ArrayList<Event>();
 
     private EventRecorder() {
     }
@@ -85,7 +85,7 @@ public class EventRecorder {
         events.add(evt);
     }
 
-    public List getEvents() {
+    public List<Event> getEvents() {
         return events;
     }
 

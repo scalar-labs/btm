@@ -36,18 +36,18 @@ import java.util.Set;
 
 /**
  * This class generates JDBC proxy classes using stardard java.lang.reflect.Proxy
- * implementations. 
+ * implementations.
  *
  * @author Brett Wooldridge
  */
 public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 
-	private ProxyFactory<Connection> proxyConnectionFactory;
-	private ProxyFactory<XAConnection> proxyXAConnectionFactory;
-	private ProxyFactory<Statement> proxyStatementFactory;
-	private ProxyFactory<CallableStatement> proxyCallableStatementFactory;
-	private ProxyFactory<PreparedStatement> proxyPreparedStatementFactory;
-	private ProxyFactory<ResultSet> proxyResultSetFactory;
+	private final ProxyFactory<Connection> proxyConnectionFactory;
+	private final ProxyFactory<XAConnection> proxyXAConnectionFactory;
+	private final ProxyFactory<Statement> proxyStatementFactory;
+	private final ProxyFactory<CallableStatement> proxyCallableStatementFactory;
+	private final ProxyFactory<PreparedStatement> proxyPreparedStatementFactory;
+	private final ProxyFactory<ResultSet> proxyResultSetFactory;
 
 	JdbcJavaProxyFactory() {
 		proxyConnectionFactory = createProxyConnectionFactory();
@@ -59,6 +59,7 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 	}
 
 	/** {@inheritDoc} */
+    @Override
 	public Connection getProxyConnection(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
 		try {
 			ConnectionJavaProxy jdbcConnectionProxy = new ConnectionJavaProxy(jdbcPooledConnection, connection);
@@ -69,6 +70,7 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 	}
 
     /** {@inheritDoc} */
+    @Override
 	public Statement getProxyStatement(JdbcPooledConnection jdbcPooledConnection, Statement statement) {
 		try {
 			StatementJavaProxy jdbcStatementProxy = new StatementJavaProxy(jdbcPooledConnection, statement);
@@ -79,6 +81,7 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 	}
 
     /** {@inheritDoc} */
+    @Override
 	public CallableStatement getProxyCallableStatement(JdbcPooledConnection jdbcPooledConnection, CallableStatement statement) {
 		try {
 			CallableStatementJavaProxy jdbcStatementProxy = new CallableStatementJavaProxy(jdbcPooledConnection, statement);
@@ -89,6 +92,7 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 	}
 
     /** {@inheritDoc} */
+    @Override
 	public PreparedStatement getProxyPreparedStatement(JdbcPooledConnection jdbcPooledConnection, PreparedStatement statement, CacheKey cacheKey) {
 		try {
 			PreparedStatementJavaProxy jdbcStatementProxy = new PreparedStatementJavaProxy(jdbcPooledConnection, statement, cacheKey);
@@ -99,6 +103,7 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 	}
 
     /** {@inheritDoc} */
+    @Override
 	public ResultSet getProxyResultSet(Statement statement, ResultSet resultSet) {
 		try {
 			ResultSetJavaProxy jdbcResultSetProxy = new ResultSetJavaProxy(statement, resultSet);
@@ -109,6 +114,7 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 	}
 
     /** {@inheritDoc} */
+    @Override
 	public XAConnection getProxyXaConnection(Connection connection) {
 		try {
 			LrcXAConnectionJavaProxy jdbcLrcXaConnectionProxy = new LrcXAConnectionJavaProxy(connection);
@@ -119,6 +125,7 @@ public class JdbcJavaProxyFactory implements JdbcProxyFactory {
 	}
 
     /** {@inheritDoc} */
+    @Override
 	public Connection getProxyConnection(LrcXAResource xaResource, Connection connection) {
 		try {
 			LrcConnectionJavaProxy lrcConnectionJavaProxy = new LrcConnectionJavaProxy(xaResource, connection);

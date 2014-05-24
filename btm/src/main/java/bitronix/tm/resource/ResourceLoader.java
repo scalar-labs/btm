@@ -84,6 +84,7 @@ public class ResourceLoader implements Service {
         }
     }
 
+    @Override
     public synchronized void shutdown() {
         if (log.isDebugEnabled()) { log.debug("resource loader has registered " + resourcesByUniqueName.entrySet().size() + " resource(s), unregistering them now"); }
         for (Map.Entry<String, XAResourceProducer> entry : resourcesByUniqueName.entrySet()) {
@@ -292,6 +293,7 @@ public class ResourceLoader implements Service {
             return value;
         }
 
+        @Override
         public String toString() {
             return name + "/" + value;
         }

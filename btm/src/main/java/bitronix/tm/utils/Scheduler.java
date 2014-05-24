@@ -31,6 +31,7 @@ import java.util.TreeSet;
  * objects of a cetain position can be retrieved for iteration.
  *
  * @author Ludovic Orban
+ * @param <T>
  */
 public class Scheduler<T> implements Iterable<T> {
 
@@ -38,8 +39,8 @@ public class Scheduler<T> implements Iterable<T> {
     public static final Integer ALWAYS_FIRST_POSITION = Integer.MIN_VALUE;
     public static final Integer ALWAYS_LAST_POSITION = Integer.MAX_VALUE;
 
-    private List<Integer> keys = new ArrayList<Integer>();
-    private Map<Integer, List<T>> objects = new TreeMap<Integer, List<T>>();
+    private final List<Integer> keys = new ArrayList<Integer>();
+    private final Map<Integer, List<T>> objects = new TreeMap<Integer, List<T>>();
     private int size = 0;
 
 
@@ -96,6 +97,7 @@ public class Scheduler<T> implements Iterable<T> {
         return size;
     }
 
+    @Override
     public Iterator<T> iterator() {
         return new SchedulerNaturalOrderIterator();
     }
@@ -104,6 +106,7 @@ public class Scheduler<T> implements Iterable<T> {
         return new SchedulerReverseOrderIterator();
     }
 
+    @Override
     public String toString() {
         return "a Scheduler with " + size() + " object(s) in " + getNaturalOrderPositions().size() + " position(s)";
     }
@@ -120,6 +123,7 @@ public class Scheduler<T> implements Iterable<T> {
             this.nextKeyIndex = 0;
         }
 
+        @Override
         public void remove() {
             synchronized (Scheduler.this) {
                 if (objectsOfCurrentKey == null)
@@ -127,7 +131,7 @@ public class Scheduler<T> implements Iterable<T> {
 
                 objectsOfCurrentKeyIndex--;
                 objectsOfCurrentKey.remove(objectsOfCurrentKeyIndex);
-                if (objectsOfCurrentKey.size() == 0) {
+                if (objectsOfCurrentKey.isEmpty()) {
                     // there are no more objects in the current position's list -> remove it
                     nextKeyIndex--;
                     Integer key = Scheduler.this.keys.get(nextKeyIndex);
@@ -139,6 +143,7 @@ public class Scheduler<T> implements Iterable<T> {
             }
         }
 
+        @Override
         public boolean hasNext() {
             synchronized (Scheduler.this) {
                 if (objectsOfCurrentKey == null || objectsOfCurrentKeyIndex >= objectsOfCurrentKey.size()) {
@@ -161,6 +166,7 @@ public class Scheduler<T> implements Iterable<T> {
             }
         }
 
+        @Override
         public T next() {
             synchronized (Scheduler.this) {
                 if (!hasNext())
@@ -184,6 +190,7 @@ public class Scheduler<T> implements Iterable<T> {
             }
         }
 
+        @Override
         public void remove() {
             synchronized (Scheduler.this) {
                 if (objectsOfCurrentKey == null)
@@ -191,7 +198,7 @@ public class Scheduler<T> implements Iterable<T> {
 
                 objectsOfCurrentKeyIndex--;
                 objectsOfCurrentKey.remove(objectsOfCurrentKeyIndex);
-                if (objectsOfCurrentKey.size() == 0) {
+                if (objectsOfCurrentKey.isEmpty()) {
                     // there are no more objects in the current position's list -> remove it
                     Integer key = Scheduler.this.keys.get(nextKeyIndex+1);
                     Scheduler.this.keys.remove(nextKeyIndex+1);
@@ -202,6 +209,7 @@ public class Scheduler<T> implements Iterable<T> {
             }
         }
 
+        @Override
         public boolean hasNext() {
             synchronized (Scheduler.this) {
                 if (objectsOfCurrentKey == null || objectsOfCurrentKeyIndex >= objectsOfCurrentKey.size()) {
@@ -224,6 +232,7 @@ public class Scheduler<T> implements Iterable<T> {
             }
         }
 
+        @Override
         public T next() {
             synchronized (Scheduler.this) {
                 if (!hasNext())

@@ -46,6 +46,7 @@ public class JdbcPoolTest extends TestCase {
     private final static Logger log = LoggerFactory.getLogger(JdbcPoolTest.class);
     private PoolingDataSource pds;
 
+    @Override
     protected void setUp() throws Exception {
         TransactionManagerServices.getConfiguration().setJournal("null").setGracefulShutdownInterval(2);
         TransactionManagerServices.getTransactionManager();
@@ -64,11 +65,11 @@ public class JdbcPoolTest extends TestCase {
         pds.init();
     }
 
-
+    @Override
     protected void tearDown() throws Exception {
         pds.close();
 
-        TransactionManagerServices.getTransactionManager().shutdown();        
+        TransactionManagerServices.getTransactionManager().shutdown();
     }
 
     public void testObjectProperties() throws Exception {
@@ -186,7 +187,7 @@ public class JdbcPoolTest extends TestCase {
         TransactionManagerServices.getTaskScheduler().interrupt(); // wake up the task scheduler
         Thread.sleep(1200); // leave enough time for the scheduled shrinking task to do its work
 
-        if (log.isDebugEnabled()) { log.debug("*** checking pool sizes"); }        
+        if (log.isDebugEnabled()) { log.debug("*** checking pool sizes"); }
         assertEquals(1, pool.inPoolSize());
         assertEquals(1, pool.totalPoolSize());
     }
@@ -395,7 +396,7 @@ public class JdbcPoolTest extends TestCase {
         if (log.isDebugEnabled()) { log.debug("*** Starting testPoolNotStartingTransactionManager"); }
         // make sure TM is not running
         TransactionManagerServices.getTransactionManager().shutdown();
-        
+
         PoolingDataSource pds = new PoolingDataSource();
         pds.setMinPoolSize(1);
         pds.setMaxPoolSize(2);

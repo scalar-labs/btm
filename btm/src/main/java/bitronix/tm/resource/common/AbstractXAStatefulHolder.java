@@ -15,7 +15,6 @@
  */
 package bitronix.tm.resource.common;
 
-import bitronix.tm.utils.Decoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,56 +31,61 @@ public abstract class AbstractXAStatefulHolder implements XAStatefulHolder {
 
     private final static Logger log = LoggerFactory.getLogger(AbstractXAStatefulHolder.class);
 
-    private volatile int state = STATE_IN_POOL;
+    private volatile State state = State.IN_POOL;
     private final List<StateChangeListener> stateChangeEventListeners = new CopyOnWriteArrayList<StateChangeListener>();
     private final Date creationDate = new Date();
 
+    @Override
     public Date getCreationDate() {
         return creationDate;
     }
 
-    public int getState() {
+    @Override
+    public State getState() {
         return state;
     }
 
-    public void setState(int state) {
-        int oldState = this.state;
+    @Override
+    public void setState(State state) {
+        State oldState = this.state;
         fireStateChanging(oldState, state);
 
         if (oldState == state)
-            throw new IllegalArgumentException("cannot switch state from " + Decoder.decodeXAStatefulHolderState(oldState) +
-                    " to " + Decoder.decodeXAStatefulHolderState(state));
+            throw new IllegalArgumentException("cannot switch state from " + oldState +
+                    " to " + state);
 
-        if (log.isDebugEnabled()) log.debug("state changing from " + Decoder.decodeXAStatefulHolderState(oldState) +
-                " to " + Decoder.decodeXAStatefulHolderState(state) + " in " + this);
+        if (log.isDebugEnabled()) log.debug("state changing from " + oldState +
+                " to " + state + " in " + this);
 
         this.state = state;
 
         fireStateChanged(oldState, state);
     }
 
+    @Override
     public void addStateChangeEventListener(StateChangeListener listener) {
         stateChangeEventListeners.add(listener);
     }
 
+    @Override
     public void removeStateChangeEventListener(StateChangeListener listener) {
         stateChangeEventListeners.remove(listener);
     }
 
-    private void fireStateChanging(int currentState, int futureState) {
+    private void fireStateChanging(State currentState, State futureState) {
         if (log.isDebugEnabled()) log.debug("notifying " + stateChangeEventListeners.size() +
-                " stateChangeEventListener(s) about state changing from " + Decoder.decodeXAStatefulHolderState(currentState) +
-                " to " + Decoder.decodeXAStatefulHolderState(futureState) + " in " + this);
+                " stateChangeEventListener(s) about state changing from " + currentState +
+                " to " + futureState + " in " + this);
 
         for (StateChangeListener stateChangeListener : stateChangeEventListeners) {
             stateChangeListener.stateChanging(this, currentState, futureState);
         }
     }
 
-    private void fireStateChanged(int oldState, int newState) {
+    private void fireStateChanged(State oldState, State newState) {
         if (log.isDebugEnabled()) log.debug("notifying " + stateChangeEventListeners.size() +
-                " stateChangeEventListener(s) about state changed from " + Decoder.decodeXAStatefulHolderState(oldState) +
-                " to " + Decoder.decodeXAStatefulHolderState(newState) + " in " + this);
+                " stateChangeEventListener(s) about state changed from " + oldState +
+                " to " + newState + " in " + this);
 
         for (StateChangeListener stateChangeListener : stateChangeEventListeners) {
             stateChangeListener.stateChanged(this, oldState, newState);
