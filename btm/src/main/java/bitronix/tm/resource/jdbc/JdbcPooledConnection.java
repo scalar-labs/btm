@@ -153,10 +153,15 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
         poolingDataSource.unregister(this);
 
-        connection.close();
-        xaConnection.close();
-
-        poolingDataSource.fireOnDestroy(connection);
+        try {
+            connection.close();
+        } finally {
+            try {
+                xaConnection.close();
+            } finally {
+                poolingDataSource.fireOnDestroy(connection);
+            }
+        }
     }
 
     public RecoveryXAResourceHolder createRecoveryXAResourceHolder() {
@@ -295,7 +300,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
             }
             else {
                 if (log.isDebugEnabled()) { log.debug("connection " + xaConnection + " was in state " + Decoder.decodeXAStatefulHolderState(oldState) + ", no need to test it"); }
-            }
+        }
 
             if (log.isDebugEnabled()) { log.debug("got connection handle from " + this); }
             return getConnectionHandle(connection);
