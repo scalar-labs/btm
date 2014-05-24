@@ -100,9 +100,12 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
         if (xaConnection != null) {
             poolingConnectionFactory.unregister(this);
             setState(State.CLOSED);
-            xaConnection.close();
+            try {
+                xaConnection.close();
+            } finally {
+                xaConnection = null;
+            }
         }
-        xaConnection = null;
     }
 
     @Override
