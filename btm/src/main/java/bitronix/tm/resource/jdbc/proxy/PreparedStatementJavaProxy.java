@@ -71,10 +71,16 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
         else {
 	        // Clear the parameters so the next use of this cached statement
 	        // doesn't pick up unexpected values.
-	        delegate.clearParameters();
-	
-	        // Return to cache so the usage count can be updated
-	        jdbcPooledConnection.putCachedStatement(cacheKey, delegate);
+            delegate.clearParameters();
+            delegate.clearWarnings();
+            try {
+                delegate.clearBatch();
+            } catch (SQLException e) {
+                // Driver probably doesn't support batch updates.
+            }
+
+            // Return to cache so the usage count can be updated
+            jdbcPooledConnection.putCachedStatement(cacheKey, delegate);
         }
     }
 
@@ -113,7 +119,7 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
     	}
     	return JdbcProxyFactory.INSTANCE.getProxyResultSet(this.getProxy(), generatedKeys);
     }
-    
+
     /* java.sql.Wrapper implementation */
 
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
