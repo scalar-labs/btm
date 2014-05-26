@@ -98,10 +98,8 @@ public class Phase2FailureTest extends TestCase {
         int journalCommittingEventCount = 0;
         int journalCommittedEventCount = 0;
         int commitEventCount = 0;
-        List events = EventRecorder.getOrderedEvents();
-        for (int i = 0; i < events.size(); i++) {
-            Event event = (Event) events.get(i);
-
+        List<? extends Event> events = EventRecorder.getOrderedEvents();
+        for (Event event : events) {
             if (event instanceof XAResourceCommitEvent)
                 commitEventCount++;
 
@@ -168,10 +166,8 @@ public class Phase2FailureTest extends TestCase {
         int journalCommittedEventCount = 0;
         int commitEventCount = 0;
         int forgetEventCount = 0;
-        List events = EventRecorder.getOrderedEvents();
-        for (int i = 0; i < events.size(); i++) {
-            Event event = (Event) events.get(i);
-
+        List<? extends Event> events = EventRecorder.getOrderedEvents();
+        for (Event event : events) {
             if (event instanceof XAResourceCommitEvent)
                 commitEventCount++;
 
@@ -235,10 +231,8 @@ public class Phase2FailureTest extends TestCase {
 
         int journalUnknownEventCount = 0;
         int commitEventCount = 0;
-        List events = EventRecorder.getOrderedEvents();
-        for (int i = 0; i < events.size(); i++) {
-            Event event = (Event) events.get(i);
-
+        List<? extends Event> events = EventRecorder.getOrderedEvents();
+        for (Event event : events) {
             if (event instanceof XAResourceCommitEvent)
                 commitEventCount++;
 
@@ -253,9 +247,9 @@ public class Phase2FailureTest extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
-        Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+        Iterator<String> it = ResourceRegistrar.getResourcesUniqueNames().iterator();
         while (it.hasNext()) {
-            String name = (String) it.next();
+            String name = it.next();
             ResourceRegistrar.unregister(ResourceRegistrar.get(name));
         }
 

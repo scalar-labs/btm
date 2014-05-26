@@ -1044,8 +1044,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         static int successes = 0;
         static int failures = 0;
 
-        private int number;
-        private PoolingDataSource poolingDataSource;
+        private final int number;
+        private final PoolingDataSource poolingDataSource;
         private boolean succesful = false;
 
         public LooseTransactionThread(int number, PoolingDataSource poolingDataSource) {
@@ -1053,6 +1053,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
             this.poolingDataSource = poolingDataSource;
         }
 
+        @Override
         public void run() {
             try {
                 UserTransaction ut = TransactionManagerServices.getTransactionManager();
