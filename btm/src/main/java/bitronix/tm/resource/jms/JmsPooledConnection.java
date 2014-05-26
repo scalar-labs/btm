@@ -23,7 +23,6 @@ import bitronix.tm.resource.common.TransactionContextHelper;
 import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.resource.jms.lrc.LrcXAConnectionFactory;
-import bitronix.tm.utils.Decoder;
 import bitronix.tm.utils.ManagementRegistrar;
 import bitronix.tm.utils.MonotonicClock;
 import bitronix.tm.utils.Scheduler;
@@ -101,9 +100,12 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
         if (xaConnection != null) {
             poolingConnectionFactory.unregister(this);
             setState(State.CLOSED);
-            xaConnection.close();
+            try {
+                xaConnection.close();
+            } finally {
+                xaConnection = null;
+            }
         }
-        xaConnection = null;
     }
 
     @Override
