@@ -249,7 +249,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder implements Sess
             }
             messageConsumers.clear();
 
-        } // if newState == STATE_CLOSED
+        } // if newState == State.CLOSED
     }
 
     @Override
