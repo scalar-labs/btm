@@ -19,6 +19,7 @@ import bitronix.tm.BitronixTransactionManager;
 import bitronix.tm.TransactionManagerServices;
 import bitronix.tm.mock.events.ConnectionDequeuedEvent;
 import bitronix.tm.mock.events.ConnectionQueuedEvent;
+import bitronix.tm.mock.events.Event;
 import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.events.JournalLogEvent;
 import bitronix.tm.mock.events.XAResourceCommitEvent;
@@ -301,7 +302,7 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
         assertEquals(POOL_SIZE, pool1.inPoolSize());
 
         // check flow
-        List orderedEvents = EventRecorder.getOrderedEvents();
+        List<? extends Event> orderedEvents = EventRecorder.getOrderedEvents();
         log.info(EventRecorder.dumpToString());
 
         assertEquals(18, orderedEvents.size());
