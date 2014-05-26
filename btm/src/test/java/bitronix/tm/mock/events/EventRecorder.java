@@ -42,12 +42,12 @@ public class EventRecorder {
         return eventRecorders;
     }
 
-    public static Iterator<Event> iterateEvents() {
+    public static Iterator<? extends Event> iterateEvents() {
         return new EventsIterator(eventRecorders);
     }
 
-    public static List<Event> getOrderedEvents() {
-        Iterator<Event> iterator = iterateEvents();
+    public static List<? extends Event> getOrderedEvents() {
+        Iterator<? extends Event> iterator = iterateEvents();
         List<Event> orderedEvents = new ArrayList<Event>();
         while (iterator.hasNext()) {
             Event ev = iterator.next();
@@ -60,7 +60,7 @@ public class EventRecorder {
         StringBuilder sb = new StringBuilder();
 
         int i = 0;
-        Iterator<Event> it = iterateEvents();
+        Iterator<? extends Event> it = iterateEvents();
         while (it.hasNext()) {
             Event event = it.next();
             sb.append(i++);

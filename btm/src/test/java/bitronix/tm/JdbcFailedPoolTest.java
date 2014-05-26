@@ -31,15 +31,17 @@ import java.sql.SQLException;
  */
 public class JdbcFailedPoolTest extends TestCase {
 
+    @Override
     protected void setUp() throws Exception {
         TransactionManagerServices.getJournal().open();
         TransactionManagerServices.getTaskScheduler();
     }
 
+    @Override
     protected void tearDown() throws Exception {
         TransactionManagerServices.getJournal().close();
         TransactionManagerServices.getTaskScheduler().shutdown();
-        
+
         MockitoXADataSource.setStaticGetXAConnectionException(null);
     }
 
