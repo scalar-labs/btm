@@ -23,8 +23,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -76,11 +76,13 @@ public class TransactionLogRecord implements JournalRecord {
     // status + record length + record header length + current time + sequence number + checksum
     private final static int RECORD_HEADER_LENGTH = 4 + 4 + 4 + 8 + 4 + 4;
 
+    private static final Charset US_ASCII = Charset.forName("US-ASCII");
+
     private final static AtomicInteger sequenceGenerator = new AtomicInteger();
 
     private final int status;
     private int recordLength;
-    private int headerLength;
+    private final int headerLength;
     private final long time;
     private final int sequenceNumber;
     private int crc32;
@@ -132,6 +134,7 @@ public class TransactionLogRecord implements JournalRecord {
         refresh();
     }
 
+    @Override
     public int getStatus() {
         return status;
     }
@@ -144,6 +147,7 @@ public class TransactionLogRecord implements JournalRecord {
         return headerLength;
     }
 
+    @Override
     public long getTime() {
         return time;
     }
@@ -156,6 +160,7 @@ public class TransactionLogRecord implements JournalRecord {
         return crc32;
     }
 
+    @Override
     public Uid getGtrid() {
         return gtrid;
     }
@@ -168,6 +173,7 @@ public class TransactionLogRecord implements JournalRecord {
         writePosition = position;
     }
 
+    @Override
     public Set<String> getUniqueNames() {
         return Collections.unmodifiableSortedSet(uniqueNames);
     }
@@ -195,6 +201,7 @@ public class TransactionLogRecord implements JournalRecord {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean isValid() {
         return isCrc32Correct();
     }
@@ -202,6 +209,7 @@ public class TransactionLogRecord implements JournalRecord {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Map<String, ?> getRecordProperties() {
         Map<String, Object> props = new LinkedHashMap<String, Object>(4);
         props.put("recordLength", recordLength);
@@ -232,12 +240,8 @@ public class TransactionLogRecord implements JournalRecord {
     	buf.putInt(uniqueNames.size());  // offset: 24 + gtridArray.length
 
         for (String name : uniqueNames) {
-        	buf.putShort((short) name.length());
-            try {
-            	buf.put(name.getBytes("US-ASCII"));
-            } catch (UnsupportedEncodingException ex) {
-                log.error("unable to convert unique name bytes to US-ASCII", ex);
-            }
+            buf.putShort((short) name.length());
+            buf.put(name.getBytes(US_ASCII));
         }
 
         buf.putInt(endRecord);
@@ -247,6 +251,7 @@ public class TransactionLogRecord implements JournalRecord {
         return (int) crc32.getValue();
     }
 
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder(128);
 
@@ -294,6 +299,7 @@ public class TransactionLogRecord implements JournalRecord {
         private NullOutputStream() {
         }
 
+        @Override
         public void write(int b) throws IOException {
         }
     }

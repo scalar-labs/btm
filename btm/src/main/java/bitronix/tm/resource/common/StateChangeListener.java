@@ -15,6 +15,8 @@
  */
 package bitronix.tm.resource.common;
 
+import bitronix.tm.resource.common.XAStatefulHolder.State;
+
 /**
  * {@link XAStatefulHolder} state change listener interface.
  *
@@ -28,7 +30,7 @@ public interface StateChangeListener {
      * @param oldState the old state of the {@link XAStatefulHolder}.
      * @param newState the new state of the {@link XAStatefulHolder}.
      */
-    public void stateChanged(XAStatefulHolder source, int oldState, int newState);
+    public void stateChanged(XAStatefulHolder source, State oldState, State newState);
 
     /**
      * Fired before the internal state of a {@link XAStatefulHolder} has changed.
@@ -36,6 +38,6 @@ public interface StateChangeListener {
      * @param currentState the current state of the {@link XAStatefulHolder}.
      * @param futureState the future state of the {@link XAStatefulHolder}.
      */
-    public void stateChanging(XAStatefulHolder source, int currentState, int futureState);
+    public void stateChanging(XAStatefulHolder source, State currentState, State futureState);
 
 }

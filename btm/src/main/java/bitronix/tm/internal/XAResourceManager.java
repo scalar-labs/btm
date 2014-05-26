@@ -194,7 +194,7 @@ public class XAResourceManager {
             if (xaResourceHolderState.getXAResource() == xaResource)
                 return xaResourceHolderState;
         }
-        
+
         return null;
     }
 
@@ -223,7 +223,7 @@ public class XAResourceManager {
             }
             if (log.isDebugEnabled()) { log.debug("resources are not joinable"); }
         }
-        
+
         if (log.isDebugEnabled()) { log.debug("no joinable resource found for " + xaResourceHolderState); }
         return null;
     }
@@ -306,6 +306,7 @@ public class XAResourceManager {
      * Return a human-readable representation of this object.
      * @return a human-readable representation of this object.
      */
+    @Override
     public String toString() {
         return "a XAResourceManager with GTRID [" + gtrid + "] and " + resources;
     }

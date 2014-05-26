@@ -30,36 +30,42 @@ import java.util.Iterator;
 public class ResourcesTreeModel implements TreeModel {
 
     private static final String ROOT = "Resource loader";
-    private ResourceLoader resourceLoader;
+    private final ResourceLoader resourceLoader;
 
     public ResourcesTreeModel() {
         resourceLoader = TransactionManagerServices.getResourceLoader();
     }
 
+    @Override
     public Object getRoot() {
         return ROOT;
     }
 
+    @Override
     public int getChildCount(Object parent) {
         if (parent.equals(ROOT))
             return resourceLoader.getResources().size();
         return 0;
     }
 
+    @Override
     public boolean isLeaf(Object node) {
         if (node.equals(ROOT))
             return false;
         return true;
     }
 
+    @Override
     public void addTreeModelListener(TreeModelListener l) {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    @Override
     public void removeTreeModelListener(TreeModelListener l) {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    @Override
     public Object getChild(Object parent, int index) {
         if (index < 0)
             return ROOT;
@@ -72,10 +78,12 @@ public class ResourcesTreeModel implements TreeModel {
         return result;
     }
 
+    @Override
     public int getIndexOfChild(Object parent, Object child) {
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    @Override
     public void valueForPathChanged(TreePath path, Object newValue) {
         //To change body of implemented methods use File | Settings | File Templates.
     }

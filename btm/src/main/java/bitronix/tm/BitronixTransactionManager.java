@@ -109,6 +109,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         if (debug) { log.debug("Creating sorted memory storage for inflight transactions."); }
 
         final Comparator<BitronixTransaction> timestampSortComparator = new Comparator<BitronixTransaction>() {
+                @Override
                 public int compare(BitronixTransaction t1, BitronixTransaction t2) {
                     Long timestamp1 = t1.getResourceManager().getGtrid().extractTimestamp();
                     Long timestamp2 = t2.getResourceManager().getGtrid().extractTimestamp();
@@ -141,6 +142,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * @throws NotSupportedException if a transaction is already bound to the calling thread.
      * @throws SystemException if the transaction manager is shutting down.
      */
+    @Override
     public void begin() throws NotSupportedException, SystemException {
         if (log.isDebugEnabled()) { log.debug("beginning a new transaction"); }
         if (isShuttingDown())
@@ -171,6 +173,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         }
     }
 
+    @Override
     public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, IllegalStateException, SystemException {
         BitronixTransaction currentTx = getCurrentTransaction();
         if (log.isDebugEnabled()) { log.debug("committing transaction " + currentTx); }
@@ -180,6 +183,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         currentTx.commit();
     }
 
+    @Override
     public void rollback() throws IllegalStateException, SecurityException, SystemException {
         BitronixTransaction currentTx = getCurrentTransaction();
         if (log.isDebugEnabled()) { log.debug("rolling back transaction " + currentTx); }
@@ -189,6 +193,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         currentTx.rollback();
     }
 
+    @Override
     public int getStatus() throws SystemException {
         BitronixTransaction currentTx = getCurrentTransaction();
         if (currentTx == null)
@@ -197,10 +202,12 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         return currentTx.getStatus();
     }
 
+    @Override
     public Transaction getTransaction() throws SystemException {
         return getCurrentTransaction();
     }
 
+    @Override
     public void setRollbackOnly() throws IllegalStateException, SystemException {
         BitronixTransaction currentTx = getCurrentTransaction();
         if (log.isDebugEnabled()) { log.debug("marking transaction as rollback only: " + currentTx); }
@@ -210,12 +217,14 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         currentTx.setRollbackOnly();
     }
 
+    @Override
     public void setTransactionTimeout(int seconds) throws SystemException {
         if (seconds < 0)
             throw new BitronixSystemException("cannot set a timeout to less than 0 second (was: " + seconds + "s)");
         ThreadContext.getThreadContext().setTimeout(seconds);
     }
 
+    @Override
     public Transaction suspend() throws SystemException {
         BitronixTransaction currentTx = getCurrentTransaction();
         if (log.isDebugEnabled()) { log.debug("suspending transaction " + currentTx); }
@@ -235,6 +244,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         }
     }
 
+    @Override
     public void resume(Transaction transaction) throws InvalidTransactionException, IllegalStateException, SystemException {
         if (log.isDebugEnabled()) { log.debug("resuming " + transaction); }
         if (transaction == null)
@@ -268,6 +278,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      *
      * @return an empty reference to get the BitronixTransactionManager.
      */
+    @Override
     public Reference getReference() throws NamingException {
         return new Reference(
                 BitronixTransactionManager.class.getName(),
@@ -296,7 +307,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         	long oldestTimestamp = oldestTransaction.getResourceManager().getGtrid().extractTimestamp();
         	if (log.isDebugEnabled()) { log.debug("oldest in-flight transaction's timestamp: " + oldestTimestamp); }
         	return oldestTimestamp;
-        	
+
         } catch (NoSuchElementException e) {
         	if (log.isDebugEnabled()) { log.debug("oldest in-flight transaction's timestamp: " + Long.MIN_VALUE); }
         	return Long.MIN_VALUE;
@@ -345,6 +356,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * {@link javax.transaction.TransactionManager#begin()}) will be rejected with a {@link SystemException}.</p>
      * @see Configuration#getGracefulShutdownInterval()
      */
+    @Override
     public synchronized void shutdown() {
         if (isShuttingDown()) {
             if (log.isDebugEnabled()) { log.debug("Transaction Manager has already shut down"); }
@@ -411,6 +423,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         }
     }
 
+    @Override
     public String toString() {
         return "a BitronixTransactionManager with " + inFlightTransactions.size() + " in-flight transaction(s)";
     }
@@ -449,16 +462,18 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
 
     private final class ClearContextSynchronization implements Synchronization {
         private final BitronixTransaction currentTx;
-        private AtomicReference<ThreadContext> threadContext;
+        private final AtomicReference<ThreadContext> threadContext;
 
         public ClearContextSynchronization(BitronixTransaction currentTx, ThreadContext threadContext) {
             this.currentTx = currentTx;
             this.threadContext = new AtomicReference<ThreadContext>(threadContext);
         }
 
+        @Override
         public void beforeCompletion() {
         }
 
+        @Override
         public void afterCompletion(int status) {
         	ThreadContext context = threadContext.get();
         	if (context != null) {
@@ -477,6 +492,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
         	this.threadContext.set(threadContext);
         }
 
+        @Override
         public String toString() {
             return "a ClearContextSynchronization for " + currentTx;
         }

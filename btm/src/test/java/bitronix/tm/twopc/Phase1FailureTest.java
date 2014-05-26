@@ -203,7 +203,7 @@ public class Phase1FailureTest extends TestCase {
         assertEquals("TM haven't properly tried to prepare", 3, prepareEventCount);
         assertEquals("TM haven't properly tried to rollback", 3, rollbackEventCount);
     }
-    
+
     /**
      * Test scenario:
      *
@@ -214,7 +214,7 @@ public class Phase1FailureTest extends TestCase {
      * XAResource 2 resolution: it's an LRCXaResource and prepare does not happen on this resource.
      *
      * Expected outcome:
-     *   TM fails on resource 1 prepare and throws RollbackException. Prepare must not happen on resource 2. 
+     *   TM fails on resource 1 prepare and throws RollbackException. Prepare must not happen on resource 2.
      *   On call to rollback, the two resource rollback should succeed.
      * Expected TM events:
      *  1 XAResourcePrepareEvent, 1 XAResourceRollbackEvent
@@ -233,10 +233,10 @@ public class Phase1FailureTest extends TestCase {
 
         Connection connection2 = poolingDataSourceLrc.getConnection();
         connection2.createStatement();
-        
+
         MockXAResource mockXAResource1 = (MockXAResource) xaConnection1.getXAResource();
         mockXAResource1.setPrepareException(createXAException("resource 1 prepare failed", XAException.XAER_RMERR));
-        
+
         try {
             tm.commit();
             fail("TM should have thrown an exception");
@@ -267,7 +267,7 @@ public class Phase1FailureTest extends TestCase {
 
             if (event instanceof XAResourcePrepareEvent)
                 prepareEventCount++;
-            
+
             if (event instanceof LocalRollbackEvent)
                 localRollbackEventCount++;
 
@@ -282,12 +282,14 @@ public class Phase1FailureTest extends TestCase {
         assertEquals("TM haven't properly tried to rollback", 1, localRollbackEventCount);
     }
 
+    @Override
     protected void setUp() throws Exception {
         EventRecorder.clear();
 
         // change disk journal into mock journal
         Field field = TransactionManagerServices.class.getDeclaredField("journalRef");
         field.setAccessible(true);
+        @SuppressWarnings("unchecked")
         AtomicReference<Journal> journalRef = (AtomicReference<Journal>) field.get(TransactionManagerServices.class);
         journalRef.set(new MockJournal());
 
@@ -314,7 +316,7 @@ public class Phase1FailureTest extends TestCase {
         poolingDataSource3.setMaxPoolSize(5);
         poolingDataSource3.setAutomaticEnlistingEnabled(true);
         poolingDataSource3.init();
-        
+
         poolingDataSourceLrc = new PoolingDataSource();
         poolingDataSourceLrc.setClassName(LrcXADataSource.class.getName());
         poolingDataSourceLrc.setUniqueName("pds4_lrc");
@@ -329,6 +331,7 @@ public class Phase1FailureTest extends TestCase {
         tm = TransactionManagerServices.getTransactionManager();
     }
 
+    @Override
     protected void tearDown() throws Exception {
         poolingDataSource1.close();
         poolingDataSource2.close();

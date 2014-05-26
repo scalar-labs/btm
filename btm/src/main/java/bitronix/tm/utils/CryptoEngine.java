@@ -28,6 +28,7 @@ import javax.crypto.spec.DESKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -41,6 +42,7 @@ public class CryptoEngine {
 
     private static final int LONG_SIZE_IN_BYTES = 8;
     private static final String CRYPTO_PASSWORD = "B1tr0n!+";
+    private static final Charset US_ASCII = Charset.forName("US-ASCII");
 
     /**
      * Crypt the given data using the given cipher.
@@ -59,7 +61,7 @@ public class CryptoEngine {
     public static String crypt(String cipher, String data) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeySpecException, IOException {
         byte[] prependedBytes = Encoder.longToBytes(MonotonicClock.currentTimeMillis());
 
-        byte[] dataBytes = data.getBytes("US-ASCII");
+        byte[] dataBytes = data.getBytes(US_ASCII);
         byte[] toCrypt = new byte[LONG_SIZE_IN_BYTES + dataBytes.length];
         System.arraycopy(prependedBytes, 0, toCrypt, 0, LONG_SIZE_IN_BYTES);
         System.arraycopy(dataBytes, 0, toCrypt, LONG_SIZE_IN_BYTES, dataBytes.length);
@@ -171,7 +173,7 @@ public class CryptoEngine {
         private final static int MAX_LINE_LENGTH = 76;
         private final static byte EQUALS_SIGN = (byte) '=';
         private final static byte NEW_LINE = (byte) '\n';
-        private final static String PREFERRED_ENCODING = "UTF-8";
+        private final static Charset UTF8 = Charset.forName("UTF-8"); // JDKs *must* support UTF-8
         private final static byte WHITE_SPACE_ENC = -5; // Indicates white space in encoding
         private final static byte EQUALS_SIGN_ENC = -1; // Indicates equals sign in encoding
 
@@ -565,13 +567,8 @@ public class CryptoEngine {
                 }   // end finally
 
                 // Return value according to relevant encoding.
-                try {
-                    return new String(baos.toByteArray(), PREFERRED_ENCODING);
-                }   // end try
-                catch (java.io.UnsupportedEncodingException uue) {
-                    return new String(baos.toByteArray());
-                }   // end catch
-            }   // end if: compress
+                return new String(baos.toByteArray(), UTF8);
+           }   // end if: compress
 
             // Else, don't compress. Better not to use streams at all then.
             else {
@@ -603,13 +600,7 @@ public class CryptoEngine {
                 }   // end if: some padding needed
 
                 // Return value according to relevant encoding.
-                try {
-                    return new String(outBuff, 0, e, PREFERRED_ENCODING);
-                }   // end try
-                catch (java.io.UnsupportedEncodingException uue) {
-                    return new String(outBuff, 0, e);
-                }   // end catch
-
+                return new String(outBuff, 0, e, UTF8);
             }   // end else: don't compress
 
         }   // end encodeBytes
@@ -776,13 +767,7 @@ public class CryptoEngine {
          * @since 1.4
          */
         public static byte[] decode(String s, int options) {
-            byte[] bytes;
-            try {
-                bytes = s.getBytes(PREFERRED_ENCODING);
-            }   // end try
-            catch (java.io.UnsupportedEncodingException uee) {
-                bytes = s.getBytes();
-            }   // end catch
+            byte[] bytes = s.getBytes(UTF8);
             //</change>
 
             // Decode
@@ -965,6 +950,7 @@ public class CryptoEngine {
              * @param theByte the byte to write
              * @since 1.3
              */
+            @Override
             public void write(int theByte) throws java.io.IOException {
                 // Encoding suspended?
                 if (suspendEncoding) {
@@ -1016,6 +1002,7 @@ public class CryptoEngine {
              * @param len      max number of bytes to read into array
              * @since 1.3
              */
+            @Override
             public void write(byte[] theBytes, int off, int len) throws java.io.IOException {
                 // Encoding suspended?
                 if (suspendEncoding) {
@@ -1054,7 +1041,8 @@ public class CryptoEngine {
              *
              * @since 1.3
              */
-            public void close() throws java.io.IOException {
+             @Override
+             public void close() throws java.io.IOException {
                 // 1. Ensure that pending characters are written
                 flushBase64();
 

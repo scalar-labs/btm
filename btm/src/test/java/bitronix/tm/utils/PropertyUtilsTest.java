@@ -52,7 +52,7 @@ public class PropertyUtilsTest extends TestCase {
 
     public void testSetPropertiesObjectLongKey() throws Exception {
         PrivateDestination destination = new PrivateDestination();
-        
+
         PropertyUtils.setProperty(destination, "props.key", "value1");
         PropertyUtils.setProperty(destination, "props.a.dotted.key", "value2");
 
@@ -76,8 +76,8 @@ public class PropertyUtilsTest extends TestCase {
         assertEquals("one", map.get("props.number1"));
         assertEquals("two", map.get("props.number2"));
         assertEquals(new Integer(10), map.get("anInteger"));
-        assertEquals(new Boolean(true), map.get("aBoolean"));
-        assertEquals(new Boolean(false), map.get("anotherBoolean"));
+        assertEquals(Boolean.TRUE, map.get("aBoolean"));
+        assertEquals(Boolean.FALSE, map.get("anotherBoolean"));
         assertNull(map.get("subDestination"));
     }
 

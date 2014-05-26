@@ -38,6 +38,7 @@ public class BitronixMultiSystemException extends BitronixSystemException {
         this.resourceStates = resourceStates;
     }
 
+    @Override
     public String getMessage() {
         StringBuilder errorMessage = new StringBuilder();
         errorMessage.append("collected ");
@@ -45,9 +46,9 @@ public class BitronixMultiSystemException extends BitronixSystemException {
         errorMessage.append(" exception(s):");
         for (int i = 0; i < exceptions.size(); i++) {
             errorMessage.append(System.getProperty("line.separator"));
-            Throwable throwable = (Throwable) exceptions.get(i);
+            Throwable throwable = exceptions.get(i);
             String message = throwable.getMessage();
-            XAResourceHolderState holderState = (XAResourceHolderState) resourceStates.get(i);
+            XAResourceHolderState holderState = resourceStates.get(i);
 
             if (holderState != null) {
                 errorMessage.append(" [");
@@ -72,8 +73,7 @@ public class BitronixMultiSystemException extends BitronixSystemException {
     }
 
     public boolean isUnilateralRollback() {
-        for (int i = 0; i < exceptions.size(); i++) {
-            Throwable throwable = (Throwable) exceptions.get(i);
+        for (Throwable throwable : exceptions) {
             if (!(throwable instanceof BitronixRollbackSystemException))
                 return false;
         }

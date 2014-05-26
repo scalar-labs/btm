@@ -64,11 +64,11 @@ public class RecovererTest extends TestCase {
     private PoolingDataSource pds;
     private Journal journal;
 
-
+    @Override
     protected void setUp() throws Exception {
-        Iterator it = ResourceRegistrar.getResourcesUniqueNames().iterator();
+        Iterator<String> it = ResourceRegistrar.getResourcesUniqueNames().iterator();
         while (it.hasNext()) {
-            String name = (String) it.next();
+            String name = it.next();
             ResourceRegistrar.unregister(ResourceRegistrar.get(name));
         }
 
@@ -81,6 +81,7 @@ public class RecovererTest extends TestCase {
 
         new File(TransactionManagerServices.getConfiguration().getLogPart1Filename()).delete();
         new File(TransactionManagerServices.getConfiguration().getLogPart2Filename()).delete();
+        EventRecorder.clear();
 
         Connection connection1 = pds.getConnection();
         PooledConnectionProxy handle = (PooledConnectionProxy) connection1;
@@ -95,7 +96,7 @@ public class RecovererTest extends TestCase {
         journal.open();
     }
 
-
+    @Override
     protected void tearDown() throws Exception {
         if (TransactionManagerServices.isTransactionManagerRunning())
             TransactionManagerServices.getTransactionManager().shutdown();
@@ -156,7 +157,7 @@ public class RecovererTest extends TestCase {
         Xid xid2 = new MockXid(2, UidGenerator.generateUid().getArray(), BitronixXid.FORMAT_ID);
         xaResource.addInDoubtXid(xid2);
 
-        Set names = new HashSet();
+        Set<String> names = new HashSet<String>();
         names.add(pds.getUniqueName());
         journal.log(Status.STATUS_COMMITTING, new Uid(xid0.getGlobalTransactionId()), names);
         journal.log(Status.STATUS_COMMITTING, new Uid(xid1.getGlobalTransactionId()), names);
@@ -180,7 +181,7 @@ public class RecovererTest extends TestCase {
         Xid xid2 = new MockXid(2, UidGenerator.generateUid().getArray(), BitronixXid.FORMAT_ID);
         xaResource.addInDoubtXid(xid2);
 
-        Set names = new HashSet();
+        Set<String> names = new HashSet<String>();
         names.add(pds.getUniqueName());
         journal.log(Status.STATUS_COMMITTING, new Uid(xid0.getGlobalTransactionId()), names);
         journal.log(Status.STATUS_COMMITTING, new Uid(xid1.getGlobalTransactionId()), names);
@@ -228,7 +229,7 @@ public class RecovererTest extends TestCase {
         Uid uid0 = UidGenerator.generateUid();
         Xid xid0 = new MockXid(0, uid0.getArray(), BitronixXid.FORMAT_ID);
         xaResource.addInDoubtXid(xid0);
-        Set names = new HashSet();
+        Set<String> names = new HashSet<String>();
         names.add(pds.getUniqueName());
         journal.log(Status.STATUS_COMMITTING, new Uid(xid0.getGlobalTransactionId()), names);
 
@@ -239,7 +240,7 @@ public class RecovererTest extends TestCase {
         Xid xid1 = new MockXid(1, UidGenerator.generateUid().getArray(), BitronixXid.FORMAT_ID);
         xaResource.addInDoubtXid(xid1);
 
-        names = new HashSet();
+        names = new HashSet<String>();
         names.add(pds.getUniqueName());
         journal.log(Status.STATUS_COMMITTING, new Uid(xid1.getGlobalTransactionId()), names);
 
@@ -260,7 +261,7 @@ public class RecovererTest extends TestCase {
         final Xid xid0 = new MockXid(0, UidGenerator.generateUid().getArray(), BitronixXid.FORMAT_ID);
         xaResource.addInDoubtXid(xid0);
 
-        Set names = new HashSet();
+        Set<String> names = new HashSet<String>();
         names.add("no-such-registered-resource");
         journal.log(Status.STATUS_COMMITTING, new Uid(xid0.getGlobalTransactionId()), names);
         assertEquals(1, TransactionManagerServices.getJournal().collectDanglingRecords().size());
@@ -277,6 +278,7 @@ public class RecovererTest extends TestCase {
 
         // the TM is running, adding this resource will kick incremental recovery on it
         PoolingDataSource pds = new PoolingDataSource() {
+            @Override
             public XAStatefulHolder createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
                 JdbcPooledConnection pc = (JdbcPooledConnection) super.createPooledConnection(xaFactory, bean);
                 MockXAResource xaResource = (MockXAResource) pc.getXAResource();
@@ -308,6 +310,7 @@ public class RecovererTest extends TestCase {
         // change disk journal into mock journal
         Field field = TransactionManagerServices.class.getDeclaredField("journalRef");
         field.setAccessible(true);
+        @SuppressWarnings("unchecked")
         AtomicReference<Journal> journalRef = (AtomicReference<Journal>) field.get(TransactionManagerServices.class);
         journalRef.set(new MockJournal());
 
@@ -320,6 +323,7 @@ public class RecovererTest extends TestCase {
 
             BitronixTransaction tx = btm.getCurrentTransaction();
             tx.addTransactionStatusChangeListener(new TransactionStatusChangeListener() {
+                @Override
                 public void statusChanged(int oldStatus, int newStatus) {
                     if (newStatus != Status.STATUS_COMMITTING)
                         return;
@@ -335,7 +339,7 @@ public class RecovererTest extends TestCase {
             Connection c = pds.getConnection();
             c.createStatement();
             c.close();
-    
+
             xaResource.addInDoubtXid(new MockXid(new byte[] {0, 1, 2}, tx.getResourceManager().getGtrid().getArray(), BitronixXid.FORMAT_ID));
 
             btm.commit();
@@ -367,7 +371,7 @@ public class RecovererTest extends TestCase {
         Recoverer recoverer = new Recoverer();
         xaResource.setRecoveryDelay(1000);
 
-        List threads = new ArrayList();
+        List<Thread> threads = new ArrayList<Thread>();
 
         //create
         for (int i=0; i< THREAD_COUNT;i++) {
@@ -377,17 +381,17 @@ public class RecovererTest extends TestCase {
 
         //start
         for (int i=0; i< THREAD_COUNT;i++) {
-            Thread t = (Thread) threads.get(i);
+            Thread t = threads.get(i);
             t.start();
         }
 
         //join
         for (int i=0; i< THREAD_COUNT;i++) {
-            Thread t = (Thread) threads.get(i);
+            Thread t = threads.get(i);
             t.join();
         }
 
         assertEquals(1, recoverer.getExecutionsCount());
     }
-    
+
 }

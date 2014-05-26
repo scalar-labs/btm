@@ -223,10 +223,12 @@ public class XAResourceHolderState {
         if (log.isDebugEnabled()) { log.debug("started " + this + " with " + Decoder.decodeXAResourceFlag(flags)); }
     }
 
+    @Override
     public int hashCode() {
         return hashCode;
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof XAResourceHolderState) || this.hashCode != obj.hashCode())
             return false;
@@ -244,6 +246,7 @@ public class XAResourceHolderState {
         return obj1.equals(obj2);
     }
 
+    @Override
     public String toString() {
         return "an XAResourceHolderState with uniqueName=" + bean.getUniqueName() +
                 " XAResource=" + getXAResource() +

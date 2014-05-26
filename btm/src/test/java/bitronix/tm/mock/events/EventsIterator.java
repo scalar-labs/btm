@@ -22,21 +22,21 @@ import java.util.Map;
  *
  * @author Ludovic Orban
  */
-public class EventsIterator implements Iterator {
+public class EventsIterator implements Iterator<Event> {
 
-    private Iterator[] eventRecorderIterators;
-    private Event[] nextEvents;
+    private final Iterator[] eventRecorderIterators;
+    private final Event[] nextEvents;
 
-    public EventsIterator(Map eventRecorders) {
+    public EventsIterator(Map<Object, EventRecorder> eventRecorders) {
         int size = eventRecorders.size();
         eventRecorderIterators = new Iterator[size];
         nextEvents = new Event[size];
 
         int i = 0;
-        Iterator it = eventRecorders.entrySet().iterator();
+        Iterator<Map.Entry<Object, EventRecorder>> it = eventRecorders.entrySet().iterator();
         while (it.hasNext()) {
-            Map.Entry entry = (Map.Entry) it.next();
-            EventRecorder er = (EventRecorder) entry.getValue();
+            Map.Entry<Object, EventRecorder> entry = it.next();
+            EventRecorder er = entry.getValue();
             eventRecorderIterators[i] = er.getEvents().iterator();
             if (eventRecorderIterators[i].hasNext())
                 nextEvents[i] = (Event) eventRecorderIterators[i].next();
@@ -44,9 +44,11 @@ public class EventsIterator implements Iterator {
         }
     }
 
+    @Override
     public void remove() {
     }
 
+    @Override
     public boolean hasNext() {
         for (int i = 0; i < nextEvents.length; i++) {
             Event nextEvent = nextEvents[i];
@@ -56,14 +58,15 @@ public class EventsIterator implements Iterator {
         return false;
     }
 
-    public Object next() {
+    @Override
+    public Event next() {
         Event current = null;
         int index = -1;
         for (int i = 0; i < nextEvents.length; i++) {
             Event nextEvent = nextEvents[i];
             if (nextEvent == null)
                 continue;
-            
+
             if (current == null) {
                 current = nextEvent;
                 index = i;

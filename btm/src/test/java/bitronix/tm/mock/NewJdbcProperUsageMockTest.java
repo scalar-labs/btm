@@ -1016,16 +1016,16 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
 
     public void testPoolBoundsWithLooseEnlistment() throws Exception {
         Thread.currentThread().setName("testPoolBoundsWithLooseEnlistment");
-        ArrayList list = new ArrayList();
+        ArrayList<LooseTransactionThread> list = new ArrayList<LooseTransactionThread>();
 
         for (int i=0; i<LOOPS ;i++) {
-            Thread t = new LooseTransactionThread(i, poolingDataSource1);
+            LooseTransactionThread t = new LooseTransactionThread(i, poolingDataSource1);
             list.add(t);
             t.start();
         }
 
         for (int i = 0; i < list.size(); i++) {
-            LooseTransactionThread thread = (LooseTransactionThread) list.get(i);
+            LooseTransactionThread thread = list.get(i);
             thread.join(5000);
             if (!thread.isSuccesful())
                 log.info("thread " + thread.getNumber() + " failed");
@@ -1107,7 +1107,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
 
         tm.begin();
-        
+
         Connection c = poolingDataSource1.getConnection();
         assertTrue(c.getAutoCommit());
         c.close();

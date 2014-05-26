@@ -42,6 +42,7 @@ public abstract class JavaProxyBase<T> implements InvocationHandler {
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     	if (Proxy.isProxyClass(proxy.getClass())) {
     		this.proxy = (T) proxy;
@@ -52,7 +53,7 @@ public abstract class JavaProxyBase<T> implements InvocationHandler {
             if (ourMethod != null) {
                 return ourMethod.invoke(this, args);
             }
-    
+
             return method.invoke(delegate, args);
         }
         catch (InvocationTargetException ite) {

@@ -71,6 +71,7 @@ public class BitronixXid implements Xid {
      * Get Bitronix XID format ID. Defined by {@link BitronixXid#FORMAT_ID}.
      * @return the Bitronix XID format ID.
      */
+    @Override
     public int getFormatId() {
         return FORMAT_ID;
     }
@@ -79,6 +80,7 @@ public class BitronixXid implements Xid {
      * Get the BQUAL of the XID.
      * @return the XID branch qualifier.
      */
+    @Override
     public byte[] getBranchQualifier() {
         return branchQualifier.getArray();
     }
@@ -91,6 +93,7 @@ public class BitronixXid implements Xid {
      * Get the GTRID of the XID.
      * @return the XID global transaction ID.
      */
+    @Override
     public byte[] getGlobalTransactionId() {
         return globalTransactionId.getArray();
     }
@@ -103,6 +106,7 @@ public class BitronixXid implements Xid {
      * Get a human-readable string representation of the XID.
      * @return a human-readable string representation.
      */
+    @Override
     public String toString() {
         return toStringValue;
     }
@@ -122,6 +126,7 @@ public class BitronixXid implements Xid {
      * @param obj the XID to compare to.
      * @return true if both XIDs have the same format ID and contain exactly the same GTRID and BQUAL.
      */
+    @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof BitronixXid))
             return false;
@@ -136,6 +141,7 @@ public class BitronixXid implements Xid {
      * Get an integer hash for the XID.
      * @return a constant hash value.
      */
+    @Override
     public int hashCode() {
         return hashCodeValue;
     }

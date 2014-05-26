@@ -76,7 +76,7 @@ public class ClassLoaderUtils {
                 if (log.isDebugEnabled()) { log.debug("context classloader could not find class '" + className + "', trying Class.forName() instead"); }
             }
         }
-        
+
         return Class.forName(className);
     }
 
@@ -96,7 +96,7 @@ public class ClassLoaderUtils {
 
     private static class CascadingClassLoader extends ClassLoader {
 
-        private ClassLoader contextLoader;
+        private final ClassLoader contextLoader;
 
         CascadingClassLoader(ClassLoader contextLoader) {
             this.contextLoader = contextLoader;

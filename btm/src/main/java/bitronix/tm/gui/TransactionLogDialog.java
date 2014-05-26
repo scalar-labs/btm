@@ -31,25 +31,25 @@ import java.util.Set;
  */
 public class TransactionLogDialog extends JDialog {
 
-    private JPanel labelPanel = new JPanel();
-    private JLabel statusLabel = new JLabel("Status");
-    private JLabel recordLengthLabel = new JLabel("Record length");
-    private JLabel headerLengthLabel = new JLabel("Header length");
-    private JLabel timeLabel = new JLabel("Time");
-    private JLabel sequenceNumberLabel = new JLabel("Sequence number");
-    private JLabel crc32Label = new JLabel("CRC");
-    private JLabel gtridLabel = new JLabel("GTRID");
-    private JLabel uniqueNamesLabel = new JLabel("Resources");
+    private final JPanel labelPanel = new JPanel();
+    private final JLabel statusLabel = new JLabel("Status");
+    private final JLabel recordLengthLabel = new JLabel("Record length");
+    private final JLabel headerLengthLabel = new JLabel("Header length");
+    private final JLabel timeLabel = new JLabel("Time");
+    private final JLabel sequenceNumberLabel = new JLabel("Sequence number");
+    private final JLabel crc32Label = new JLabel("CRC");
+    private final JLabel gtridLabel = new JLabel("GTRID");
+    private final JLabel uniqueNamesLabel = new JLabel("Resources");
 
-    private JPanel fieldPanel = new JPanel();
-    private JTextField statusField = new JTextField();
-    private JTextField recordLengthField = new JTextField();
-    private JTextField headerLengthField = new JTextField();
-    private JTextField timeField = new JTextField();
-    private JTextField sequenceNumberField = new JTextField();
-    private JTextField crc32Field = new JTextField();
-    private JTextField gtridField = new JTextField();
-    private JTextField uniqueNamesField = new JTextField();
+    private final JPanel fieldPanel = new JPanel();
+    private final JTextField statusField = new JTextField();
+    private final JTextField recordLengthField = new JTextField();
+    private final JTextField headerLengthField = new JTextField();
+    private final JTextField timeField = new JTextField();
+    private final JTextField sequenceNumberField = new JTextField();
+    private final JTextField crc32Field = new JTextField();
+    private final JTextField gtridField = new JTextField();
+    private final JTextField uniqueNamesField = new JTextField();
 
 
     public TransactionLogDialog(JFrame frame, TransactionLogRecord tlog) {

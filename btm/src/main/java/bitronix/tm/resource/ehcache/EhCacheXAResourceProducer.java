@@ -131,6 +131,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
     /**
      * {@inheritDoc}
      */
+    @Override
     public XAResourceHolderState startRecovery() throws RecoveryException {
         if (recoveryXAResourceHolder != null) {
             throw new RecoveryException("recovery already in progress on " + this);
@@ -147,6 +148,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
     /**
      * {@inheritDoc}
      */
+    @Override
     public void endRecovery() throws RecoveryException {
         recoveryXAResourceHolder = null;
     }
@@ -154,6 +156,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
     /**
      * {@inheritDoc}
      */
+    @Override
     public void setFailed(boolean failed) {
         // cache cannot fail as it's not connection oriented
     }
@@ -161,6 +164,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
     /**
      * {@inheritDoc}
      */
+    @Override
     public XAResourceHolder findXAResourceHolder(XAResource xaResource) {
         for (EhCacheXAResourceHolder xaResourceHolder : xaResourceHolders.values()) {
             if (xaResource == xaResourceHolder.getXAResource()) {
@@ -174,6 +178,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
     /**
      * {@inheritDoc}
      */
+    @Override
     public void init() {
         try {
             ResourceRegistrar.register(this);
@@ -185,6 +190,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
     /**
      * {@inheritDoc}
      */
+    @Override
     public void close() {
         xaResourceHolders.clear();
         xaResourceHolderCounter.set(0);
@@ -194,6 +200,7 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
     /**
      * {@inheritDoc}
      */
+    @Override
     public XAStatefulHolder createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
         throw new UnsupportedOperationException("Ehcache is not connection-oriented");
     }
@@ -201,12 +208,14 @@ public final class EhCacheXAResourceProducer extends ResourceBean implements XAR
     /**
      * {@inheritDoc}
      */
+    @Override
     public Reference getReference() throws NamingException {
         return new Reference(EhCacheXAResourceProducer.class.getName(),
                 new StringRefAddr("uniqueName", getUniqueName()),
                 ResourceObjectFactory.class.getName(), null);
     }
 
+    @Override
     public String toString() {
         return "a EhCacheXAResourceProducer with uniqueName " + getUniqueName();
     }
