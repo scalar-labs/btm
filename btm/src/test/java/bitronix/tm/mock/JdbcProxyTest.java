@@ -64,7 +64,9 @@ public class JdbcProxyTest extends AbstractMockJdbcTest {
 
         for (int i = 0; i < 1000; i++) {
             PreparedStatement prepareStatement = connection.prepareStatement("SELECT 1 FROM nothing WHERE a=? AND b=? AND c=? AND d=?");
+            assertFalse(prepareStatement.isClosed());
             prepareStatement.close();
+            assertTrue(prepareStatement.isClosed());
         }
 
         connection.close();
@@ -84,18 +86,42 @@ public class JdbcProxyTest extends AbstractMockJdbcTest {
         PreparedStatement prepareStatement1 = connection.prepareStatement("SELECT 1 FROM nothing WHERE a=? AND b=? AND c=? AND d=?");
         PreparedStatement prepareStatement2 = connection.prepareStatement("SELECT 1 FROM nothing WHERE a=? AND b=? AND c=? AND d=?");
 
-        Assert.assertSame(prepareStatement1, prepareStatement2);
+        Assert.assertSame(prepareStatement1.unwrap(PreparedStatement.class), prepareStatement2.unwrap(PreparedStatement.class));
 
         prepareStatement2.close();
 
         prepareStatement2 = connection.prepareStatement("SELECT 1 FROM nothing WHERE a=? AND b=? AND c=? AND d=?");
-        Assert.assertSame(prepareStatement1, prepareStatement2);
+        Assert.assertSame(prepareStatement1.unwrap(PreparedStatement.class), prepareStatement2.unwrap(PreparedStatement.class));
 
         prepareStatement1.close();
         prepareStatement2.close();
 
         connection.close();
         tm.shutdown();
+    }
+
+    @Test
+    public void testCachedStatementsCanBeReused() throws Exception {
+        BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        tm.setTransactionTimeout(60);
+        tm.begin();
+        try {
+            Connection connection = poolingDataSource1.getConnection();
+            try {
+                PreparedStatement prepareStatement1 = connection.prepareStatement("SELECT 1 FROM nothing WHERE a=? AND b=? AND c=? AND d=?");
+                assertFalse(prepareStatement1.isClosed());
+
+                prepareStatement1.close();
+                assertTrue(prepareStatement1.isClosed());
+
+                PreparedStatement prepareStatement2 = connection.prepareStatement("SELECT 1 FROM nothing WHERE a=? AND b=? AND c=? AND d=?");
+                assertFalse(prepareStatement2.isClosed());
+            } finally {
+                connection.close();
+            }
+        } finally {
+            tm.shutdown();
+        }
     }
 
     @Test
@@ -109,12 +135,12 @@ public class JdbcProxyTest extends AbstractMockJdbcTest {
         PreparedStatement prepareStatement1 = connection.prepareStatement("SELECT 1 FROM nothing WHERE a=? AND b=? AND c=? AND d=?");
         PreparedStatement prepareStatement2 = connection.prepareStatement("SELECT 1 FROM nothing WHERE a=? AND b=? AND c=? AND d=?");
 
-        Assert.assertNotSame(prepareStatement1, prepareStatement2);
+        Assert.assertNotSame(prepareStatement1.unwrap(PreparedStatement.class), prepareStatement2.unwrap(PreparedStatement.class));
 
         prepareStatement2.close();
 
         prepareStatement2 = connection.prepareStatement("SELECT 1 FROM nothing WHERE a=? AND b=? AND c=? AND d=?");
-        Assert.assertNotSame(prepareStatement1, prepareStatement2);
+        Assert.assertNotSame(prepareStatement1.unwrap(PreparedStatement.class), prepareStatement2.unwrap(PreparedStatement.class));
 
         prepareStatement1.close();
         prepareStatement2.close();
