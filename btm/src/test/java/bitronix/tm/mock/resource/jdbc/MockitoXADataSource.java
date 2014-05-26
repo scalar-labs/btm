@@ -192,25 +192,22 @@ public class MockitoXADataSource implements XADataSource {
         when(mockConnection.getAutoCommit()).thenReturn(true);
 
         // Handle Connection.createStatement()
-        Statement statement = mock(Statement.class);
-        when(mockConnection.createStatement()).thenReturn(statement);
-        when(mockConnection.createStatement(anyInt(), anyInt())).thenReturn(statement);
-        when(mockConnection.createStatement(anyInt(), anyInt(), anyInt())).thenReturn(statement);
+        when(mockConnection.createStatement()).thenAnswer(mockStatement());
+        when(mockConnection.createStatement(anyInt(), anyInt())).thenAnswer(mockStatement());
+        when(mockConnection.createStatement(anyInt(), anyInt(), anyInt())).thenAnswer(mockStatement());
 
         // Handle Connection.prepareStatement()
-         PreparedStatement mockPreparedStatement = mock(PreparedStatement.class);
-        when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
-        when(mockConnection.prepareStatement(anyString(), anyInt())).thenReturn(mockPreparedStatement);
-        when(mockConnection.prepareStatement(anyString(), (int[]) anyObject())).thenReturn(mockPreparedStatement);
-        when(mockConnection.prepareStatement(anyString(), (String[]) anyObject())).thenReturn(mockPreparedStatement);
-        when(mockConnection.prepareStatement(anyString(), anyInt(), anyInt())).thenReturn(mockPreparedStatement);
-        when(mockConnection.prepareStatement(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(mockPreparedStatement);
+        when(mockConnection.prepareStatement(anyString())).thenAnswer(mockPreparedStatement());
+        when(mockConnection.prepareStatement(anyString(), anyInt())).thenAnswer(mockPreparedStatement());
+        when(mockConnection.prepareStatement(anyString(), (int[]) anyObject())).thenAnswer(mockPreparedStatement());
+        when(mockConnection.prepareStatement(anyString(), (String[]) anyObject())).thenAnswer(mockPreparedStatement());
+        when(mockConnection.prepareStatement(anyString(), anyInt(), anyInt())).thenAnswer(mockPreparedStatement());
+        when(mockConnection.prepareStatement(anyString(), anyInt(), anyInt(), anyInt())).thenAnswer(mockPreparedStatement());
 
         // Handle Connection.prepareCall()
-        CallableStatement mockCallableStatement = mock(CallableStatement.class);
-        when(mockConnection.prepareCall(anyString())).thenReturn(mockCallableStatement);
-        when(mockConnection.prepareCall(anyString(), anyInt(), anyInt())).thenReturn(mockCallableStatement);
-        when(mockConnection.prepareCall(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(mockCallableStatement);
+        when(mockConnection.prepareCall(anyString())).thenAnswer(mockCallableStatement());
+        when(mockConnection.prepareCall(anyString(), anyInt(), anyInt())).thenAnswer(mockCallableStatement());
+        when(mockConnection.prepareCall(anyString(), anyInt(), anyInt(), anyInt())).thenAnswer(mockCallableStatement());
 
         // Handle Connection.close()
         doAnswer(new Answer() {
@@ -251,5 +248,32 @@ public class MockitoXADataSource implements XADataSource {
 
     public void setUselessThing(Object uselessThing) {
         this.uselessThing = uselessThing;
+    }
+
+    private static Answer<Statement> mockStatement() {
+        return new Answer<Statement>() {
+            @Override
+            public Statement answer(InvocationOnMock invocation) throws Throwable {
+                return mock(Statement.class);
+            }
+        };
+    }
+
+    private static Answer<PreparedStatement> mockPreparedStatement() {
+        return new Answer<PreparedStatement>() {
+            @Override
+            public PreparedStatement answer(InvocationOnMock invocation) throws Throwable {
+                return mock(PreparedStatement.class);
+            }
+        };
+    }
+
+    private static Answer<CallableStatement> mockCallableStatement() {
+        return new Answer<CallableStatement>() {
+            @Override
+            public CallableStatement answer(InvocationOnMock invocation) throws Throwable {
+                return mock(CallableStatement.class);
+            }
+        };
     }
 }
