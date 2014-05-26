@@ -280,35 +280,42 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder implements St
 
         // Increment the usage count
         usageCount++;
-
-        // Only transition to STATE_ACCESSIBLE on the first usage.  If we're not sharing
-        // connections (default behavior) usageCount is always 1 here, so this transition
-        // will always occur (current behavior unchanged).  If we _are_ sharing connections,
-        // and this is _not_ the first usage, it is valid for the state to already be
-        // STATE_ACCESSIBLE.  Calling setState() with STATE_ACCESSIBLE when the state is
-        // already STATE_ACCESSIBLE fails the sanity check in AbstractXAStatefulHolder.
-        // Even if the connection is shared (usageCount > 1), if the state was STATE_NOT_ACCESSIBLE
-        // we transition back to STATE_ACCESSIBLE.
-        if (usageCount == 1 || oldState == State.NOT_ACCESSIBLE) {
-            setState(State.ACCESSIBLE);
-        }
-
-        if (oldState == State.IN_POOL) {
-            if (log.isDebugEnabled()) { log.debug("connection " + xaConnection + " was in state IN_POOL, testing it"); }
-            testConnection(connection);
-            applyIsolationLevel();
-            applyCursorHoldabilty();
-            if (TransactionContextHelper.currentTransaction() == null) {
-                // it is safe to set the auto-commit flag outside of a global transaction
-                applyLocalAutoCommit();
+        try {
+            // Only transition to State.ACCESSIBLE on the first usage.  If we're not sharing
+            // connections (default behavior) usageCount is always 1 here, so this transition
+            // will always occur (current behavior unchanged).  If we _are_ sharing connections,
+            // and this is _not_ the first usage, it is valid for the state to already be
+            // State.ACCESSIBLE.  Calling setState() with State.ACCESSIBLE when the state is
+            // already State.ACCESSIBLE fails the sanity check in AbstractXAStatefulHolder.
+            // Even if the connection is shared (usageCount > 1), if the state was State.NOT_ACCESSIBLE
+            // we transition back to State.ACCESSIBLE.
+            if (usageCount == 1 || oldState == State.NOT_ACCESSIBLE) {
+                setState(State.ACCESSIBLE);
             }
-        }
-        else {
-            if (log.isDebugEnabled()) { log.debug("connection " + xaConnection + " was in state " + oldState + ", no need to test it"); }
-        }
 
-        if (log.isDebugEnabled()) { log.debug("got connection handle from " + this); }
-        return getConnectionHandle(connection);
+            if (oldState == State.IN_POOL) {
+                if (log.isDebugEnabled()) { log.debug("connection " + xaConnection + " was in state IN_POOL, testing it"); }
+                testConnection(connection);
+                applyIsolationLevel();
+                applyCursorHoldabilty();
+                if (TransactionContextHelper.currentTransaction() == null) {
+                    // it is safe to set the auto-commit flag outside of a global transaction
+                    applyLocalAutoCommit();
+                }
+            }
+            else {
+                if (log.isDebugEnabled()) { log.debug("connection " + xaConnection + " was in state " + oldState + ", no need to test it"); }
+            }
+
+            if (log.isDebugEnabled()) { log.debug("got connection handle from " + this); }
+            return getConnectionHandle(connection);
+        } catch (Exception e) {
+            // This connection must be invalid, so make it inaccessible and revert the usage counter.
+            // Note: Closing a handle with usageCount > 0 "should never happen".
+            setState(State.NOT_ACCESSIBLE);
+            --usageCount;
+            throw e;
+        }
     }
 
     @Override
