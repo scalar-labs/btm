@@ -51,6 +51,7 @@ public class PreparedStatementJavaProxy extends JavaProxyBase<PreparedStatement>
         this.pretendClosed = false;
     }
 
+    @Override
     public String toString() {
         return "a PreparedStatementJavaProxy wrapping [" + delegate + "]";
     }
