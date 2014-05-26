@@ -151,10 +151,15 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder<JdbcPooledCon
 
         poolingDataSource.unregister(this);
 
-        connection.close();
-        xaConnection.close();
-
-        poolingDataSource.fireOnDestroy(connection);
+        try {
+            connection.close();
+        } finally {
+            try {
+                xaConnection.close();
+            } finally {
+                poolingDataSource.fireOnDestroy(connection);
+            }
+        }
     }
 
     public RecoveryXAResourceHolder createRecoveryXAResourceHolder() {
