@@ -64,16 +64,18 @@ public class ConnectionJavaProxy extends JavaProxyBase<Connection> implements Po
     }
 
     @Override
-	public String toString() {
+    public String toString() {
         return "a ConnectionJavaProxy of " + jdbcPooledConnection + " on " + delegate;
     }
 
     /* PooledConnectionProxy interface methods */
 
+    @Override
     public JdbcPooledConnection getPooledConnection() {
         return jdbcPooledConnection;
     }
 
+    @Override
     public Connection getProxiedDelegate() {
         return delegate;
     }
@@ -383,9 +385,9 @@ public class ConnectionJavaProxy extends JavaProxyBase<Connection> implements Po
             try {
                 TransactionContextHelper.enlistInCurrentTransaction(jdbcPooledConnection);
             } catch (SystemException ex) {
-                throw (SQLException) new SQLException("error enlisting " + this).initCause(ex);
+                throw new SQLException("error enlisting " + this, ex);
             } catch (RollbackException ex) {
-                throw (SQLException) new SQLException("error enlisting " + this).initCause(ex);
+                throw new SQLException("error enlisting " + this, ex);
             }
         } // if getAutomaticEnlistingEnabled
     }
