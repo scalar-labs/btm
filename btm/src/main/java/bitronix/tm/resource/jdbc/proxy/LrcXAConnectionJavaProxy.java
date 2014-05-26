@@ -75,8 +75,7 @@ public class LrcXAConnectionJavaProxy extends JavaProxyBase<Connection> {
 
     private void fireCloseEvent() {
         if (log.isDebugEnabled()) { log.debug("notifying " + connectionEventListeners.size() + " connectionEventListeners(s) about closing of " + this); }
-        for (int i = 0; i < connectionEventListeners.size(); i++) {
-            ConnectionEventListener connectionEventListener = connectionEventListeners.get(i);
+        for (ConnectionEventListener connectionEventListener : connectionEventListeners) {
             connectionEventListener.connectionClosed(new ConnectionEvent((PooledConnection) delegate));
         }
     }
