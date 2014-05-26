@@ -17,7 +17,6 @@ package bitronix.tm.utils;
 
 import bitronix.tm.internal.XAResourceHolderState;
 import bitronix.tm.journal.TransactionLogHeader;
-import bitronix.tm.resource.common.XAStatefulHolder;
 
 import javax.transaction.Status;
 import javax.transaction.xa.XAException;
@@ -107,16 +106,6 @@ public class Decoder {
         switch (state) {
             case TransactionLogHeader.CLEAN_LOG_STATE: return "CLEAN_LOG_STATE";
             case TransactionLogHeader.UNCLEAN_LOG_STATE: return "UNCLEAN_LOG_STATE";
-            default: return "!invalid state (" + state + ")!";
-        }
-    }
-
-    public static String decodeXAStatefulHolderState(int state) {
-        switch (state) {
-            case XAStatefulHolder.STATE_CLOSED: return "CLOSED";
-            case XAStatefulHolder.STATE_IN_POOL: return "IN_POOL";
-            case XAStatefulHolder.STATE_ACCESSIBLE: return "ACCESSIBLE";
-            case XAStatefulHolder.STATE_NOT_ACCESSIBLE: return "NOT_ACCESSIBLE";
             default: return "!invalid state (" + state + ")!";
         }
     }

@@ -24,6 +24,7 @@ import javax.transaction.xa.XAException;
  */
 public class DefaultExceptionAnalyzer implements ExceptionAnalyzer {
 
+    @Override
     public String extractExtraXAExceptionDetails(XAException ex) {
         if (ex.getClass().getName().equals("oracle.jdbc.xa.OracleXAException")) {
             try {
@@ -35,6 +36,7 @@ public class DefaultExceptionAnalyzer implements ExceptionAnalyzer {
         return null;
     }
 
+    @Override
     public void shutdown() {
     }
 

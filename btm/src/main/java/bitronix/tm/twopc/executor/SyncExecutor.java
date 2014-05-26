@@ -22,18 +22,22 @@ package bitronix.tm.twopc.executor;
  */
 public class SyncExecutor implements Executor {
 
+    @Override
     public Object submit(Job job) {
         job.run();
         return new Object();
     }
 
+    @Override
     public void waitFor(Object future, long timeout) {
     }
 
+    @Override
     public boolean isDone(Object future) {
         return true;
     }
 
+    @Override
     public void shutdown() {
     }
 }

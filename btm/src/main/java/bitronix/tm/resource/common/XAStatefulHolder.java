@@ -27,40 +27,41 @@ import java.util.List;
  */
 public interface XAStatefulHolder {
 
-    /**
-     * The state in which the resource is when it is closed and unusable.
-     */
-    public final static int STATE_CLOSED = 0;
+    enum State {
+        /**
+         * The state in which the resource is when it is closed and unusable.
+         */
+        CLOSED,
 
-    /**
-     * The state in which the resource is when it is available in the pool.
-     */
-    public final static int STATE_IN_POOL = 1;
+        /**
+         * The state in which the resource is when it is available in the pool.
+         */
+        IN_POOL,
 
-    /**
-     * The state in which the resource is when it out of the pool but accessible by the application.
-     */
-    public final static int STATE_ACCESSIBLE = 2;
+        /**
+         * The state in which the resource is when it out of the pool but accessible by the application.
+         */
+        ACCESSIBLE,
 
-    /**
-     * The state in which the resource is when it out of the pool but not accessible by the application.
-     */
-    public final static int STATE_NOT_ACCESSIBLE = 3;
-
+        /**
+         * The state in which the resource is when it out of the pool but not accessible by the application.
+         */
+        NOT_ACCESSIBLE
+    };
 
     /**
      * Get the current resource state.
      * <p>This method is thread-safe.</p>
      * @return the current resource state.
      */
-    public int getState();
+    public State getState();
 
     /**
      * Set the current resource state.
      * <p>This method is thread-safe.</p>
      * @param state the current resource state.
      */
-    public void setState(int state);
+    public void setState(State state);
 
     /**
      * Register an implementation of {@link StateChangeListener}.

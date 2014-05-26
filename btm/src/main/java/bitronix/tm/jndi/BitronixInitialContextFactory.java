@@ -36,7 +36,7 @@ import java.util.Hashtable;
  * </pre>
  * </p>
  * <p>The transaction manager can be looked up at the standard URL <code>java:comp/UserTransaction</code>
- * while resources can be looked up using their unique name as set in 
+ * while resources can be looked up using their unique name as set in
  * {@link bitronix.tm.resource.common.ResourceBean#getUniqueName()}.
  * </p>
  *
@@ -45,10 +45,12 @@ import java.util.Hashtable;
  */
 public class BitronixInitialContextFactory implements InitialContextFactory {
 
+    @Override
     public Context getInitialContext(Hashtable<?,?> hashtable) throws NamingException {
         return new BitronixContext();
     }
 
+    @Override
     public String toString() {
         return "a BitronixInitialContextFactory";
     }

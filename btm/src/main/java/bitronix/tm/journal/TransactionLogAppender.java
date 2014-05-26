@@ -88,7 +88,7 @@ public class TransactionLogAppender {
     /**
      * Get the current file position and advance the position by recordSize if
      * the maximum file length won't be exceeded.  Callers to this method are
-     * synchronized within the DiskJournal and it is guaranteed there will 
+     * synchronized within the DiskJournal and it is guaranteed there will
      * never be two callers to this method.  This creates a Java memory barrier
      * that guarantees that 'position' will never be viewed inconsistently
      * between threads.
@@ -141,7 +141,7 @@ public class TransactionLogAppender {
             buf.flip();
 
             if (log.isDebugEnabled()) { log.debug("between " + tlog.getWritePosition() + " and " + tlog.getWritePosition() + tlog.calculateTotalRecordSize() + ", writing " + tlog); }
-    
+
             final long writePosition = tlog.getWritePosition();
             while (buf.hasRemaining()) {
             	fc.write(buf, writePosition + buf.position());
@@ -160,17 +160,18 @@ public class TransactionLogAppender {
     	synchronized (danglingRecords) {
 	        List<Uid> sortedUids = new ArrayList<Uid>(danglingRecords.keySet());
 	        Collections.sort(sortedUids, new Comparator<Uid>() {
+                @Override
 	            public int compare(Uid uid1, Uid uid2) {
-	                return Integer.valueOf(uid1.extractSequence()).compareTo(uid2.extractSequence()); 
+	                return Integer.valueOf(uid1.extractSequence()).compareTo(uid2.extractSequence());
 	            }
 	        });
-	
+
 	        List<TransactionLogRecord> outstandingLogs = new ArrayList<TransactionLogRecord>(danglingRecords.size());
 	        for (Uid uid : sortedUids) {
 	            Set<String> uniqueNames = danglingRecords.get(uid);
 	            outstandingLogs.add(new TransactionLogRecord(Status.STATUS_COMMITTING, uid, uniqueNames));
 	        }
-	
+
 	        return outstandingLogs;
     	}
     }
@@ -307,6 +308,7 @@ public class TransactionLogAppender {
         if (log.isDebugEnabled()) { log.debug("done forcing log"); }
     }
 
+    @Override
     public String toString() {
         return "a TransactionLogAppender on " + file.getName();
     }

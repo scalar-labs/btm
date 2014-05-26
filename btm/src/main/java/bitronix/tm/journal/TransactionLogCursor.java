@@ -37,11 +37,11 @@ public class TransactionLogCursor {
     private final static Logger log = LoggerFactory.getLogger(TransactionLogCursor.class);
 
     // private final RandomAccessFile randomAccessFile;
-    private FileInputStream fis;
-    private FileChannel fileChannel;
+    private final FileInputStream fis;
+    private final FileChannel fileChannel;
     private long currentPosition;
-    private long endPosition;
-    private ByteBuffer page;
+    private final long endPosition;
+    private final ByteBuffer page;
 
     /**
      * Create a TransactionLogCursor that will read from the specified file.

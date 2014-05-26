@@ -132,10 +132,12 @@ public final class Preparer extends AbstractPhaseEngine {
                     " threw unexpected exception", phaseException);
     }
 
+    @Override
     protected Job createJob(XAResourceHolderState xaResourceHolderState) {
         return new PrepareJob(xaResourceHolderState);
     }
 
+    @Override
     protected boolean isParticipating(XAResourceHolderState xaResourceHolderState) {
         return true;
     }
@@ -146,6 +148,7 @@ public final class Preparer extends AbstractPhaseEngine {
             super(resourceHolder);
         }
 
+        @Override
         public void execute() {
             try {
                 XAResourceHolderState resourceHolder = getResource();
@@ -164,6 +167,7 @@ public final class Preparer extends AbstractPhaseEngine {
             }
         }
 
+        @Override
         public String toString() {
             return "a PrepareJob with " + getResource();
         }

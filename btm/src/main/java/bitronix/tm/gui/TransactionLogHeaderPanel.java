@@ -36,10 +36,10 @@ public class TransactionLogHeaderPanel extends JPanel {
 
     private final static Logger log = LoggerFactory.getLogger(TransactionLogHeaderPanel.class);
 
-    private JTextField logFileField = new JTextField();
-    private JTextField timestampField = new JTextField();
-    private JTextField stateField = new JTextField();
-    private JTextField positionField = new JTextField();
+    private final JTextField logFileField = new JTextField();
+    private final JTextField timestampField = new JTextField();
+    private final JTextField stateField = new JTextField();
+    private final JTextField positionField = new JTextField();
 
     public TransactionLogHeaderPanel() {
         logFileField.setEditable(false);
