@@ -47,14 +47,14 @@ import java.util.Set;
  */
 public class JdbcCglibProxyFactory implements JdbcProxyFactory {
 
-    private Class<Connection> proxyConnectionClass;
-    private Class<Statement> proxyStatementClass;
-    private Class<CallableStatement> proxyCallableStatementClass;
-    private Class<PreparedStatement> proxyPreparedStatementClass;
-    private Class<ResultSet> proxyResultSetClass;
+    private final Class<Connection> proxyConnectionClass;
+    private final Class<Statement> proxyStatementClass;
+    private final Class<CallableStatement> proxyCallableStatementClass;
+    private final Class<PreparedStatement> proxyPreparedStatementClass;
+    private final Class<ResultSet> proxyResultSetClass;
 
     // For LRC we just use the standard Java Proxies
-    private JdbcJavaProxyFactory lrcProxyFactory;
+    private final JdbcJavaProxyFactory lrcProxyFactory;
 
     JdbcCglibProxyFactory() {
         proxyConnectionClass = createProxyConnectionClass();
@@ -66,6 +66,7 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     }
 
 	/** {@inheritDoc} */
+    @Override
     public Connection getProxyConnection(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
         ConnectionJavaProxy methodInterceptor = new ConnectionJavaProxy(jdbcPooledConnection, connection);
         Interceptor interceptor = new Interceptor(methodInterceptor);
@@ -81,6 +82,7 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     }
 
     /** {@inheritDoc} */
+    @Override
     public Statement getProxyStatement(JdbcPooledConnection jdbcPooledConnection, Statement statement) {
         StatementJavaProxy methodInterceptor = new StatementJavaProxy(jdbcPooledConnection, statement);
         Interceptor interceptor = new Interceptor(methodInterceptor);
@@ -96,6 +98,7 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     }
 
     /** {@inheritDoc} */
+    @Override
     public CallableStatement getProxyCallableStatement(JdbcPooledConnection jdbcPooledConnection, CallableStatement statement) {
         CallableStatementJavaProxy methodInterceptor = new CallableStatementJavaProxy(jdbcPooledConnection, statement);
         Interceptor interceptor = new Interceptor(methodInterceptor);
@@ -111,6 +114,7 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     }
 
     /** {@inheritDoc} */
+    @Override
     public PreparedStatement getProxyPreparedStatement(JdbcPooledConnection jdbcPooledConnection, PreparedStatement statement, CacheKey cacheKey) {
         PreparedStatementJavaProxy methodInterceptor = new PreparedStatementJavaProxy(jdbcPooledConnection, statement, cacheKey);
         Interceptor interceptor = new Interceptor(methodInterceptor);
@@ -126,6 +130,7 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     }
 
     /** {@inheritDoc} */
+    @Override
 	public ResultSet getProxyResultSet(Statement statement, ResultSet resultSet) {
         ResultSetJavaProxy methodInterceptor = new ResultSetJavaProxy(statement, resultSet);
         Interceptor interceptor = new Interceptor(methodInterceptor);
@@ -141,11 +146,13 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
 	}
 
     /** {@inheritDoc} */
+    @Override
     public XAConnection getProxyXaConnection(Connection connection) {
         return lrcProxyFactory.getProxyXaConnection(connection);
     }
 
     /** {@inheritDoc} */
+    @Override
     public Connection getProxyConnection(LrcXAResource xaResource, Connection connection) {
         return lrcProxyFactory.getProxyConnection(xaResource, connection);
     }
@@ -213,26 +220,28 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     // ---------------------------------------------------------------
     //  CGLIB Classes
     // ---------------------------------------------------------------
-    
+
     static class FastDispatcher implements LazyLoader {
-        private Object delegate;
+        private final Object delegate;
 
         public FastDispatcher(Object delegate) {
             this.delegate = delegate;
         }
 
+        @Override
         public Object loadObject() throws Exception {
             return delegate;
         }
     }
 
     static class Interceptor implements MethodInterceptor {
-        private JavaProxyBase<?> interceptor;
+        private final JavaProxyBase<?> interceptor;
 
         public Interceptor(JavaProxyBase<?> interceptor) {
             this.interceptor = interceptor;
         }
-        
+
+        @Override
         public Object intercept(Object enhanced, Method method, Object[] args, MethodProxy fastProxy) throws Throwable {
         	interceptor.proxy = enhanced;
             return interceptor.invoke(interceptor, method, args);
@@ -240,12 +249,13 @@ public class JdbcCglibProxyFactory implements JdbcProxyFactory {
     }
 
     static class InterceptorFilter implements CallbackFilter {
-        private Map<String, Method> methodMap;
+        private final Map<String, Method> methodMap;
 
         public InterceptorFilter(JavaProxyBase<?> proxyClass) {
             methodMap = proxyClass.getMethodMap();
         }
 
+        @Override
         public int accept(Method method) {
             if (methodMap.containsKey(JavaProxyBase.getMethodKey(method))) {
                 // Use the Interceptor

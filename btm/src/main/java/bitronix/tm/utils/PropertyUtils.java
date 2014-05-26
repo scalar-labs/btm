@@ -196,7 +196,7 @@ public final class PropertyUtils {
         Map<String, Object> properties = new TreeMap<String, Object>(getProperties(obj));
         Iterator<String> it = properties.keySet().iterator();
         while (it.hasNext()) {
-            String property = (String) it.next();
+            String property = it.next();
             Object val = getProperty(obj, property);
             sb.append(property);
             sb.append("=");

@@ -29,8 +29,8 @@ public class JdbcClassHelper {
 
     private final static int DETECTION_TIMEOUT = 5; // seconds
 
-	private static Map<Class<Connection>, Integer> connectionClassVersions = new ConcurrentHashMap<Class<Connection>, Integer>();
-	private static Map<Class<Connection>, Method> isValidMethods = new ConcurrentHashMap<Class<Connection>, Method>();
+	private static final Map<Class<Connection>, Integer> connectionClassVersions = new ConcurrentHashMap<Class<Connection>, Integer>();
+	private static final Map<Class<? extends Connection>, Method> isValidMethods = new ConcurrentHashMap<Class<? extends Connection>, Method>();
 
 	public static int detectJdbcVersion(Connection connection) {
 		@SuppressWarnings("unchecked")
@@ -63,5 +63,5 @@ public class JdbcClassHelper {
 		return isValidMethods.get(connection.getClass());
 	}
 
-	
+
 }

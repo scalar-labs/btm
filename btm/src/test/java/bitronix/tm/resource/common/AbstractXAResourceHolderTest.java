@@ -37,25 +37,31 @@ public class AbstractXAResourceHolderTest extends TestCase {
         };
 
         AbstractXAResourceHolder xaResourceHolder = new AbstractXAResourceHolder() {
+            @Override
             public XAResource getXAResource() {
                 return null;
             }
 
+            @Override
             public ResourceBean getResourceBean() {
                 return resourceBean;
             }
 
-            public List getXAResourceHolders() {
+            @Override
+            public List<XAResourceHolder> getXAResourceHolders() {
                 return null;
             }
 
+            @Override
             public Object getConnectionHandle() throws Exception {
                 return null;
             }
 
+            @Override
             public void close() throws Exception {
             }
 
+            @Override
             public Date getLastReleaseDate() {
                 return null;
             }

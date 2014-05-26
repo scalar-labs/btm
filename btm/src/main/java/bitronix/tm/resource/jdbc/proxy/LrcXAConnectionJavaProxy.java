@@ -39,7 +39,7 @@ public class LrcXAConnectionJavaProxy extends JavaProxyBase<Connection> {
 
     private final static Map<String, Method> selfMethodMap = createMethodMap(LrcXAConnectionJavaProxy.class);
 
-    private LrcXAResource xaResource;
+    private final LrcXAResource xaResource;
     private final List<ConnectionEventListener> connectionEventListeners = new CopyOnWriteArrayList<ConnectionEventListener>();
 
     public LrcXAConnectionJavaProxy(Connection connection) {
@@ -47,6 +47,7 @@ public class LrcXAConnectionJavaProxy extends JavaProxyBase<Connection> {
         this.delegate = new JdbcJavaProxyFactory().getProxyConnection(xaResource, connection);
     }
 
+    @Override
     public String toString() {
         return "a JDBC LrcXAConnection on " + delegate;
     }
@@ -80,6 +81,7 @@ public class LrcXAConnectionJavaProxy extends JavaProxyBase<Connection> {
         }
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof LrcXAConnectionJavaProxy))
             return false;
@@ -88,6 +90,7 @@ public class LrcXAConnectionJavaProxy extends JavaProxyBase<Connection> {
         return this.delegate.equals(other.delegate);
     }
 
+    @Override
     public int hashCode() {
         return this.delegate.hashCode();
     }

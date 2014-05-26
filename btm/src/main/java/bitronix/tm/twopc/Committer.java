@@ -160,10 +160,12 @@ public final class Committer extends AbstractPhaseEngine {
                     (heuristicResources.size() > 0 ? " resource(s) " + Decoder.collectResourcesNames(heuristicResources) + " improperly unilaterally rolled back" + (hazard ? " (or hazard happened)" : "") : ""), phaseException);
     }
 
+    @Override
     protected Job createJob(XAResourceHolderState resourceHolder) {
         return new CommitJob(resourceHolder);
     }
 
+    @Override
     protected boolean isParticipating(XAResourceHolderState xaResourceHolderState) {
         for (XAResourceHolderState resourceHolderState : interestedResources) {
             if (xaResourceHolderState == resourceHolderState)
@@ -179,14 +181,17 @@ public final class Committer extends AbstractPhaseEngine {
             super(resourceHolder);
         }
 
+        @Override
         public XAException getXAException() {
             return xaException;
         }
 
+        @Override
         public RuntimeException getRuntimeException() {
             return runtimeException;
         }
 
+        @Override
         public void execute() {
             try {
                 commitResource(getResource(), onePhase);
@@ -255,6 +260,7 @@ public final class Committer extends AbstractPhaseEngine {
             }
         }
 
+        @Override
         public String toString() {
             return "a CommitJob " + (onePhase ? "(one phase) " : "") + "with " + getResource();
         }

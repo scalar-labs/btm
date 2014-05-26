@@ -38,10 +38,12 @@ public class RecoveryTask extends Task {
         this.recoverer = recoverer;
     }
 
+    @Override
     public Object getObject() {
         return recoverer;
     }
 
+    @Override
     public void execute() throws TaskException {
         if (log.isDebugEnabled()) { log.debug("running recovery"); }
         Thread recovery = new Thread(recoverer);
@@ -55,8 +57,9 @@ public class RecoveryTask extends Task {
         getTaskScheduler().scheduleRecovery(recoverer, nextExecutionDate);
     }
 
+    @Override
     public String toString() {
         return "a RecoveryTask scheduled for " + getExecutionTime();
     }
-    
+
 }

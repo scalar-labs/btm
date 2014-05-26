@@ -54,6 +54,7 @@ public class LrcXAConnectionFactory implements XAConnectionFactory {
         this.properties = properties;
     }
 
+    @Override
     public XAConnection createXAConnection() throws JMSException {
         try {
             Class<?> clazz = ClassLoaderUtils.loadClass(connectionFactoryClassName);
@@ -66,6 +67,7 @@ public class LrcXAConnectionFactory implements XAConnectionFactory {
         }
     }
 
+    @Override
     public XAConnection createXAConnection(String user, String password) throws JMSException {
         try {
             Class<?> clazz = ClassLoaderUtils.loadClass(connectionFactoryClassName);
@@ -78,6 +80,7 @@ public class LrcXAConnectionFactory implements XAConnectionFactory {
         }
     }
 
+    @Override
     public String toString() {
         return "a JMS LrcXAConnectionFactory on " + connectionFactoryClassName + " with properties " + properties;
     }

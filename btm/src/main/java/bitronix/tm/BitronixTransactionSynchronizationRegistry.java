@@ -41,8 +41,9 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
     private final static Logger log = LoggerFactory.getLogger(BitronixTransactionSynchronizationRegistry.class);
 
     private final BitronixTransactionManager transactionManager;
-    
+
     private final static ThreadLocal<Map<Object, Object>> resourcesTl = new ThreadLocal<Map<Object, Object>>() {
+        @Override
         protected Map<Object, Object> initialValue() {
             return new HashMap<Object, Object>();
         }
@@ -53,6 +54,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
         transactionManager = TransactionManagerServices.getTransactionManager();
     }
 
+    @Override
     public Object getResource(Object key) {
         try {
             if (key == null)
@@ -66,6 +68,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
         }
     }
 
+    @Override
     public boolean getRollbackOnly() {
         try {
             if (currentTransaction() == null || currentTransaction().getStatus() == Status.STATUS_NO_TRANSACTION)
@@ -77,6 +80,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
         }
     }
 
+    @Override
     public Object getTransactionKey() {
         try {
             if (currentTransaction() == null || currentTransaction().getStatus() == Status.STATUS_NO_TRANSACTION)
@@ -88,6 +92,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
         }
     }
 
+    @Override
     public int getTransactionStatus() {
         try {
             if (currentTransaction() == null)
@@ -99,6 +104,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
         }
     }
 
+    @Override
     public void putResource(Object key, Object value) {
         try {
             if (key == null)
@@ -118,6 +124,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
         }
     }
 
+    @Override
     public void registerInterposedSynchronization(Synchronization synchronization) {
         try {
             if (currentTransaction() == null || currentTransaction().getStatus() == Status.STATUS_NO_TRANSACTION)
@@ -137,6 +144,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
         }
     }
 
+    @Override
     public void setRollbackOnly() {
         try {
             if (currentTransaction() == null || currentTransaction().getStatus() == Status.STATUS_NO_TRANSACTION)
@@ -156,6 +164,7 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
         return transactionManager.getCurrentTransaction();
     }
 
+    @Override
     public Reference getReference() throws NamingException {
         return new Reference(
                 BitronixTransactionManager.class.getName(),
@@ -166,9 +175,11 @@ public class BitronixTransactionSynchronizationRegistry implements TransactionSy
     }
 
     private final class ClearRegistryResourcesSynchronization implements Synchronization {
+        @Override
         public void beforeCompletion() {
         }
 
+        @Override
         public void afterCompletion(int status) {
             if (log.isDebugEnabled()) { log.debug("clearing resources"); }
             getResources().clear();
