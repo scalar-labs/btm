@@ -43,8 +43,9 @@ public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
 
         final Transaction suspended = tm.suspend();
 
-        final ArrayList twoConnections = new ArrayList();
+        final ArrayList<Connection> twoConnections = new ArrayList<Connection>();
         Thread thread1 = new Thread() {
+            @Override
         	public void run() {
         		try {
 					tm.resume(suspended);
@@ -62,6 +63,7 @@ public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
         thread1.join();
 
         Thread thread2 = new Thread() {
+            @Override
         	public void run() {
         		try {
 					tm.resume(suspended);

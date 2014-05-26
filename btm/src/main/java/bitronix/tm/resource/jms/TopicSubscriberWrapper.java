@@ -30,14 +30,17 @@ public class TopicSubscriberWrapper extends MessageConsumerWrapper implements To
         super(topicSubscriber, session, poolingConnectionFactory);
     }
 
+    @Override
     public Topic getTopic() throws JMSException {
         return ((TopicSubscriber) getMessageConsumer()).getTopic();
     }
 
+    @Override
     public boolean getNoLocal() throws JMSException {
         return ((TopicSubscriber) getMessageConsumer()).getNoLocal();
     }
 
+    @Override
     public String toString() {
         return "a TopicSubscriberWrapper of " + session;
     }

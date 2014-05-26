@@ -33,26 +33,32 @@ public class RecoveryXAResourceHolder extends AbstractXAResourceHolder {
         this.xaResourceHolder = xaResourceHolder;
     }
 
+    @Override
     public void close() throws Exception {
-        xaResourceHolder.setState(STATE_IN_POOL);
+        xaResourceHolder.setState(State.IN_POOL);
     }
 
+    @Override
     public Date getLastReleaseDate() {
         return null;
     }
 
+    @Override
     public XAResource getXAResource() {
         return xaResourceHolder.getXAResource();
     }
 
+    @Override
     public ResourceBean getResourceBean() {
         return null;
     }
 
+    @Override
     public List<XAResourceHolder> getXAResourceHolders() {
         return null;
     }
 
+    @Override
     public Object getConnectionHandle() throws Exception {
         throw new UnsupportedOperationException("illegal connection creation attempt out of " + this);
     }

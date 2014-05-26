@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Thrown when a phase exection has thrown one or more exception(s).  
+ * Thrown when a phase exection has thrown one or more exception(s).
  *
  * @author Ludovic Orban
  */
@@ -38,6 +38,7 @@ public class PhaseException extends Exception {
         this.resourceStates = Collections.unmodifiableList(resourceStates);
     }
 
+    @Override
     public String getMessage() {
         StringBuilder errorMessage = new StringBuilder();
         errorMessage.append("collected ");

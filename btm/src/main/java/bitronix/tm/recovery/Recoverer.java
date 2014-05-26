@@ -106,6 +106,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         ManagementRegistrar.register(jmxName, this);
     }
 
+    @Override
     public void shutdown() {
         ManagementRegistrar.unregister(jmxName);
     }
@@ -114,6 +115,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * Run the recovery process. This method is automatically called by the transaction manager, you should never
      * call it manually.
      */
+    @Override
     public void run() {
         if (!isRunning.compareAndSet(false, true)) {
             log.info("recoverer is already running, abandoning this recovery request");
@@ -157,7 +159,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             else if (log.isDebugEnabled()) {
                 log.debug("recovery committed " + committedCount + " dangling transaction(s) and rolled back " + rolledbackCount +
                         " aborted transaction(s) on " + registeredResources.size() + " resource(s) [" + getRegisteredResourcesUniqueNames() + "]" +
-                        ((TransactionManagerServices.getConfiguration().isCurrentNodeOnlyRecovery()) ? " (restricted to serverId '" + TransactionManagerServices.getConfiguration().getServerId() + "')" : ""));                
+                        ((TransactionManagerServices.getConfiguration().isCurrentNodeOnlyRecovery()) ? " (restricted to serverId '" + TransactionManagerServices.getConfiguration().getServerId() + "')" : ""));
             }
             this.completionException = null;
         } catch (Exception ex) {
@@ -176,6 +178,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * Get the exception reported when recovery failed.
      * @return the exception that made recovery fail or null if last recovery execution was successful.
      */
+    @Override
     public Exception getCompletionException() {
         return completionException;
     }
@@ -184,6 +187,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * Get the amount of transactions committed during the last recovery run.
      * @return the amount of committed transactions.
      */
+    @Override
     public int getCommittedCount() {
         return committedCount;
     }
@@ -192,6 +196,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * Get the amount of transactions rolled back during the last recovery run.
      * @return the amount of rolled back transactions.
      */
+    @Override
     public int getRolledbackCount() {
         return rolledbackCount;
     }
@@ -200,6 +205,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * Get how many times the recoverer has run since the transaction manager started.
      * @return how many times the recoverer has run since the transaction manager started.
      */
+    @Override
     public int getExecutionsCount() {
         return executionsCount;
     }
@@ -208,6 +214,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
      * Check if the recoverer currently is running.
      * @return true if the recoverer currently is running, false otherwise.
      */
+    @Override
     public boolean isRunning() {
         return isRunning.get();
     }
@@ -280,8 +287,8 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
         Iterator<Map.Entry<Uid, JournalRecord>> it = danglingRecords.entrySet().iterator();
         while (it.hasNext()) {
             Entry<Uid, JournalRecord> entry = it.next();
-            Uid gtrid = (Uid) entry.getKey();
-            JournalRecord tlog = (JournalRecord) entry.getValue();
+            Uid gtrid = entry.getKey();
+            JournalRecord tlog = entry.getValue();
 
             Set<String> uniqueNames = tlog.getUniqueNames();
             Set<DanglingTransaction> danglingTransactions = getDanglingTransactionsInRecoveredXids(uniqueNames, tlog.getGtrid());

@@ -23,10 +23,10 @@ import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.resource.MockJournal;
 import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.resource.ResourceRegistrar;
-import bitronix.tm.resource.common.AbstractXAResourceHolder;
 import bitronix.tm.resource.common.StateChangeListener;
 import bitronix.tm.resource.common.XAPool;
 import bitronix.tm.resource.common.XAStatefulHolder;
+import bitronix.tm.resource.common.XAStatefulHolder.State;
 import bitronix.tm.resource.jdbc.JdbcPooledConnection;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import junit.framework.TestCase;
@@ -51,6 +51,7 @@ public abstract class AbstractMockJdbcTest extends TestCase {
     protected static final String DATASOURCE1_NAME = "pds1";
     protected static final String DATASOURCE2_NAME = "pds2";
 
+    @Override
     protected void setUp() throws Exception {
         Iterator<?> it = ResourceRegistrar.getResourcesUniqueNames().iterator();
         while (it.hasNext()) {
@@ -111,19 +112,22 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         while (iterator.hasNext()) {
         	JdbcPooledConnection jdbcPooledConnection = (JdbcPooledConnection) iterator.next();
             jdbcPooledConnection.addStateChangeEventListener(new StateChangeListener() {
-                public void stateChanged(XAStatefulHolder source, int oldState, int newState) {
-                    if (newState == AbstractXAResourceHolder.STATE_IN_POOL)
+                @Override
+                public void stateChanged(XAStatefulHolder source, State oldState, State newState) {
+                    if (newState == State.IN_POOL)
                         EventRecorder.getEventRecorder(this).addEvent(new ConnectionQueuedEvent(this, (JdbcPooledConnection) source));
-                    if (newState == AbstractXAResourceHolder.STATE_ACCESSIBLE)
+                    if (newState == State.ACCESSIBLE)
                         EventRecorder.getEventRecorder(this).addEvent(new ConnectionDequeuedEvent(this, (JdbcPooledConnection) source));
                 }
 
-                public void stateChanging(XAStatefulHolder source, int currentState, int futureState) {
+                @Override
+                public void stateChanging(XAStatefulHolder source, State currentState, State futureState) {
                 }
             });
         }
     }
 
+    @Override
     protected void tearDown() throws Exception {
         try {
             if (log.isDebugEnabled()) { log.debug("*** tearDown rollback"); }

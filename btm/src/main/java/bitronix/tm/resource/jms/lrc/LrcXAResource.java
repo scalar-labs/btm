@@ -87,25 +87,31 @@ public class LrcXAResource implements XAResource {
         }
     }
 
+    @Override
     public int getTransactionTimeout() throws XAException {
         return 0;
     }
 
+    @Override
     public boolean setTransactionTimeout(int seconds) throws XAException {
         return false;
     }
 
+    @Override
     public void forget(Xid xid) throws XAException {
     }
 
+    @Override
     public Xid[] recover(int flags) throws XAException {
         return new Xid[0];
     }
 
+    @Override
     public boolean isSameRM(XAResource xaResource) throws XAException {
         return xaResource == this;
     }
 
+    @Override
     public void start(Xid xid, int flag) throws XAException {
         if (flag != XAResource.TMNOFLAGS  && flag != XAResource.TMJOIN)
             throw new BitronixXAException("unsupported start flag " + Decoder.decodeXAResourceFlag(flag), XAException.XAER_RMERR);
@@ -145,6 +151,7 @@ public class LrcXAResource implements XAResource {
         this.state = STARTED;
     }
 
+    @Override
     public void end(Xid xid, int flag) throws XAException {
         if (flag != XAResource.TMSUCCESS && flag != XAResource.TMFAIL)
             throw new BitronixXAException("unsupported end flag " + Decoder.decodeXAResourceFlag(flag), XAException.XAER_RMERR);
@@ -182,6 +189,7 @@ public class LrcXAResource implements XAResource {
         this.state = ENDED;
     }
 
+    @Override
     public int prepare(Xid xid) throws XAException {
         if (xid == null)
             throw new BitronixXAException("XID cannot be null", XAException.XAER_INVAL);
@@ -212,6 +220,7 @@ public class LrcXAResource implements XAResource {
         }
     }
 
+    @Override
     public void commit(Xid xid, boolean onePhase) throws XAException {
         if (xid == null)
             throw new BitronixXAException("XID cannot be null", XAException.XAER_INVAL);
@@ -250,6 +259,7 @@ public class LrcXAResource implements XAResource {
         this.xid = null;
     }
 
+    @Override
     public void rollback(Xid xid) throws XAException {
         if (xid == null)
             throw new BitronixXAException("XID cannot be null", XAException.XAER_INVAL);
@@ -282,6 +292,7 @@ public class LrcXAResource implements XAResource {
         }
     }
 
+    @Override
     public String toString() {
         return "a JMS LrcXAResource in state " + xlatedState() + " of session " + session;
     }

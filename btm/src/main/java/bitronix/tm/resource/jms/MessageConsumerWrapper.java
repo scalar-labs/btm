@@ -63,41 +63,49 @@ public class MessageConsumerWrapper implements MessageConsumer {
         } // if getAutomaticEnlistingEnabled
     }
 
+    @Override
     public String toString() {
         return "a MessageConsumerWrapper of " + session;
     }
 
     /* MessageProducer with special XA semantics implementation */
 
+    @Override
     public Message receive() throws JMSException {
         enlistResource();
         return getMessageConsumer().receive();
     }
 
+    @Override
     public Message receive(long timeout) throws JMSException {
         enlistResource();
         return getMessageConsumer().receive(timeout);
     }
 
+    @Override
     public Message receiveNoWait() throws JMSException {
         enlistResource();
         return getMessageConsumer().receiveNoWait();
     }
 
+    @Override
     public void close() throws JMSException {
         // do nothing as the close is handled by the session handle
     }
 
     /* dumb wrapping of MessageProducer methods */
 
+    @Override
     public String getMessageSelector() throws JMSException {
         return getMessageConsumer().getMessageSelector();
     }
 
+    @Override
     public MessageListener getMessageListener() throws JMSException {
         return getMessageConsumer().getMessageListener();
     }
 
+    @Override
     public void setMessageListener(MessageListener listener) throws JMSException {
         getMessageConsumer().setMessageListener(listener);
     }

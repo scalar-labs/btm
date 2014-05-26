@@ -30,13 +30,14 @@ public class LrcConnectionJavaProxy extends JavaProxyBase<Connection> {
 
     private final static Map<String, Method> selfMethodMap = createMethodMap(LrcConnectionJavaProxy.class);
 
-    private LrcXAResource xaResource;
+    private final LrcXAResource xaResource;
 
     public LrcConnectionJavaProxy(LrcXAResource xaResource, Connection connection) {
         this.delegate = connection;
         this.xaResource = xaResource;
     }
 
+    @Override
     public String toString() {
         return "a JDBC LrcConnectionJavaProxy on " + delegate;
     }

@@ -43,10 +43,12 @@ public class LrcXADataSource implements XADataSource {
     public LrcXADataSource() {
     }
 
+    @Override
     public int getLoginTimeout() throws SQLException {
         return loginTimeout;
     }
 
+    @Override
     public void setLoginTimeout(int seconds) throws SQLException {
         this.loginTimeout = seconds;
     }
@@ -83,13 +85,16 @@ public class LrcXADataSource implements XADataSource {
         this.password = password;
     }
 
+    @Override
     public PrintWriter getLogWriter() throws SQLException {
         return null;
     }
 
+    @Override
     public void setLogWriter(PrintWriter out) throws SQLException {
     }
 
+    @Override
     public XAConnection getXAConnection() throws SQLException {
         try {
             Class<?> driverClazz = ClassLoaderUtils.loadClass(driverClassName);
@@ -101,10 +106,11 @@ public class LrcXADataSource implements XADataSource {
             XAConnection xaConnection = JdbcProxyFactory.INSTANCE.getProxyXaConnection(connection);
             return xaConnection;
         } catch (Exception ex) {
-            throw (SQLException) new SQLException("unable to connect to non-XA resource " + driverClassName).initCause(ex);
+            throw new SQLException("unable to connect to non-XA resource " + driverClassName, ex);
         }
     }
 
+    @Override
     public XAConnection getXAConnection(String user, String password) throws SQLException {
         try {
             Class<?> driverClazz = ClassLoaderUtils.loadClass(driverClassName);
@@ -116,10 +122,11 @@ public class LrcXADataSource implements XADataSource {
             XAConnection xaConnection = JdbcProxyFactory.INSTANCE.getProxyXaConnection(connection);
             return xaConnection;
         } catch (Exception ex) {
-            throw (SQLException) new SQLException("unable to connect to non-XA resource " + driverClassName).initCause(ex);
+            throw new SQLException("unable to connect to non-XA resource " + driverClassName, ex);
         }
     }
 
+    @Override
     public String toString() {
         return "a JDBC LrcXADataSource on " + driverClassName + " with URL " + url;
     }

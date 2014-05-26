@@ -50,7 +50,7 @@ import bitronix.tm.utils.ClassLoaderUtils;
  */
 public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
 
-    private ClassMap classMap;
+    private final ClassMap classMap;
     private ClassPool classPool;
 
     private Constructor<Connection> proxyConnectionConstructor;
@@ -60,7 +60,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
     private Constructor<ResultSet> proxyResultSetConstructor;
 
     // For LRC we just use the standard Java Proxies
-    private JdbcJavaProxyFactory lrcProxyFactory;
+    private final JdbcJavaProxyFactory lrcProxyFactory;
 
     JdbcJavassistProxyFactory() {
         classMap = new ClassMap();
@@ -83,6 +83,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
     }
 
     /** {@inheritDoc} */
+    @Override
     public Connection getProxyConnection(JdbcPooledConnection jdbcPooledConnection, Connection connection) {
         try {
             return proxyConnectionConstructor.newInstance(jdbcPooledConnection, connection);
@@ -92,6 +93,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
     }
 
     /** {@inheritDoc} */
+    @Override
     public Statement getProxyStatement(JdbcPooledConnection jdbcPooledConnection, Statement statement) {
         try {
             return proxyStatementConstructor.newInstance(jdbcPooledConnection, statement);
@@ -101,6 +103,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
     }
 
     /** {@inheritDoc} */
+    @Override
     public CallableStatement getProxyCallableStatement(JdbcPooledConnection jdbcPooledConnection, CallableStatement statement) {
         try {
             return proxyCallableStatementConstructor.newInstance(jdbcPooledConnection, statement);
@@ -110,6 +113,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
     }
 
     /** {@inheritDoc} */
+    @Override
     public PreparedStatement getProxyPreparedStatement(JdbcPooledConnection jdbcPooledConnection, PreparedStatement statement, CacheKey cacheKey) {
         try {
             return proxyPreparedStatementConstructor.newInstance(jdbcPooledConnection, statement, cacheKey);
@@ -119,6 +123,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
     }
 
     /** {@inheritDoc} */
+    @Override
 	public ResultSet getProxyResultSet(Statement statement, ResultSet resultSet) {
         try {
             return proxyResultSetConstructor.newInstance(statement, resultSet);
@@ -128,11 +133,13 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
 	}
 
     /** {@inheritDoc} */
+    @Override
     public XAConnection getProxyXaConnection(Connection connection) {
         return lrcProxyFactory.getProxyXaConnection(connection);
     }
 
     /** {@inheritDoc} */
+    @Override
     public Connection getProxyConnection(LrcXAResource xaResource, Connection connection) {
         return lrcProxyFactory.getProxyConnection(xaResource, connection);
     }
@@ -142,7 +149,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
     // ---------------------------------------------------------------
 
     /**
-     * Create a proxy class: class ConnectionJavassistProxy extends ConnectionJavaProxy implements java.sql.Connection 
+     * Create a proxy class: class ConnectionJavassistProxy extends ConnectionJavaProxy implements java.sql.Connection
      */
     private void createProxyConnectionClass() {
         try {
@@ -154,7 +161,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
     }
 
     /**
-     * Create a proxy class: class StatementJavassistProxy extends StatementJavaProxy implements java.sql.Statement 
+     * Create a proxy class: class StatementJavassistProxy extends StatementJavaProxy implements java.sql.Statement
      */
     private void createProxyStatementClass() {
         try {
@@ -166,7 +173,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
     }
 
     /**
-     * Create a proxy class: class CallableStatementJavassistProxy extends CallableStatementJavaProxy implements java.sql.CallableStatement 
+     * Create a proxy class: class CallableStatementJavassistProxy extends CallableStatementJavaProxy implements java.sql.CallableStatement
      */
     private void createProxyCallableStatementClass() {
         try {
@@ -178,7 +185,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
     }
 
     /**
-     * Create a proxy class: class PreparedStatementJavassistProxy extends PreparedStatementJavaProxy implements java.sql.PreparedStatement 
+     * Create a proxy class: class PreparedStatementJavassistProxy extends PreparedStatementJavaProxy implements java.sql.PreparedStatement
      */
     private void createProxyPreparedStatementClass() {
         try {
@@ -190,7 +197,7 @@ public class JdbcJavassistProxyFactory implements JdbcProxyFactory {
     }
 
     /**
-     * Create a proxy class: class ResultSetJavassistProxy extends ResultSetJavaProxy implements java.sql.ResultSet 
+     * Create a proxy class: class ResultSetJavassistProxy extends ResultSetJavaProxy implements java.sql.ResultSet
      */
     private void createProxyResultSetClass() {
         try {

@@ -38,10 +38,12 @@ public class AsyncExecutor implements Executor {
         executorService = Executors.newCachedThreadPool();
     }
 
+    @Override
     public Object submit(Job job) {
         return executorService.submit(job);
     }
 
+    @Override
     public void waitFor(Object future, long timeout) {
         Future<?> f = (Future<?>) future;
 
@@ -56,12 +58,14 @@ public class AsyncExecutor implements Executor {
         }
     }
 
+    @Override
     public boolean isDone(Object future) {
         Future<?> f = (Future<?>) future;
 
         return f.isDone();
     }
 
+    @Override
     public void shutdown() {
         executorService.shutdownNow();
     }

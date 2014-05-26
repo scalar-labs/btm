@@ -222,6 +222,7 @@ public class TransactionLogHeader {
      * Create human-readable String representation.
      * @return a human-readable String representing this object's state.
      */
+    @Override
     public String toString() {
         return "a Bitronix TransactionLogHeader with timestamp=" + timestamp +
                 ", state=" + Decoder.decodeHeaderState(state) +

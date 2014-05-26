@@ -241,6 +241,7 @@ public class TaskScheduler extends Thread implements Service {
         return active.get();
     }
 
+    @Override
     public void run() {
         while (isActive()) {
             try {
