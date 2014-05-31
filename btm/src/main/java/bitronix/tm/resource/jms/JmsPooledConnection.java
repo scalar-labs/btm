@@ -20,8 +20,6 @@ import bitronix.tm.resource.common.AbstractXAStatefulHolder;
 import bitronix.tm.resource.common.RecoveryXAResourceHolder;
 import bitronix.tm.resource.common.StateChangeListener;
 import bitronix.tm.resource.common.TransactionContextHelper;
-import bitronix.tm.resource.common.XAResourceHolder;
-import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.resource.jms.lrc.LrcXAConnectionFactory;
 import bitronix.tm.utils.ManagementRegistrar;
 import bitronix.tm.utils.MonotonicClock;
@@ -49,7 +47,7 @@ import java.util.Set;
  * @author Ludovic Orban
  * TODO: how can the JMS connection be accurately tested?
  */
-public class JmsPooledConnection extends AbstractXAStatefulHolder implements JmsPooledConnectionMBean {
+public class JmsPooledConnection extends AbstractXAStatefulHolder<JmsPooledConnection> implements JmsPooledConnectionMBean {
 
     private final static Logger log = LoggerFactory.getLogger(JmsPooledConnection.class);
 
@@ -109,9 +107,9 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
     }
 
     @Override
-    public List<XAResourceHolder> getXAResourceHolders() {
+    public List<DualSessionWrapper> getXAResourceHolders() {
         synchronized (sessions) {
-            return new ArrayList<XAResourceHolder>(sessions);
+            return new ArrayList<DualSessionWrapper>(sessions);
         }
     }
 
@@ -249,9 +247,9 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
      * When state changes to State.CLOSED, the connection is unregistered from
      * {@link bitronix.tm.utils.ManagementRegistrar}.
      */
-    private final class JmsPooledConnectionStateChangeListener implements StateChangeListener {
+    private final class JmsPooledConnectionStateChangeListener implements StateChangeListener<JmsPooledConnection> {
         @Override
-        public void stateChanged(XAStatefulHolder source, State oldState, State newState) {
+        public void stateChanged(JmsPooledConnection source, State oldState, State newState) {
             if (newState == State.IN_POOL) {
                 if (log.isDebugEnabled()) { log.debug("requeued JMS connection of " + poolingConnectionFactory); }
                 lastReleaseDate = new Date(MonotonicClock.currentTimeMillis());
@@ -265,7 +263,7 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
         }
 
         @Override
-        public void stateChanging(XAStatefulHolder source, State currentState, State futureState) {
+        public void stateChanging(JmsPooledConnection source, State currentState, State futureState) {
         }
     }
 
@@ -273,9 +271,9 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
      * {@link JmsConnectionHandle} {@link bitronix.tm.resource.common.StateChangeListener}.
      * When state changes to State.CLOSED, the session is removed from the list of opened sessions.
      */
-    private final class JmsConnectionHandleStateChangeListener implements StateChangeListener {
+    private final class JmsConnectionHandleStateChangeListener implements StateChangeListener<DualSessionWrapper> {
         @Override
-        public void stateChanged(XAStatefulHolder source, State oldState, State newState) {
+        public void stateChanged(DualSessionWrapper source, State oldState, State newState) {
             if (newState == State.CLOSED) {
                 synchronized (sessions) {
                     sessions.remove(source);
@@ -285,13 +283,13 @@ public class JmsPooledConnection extends AbstractXAStatefulHolder implements Jms
         }
 
         @Override
-        public void stateChanging(XAStatefulHolder source, State currentState, State futureState) {
+        public void stateChanging(DualSessionWrapper source, State currentState, State futureState) {
         }
     }
 
-    public XAResourceHolder getXAResourceHolderForXaResource(XAResource xaResource) {
+    public DualSessionWrapper getXAResourceHolderForXaResource(XAResource xaResource) {
         synchronized (sessions) {
-            for (XAResourceHolder xaResourceHolder : sessions) {
+            for (DualSessionWrapper xaResourceHolder : sessions) {
                 if (xaResourceHolder.getXAResource() == xaResource) {
                     return xaResourceHolder;
                 }

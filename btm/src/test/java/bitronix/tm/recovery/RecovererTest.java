@@ -30,7 +30,6 @@ import bitronix.tm.mock.resource.MockXid;
 import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
 import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.ResourceBean;
-import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.resource.jdbc.JdbcPooledConnection;
 import bitronix.tm.resource.jdbc.PooledConnectionProxy;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
@@ -279,8 +278,8 @@ public class RecovererTest extends TestCase {
         // the TM is running, adding this resource will kick incremental recovery on it
         PoolingDataSource pds = new PoolingDataSource() {
             @Override
-            public XAStatefulHolder createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
-                JdbcPooledConnection pc = (JdbcPooledConnection) super.createPooledConnection(xaFactory, bean);
+            public JdbcPooledConnection createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
+                JdbcPooledConnection pc = super.createPooledConnection(xaFactory, bean);
                 MockXAResource xaResource = (MockXAResource) pc.getXAResource();
                 xaResource.addInDoubtXid(UidGenerator.generateXid(new Uid(xid0.getGlobalTransactionId())));
                 return pc;

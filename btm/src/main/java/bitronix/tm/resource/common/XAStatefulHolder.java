@@ -25,7 +25,7 @@ import java.util.List;
  *
  * @author Ludovic Orban
  */
-public interface XAStatefulHolder {
+public interface XAStatefulHolder<T extends XAStatefulHolder<T>> {
 
     enum State {
         /**
@@ -67,13 +67,13 @@ public interface XAStatefulHolder {
      * Register an implementation of {@link StateChangeListener}.
      * @param listener the {@link StateChangeListener} implementation to register.
      */
-    public void addStateChangeEventListener(StateChangeListener listener);
+    public void addStateChangeEventListener(StateChangeListener<T> listener);
 
     /**
      * Unregister an implementation of {@link StateChangeListener}.
      * @param listener the {@link StateChangeListener} implementation to unregister.
      */
-    public void removeStateChangeEventListener(StateChangeListener listener);
+    public void removeStateChangeEventListener(StateChangeListener<T> listener);
 
     /**
      * Get the list of {@link bitronix.tm.resource.common.XAResourceHolder}s created by this
@@ -82,14 +82,14 @@ public interface XAStatefulHolder {
      * @return the list of {@link XAResourceHolder}s created by this
      *         {@link bitronix.tm.resource.common.XAStatefulHolder} that are still open.
      */
-    public List<XAResourceHolder> getXAResourceHolders();
+    public List<? extends XAResourceHolder<? extends XAResourceHolder>> getXAResourceHolders();
 
     /**
      * Create a disposable handler used to drive a pooled instance of
      * {@link bitronix.tm.resource.common.XAStatefulHolder}.
      * <p>This method is thread-safe.</p>
-     * @return a resource-specific disaposable connection object.
-     * @throws Exception a resource-specific exception thrown when the disaposable connection cannot be created.
+     * @return a resource-specific disposable connection object.
+     * @throws Exception a resource-specific exception thrown when the disposable connection cannot be created.
      */
     public Object getConnectionHandle() throws Exception;
 

@@ -28,7 +28,7 @@ import java.io.Serializable;
  *
  * @author Ludovic Orban
  */
-public interface XAResourceProducer extends Referenceable, Serializable {
+public interface XAResourceProducer<R extends XAResourceHolder<R>, T extends XAStatefulHolder<T>> extends Referenceable, Serializable {
 
     /**
      * Get the resource name as registered in the transactions journal.
@@ -45,7 +45,7 @@ public interface XAResourceProducer extends Referenceable, Serializable {
 
     /**
      * Release internal resources held after call to <code>startRecovery()</code>.
-     * @throws bitronix.tm.recovery.RecoveryException thrown when an error occured while releasing reserved resources.
+     * @throws bitronix.tm.recovery.RecoveryException thrown when an error occurred while releasing reserved resources.
      */
     public void endRecovery() throws RecoveryException;
 
@@ -62,7 +62,7 @@ public interface XAResourceProducer extends Referenceable, Serializable {
      * @return the associated {@link XAResourceHolder} or null if the {@link XAResource} does not belong to this
      *         {@link XAResourceProducer}.
      */
-    public XAResourceHolder findXAResourceHolder(XAResource xaResource);
+    public R findXAResourceHolder(XAResource xaResource);
 
     /**
      * Initialize this {@link XAResourceProducer}'s internal resources.
@@ -81,6 +81,6 @@ public interface XAResourceProducer extends Referenceable, Serializable {
      * @return a {@link XAStatefulHolder} that will be placed in an {@link XAPool}.
      * @throws Exception thrown when the {@link XAStatefulHolder} cannot be created.
      */
-    public XAStatefulHolder createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception;
+    public T createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception;
 
 }
