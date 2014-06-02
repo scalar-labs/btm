@@ -35,9 +35,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -65,7 +65,7 @@ public class XAPool<R extends XAResourceHolder<R>, T extends XAStatefulHolder<T>
      */
     private final ReentrantReadWriteLock stateTransitionLock = new ReentrantReadWriteLock();
 
-    private final BlockingQueue<T> availablePool = new LinkedBlockingQueue<T>();
+    private final BlockingDeque<T> availablePool = new LinkedBlockingDeque<T>();
     private final Queue<T> accessiblePool = new LinkedList<T>();
     private final Queue<T> inaccessiblePool = new LinkedList<T>();
 
@@ -267,7 +267,7 @@ public class XAPool<R extends XAResourceHolder<R>, T extends XAStatefulHolder<T>
         	switch (newState) {
         	case IN_POOL:
                 if (log.isDebugEnabled()) { log.debug("added " + source + " to the available pool"); }
-                availablePool.add(source);
+                availablePool.addFirst(source);
         		break;
         	case ACCESSIBLE:
         		if (log.isDebugEnabled()) { log.debug("added " + source + " to the accessible pool"); }
@@ -311,7 +311,7 @@ public class XAPool<R extends XAResourceHolder<R>, T extends XAStatefulHolder<T>
         if (log.isDebugEnabled()) { log.debug("getting IN_POOL connection from " + this + ", waiting if necessary"); }
 
         try {
-            T xaStatefulHolder = availablePool.poll(remainingTimeMs, TimeUnit.MILLISECONDS);
+            T xaStatefulHolder = availablePool.pollFirst(remainingTimeMs, TimeUnit.MILLISECONDS);
             if (xaStatefulHolder == null) {
                 if (TransactionManagerServices.isTransactionManagerRunning())
                     TransactionManagerServices.getTransactionManager().dumpTransactionContexts();
@@ -471,7 +471,7 @@ public class XAPool<R extends XAResourceHolder<R>, T extends XAStatefulHolder<T>
     private void createPooledObject(Object xaFactory) throws Exception {
         T xaStatefulHolder = xaResourceProducer.createPooledConnection(xaFactory, bean);
         xaStatefulHolder.addStateChangeEventListener(this);
-        availablePool.add(xaStatefulHolder);
+        availablePool.addLast(xaStatefulHolder);
         poolSize.incrementAndGet();
     }
 
@@ -503,7 +503,7 @@ public class XAPool<R extends XAResourceHolder<R>, T extends XAStatefulHolder<T>
         int closed = 0;
         final int availableSize = availablePool.size();
         for (int i = 0; i < availableSize; i++) {
-            T xaStatefulHolder = availablePool.poll();
+            T xaStatefulHolder = availablePool.pollFirst();
             if (xaStatefulHolder == null) {
                 break;
             }
@@ -511,7 +511,7 @@ public class XAPool<R extends XAResourceHolder<R>, T extends XAStatefulHolder<T>
             if (expireStatefulHolder(xaStatefulHolder, forceClose)) {
                 closed++;
             } else {
-                availablePool.add(xaStatefulHolder);
+                availablePool.addLast(xaStatefulHolder);
             }
         }
 
