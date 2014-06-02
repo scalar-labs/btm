@@ -375,7 +375,7 @@ public class ConnectionJavaProxy extends JavaProxyBase<Connection> implements Po
     /**
      * Enlist this connection into the current transaction if automaticEnlistingEnabled = true for this resource.
      * If no transaction is running then this method does nothing.
-     * @throws SQLException thrown when an error occurs during elistment.
+     * @throws SQLException thrown when an error occurs during enlistment.
      */
     private void enlistResource() throws SQLException {
         if (jdbcPooledConnection == null)

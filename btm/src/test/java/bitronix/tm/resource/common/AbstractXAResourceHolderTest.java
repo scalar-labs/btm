@@ -36,7 +36,7 @@ public class AbstractXAResourceHolderTest extends TestCase {
         final ResourceBean resourceBean = new ResourceBean() {
         };
 
-        AbstractXAResourceHolder xaResourceHolder = new AbstractXAResourceHolder() {
+        AbstractXAResourceHolder<DummyResourceHolder> xaResourceHolder = new AbstractXAResourceHolder<DummyResourceHolder>() {
             @Override
             public XAResource getXAResource() {
                 return null;
@@ -48,8 +48,8 @@ public class AbstractXAResourceHolderTest extends TestCase {
             }
 
             @Override
-            public List<XAResourceHolder> getXAResourceHolders() {
-                return null;
+            public List<? extends XAResourceHolder<? extends XAResourceHolder>> getXAResourceHolders() {
+                throw new UnsupportedOperationException("Not supported yet.");
             }
 
             @Override

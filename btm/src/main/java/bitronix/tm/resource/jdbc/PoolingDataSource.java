@@ -23,9 +23,7 @@ import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.RecoveryXAResourceHolder;
 import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.resource.common.XAPool;
-import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.resource.common.XAResourceProducer;
-import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.utils.ManagementRegistrar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,15 +50,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Brett Wooldridge
  */
 @SuppressWarnings("serial")
-public class PoolingDataSource extends ResourceBean implements DataSource, XAResourceProducer, PoolingDataSourceMBean {
+public class PoolingDataSource extends ResourceBean implements DataSource, XAResourceProducer<JdbcPooledConnection, JdbcPooledConnection>, PoolingDataSourceMBean {
 
     private final static Logger log = LoggerFactory.getLogger(PoolingDataSource.class);
 
-    private volatile transient XAPool pool;
+    private volatile transient XAPool<JdbcPooledConnection, JdbcPooledConnection> pool;
     private volatile transient XADataSource xaDataSource;
     private volatile transient RecoveryXAResourceHolder recoveryXAResourceHolder;
     private volatile transient Connection recoveryConnectionHandle;
-    private volatile transient Map<XAResource, XAResourceHolder> xaResourceHolderMap;
+    private volatile transient Map<XAResource, JdbcPooledConnection> xaResourceHolderMap;
 
     private volatile String testQuery;
     private volatile boolean enableJdbc4ConnectionTest;
@@ -72,7 +70,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     private final List<ConnectionCustomizer> connectionCustomizers = new CopyOnWriteArrayList<ConnectionCustomizer>();
 
     public PoolingDataSource() {
-        xaResourceHolderMap = new ConcurrentHashMap<XAResource, XAResourceHolder>();
+        xaResourceHolderMap = new ConcurrentHashMap<XAResource, JdbcPooledConnection>();
     }
 
     /**
@@ -97,7 +95,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
             return;
 
         if (log.isDebugEnabled()) { log.debug("building XA pool for " + getUniqueName() + " with " + getMinPoolSize() + " connection(s)"); }
-        pool = new XAPool(this, this, xaDataSource);
+        pool = new XAPool<JdbcPooledConnection, JdbcPooledConnection>(this, this, xaDataSource);
         boolean builtXaFactory = false;
         if (xaDataSource == null) {
             xaDataSource = (XADataSource) pool.getXAFactory();
@@ -366,7 +364,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     }
 
     @Override
-    public XAStatefulHolder createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
+    public JdbcPooledConnection createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
         if (!(xaFactory instanceof XADataSource))
             throw new IllegalArgumentException("class '" + xaFactory.getClass().getName() + "' does not implement " + XADataSource.class.getName());
         XADataSource xads = (XADataSource) xaFactory;
@@ -376,7 +374,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     }
 
     @Override
-    public XAResourceHolder findXAResourceHolder(XAResource xaResource) {
+    public JdbcPooledConnection findXAResourceHolder(XAResource xaResource) {
         return xaResourceHolderMap.get(xaResource);
     }
 
@@ -451,7 +449,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         pool.reset();
     }
 
-    public void unregister(XAResourceHolder xaResourceHolder) {
+    public void unregister(JdbcPooledConnection xaResourceHolder) {
         xaResourceHolderMap.remove(xaResourceHolder.getXAResource());
 
     }

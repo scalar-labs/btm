@@ -23,9 +23,7 @@ import bitronix.tm.resource.ResourceRegistrar;
 import bitronix.tm.resource.common.RecoveryXAResourceHolder;
 import bitronix.tm.resource.common.ResourceBean;
 import bitronix.tm.resource.common.XAPool;
-import bitronix.tm.resource.common.XAResourceHolder;
 import bitronix.tm.resource.common.XAResourceProducer;
-import bitronix.tm.resource.common.XAStatefulHolder;
 import bitronix.tm.utils.ManagementRegistrar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,15 +46,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Ludovic Orban
  */
 @SuppressWarnings("serial")
-public class PoolingConnectionFactory extends ResourceBean implements ConnectionFactory, XAResourceProducer, PoolingConnectionFactoryMBean {
+public class PoolingConnectionFactory extends ResourceBean implements ConnectionFactory, XAResourceProducer<DualSessionWrapper, JmsPooledConnection>, PoolingConnectionFactoryMBean {
 
     private final static Logger log = LoggerFactory.getLogger(PoolingConnectionFactory.class);
 
-    private volatile transient XAPool pool;
+    private volatile transient XAPool<DualSessionWrapper, JmsPooledConnection> pool;
     private volatile transient XAConnectionFactory xaConnectionFactory;
     private volatile transient JmsPooledConnection recoveryPooledConnection;
     private volatile transient RecoveryXAResourceHolder recoveryXAResourceHolder;
-    private volatile transient List<JmsPooledConnection> xaStatefulHolders;
+    private final transient List<JmsPooledConnection> xaStatefulHolders;
 
     private volatile boolean cacheProducersConsumers = true;
     private volatile boolean testConnections = false;
@@ -141,7 +139,7 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
             return;
 
         if (log.isDebugEnabled()) { log.debug("building JMS XA pool for " + getUniqueName() + " with " + getMinPoolSize() + " connection(s)"); }
-        pool = new XAPool(this, this, xaConnectionFactory);
+        pool = new XAPool<DualSessionWrapper, JmsPooledConnection>(this, this, xaConnectionFactory);
         boolean builtXaFactory = false;
         if (this.xaConnectionFactory == null) {
             this.xaConnectionFactory = (XAConnectionFactory) pool.getXAFactory();
@@ -262,7 +260,7 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
     }
 
     @Override
-    public XAStatefulHolder createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
+    public JmsPooledConnection createPooledConnection(Object xaFactory, ResourceBean bean) throws Exception {
         if (!(xaFactory instanceof XAConnectionFactory))
             throw new IllegalArgumentException("class '" + xaFactory.getClass().getName() + "' does not implement " + XAConnectionFactory.class.getName());
         XAConnectionFactory xaConnectionFactory = (XAConnectionFactory) xaFactory;
@@ -283,10 +281,10 @@ public class PoolingConnectionFactory extends ResourceBean implements Connection
     }
 
     @Override
-    public XAResourceHolder findXAResourceHolder(XAResource xaResource) {
+    public DualSessionWrapper findXAResourceHolder(XAResource xaResource) {
         synchronized (xaStatefulHolders) {
             for (JmsPooledConnection jmsPooledConnection : xaStatefulHolders) {
-                XAResourceHolder xaResourceHolder = jmsPooledConnection.getXAResourceHolderForXaResource(xaResource);
+                DualSessionWrapper xaResourceHolder = jmsPooledConnection.getXAResourceHolderForXaResource(xaResource);
                 if (xaResourceHolder != null) {
                     return xaResourceHolder;
                 }

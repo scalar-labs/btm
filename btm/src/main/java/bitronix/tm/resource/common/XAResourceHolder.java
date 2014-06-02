@@ -28,7 +28,7 @@ import javax.transaction.xa.XAResource;
  * @see XAResourceHolderState
  * @author Ludovic Orban
  */
-public interface XAResourceHolder extends XAStatefulHolder {
+public interface XAResourceHolder<T extends XAResourceHolder<T>> extends XAStatefulHolder<T> {
 
     /**
      * Get the vendor's {@link XAResource} implementation of the wrapped resource.
@@ -42,7 +42,7 @@ public interface XAResourceHolder extends XAStatefulHolder {
      * {@link XAResourceHolderState} in the order they were added.  This method was introduced
      * as a replacement for the old getXAResourceHolderStatesForGtrid(Uid) method.  The old
      * getXAResourceHolderStatesForGtrid method exported an internal collection which was unsynchronized
-     * yet was iterated over by the callers.  Using the Visitor Pattern allows us to perform the same 
+     * yet was iterated over by the callers.  Using the Visitor Pattern allows us to perform the same
      * iteration within the context of a lock, and avoids exposing internal state and implementation
      * details to callers.
      * @param gtrid the GTRID of the transaction state to visit {@link XAResourceHolderState}s for
@@ -85,7 +85,7 @@ public interface XAResourceHolder extends XAStatefulHolder {
      * @param xaResourceHolder the {@link XAResourceHolder} to look for.
      * @return true if the {@link XAResourceHolder} is enlisted in some transaction, false otherwise.
      */
-    public boolean hasStateForXAResource(XAResourceHolder xaResourceHolder);
+    public boolean hasStateForXAResource(XAResourceHolder<? extends XAResourceHolder> xaResourceHolder);
 
     /**
      * Get the ResourceBean which created this XAResourceHolder.

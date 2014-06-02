@@ -36,7 +36,7 @@ public class XAPoolTest extends TestCase {
         rb.getDriverProperties().setProperty("userName", "java");
         rb.getDriverProperties().setProperty("password", "{DES}" + CryptoEngine.crypt("DES", "java"));
 
-        XAPool xaPool = new XAPool(null, rb, null);
+        XAPool<DummyResourceHolder, DummyStatefulHolder> xaPool = new XAPool<DummyResourceHolder, DummyStatefulHolder>(null, rb, null);
         assertEquals(0, xaPool.totalPoolSize());
         assertEquals(0, xaPool.inPoolSize());
 
