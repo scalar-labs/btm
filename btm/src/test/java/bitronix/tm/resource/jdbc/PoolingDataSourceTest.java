@@ -52,4 +52,9 @@ public class PoolingDataSourceTest extends TestCase {
         assertEquals(15, pds.getEffectiveJdbc4ConnectionTestTimeout());
     }
 
+    public void testDefaultEffectiveAcquisitionTimeout() {
+        PoolingDataSource pds = new PoolingDataSource();
+        assertEquals(30, pds.getEffectiveJdbc4ConnectionTestTimeout());
+    }
+
 }
