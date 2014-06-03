@@ -167,12 +167,14 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder<JdbcPooledCon
     }
 
     private void testConnection(Connection connection) throws SQLException {
+        int connectionTestTimeout = poolingDataSource.getEffectiveConnectionTestTimeout();
+
         if (poolingDataSource.isEnableJdbc4ConnectionTest() && jdbcVersionDetected >= 4) {
             Boolean isValid = null;
             try {
                 if (log.isDebugEnabled()) { log.debug("testing with JDBC4 isValid() method, connection of " + this); }
                 Method isValidMethod = JdbcClassHelper.getIsValidMethod(connection);
-                isValid = (Boolean) isValidMethod.invoke(connection, new Object[]{new Integer(poolingDataSource.getAcquisitionTimeout())});
+                isValid = (Boolean) isValidMethod.invoke(connection, new Object[]{ connectionTestTimeout });
             } catch (Exception e) {
                 log.warn("dysfunctional JDBC4 Connection.isValid() method, or negative acquisition timeout, in call to test connection of " + this + ".  Falling back to test query.");
                 jdbcVersionDetected = 3;
@@ -196,9 +198,13 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder<JdbcPooledCon
         // Throws a SQLException if the connection is dead
         if (log.isDebugEnabled()) { log.debug("testing with query '" + query + "' connection of " + this); }
         PreparedStatement stmt = connection.prepareStatement(query);
-        ResultSet rs = stmt.executeQuery();
-        rs.close();
-        stmt.close();
+        try {
+            stmt.setQueryTimeout(connectionTestTimeout);
+            ResultSet rs = stmt.executeQuery();
+            rs.close();
+        } finally {
+            stmt.close();
+        }
         if (log.isDebugEnabled()) { log.debug("testQuery successfully tested connection of " + this); }
     }
 

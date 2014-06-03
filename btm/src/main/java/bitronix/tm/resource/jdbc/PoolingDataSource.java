@@ -62,6 +62,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
 
     private volatile String testQuery;
     private volatile boolean enableJdbc4ConnectionTest;
+    private volatile int connectionTestTimeout;
     private volatile int preparedStatementCacheSize = 0;
     private volatile String isolationLevel;
     private volatile String cursorHoldability;
@@ -158,6 +159,37 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
      */
     public boolean isEnableJdbc4ConnectionTest() {
         return enableJdbc4ConnectionTest;
+    }
+
+    /**
+     * Determines how many seconds the connection test logic
+     * will wait for a response from the database.
+     * @param connectionTestTimeout
+     */
+    public void setConnectionTestTimeout(int connectionTestTimeout) {
+        this.connectionTestTimeout = connectionTestTimeout;
+    }
+
+    /**
+     * @return how many seconds each connection test will wait for a response.
+     */
+    public int getConnectionTestTimeout() {
+        return connectionTestTimeout;
+    }
+
+    /**
+     * @return how many seconds each connection test will wait for a response,
+     * bounded above by the acquisition timeout.
+     */
+    public int getEffectiveConnectionTestTimeout() {
+        int t1 = getConnectionTestTimeout();
+        int t2 = getAcquisitionTimeout();
+
+        if ((t1 > 0) && (t2 > 0)) {
+            return Math.min(t1, t2);
+        } else {
+            return Math.max(t1, t2);
+        }
     }
 
     /**
