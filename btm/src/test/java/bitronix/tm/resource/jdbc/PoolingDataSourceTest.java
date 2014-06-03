@@ -28,4 +28,33 @@ public class PoolingDataSourceTest extends TestCase {
         }
     }
 
+    public void testEffectiveConnectionTimeoutWhenSet() {
+        PoolingDataSource pds = new PoolingDataSource();
+        pds.setConnectionTestTimeout(10);
+        assertEquals(10, pds.getEffectiveConnectionTestTimeout());
+    }
+
+    public void testEffectiveConnectionTimeoutWhenAcquisitionTimeoutSet() {
+        PoolingDataSource pds = new PoolingDataSource();
+        pds.setAcquisitionTimeout(10);
+        assertEquals(10, pds.getEffectiveConnectionTestTimeout());
+    }
+
+    public void testEffectiveConnectionTimeoutIsMinimumValue() {
+        PoolingDataSource pds = new PoolingDataSource();
+
+        pds.setConnectionTestTimeout(5);
+        pds.setAcquisitionTimeout(10);
+        assertEquals(5, pds.getEffectiveConnectionTestTimeout());
+
+        pds.setAcquisitionTimeout(15);
+        pds.setConnectionTestTimeout(20);
+        assertEquals(15, pds.getEffectiveConnectionTestTimeout());
+    }
+
+    public void testDefaultEffectiveAcquisitionTimeout() {
+        PoolingDataSource pds = new PoolingDataSource();
+        assertEquals(30, pds.getEffectiveConnectionTestTimeout());
+    }
+
 }
