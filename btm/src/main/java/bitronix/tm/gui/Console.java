@@ -40,8 +40,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * <p></p>
- *
  * @author Ludovic Orban
  */
 public class Console extends JFrame {

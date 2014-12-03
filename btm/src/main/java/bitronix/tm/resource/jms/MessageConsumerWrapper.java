@@ -48,7 +48,7 @@ public class MessageConsumerWrapper implements MessageConsumer {
     /**
      * Enlist this session into the current transaction if automaticEnlistingEnabled = true for this resource.
      * If no transaction is running then this method does nothing.
-     * @throws javax.jms.JMSException
+     * @throws javax.jms.JMSException if an exception occurs
      */
     protected void enlistResource() throws JMSException {
         if (poolingConnectionFactory.getAutomaticEnlistingEnabled()) {

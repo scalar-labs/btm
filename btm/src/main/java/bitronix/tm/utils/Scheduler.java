@@ -31,7 +31,7 @@ import java.util.TreeSet;
  * objects of a cetain position can be retrieved for iteration.
  *
  * @author Ludovic Orban
- * @param <T>
+ * @param <T> the type the scheduler handles
  */
 public class Scheduler<T> implements Iterable<T> {
 

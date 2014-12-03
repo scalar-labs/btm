@@ -29,8 +29,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <p></p>
- *
  * @author Ludovic Orban
  */
 public class PendingTransactionTableModel extends TransactionTableModel {

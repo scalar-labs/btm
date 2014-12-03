@@ -35,7 +35,7 @@ public class BitronixTransactionSynchronizationRegistryObjectFactory implements 
     /**
      * Since there can be only one synchronization registry per VM instance, this method always returns a reference
      * to the unique BitronixTransactionSynchronizationRegistry object.
-     * @throws java.lang.Exception
+     * @throws java.lang.Exception throw if an instance cannot be created
      * @see bitronix.tm.BitronixTransactionSynchronizationRegistry
      * @return the unique synchronization registry instance.
      */

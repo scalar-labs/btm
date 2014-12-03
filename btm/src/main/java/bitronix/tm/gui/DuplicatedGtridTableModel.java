@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * <p></p>
- *
  * @author Ludovic Orban
  */
 public class DuplicatedGtridTableModel extends DefaultTableModel {

@@ -126,8 +126,8 @@ public class LruStatementCache {
      * closed (by the client).  A "closed" statement has it's
      * usage counter decremented in the cache.
      *
-     * @param key a prepared statement handle
-     * @param statement
+     * @param key a cache key
+     * @param statement a prepared statement handle
      * @return a prepared statement
      */
     public PreparedStatement put(CacheKey key, PreparedStatement statement) {
@@ -279,7 +279,7 @@ public class LruStatementCache {
         /**
          * Overridden equals() that takes all PreparedStatement attributes into
          * account.
-         * @return
+         * @return true if equal, false otherwise
          */
         @Override
         public boolean equals(Object obj) {

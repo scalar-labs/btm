@@ -71,7 +71,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *   <li>4. For any heuristic outcome you see reported from an XAResource, call <code>forget()</code> for that
  *          {@link XAResource}/{@link Xid} pair so that the resource can stop holding onto a reference to that transaction</li>
  * </ul>
- * </p>
  * <p>To achieve this, {@link Recoverer} must have access to all previously used resources, even if the journal contains
  * no trace of some of them. There are two ways of achieving this: either you use the {@link ResourceLoader} to configure
  * all your resources and everything will be working automatically or by making sure resources are re-created and re-registered.</p>
@@ -80,7 +79,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *   <li>call <code>recover()</code> on all known resources (Mike's steps 1 to 5)</li>
  *   <li>commit dangling COMMITTING transactions (Mike's step 6)</li>
  *   <li>rollback any remaining recovered transaction (Mike's step 7)</li>
- * </ul></p>
+ * </ul>
  *
  * @author Ludovic Orban
  */

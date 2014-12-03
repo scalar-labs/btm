@@ -33,7 +33,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 /**
  * Collection of initialized {@link XAResourceProducer}s. All resources must be registered in the {@link ResourceRegistrar}
  * before they can be used by the transaction manager.
- * <p/>
+ * <p>
  * Note: The implementation is based on a thread safe, read-optimized list (copy-on-write) assuming that the
  * number of registered resources is around 1 to 16 entries and does not change often. If this assumption is
  * not-true it may be required to re-implement this with a ConcurrentMap instead.

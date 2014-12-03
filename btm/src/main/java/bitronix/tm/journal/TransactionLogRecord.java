@@ -38,8 +38,8 @@ import java.util.zip.CRC32;
 /**
  * Representation of a transaction log record on disk.
  * <p>On-disk format has been implemented following Mike Spille's recommendations. Quoting him:</p>
- * <p/>
- * <i><p><code>
+ * <p>
+ * <p><code>
  * [RECORD_TYPE :4]
  * [RECORD_LEN :4]
  * [HEADER_LEN :4]
@@ -59,8 +59,8 @@ import java.util.zip.CRC32;
  * but can be priceless if you ever move to a system with multiple dual log file pairs to lessen single-threading on a
  * single log file pair. Finally, I like having an [END_RECORD_INDICATOR] as an extra corruption detector device - I'm
  * a suspenders and belt kind of guy. Actually, the END_RECORD_INDICATOR and [RECORD_LEN] in conjunction are very
- * useful in development, as well, to catch programming mistakes in the log system early.</p></i>
- * <p/>
+ * useful in development, as well, to catch programming mistakes in the log system early.<br>
+ * 
  * <p>Payload contains <code>[GTRID LENGTH :1] [GTRID :A] [UNIQUE NAMES COUNT :4] ([UNIQUE NAME LENGTH :2] [UNIQUE NAME :Y] ...)</code>
  * which makes a major difference with Mike's proposed format because here a record can vary in length: the GTRID size
  * is A bytes long (A being the GTRID length) and there can be X unique names that are Y characters long, Y being eventually

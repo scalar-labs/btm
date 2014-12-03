@@ -15,21 +15,20 @@
  */
 package bitronix.tm.gui;
 
-import bitronix.tm.journal.JournalRecord;
-import bitronix.tm.journal.TransactionLogCursor;
-import bitronix.tm.journal.TransactionLogRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.swing.table.TableModel;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.table.TableModel;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import bitronix.tm.journal.TransactionLogCursor;
+import bitronix.tm.journal.TransactionLogRecord;
+
 /**
- * <p></p>
- *
  * @author Ludovic Orban
  */
 public abstract class TransactionTableModel implements TableModel {

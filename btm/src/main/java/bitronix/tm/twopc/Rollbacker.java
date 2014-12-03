@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Phase 1 & 2 Rollback logic engine.
+ * Phase 1 &amp; 2 Rollback logic engine.
  *
  * @author Ludovic Orban
  */

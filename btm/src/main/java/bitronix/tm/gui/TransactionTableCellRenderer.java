@@ -22,8 +22,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 
 /**
- * <p></p>
- *
  * @author Ludovic Orban
  */
 public class TransactionTableCellRenderer extends DefaultTableCellRenderer {

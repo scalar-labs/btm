@@ -27,8 +27,6 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * <p></p>
- *
  * @author Ludovic Orban
  */
 public class RawTransactionTableModel extends TransactionTableModel {

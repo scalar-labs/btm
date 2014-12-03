@@ -34,7 +34,6 @@ import java.util.Hashtable;
  * env.put(Context.INITIAL_CONTEXT_FACTORY, "bitronix.tm.jndi.BitronixInitialContextFactory");
  * Context ctx = new InitialContext(env);
  * </pre>
- * </p>
  * <p>The transaction manager can be looked up at the standard URL <code>java:comp/UserTransaction</code>
  * while resources can be looked up using their unique name as set in
  * {@link bitronix.tm.resource.common.ResourceBean#getUniqueName()}.

@@ -28,8 +28,6 @@ import java.io.RandomAccessFile;
 import java.util.Date;
 
 /**
- * <p></p>
- *
  * @author Ludovic Orban
  */
 public class TransactionLogHeaderPanel extends JPanel {

@@ -26,7 +26,7 @@ import java.util.Collection;
 public interface ReadableJournal {
     /**
      * Reads all raw journal records and and adds them to the given collection.
-     * <p/>
+     * <p>
      * <b>Notes:</b><ul>
      * <li>This implementation does not guarantee to return valid results if the journal is in use.
      * The caller is responsible to control this state.</li>

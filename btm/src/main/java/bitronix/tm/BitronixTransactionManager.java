@@ -353,7 +353,7 @@ public class BitronixTransactionManager implements TransactionManager, UserTrans
      * <p>The Transaction Manager will wait during a configurable graceful period before forcibly killing active
      * transactions.</p>
      * After this method is called, attempts to create new transactions (via calls to
-     * {@link javax.transaction.TransactionManager#begin()}) will be rejected with a {@link SystemException}.</p>
+     * {@link javax.transaction.TransactionManager#begin()}) will be rejected with a {@link SystemException}.
      * @see Configuration#getGracefulShutdownInterval()
      */
     @Override

@@ -32,7 +32,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * JMX facade used to (un)register any JMX enabled instances.
- * <p/>
+ * <p>
  * In case there is no JMX implementation available, calling methods of this class have no effect.
  * JMX registrations may be synchronous or asynchronous using a work-queue and worker thread.
  * The latter enables higher throughput by avoiding the registration of very short lived instances and

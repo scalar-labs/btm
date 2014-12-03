@@ -58,7 +58,7 @@ public class XAResourceManager {
     /**
      * Enlist the specified {@link XAResourceHolderState}. A XID is generated and the resource is started with
      * XAResource.TMNOFLAGS or XAResource.TMJOIN if it could be joined with another previously enlisted one.
-     * <br/>
+     * <br>
      * There are 3 different cases that can happen when a {@link XAResourceHolderState} is enlisted:
      * <ul>
      * <li>already enlisted and not ended: do nothing</li>

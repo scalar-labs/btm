@@ -164,7 +164,7 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
     /**
      * Determines how many seconds the connection test logic
      * will wait for a response from the database.
-     * @param connectionTestTimeout
+     * @param connectionTestTimeout connection timeout
      */
     public void setConnectionTestTimeout(int connectionTestTimeout) {
         this.connectionTestTimeout = connectionTestTimeout;

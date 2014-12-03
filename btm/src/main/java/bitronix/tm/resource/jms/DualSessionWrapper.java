@@ -547,7 +547,7 @@ public class DualSessionWrapper extends AbstractXAResourceHolder<DualSessionWrap
     /**
      * Enlist this session into the current transaction if automaticEnlistingEnabled = true for this resource.
      * If no transaction is running then this method does nothing.
-     * @throws JMSException
+     * @throws JMSException if an exception occurs
      */
     protected void enlistResource() throws JMSException {
         PoolingConnectionFactory poolingConnectionFactory = pooledConnection.getPoolingConnectionFactory();

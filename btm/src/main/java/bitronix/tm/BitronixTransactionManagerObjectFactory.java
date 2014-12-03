@@ -35,7 +35,7 @@ public class BitronixTransactionManagerObjectFactory implements ObjectFactory {
     /**
      * Since there can be only one transaction manager per VM instance, this method always returns a reference
      * to the unique BitronixTransactionManager object.
-     * @throws java.lang.Exception
+     * @throws java.lang.Exception thrown if an instance of the transaction manager cannot be created
      * @see BitronixTransactionManager
      * @return the unique transaction manager instance.
      */

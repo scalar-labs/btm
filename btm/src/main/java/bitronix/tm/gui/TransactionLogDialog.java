@@ -25,8 +25,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * <p></p>
- *
  * @author Ludovic Orban
  */
 public class TransactionLogDialog extends JDialog {
