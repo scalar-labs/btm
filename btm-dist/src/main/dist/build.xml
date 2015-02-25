@@ -1,0 +1,98 @@
+<project default="all" name="btm">
+
+    <property file="build.properties"/>
+
+    <property name="jar.version" value="${btm.version}"/>
+
+    <property environment="env"/>
+    <property name="dir.src" value="src"/>
+    <property name="dir.src.test" value="test"/>
+    <property name="dir.dist" value="dist"/>
+    <property name="dir.classes" value="${dir.dist}/classes"/>
+    <property name="dir.classes.test" value="${dir.dist}/classes-test"/>
+    <property name="dir.lib" value="lib"/>
+    <property name="dir.lib.test" value="test-lib"/>
+    <property name="dir.test.report" value="test-reports"/>
+    <property name="jar.file" value="${dir.dist}/btm-${jar.version}.jar"/>
+
+
+    <path id="javac.classpath">
+        <fileset dir="${dir.lib}" includes="*.jar"/>
+    </path>
+
+    <path id="test.classpath">
+        <pathelement location="${dir.classes.test}"/>
+        <pathelement location="${dir.classes}"/>
+        <fileset dir="${dir.lib.test}" includes="*.jar"/>
+        <path refid="javac.classpath"/>
+    </path>
+
+    <target name="all" depends="clean,build,test" description="Run clean,build,test"/>
+
+    <target name="build" description="Compile source files">
+        <mkdir dir="${dir.classes}"/>
+        <echo file="${dir.src}/bitronix/tm/Version.java">
+            package bitronix.tm;
+
+            public final class Version {
+            public static String getVersion() {
+            return "${jar.version}";
+            }
+            }
+        </echo>
+
+        <javac srcdir="${dir.src}" destdir="${dir.classes}" source="1.5" target="1.5" fork="true" debug="true"
+               classpathref="javac.classpath"/>
+
+        <delete file="${jar.file}" failonerror="true"/>
+        <jar basedir="${dir.classes}" file="${jar.file}">
+            <include name="**/*"/>
+        </jar>
+    </target>
+
+    <target name="test" depends="build" description="Compile JUnit tests and run them">
+        <mkdir dir="${dir.classes.test}"/>
+        <javac srcdir="${dir.src.test}" destdir="${dir.classes.test}" source="1.5" target="1.5" fork="true" debug="true"
+               classpathref="test.classpath"/>
+        <copy todir="${dir.classes.test}">
+            <fileset dir="${dir.src.test}">
+                <include name="**/*"/>
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+
+        <mkdir dir="${dir.test.report}"/>
+        <mkdir dir="${dir.test.report}/xml"/>
+        <mkdir dir="${dir.test.report}/html"/>
+        <junit printsummary="yes" failureproperty="failure.junit" errorproperty="error.junit">
+            <classpath>
+                <path refid="test.classpath"/>
+            </classpath>
+
+            <formatter type="xml"/>
+
+            <batchtest fork="yes" todir="${dir.test.report}/xml">
+                <fileset dir="${dir.src.test}">
+                    <include name="**/*Test.java"/>
+                    <exclude name="**/Abstract*Test.java"/>
+                </fileset>
+            </batchtest>
+        </junit>
+
+        <junitreport>
+            <fileset dir="${dir.test.report}/xml">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${dir.test.report}/html"/>
+        </junitreport>
+
+        <fail if="failure.junit" message="some test(s) failed"/>
+        <fail if="error.junit" message="some test(s) failed"/>
+    </target>
+
+    <target name="clean" description="Delete all generated artifacts">
+        <delete dir="${dir.test.report}" failonerror="true" includeemptydirs="true"/>
+        <delete dir="${dir.dist}" failonerror="true" includeemptydirs="true"/>
+    </target>
+
+</project>

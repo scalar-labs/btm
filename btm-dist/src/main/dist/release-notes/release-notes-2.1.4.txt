@@ -1,0 +1,33 @@
+BTM - Bitronix' JTA transaction manager
+=======================================
+version 2.1.4, September 15, 2013
+
+Getting started guide: http://docs.codehaus.org/display/BTM/NewUserGuide
+Best practices: http://docs.codehaus.org/display/BTM/JtaBestPractices
+API javadoc: http://btm.codehaus.org/api/2.1.4/
+
+ New features and bugs fixed in this release
+ --------------------------------------------
+Important note: starting with version 2.1.0, BTM does not support JDK 1.4
+anymore. You have to use at least JDK 1.5.
+
+* BTM-126 	Equality/wrapping of PreparedStatement
+* BTM-129   Crypting resource password with triple-DES (DES-EDE) does not work
+
+Using BTM
+---------
+Required jars are distributed in the lib/ subdirectory.
+
+Latest Documentation:
+   http://docs.codehaus.org/display/BTM/
+
+Bug Reports:
+   BTM JIRA (http://jira.codehaus.org/browse/BTM/)
+   or BTM mailing list (http://www.nabble.com/Bitronix-Transaction-Manager-f25701.html)
+
+
+License
+-------
+This software is distributed under the terms of the GNU Lesser General Public License (see license.txt).
+
+This product includes software developed by the Apache Software Foundation (http://www.apache.org/).
