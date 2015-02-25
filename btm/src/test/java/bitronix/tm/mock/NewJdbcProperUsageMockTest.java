@@ -335,7 +335,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         if (log.isDebugEnabled()) { log.debug("*** creating statement 1 on connection 1"); }
         connection1.createStatement();
 
-        Thread.sleep(1500);
+        Thread.sleep(2000);
 
         try {
             if (log.isDebugEnabled()) { log.debug("*** creating statement 2 on connection 1"); }
