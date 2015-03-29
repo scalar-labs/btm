@@ -58,6 +58,7 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
 
     public void testPrepareXAFailureCase() throws Exception {
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        EventRecorder.clear();
         tm.begin();
 
         Connection connection1 = poolingDataSource1.getConnection();
@@ -118,6 +119,7 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
 
     public void testPrepareRuntimeFailureCase() throws Exception {
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        EventRecorder.clear();
         tm.begin();
 
         Connection connection1 = poolingDataSource1.getConnection();
@@ -207,6 +209,42 @@ public class NewJdbcWrongUsageMockTest extends AbstractMockJdbcTest {
 
         tm.commit();
     }
+
+    public void testIncorrectSuspendResumeWithQuickSuspend() throws Exception {
+       TransactionManagerServices.getConfiguration().setQuickSuspend(true);
+       BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+       tm.begin();
+
+       Connection connection1 = poolingDataSource1.getConnection();
+       connection1.createStatement();
+       Connection connection2 = poolingDataSource2.getConnection();
+       connection2.createStatement();
+
+       Transaction tx = tm.suspend();
+
+       assertNull(tm.suspend());
+
+       try {
+           tm.resume(null);
+           fail("TM has allowed resuming a null TX context");
+       } catch (InvalidTransactionException ex) {
+           assertEquals("resumed transaction cannot be null", ex.getMessage());
+       }
+
+       tm.resume(tx);
+
+       try {
+           tm.resume(tx);
+           fail("TM has allowed resuming a TX context when another one is still running");
+       } catch (IllegalStateException ex) {
+           assertEquals("a transaction is already running on this thread", ex.getMessage());
+       }
+
+       connection1.close();
+       connection2.close();
+
+       tm.commit();
+   }
 
     public void testEagerEnding() throws Exception {
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();

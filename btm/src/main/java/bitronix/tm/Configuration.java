@@ -77,6 +77,7 @@ public class Configuration implements Service {
     private volatile String resourceConfigurationFilename;
     private volatile boolean conservativeJournaling;
     private volatile String jdbcProxyFactoryClass;
+    private volatile boolean quickSuspend;
 
     protected Configuration() {
         try {
@@ -125,6 +126,7 @@ public class Configuration implements Service {
             resourceConfigurationFilename = getString(properties, "bitronix.tm.resource.configuration", null);
             conservativeJournaling = getBoolean(properties, "bitronix.tm.conservativeJournaling", false);
             jdbcProxyFactoryClass = getString(properties, "bitronix.tm.jdbcProxyFactoryClass", "auto");
+            quickSuspend = getBoolean(properties, "bitronix.tm.quickSuspend", false);
         } catch (IOException ex) {
             throw new InitializationException("error loading configuration", ex);
         }
@@ -683,6 +685,29 @@ public class Configuration implements Service {
      */
     public void setJdbcProxyFactoryClass(String jdbcProxyFactoryClass) {
         this.jdbcProxyFactoryClass = jdbcProxyFactoryClass;
+    }
+
+    /**
+     * Should suspend calls on the transaction manager use all local operations or involve the resources
+     * <p>Property name:<br><b>bitronix.tm.quickSuspend -</b> <i>(defaults to true)</i></p>
+     * @return true if suspend calls should operate locally only, without resource notification
+     */
+    public boolean isQuickSuspend() {
+        return quickSuspend;
+    }
+
+    /**
+     * Set if suspend calls on the transaction manager use all local operations or involve the resources
+     * <p>Property name:<br><b>bitronix.tm.quickSuspend -</b> <i>(defaults to true)</i></p>
+     * @return true if suspend calls should operate locally only, without resource notification
+     * @see #isQuickSuspend()
+     * @param quickSuspend true if suspend calls should operate locally only, without resource notification
+     * @return this.
+     */
+    public Configuration setQuickSuspend(boolean quickSuspend) {
+        checkNotStarted();
+        this.quickSuspend = quickSuspend;
+        return this;
     }
 
 

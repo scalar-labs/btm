@@ -37,19 +37,28 @@ public class JtaTest extends TestCase {
 
     private final static Logger log = LoggerFactory.getLogger(JtaTest.class);
 
-    private BitronixTransactionManager btm;
+    private BitronixTransactionManager _btm;
 
     protected void setUp() throws Exception {
         TransactionManagerServices.getConfiguration().setGracefulShutdownInterval(1);
         TransactionManagerServices.getConfiguration().setExceptionAnalyzer(DefaultExceptionAnalyzer.class.getName());
-        btm = TransactionManagerServices.getTransactionManager();
+        _btm = null;
     }
 
+    protected BitronixTransactionManager getBtm() {
+       if (_btm == null) {
+	  _btm = TransactionManagerServices.getTransactionManager();
+       }
+       return _btm;
+    }
+    
     protected void tearDown() throws Exception {
+        BitronixTransactionManager btm = getBtm();
         btm.shutdown();
     }
 
     public void testTransactionManagerGetTransaction() throws Exception {
+        BitronixTransactionManager btm = getBtm();
         assertNull(btm.getTransaction());
 
         btm.begin();
@@ -66,6 +75,22 @@ public class JtaTest extends TestCase {
 
     // this test also helps verifying MDC support but logs have to be manually checked
     public void testSuspendResume() throws Exception {
+       BitronixTransactionManager btm = getBtm();
+       log.info("test starts");
+        btm.begin();
+        log.info("tx begun");
+        Transaction tx = btm.suspend();
+        log.info("tx suspended");
+        btm.resume(tx);
+        log.info("tx resumed");
+        btm.rollback();
+        log.info("test over");
+    }
+
+    // this test also helps verifying MDC support but logs have to be manually checked
+    public void testQuickSuspendResume() throws Exception {
+        TransactionManagerServices.getConfiguration().setQuickSuspend(true);
+        BitronixTransactionManager btm = getBtm();
         log.info("test starts");
         btm.begin();
         log.info("tx begun");
@@ -78,6 +103,7 @@ public class JtaTest extends TestCase {
     }
 
     public void testTimeout() throws Exception {
+        BitronixTransactionManager btm = getBtm();
         btm.setTransactionTimeout(1);
         btm.begin();
         CountingSynchronization sync = new CountingSynchronization();
@@ -97,6 +123,7 @@ public class JtaTest extends TestCase {
     }
 
     public void testMarkedRollback() throws Exception {
+        BitronixTransactionManager btm = getBtm();
         btm.begin();
         CountingSynchronization sync = new CountingSynchronization();
         btm.getTransaction().registerSynchronization(sync);
@@ -115,6 +142,7 @@ public class JtaTest extends TestCase {
     }
 
     public void testRecycleAfterSuspend() throws Exception {
+        BitronixTransactionManager btm = getBtm();
         PoolingDataSource pds = new PoolingDataSource();
         pds.setClassName(LrcXADataSource.class.getName());
         pds.setUniqueName("lrc-pds");
@@ -150,7 +178,46 @@ public class JtaTest extends TestCase {
         pds.close();
     }
 
+    public void testRecycleAfterQuickSuspend() throws Exception {
+       TransactionManagerServices.getConfiguration().setQuickSuspend(true);
+       BitronixTransactionManager btm = getBtm();
+       PoolingDataSource pds = new PoolingDataSource();
+       pds.setClassName(LrcXADataSource.class.getName());
+       pds.setUniqueName("lrc-pds");
+       pds.setMaxPoolSize(2);
+       pds.getDriverProperties().setProperty("driverClassName", MockDriver.class.getName());
+       pds.init();
+
+       btm.begin();
+
+       Connection c1 = pds.getConnection();
+       c1.createStatement();
+       c1.close();
+
+       Transaction tx = btm.suspend();
+
+           btm.begin();
+
+           Connection c11 = pds.getConnection();
+           c11.createStatement();
+           c11.close();
+
+           btm.commit();
+
+
+       btm.resume(tx);
+
+       Connection c2 = pds.getConnection();
+       c2.createStatement();
+       c2.close();
+
+       btm.commit();
+
+       pds.close();
+   }
+
     public void testTransactionContextCleanup() throws Exception {
+        BitronixTransactionManager btm = getBtm();       
         assertEquals(Status.STATUS_NO_TRANSACTION, btm.getStatus());
 
         btm.begin();
@@ -177,6 +244,7 @@ public class JtaTest extends TestCase {
     }
 
     public void testBeforeCompletionAddsExtraSynchronizationInDifferentPriority() throws Exception {
+        BitronixTransactionManager btm = getBtm();
         btm.begin();
 
         btm.getCurrentTransaction().getSynchronizationScheduler().add(new SynchronizationRegisteringSynchronization(btm.getCurrentTransaction()), 5);
@@ -185,15 +253,15 @@ public class JtaTest extends TestCase {
     }
 
     public void testDebugZeroResourceTransactionDisabled() throws Exception {
+        BitronixTransactionManager btm = getBtm();
         btm.begin();
         assertNull("Activation stack trace must not be available by default.", btm.getCurrentTransaction().getActivationStackTrace());
         btm.commit();
     }
 
     public void testDebugZeroResourceTransaction() throws Exception {
-        btm.shutdown(); // necessary to change the configuration
         TransactionManagerServices.getConfiguration().setDebugZeroResourceTransaction(true);
-        btm = TransactionManagerServices.getTransactionManager();
+        BitronixTransactionManager btm = getBtm();
 
         btm.begin();
         assertNotNull("Activation stack trace must be available.", btm.getCurrentTransaction().getActivationStackTrace());
@@ -201,6 +269,7 @@ public class JtaTest extends TestCase {
     }
 
     public void testBeforeCompletionRuntimeExceptionRethrown() throws Exception {
+        BitronixTransactionManager btm = getBtm();
         btm.begin();
 
         btm.getTransaction().registerSynchronization(new Synchronization() {

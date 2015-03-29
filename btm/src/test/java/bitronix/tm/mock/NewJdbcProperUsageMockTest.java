@@ -72,6 +72,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         Thread.currentThread().setName("testSimpleWorkingCase");
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.setTransactionTimeout(10);
         tm.begin();
@@ -133,6 +135,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.setTransactionTimeout(10);
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         tm.begin();
         if (log.isDebugEnabled()) { log.debug("*** after begin"); }
 
@@ -199,6 +203,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.setTransactionTimeout(10);
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         tm.begin();
         if (log.isDebugEnabled()) { log.debug("*** after begin"); }
 
@@ -272,6 +278,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
 
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.setTransactionTimeout(10);
         tm.begin();
@@ -325,6 +333,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         Thread.currentThread().setName("testStatementTimeout");
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.setTransactionTimeout(1);
         tm.begin();
@@ -373,6 +383,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         Thread.currentThread().setName("testCommitTimeout");
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.setTransactionTimeout(1);
         tm.begin();
@@ -419,6 +431,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
 
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
 
         if (log.isDebugEnabled()) { log.debug("*** getting connection from DS1 in local ctx"); }
         Connection connection1 = poolingDataSource1.getConnection();
@@ -487,6 +501,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         Thread.currentThread().setName("testDeferredReleaseAfterMarkedRollback");
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.begin();
         if (log.isDebugEnabled()) { log.debug("*** after begin"); }
@@ -527,6 +543,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         Thread.currentThread().setName("testRollingBackSynchronization");
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         final BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.begin();
         if (log.isDebugEnabled()) { log.debug("*** after begin"); }
@@ -593,6 +611,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         Thread.currentThread().setName("testSuspendResume");
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.begin();
         if (log.isDebugEnabled()) { log.debug("*** after begin"); }
@@ -649,10 +669,70 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
     }
 
+    public void testQuickSuspendResume() throws Exception {
+       Thread.currentThread().setName("testQuickSuspendResume");
+       if (log.isDebugEnabled()) { log.debug("*** setting QuickSuspend property"); }
+       TransactionManagerServices.getConfiguration().setQuickSuspend(true);
+       if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
+       BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+       if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+       EventRecorder.clear();
+       if (log.isDebugEnabled()) { log.debug("*** before begin"); }
+       tm.begin();
+       if (log.isDebugEnabled()) { log.debug("*** after begin"); }
+
+       if (log.isDebugEnabled()) { log.debug("*** getting connection from DS1"); }
+       Connection connection1 = poolingDataSource1.getConnection();
+       connection1.createStatement();
+       if (log.isDebugEnabled()) { log.debug("*** getting connection from DS2"); }
+       Connection connection2 = poolingDataSource2.getConnection();
+       connection2.createStatement();
+
+       if (log.isDebugEnabled()) { log.debug("*** suspending transaction"); }
+       Transaction tx = tm.suspend();
+       if (log.isDebugEnabled()) { log.debug("*** resuming transaction"); }
+       tm.resume(tx);
+
+       if (log.isDebugEnabled()) { log.debug("*** closing connection 1"); }
+       connection1.close();
+       if (log.isDebugEnabled()) { log.debug("*** closing connection 2"); }
+       connection2.close();
+
+       if (log.isDebugEnabled()) { log.debug("*** committing"); }
+       tm.commit();
+       if (log.isDebugEnabled()) { log.debug("*** TX is done"); }
+
+       // check flow
+       List orderedEvents = EventRecorder.getOrderedEvents();
+       log.info(EventRecorder.dumpToString());
+
+       assertEquals(17, orderedEvents.size());
+       int i=0;
+       assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+       assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+       assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
+       assertEquals(DATASOURCE2_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+       assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
+       assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
+       assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
+       assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+       assertEquals(XAResource.XA_OK, ((XAResourcePrepareEvent) orderedEvents.get(i++)).getReturnCode());
+       assertEquals(XAResource.XA_OK, ((XAResourcePrepareEvent) orderedEvents.get(i++)).getReturnCode());
+       assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+       assertEquals(Status.STATUS_COMMITTING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+       assertEquals(false, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
+       assertEquals(false, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
+       assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+       assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+       assertEquals(DATASOURCE2_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+   }    
+    
     public void testLooseWorkingCaseOutsideOutside() throws Exception {
         Thread.currentThread().setName("testLooseWorkingCaseOutsideOutside");
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
 
         if (log.isDebugEnabled()) { log.debug("*** getting connection from DS1"); }
         Connection connection1 = poolingDataSource1.getConnection();
@@ -703,6 +783,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         Thread.currentThread().setName("testLooseWorkingCaseOutsideInside");
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
 
         if (log.isDebugEnabled()) { log.debug("*** getting connection from DS1"); }
         Connection connection1 = poolingDataSource1.getConnection();
@@ -753,6 +835,8 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
         Thread.currentThread().setName("testLooseWorkingCaseInsideOutside");
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
 
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.begin();
@@ -802,6 +886,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     public void testHeuristicCommitWorkingCase() throws Exception {
         Thread.currentThread().setName("testHeuristicCommitWorkingCase");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        EventRecorder.clear();
         tm.begin();
 
         Connection connection1 = poolingDataSource1.getConnection();
@@ -862,6 +947,7 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
     public void testHeuristicRollbackWorkingCase() throws Exception {
         Thread.currentThread().setName("testHeuristicRollbackWorkingCase");
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        EventRecorder.clear();
         tm.begin();
 
         Connection connection1 = poolingDataSource1.getConnection();
@@ -915,6 +1001,9 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
 
     public void testNonXaPool() throws Exception {
         Thread.currentThread().setName("testNonXaPool");
+        TransactionManagerServices.getTransactionManager();
+        EventRecorder.clear();
+
         for (int i=0; i<LOOPS ;i++) {
             TransactionManagerServices.getTransactionManager().begin();
             assertEquals(1, TransactionManagerServices.getTransactionManager().getInFlightTransactionCount());
@@ -1155,6 +1244,29 @@ public class NewJdbcProperUsageMockTest extends AbstractMockJdbcTest {
 
         tm.shutdown();
     }
+
+    public void testAutoCommitTrueWhenEnlistedButQuickSuspended() throws Exception {
+       Thread.currentThread().setName("testAutoCommitTrueWhenEnlistedButQuickSuspended");
+       TransactionManagerServices.getConfiguration().setQuickSuspend(true);
+       BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+
+       tm.begin();
+
+       Connection c = poolingDataSource1.getConnection();
+       c.prepareStatement("");
+
+       Transaction tx = tm.suspend();
+       assertNull(tm.getTransaction());
+
+       assertTrue(c.getAutoCommit());
+
+       tm.resume(tx);
+       c.close();
+
+       tm.commit();
+
+       tm.shutdown();
+   }
 
     public void testSerialization() throws Exception {
         Thread.currentThread().setName("testSerialization");
