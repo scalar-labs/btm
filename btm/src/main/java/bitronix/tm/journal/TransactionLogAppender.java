@@ -15,17 +15,9 @@
  */
 package bitronix.tm.journal;
 
-import bitronix.tm.utils.Uid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.transaction.Status;
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -34,6 +26,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.transaction.Status;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import bitronix.tm.utils.Uid;
 
 /**
  * Used to write {@link TransactionLogRecord} objects to a log file.
@@ -53,9 +52,7 @@ public class TransactionLogAppender {
     public static final int END_RECORD = 0x786e7442;
 
     private final File file;
-    private final RandomAccessFile randomeAccessFile;
-    private final FileChannel fc;
-    private final FileLock lock;
+    private final InterruptibleLockedRandomAccessFile randomAccessFile;
     private final TransactionLogHeader header;
 	private final long maxFileLength;
 	private final AtomicInteger outstandingWrites;
@@ -70,14 +67,10 @@ public class TransactionLogAppender {
      */
     public TransactionLogAppender(File file, long maxFileLength) throws IOException {
         this.file = file;
-        this.randomeAccessFile = new RandomAccessFile(file, "rw");
-        this.fc = randomeAccessFile.getChannel();
-        this.header = new TransactionLogHeader(fc, maxFileLength);
+        this.randomAccessFile = new InterruptibleLockedRandomAccessFile(file, "rw");
+        this.header = new TransactionLogHeader(randomAccessFile, maxFileLength);
         this.maxFileLength = maxFileLength;
-        this.lock = fc.tryLock(0, TransactionLogHeader.TIMESTAMP_HEADER, false);
-        if (this.lock == null)
-            throw new IOException("transaction log file " + file.getName() + " is locked. Is another instance already running?");
-
+        
         this.outstandingWrites = new AtomicInteger();
 
         this.danglingRecords = new HashMap<Uid, Set<String>>();
@@ -144,7 +137,7 @@ public class TransactionLogAppender {
 
             final long writePosition = tlog.getWritePosition();
             while (buf.hasRemaining()) {
-            	fc.write(buf, writePosition + buf.position());
+            	randomAccessFile.write(buf, writePosition + buf.position());
             }
 
             trackOutstanding(status, gtrid, uniqueNames);
@@ -273,18 +266,14 @@ public class TransactionLogAppender {
     	return position;
     }
 
-
     /**
      * Close the appender and the underlying file.
      * @throws IOException if an I/O error occurs.
      */
     protected void close() throws IOException {
         header.setState(TransactionLogHeader.CLEAN_LOG_STATE);
-        fc.force(false);
-        if (lock != null)
-        	lock.release();
-        fc.close();
-        randomeAccessFile.close();
+        randomAccessFile.force(false);
+        randomAccessFile.close();
     }
 
     /**
@@ -304,7 +293,7 @@ public class TransactionLogAppender {
      */
     protected void force() throws IOException {
         if (log.isDebugEnabled()) { log.debug("forcing log writing"); }
-        fc.force(false);
+        randomAccessFile.force(false);
         if (log.isDebugEnabled()) { log.debug("done forcing log"); }
     }
 

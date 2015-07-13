@@ -16,6 +16,7 @@
 package bitronix.tm.gui;
 
 import bitronix.tm.journal.TransactionLogHeader;
+import bitronix.tm.journal.InterruptibleLockedRandomAccessFile;
 import bitronix.tm.utils.Decoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,8 +75,8 @@ public class TransactionLogHeaderPanel extends JPanel {
     }
 
     public void read(File logFile, boolean active) throws IOException {
-        RandomAccessFile raf = new RandomAccessFile(logFile, "r");
-        TransactionLogHeader header = new TransactionLogHeader(raf.getChannel(), 0L);
+        InterruptibleLockedRandomAccessFile raf = new InterruptibleLockedRandomAccessFile(logFile, "r");
+        TransactionLogHeader header = new TransactionLogHeader(raf, 0L);
         raf.close();
         if (log.isDebugEnabled()) { log.debug("read header: " + header); }
         setLogFile(logFile);
