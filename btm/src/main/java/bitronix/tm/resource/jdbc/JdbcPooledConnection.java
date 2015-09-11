@@ -226,6 +226,7 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder<JdbcPooledCon
             // Only requeue a connection if it is no longer in use.  In the case of non-shared connections,
             // usageCount will always be 0 here, so the default behavior is unchanged.
             if (usageCount == 0) {
+                poolingDataSource.fireOnRelease(connection);
                 try {
                     TransactionContextHelper.requeue(this, poolingDataSource);
                 } catch (BitronixSystemException ex) {
@@ -309,6 +310,8 @@ public class JdbcPooledConnection extends AbstractXAResourceHolder<JdbcPooledCon
         }
 
         if (log.isDebugEnabled()) { log.debug("got connection handle from " + this); }
+        poolingDataSource.fireOnLease(connection);
+        
         return getConnectionHandle(connection);
     }
 

@@ -279,6 +279,26 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         }
     }
 
+    void fireOnLease(Connection connection){
+        for (ConnectionCustomizer connectionCustomizer : connectionCustomizers) {
+            try {
+                connectionCustomizer.onLease(connection, getUniqueName());
+            } catch (Exception ex){
+                log.warn("ConnectionCustomizer.onLease() failed for " + connectionCustomizer, ex);
+            }
+        }
+    }
+
+    void fireOnRelease(Connection connection){
+        for (ConnectionCustomizer connectionCustomizer : connectionCustomizers) {
+            try {
+                connectionCustomizer.onRelease(connection, getUniqueName());
+            } catch (Exception ex){
+                log.warn("ConnectionCustomizer.onRelease() failed for " + connectionCustomizer, ex);
+            }
+        }
+    }
+
     void fireOnDestroy(Connection connection) {
         for (ConnectionCustomizer connectionCustomizer : connectionCustomizers) {
             try {
@@ -288,7 +308,6 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
             }
         }
     }
-
 
     /* Implementation of DataSource interface */
     @Override
