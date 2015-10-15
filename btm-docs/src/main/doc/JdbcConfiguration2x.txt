@@ -1,0 +1,163 @@
+= JDBC pools configuration
+
+BTM XA datasources can be created via some java code or via a BTM-specific tool called the Resource Loader. You are free to choose the method you prefer, there is absolutely no difference between them.
+
+== Contents
+
+* <<api,Using the BTM API>>
+** <<minSettings,Minimal settings>>
+** <<eager,Eager initialization>>
+* <<usingRL,Using the Resource Loader>>
+* <<comments,Comments>>
+
+[[api]]
+== Using the BTM API
+
+BTM comes bundled with a JDBC XA connection pool which is very easy to configure. You basically have to create an instance of https://github.com/bitronix/btm/blob/master/btm/src/main/java/bitronix/tm/resource/jdbc/PoolingDataSource.java[`bitronix.tm.resource.jdbc.PoolingDataSource`] set some properties and you're done.
+
+Here is an example of datasource creation that connects to an Oracle database:
+
+    PoolingDataSource myDataSource = new PoolingDataSource();                                         (1)
+    myDataSource.setClassName("oracle.jdbc.xa.client.OracleXADataSource");                            (2)
+    myDataSource.setUniqueName("oracle");                                                             (3)
+    myDataSource.setMinPoolSize(0);                                                                   (4)
+    myDataSource.setMaxPoolSize(5);                                                                   (5)
+    myDataSource.setAcquireIncrement(1);                                                              (6)
+    myDataSource.setAllowLocalTransactions(true);                                                     (7)
+    myDataSource.setTestQuery("SELECT 1 FROM DUAL");                                                  (8)
+    myDataSource.setUseTmJoin(true);                                                                  (9)
+    myDataSource.setDeferConnectionRelease(true);                                                     (10)
+    myDataSource.setAutomaticEnlistingEnabled(true);                                                  (11)
+    myDataSource.setAcquisitionTimeout(30);                                                           (12)
+    myDataSource.setAcquisitionInterval(1);                                                           (13)
+    myDataSource.setPreparedStatementCacheSize(5);                                                    (14)
+    myDataSource.setTwoPcOrderingPosition(0);                                                         (15)
+    myDataSource.setApplyTransactionTimeout(true);                                                    (16)
+    myDataSource.setIgnoreRecoveryFailures(false);                                                    (17)
+    myDataSource.setIsolationLevel("READ_COMMITTED");                                                 (18)
+    myDataSource.getDriverProperties().setProperty("user", "users1");                                 (19)
+    myDataSource.getDriverProperties().setProperty("password", "users1");                             (20)
+    myDataSource.getDriverProperties().setProperty("URL", "jdbc:oracle:thin:@localhost:1521:XE");     (21)
+ 
+    Connection c = myDataSource.getConnection();                                                      (22)
+    // do some SQL
+    c.close();                                                                                        (23)
+    myDataSource.close();                                                                             (24)
+
+1. The Bitronix PoolingDataSource is a javabean that implements `java.sql.DataSource`.
+2. You have to specify the driver's `XADataSource` implementation here.
+3. Each datasource must be assigned a unique name. This is required for distributed crash recovery.
+4. This datasource can contain at least 0 connection. 0 is the default value when unspecified.
+5. This datasource can contain at most 5 connections.
+6. If there aren't enough connections in the pool to fulfill a request, new connections will be created, by increments of 1 at a time.
+7. You have to set `allowLocalTransactions` to true if you want to be able to run SQL statements outside of XA transactions scope. Defaults to false.
+8. When specified, this query will be executed to check that the connection is still valid before handing it to the application code.
+9. Set `useTmJoin` to false if the vendor's `XADataSource` implementation does not implement XAResource.isSameRM() properly. Refer to the link:JdbcXaSupportEvaluation.html[JdbcXaSupportEvaluation] page to see if your database needs it. Defaults to true.
+10. Set `deferConnectionRelease` to false if the vendor's `XADataSource` implementation supports transactions interleaving. Refer to the link:JdbcXaSupportEvaluation.html[JdbcXaSupportEvaluation] page to see if your database supports it. Defaults to true.
+11. Set `automaticEnlistingEnabled` to false if you do not want the `PoolingDataSource` to automatically enlist/delist the connections into the XA transactions. You then have to enlist XAResource objects manually into the `Transaction` objects for them to participate in XA transactions. Defaults to true.
+12. The amount of seconds the pool will block when a connection is requested but the pool is empty and cannot grow anymore. Defaults to 30.
+13. The amount of seconds the pool will wait when a connection has been tested invalid before trying to acquire a new one. Defaults to 1.
+14. The amount of prepared statements cached per pooled connection. Defaults to 0, meaning statement caching is disabled.
+15. The position of this resource during the 2PC protocol execution. This is required if you want to guarantee that a resource commits before another one. Defaults to 0.
+16. Should the transaction timeout be passed to the resource via http://java.sun.com/j2se/1.4.2/docs/api/javax/transaction/xa/XAResource.html#setTransactionTimeout%28int%29[`XAResource.setTransactionTimeout()`] ? Defaults to false.
+17. Should recovery errors be ignored? Ignoring recovery errors jeopardizes the failed transactions atomicity so only set this parameter to true when you know what you're doing. This is mostly useful in a development environment.
+18. Set the default isolation level. All of the four standard `READ_COMMITTED`, `READ_UNCOMMITTED`, `REPEATABLE_READ` and `SERIALIZABLE` names are supported.
+19,20,21. The `driverProperties` is a `java.util.Properties` object. You have to add into it a set of property name / property value of the `OracleXADataSource` class. You have to refer to the driver's documentation to know what can / has to be set. http://www.oracle.com/technology/docs/tech/java/sqlj_jdbc/doc_library/javadoc/oracle.jdbc.xa.OracleXADataSource.html[`OracleXADataSource` javadoc] contains this list for the Oracle case. BTM will perform conversion from `String` to `boolean` or to `int` when necessary.
+22,23. You can now use the `PoolingDataSource` like any other `java.sql.DataSource`.
+24. Remember to close the PoolingDataSource after you're done with it to release the connections.
+
+.No XADataSource implementation ?
+****
+If your database vendor does not provide a XADataSource implementation, you should have a look at the link:LastResourceCommit2x.html[Last Resource Commit optimization].
+****
+
+[[minSettings]]
+=== Minimal settings
+
+You do not have to set properties that have a default value. Here is a simplified version of the previous code creating a `PoolingDataSource` with minimal settings:
+
+    PoolingDataSource myDataSource = new PoolingDataSource();                                         (1)
+    myDataSource.setClassName("oracle.jdbc.xa.client.OracleXADataSource");                            (2)
+    myDataSource.setUniqueName("oracle");                                                             (3)
+    myDataSource.setMaxPoolSize(5);                                                                   (4)
+    myDataSource.setAllowLocalTransactions(true);                                                     (5)
+    myDataSource.setTestQuery("SELECT 1 FROM DUAL");                                                  (6)
+    myDataSource.getDriverProperties().setProperty("user", "users1");                                 (7)
+    myDataSource.getDriverProperties().setProperty("password", "users1");                             (8)
+    myDataSource.getDriverProperties().setProperty("URL", "jdbc:oracle:thin:@localhost:1521:XE");     (9)
+    
+    Connection c = myDataSource.getConnection();                                                      (10)
+    // do some SQL
+    c.close();                                                                                        (11)
+    myDataSource.close();                                                                             (12)
+
+This will create a `PoolingDataSource` that will work exactly the same as the previous one. The only difference is that unspecified properties have been left untouched with their default value.
+
+[[eager]]
+=== Eager initialization
+
+The connection pool will be initialized during the first call to `getConnection()`. It might be desirable to initialize the pool eagerly, like during application startup rather than having to wait for the first requests. This can be done by calling `init()`:
+
+    PoolingDataSource myDataSource = new PoolingDataSource();                                         (1)
+    myDataSource.setClassName("oracle.jdbc.xa.client.OracleXADataSource");                            (2)
+    myDataSource.setUniqueName("oracle");                                                             (3)
+    myDataSource.setMaxPoolSize(5);                                                                   (4)
+    myDataSource.setAllowLocalTransactions(true);                                                     (5)
+    myDataSource.setTestQuery("SELECT 1 FROM DUAL");                                                  (6)
+    myDataSource.getDriverProperties().setProperty("user", "users1");                                 (7)
+    myDataSource.getDriverProperties().setProperty("password", "users1");                             (8)
+    myDataSource.getDriverProperties().setProperty("URL", "jdbc:oracle:thin:@localhost:1521:XE");     (9)
+    myDataSource.init();                                                                              (10)
+    Connection c = myDataSource.getConnection();                                                      (11)
+    // do some SQL
+    c.close();                                                                                        (12) 
+    myDataSource.close();                                                                             (13)
+
+Now line 10 will initialize the pool instead of line 11.
+
+[[usingRL]]
+== Using the Resource Loader
+
+A datasource configuration utility is also bundled with BTM. It is convenient to use it rather than create your datasources in code. Refer to the link:ResourceLoader2x.html[Resource Loader] page for more details.
+
+Here is the equivalent Resource Loader configuration of the previous code example:
+
+    resource.ds.className=oracle.jdbc.xa.client.OracleXADataSource
+    resource.ds.uniqueName=oracle
+    resource.ds.maxPoolSize=5
+    resource.ds.allowLocalTransactions=true
+    resource.ds.testQuery=SELECT 1 FROM DUAL
+    resource.ds.driverProperties.user=users1
+    resource.ds.driverProperties.password=users1
+    resource.ds.driverProperties.URL=jdbc:oracle:thin:@localhost:1521:XE
+
+.Datasource initialization / shutdown
+****
+The Resource Loader will always eager initialize the created datasources and close them when the transaction manager shuts down.
+****
+
+You just have to write those properties in a simple text file and tell BTM where to load it by setting the `resourceConfigurationFilename` property of the link:Configuration2x.html[Configuration] object.
+
+Now you also have to know how to get the datasource created by the Resource Loader. There are multiple ways:
+
+* Look up resources using the link:Jndi2x.html[embedded JNDI provider].
+* Another way is to bind a https://github.com/bitronix/btm/blob/master/btm/src/main/java/bitronix/tm/resource/ResourceObjectFactory.java[`bitronix.tm.resource.ResourceObjectFactory`] object, passing it a http://java.sun.com/j2se/1.4.2/docs/api/javax/naming/Reference.html[`javax.naming.Reference`] containing a http://java.sun.com/j2se/1.4.2/docs/api/javax/naming/StringRefAddr.html[javax.naming.StringRefAddr] containing the datasource's `uniqueName` as `addrType` somewhere in your JNDI tree. The `bitronix.tm.resource.ResourceObjectFactory` class will just return the datasource with the specified `uniqueName`. This is explained more in-depth in the link:TomcatWithBtm2x.html[Tomcat] and link:Jetty2x.html[Jetty] integration page.
+* The last way is to call https://github.com/bitronix/btm/blob/master/btm/src/main/java/bitronix/tm/resource/ResourceRegistrar.java[`bitronix.tm.resource.ResourceRegistrar.get(String uniqueName)`]. This is the least preferred method as this ties your code to BTM which you probably want to avoid.
+
+[[comments]]
+== Comments
+
+=== brettw Brett Wooldridge 6 13, 2011 
+
+Other properties.
+
+Two properties which are missing from this page are:
+
+    enableJdbc4ConnectionTest=[true|false]
+
+If your JDBC driver supports JDBC4, this method of testing the connection is likely much more efficient than using the testQuery parameter.  In the case of a testQuery, the query must be sent to the DB server, parsed, and executed before the connection can be used.  JDBC4 exposes a method by which a driver can make its own determination of connectivity (possibly whether the socket is still connected, etc.).  The default value of this property is false.
+
+    shareTransactionConnections=[true|false]
+
+By default, whenever a thread requests a connection from the DataSource, BTM will issue a new connection.  All connections issued are bound into the same transaction context.  Depending on the design of the user's application, this behavior can result in a large number of connections to the database -- and in the case of a database such as PostgreSQL, which uses one process per-connection this places a fairly heavy burden on the database.  Setting this option to true will enable a thread-associated connection cache.  With this option enabled, no matter how many times a thread requests a connection from the DataSource, BTM will return a single connection.  Because connections can be shared within the context of a transaction, this provides a more efficient use of connection resources.  A positive benefit of a single connection per thread is that the prepared statement cache (which is per-connection) is also made more efficient.  Lastly, another benefit is that because connections are shared within the same thread, the overhead of establishing and testing a new connection to the database is avoided, which significantly improves the performance of some access patterns.  Of course, BTM will still ensure correctness whenever this parameter is set to true.  The default value of this property is false.
+

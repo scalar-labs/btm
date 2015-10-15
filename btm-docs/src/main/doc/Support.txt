@@ -1,0 +1,16 @@
+= Getting support for BTM
+
+Free support is provided on a best-effort basis. Commercial support (development and production) can be acquired directly from Bitronix Software.
+
+== Mailing list
+
+TODO - how does this work these days?
+
+(Old: You should send any question, remark or support request to the BTM users mailing list.
+Send an email to user-subscribe @ btm.codehaus.org to register then send your questions to user @ btm.codehaus.org)
+
+Alternatively you can use link:http://bitronix-transaction-manager.10986.n7.nabble.com/[Nabble] as a more convenient access to the mailing list.
+
+== Bug tracker
+
+https://github.com/bitronix/btm/issues

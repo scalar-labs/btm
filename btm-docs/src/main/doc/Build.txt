@@ -1,0 +1,43 @@
+= Building from source
+
+== Contents
+
+* <<prerequisites,Prerequisites>>
+* <<source,Getting the Source>>
+* <<building,Building>>
+* <<ide,IDE Integration>>
+
+[[prerequisites]]
+== Prerequisites
+
+You need to have these softwares installed to be able to build BTM:
+
+* GIT
+* JDK 1.5
+* Apache Maven 2.2.1 (or higher)
+
+[[source]]
+== Getting the Source
+
+The project uses GIT as it's source code control system.
+The source can be checked out anonymously using:
+
+    git clone git://git.codehaus.org/btm-git.git
+
+[[building]]
+== Building
+
+The project uses Apache Maven 2 as it's build tool.
+Go to the top level directory of the project and type:
+
+    mvn install
+
+This will build BTM locally, run tests, build javadoc and install the generated artifacts in your local repository.
+
+[[ide]]
+== IDE Integration
+
+Because BTM supports JDBC3 and JDBC4 at the same time, setting up an IDE in a way that there are no errors can be "tricky".  See these links for an example of how an IDE can be configured.
+
+* link:ConfiguringIntelliJ.html[Configuring IntelliJ IDE]
+* link:ReleaseProcedure.html[Release procedure] 

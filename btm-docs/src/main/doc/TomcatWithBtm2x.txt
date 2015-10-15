@@ -1,0 +1,149 @@
+= How to use BTM as the transaction manager in Tomcat 6.x (and upwards)
+
+These instructions have been verified against BTM 2.1.0.
+
+== Contents
+
+* <<step1,Step 1: Copy the BTM jars>>
+* <<step2,Step 2: Configure BTM as the transaction manager>>
+* <<step3,Step 3: Configure datasources that are transaction aware>>
+* <<step4,Step 4: Configure transaction manager and datasources initialization in your META-INF/context.xml>>
+* <<step5,Step 5: Configure datasources references in your web.xml>>
+
+[[step1]]
+== Step 1: Copy the BTM jars
+
+Copy the following jars from the BTM distribution to the Tomcat `lib/` directory:
+
+- btm-2.1.4.jar
+- jta-1.1.jar
+- slf4j-api-1.6.0.jar
+- slf4j-jdk14-1.6.0.jar
+- btm-tomcat55-lifecycle-2.1.0.jar (it works with both Tomcat 5.5 and Tomcat 6)
+
+You will also need to copy your JDBC driver's JAR file in that same folder. In this example, we've used 
+Derby 10.3.2.1 so we copied derby.jar in Tomcat's `lib/` directory.
+
+[[step2]]
+== Step 2: Configure BTM as the transaction manager
+
+Windows: Create a file named setenv.bat with the following commands under Tomcat's `bin/` directory:
+
+    set CATALINA_OPTS=-Dbtm.root=%CATALINA_HOME% -Dbitronix.tm.configuration=%CATALINA_HOME%\conf\btm-config.properties
+
+Unix: Create a file named setenv.sh with the following commands under Tomcat's bin/ directory:
+
+    CATALINA_OPTS="-Dbtm.root=$CATALINA_HOME -Dbitronix.tm.configuration=$CATALINA_HOME/conf/btm-config.properties"
+
+Now create a file named `btm-config.properties` with the following properties under Tomcat's `conf/` directory:
+
+    bitronix.tm.serverId=tomcat-btm-node0
+    bitronix.tm.journal.disk.logPart1Filename=${btm.root}/work/btm1.tlog
+    bitronix.tm.journal.disk.logPart2Filename=${btm.root}/work/btm2.tlog
+    bitronix.tm.resource.configuration=${btm.root}/conf/resources.properties
+
+Then edit the file named `server.xml` under Tomcat's `conf/` directory. Under this line:
+
+    <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+
+add this one:
+
+    <Listener className="bitronix.tm.integration.tomcat55.BTMLifecycleListener" />
+
+The `<Listener>` tag will make sure BTM is started when Tomcat starts up and shutdown when Tomcat shuts down.
+
+The next step is to edit the file named `context.xml` under Tomcat's `conf/` directory.  Under this line:
+
+    <WatchedResource>WEB-INF/web.xml</WatchedResource>
+
+add this one:
+
+    <Transaction factory="bitronix.tm.BitronixUserTransactionObjectFactory" />
+
+The `<Transaction>` tag will bind the transaction manager at the standard JNDI location `java:comp/UserTransaction`.
+
+Finally, create an empty file named `resources.properties` under Tomcat's `conf/` directory.
+
+[[step3]]
+== Step 3: Configure datasources that are transaction aware
+
+You have to put your datasources configurations in Tomcat's `conf/resources.properties` file. Here's an example of using 
+BTM with a `DataSource` that implements `javax.sql.XADataSource`:
+
+    resource.ds1.className=org.apache.derby.jdbc.EmbeddedXADataSource
+    resource.ds1.uniqueName=jdbc/mydatasource
+    resource.ds1.minPoolSize=0
+    resource.ds1.maxPoolSize=5
+    resource.ds1.driverProperties.databaseName=../work/db1
+    resource.ds1.driverProperties.createDatabase=create
+
+This will create a `bitronix.tm.resource.jdbc.PoolingDataSource` that implements `javax.sql.DataSource` and interacts with the `javax.sql.XADataSource` 
+provided in this instance by Derby.
+If your database vendor does not provide an XADataSource, you can use BTM's `bitronix.tm.resource.jdbc.lrc.LrcXADataSource` as the `XADataSource` to 
+allow your database connections to be controlled by the transaction manager:
+
+    resource.ds2.className=bitronix.tm.resource.jdbc.lrc.LrcXADataSource
+    resource.ds2.uniqueName=jdbc/exampleNonXADS
+    resource.ds2.minPoolSize=0
+    resource.ds2.maxPoolSize=5
+    resource.ds2.driverProperties.driverClassName=org.apache.derby.jdbc.EmbeddedDriver
+    resource.ds2.driverProperties.url=jdbc:derby:../work/db2;create=true
+
+Again, we've used Derby as an example, but as the LrcXADataSource uses only the class name and url of a `java.sql.Driver`, you can use it with any 
+database providing a JDBC driver.
+
+[[step4]]
+== Step 4: Configure transaction manager and datasources initialization in your META-INF/context.xml
+
+In the web application where you want one or more datasource to be used, you have to create a `META-INF/context.xml` file.
+
+    <Context>
+ 
+        <Resource name="jdbc/mydatasource" auth="Container" type="javax.sql.DataSource"
+            factory="bitronix.tm.resource.ResourceObjectFactory" uniqueName="jdbc/mydatasource" />
+ 
+        <Resource name="jdbc/exampleNonXADS" auth="Container" type="javax.sql.DataSource"
+            factory="bitronix.tm.resource.ResourceObjectFactory" uniqueName="jdbc/exampleNonXADS" />
+ 
+    </Context>
+
+The `<Resource>` tags will bind a `bitronix.tm.resource.ResourceObjectFactory` object each, passing it a `javax.naming.Reference` containing a 
+`javax.naming.StringRefAddr` containing the datasource's `uniqueName` as `addrType`.
+
+.Tomcat specific
+****
+This mechanism is internal to Tomcat. You do not have to worry about how it works, the `bitronix.tm.resource.ResourceObjectFactory` class will handle 
+those details. The `bitronix.tm.resource.ResourceObjectFactory` class will return the datasource previously configured in Tomcat's 
+`conf/resources.properties` with the specified `uniqueName` when it is fetched from JNDI.
+****
+
+[[step5]]
+== Step 5: Configure datasources references in your web.xml
+
+Before your code can access configured datasources via JNDI ENC URLs, you need to declare resource references in your `web.xml`:
+
+    <?xml version="1.0" encoding="ISO-8859-1"?>
+     <!DOCTYPE web-app PUBLIC
+        "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+        "/web/20150520175205/http://java.sun.com/dtd/web-app_2_3.dtd">
+ 
+    <web-app>
+      <resource-env-ref>
+        <resource-env-ref-name>jdbc/mydatasource</resource-env-ref-name>
+        <resource-env-ref-type>javax.sql.DataSource</resource-env-ref-type>
+      </resource-env-ref>
+ 
+      <resource-env-ref>
+        <resource-env-ref-name>jdbc/exampleNonXADS</resource-env-ref-name>
+        <resource-env-ref-type>javax.sql.DataSource</resource-env-ref-type>
+      </resource-env-ref>
+    </web-app>
+
+Now you can do JNDI lookups on those URLs to access the configured datasources:
+
+    DataSource exampleNonXADS = (DataSource) ctx.lookup("java:comp/env/jdbc/exampleNonXADS");
+    DataSource mydatasource = (DataSource) ctx.lookup("java:comp/env/jdbc/mydatasource");
+
+and you can do JNDI lookups on this URL to access the transaction manager:
+
+    UserTransaction ut = (UserTransaction) ctx.lookup("java:comp/UserTransaction"); 

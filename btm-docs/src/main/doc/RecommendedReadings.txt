@@ -1,0 +1,22 @@
+= Recommended Readings
+
+== Must read
+
+If you are seriously considering using an XA transaction manager in your application, it is highly recommended to read Mike Spille's http://jroller.com/page/pyrasun?catname=%2FXA[XA Exposed I, II and III].
+
+Those blog posts summarize the most important things one should know about XA and - cherry on the cake - are quite pleasant to read.
+
+== Specifications
+
+The http://java.sun.com/products/jta/[JTA specification] is a good read to get in-depth details. The http://www.opengroup.org/pubs/catalog/c193.htm[XA Specification] should be read in parallel as the JTA spec implicitly depends on it.
+
+== Misc
+
+- A http://www.javaworld.com/javaworld/jw-04-2007/jw-04-xa.html[JavaWorld article] has been written about XA transactions and Spring. It uses and briefly discusses BTM as well as other transaction managers. Examples with source code are provided. Note that this article speaks about the beta version of BTM so examples might need to be changed a bit.
+- An interesting http://gariboldi.blogspot.com/2007/12/seam-spring-and-connections-lost.html[blog entry] giving good tips on how to mix Spring, Hibernate, BTM and PostgreSQL.
+- A http://www.time4tea.net/wiki/display/MAIN/Proper+XA+Transactions+With+Oracle+and+Spring[nice article] showing how to use Spring, Oracle and BTM together.
+
+== Comments Zdenek Vrablik 5 01, 2008 
+
+Basic description of distributed transactions http://archive.devx.com/java/free/articles/dd_jta/jta-1.asp and http://archive.devx.com/java/free/articles/dd_jta/jta-2.asp
+

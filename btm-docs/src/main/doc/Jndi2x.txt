@@ -1,0 +1,55 @@
+= Embedded JNDI provider
+
+BTM is bundled with a read-only JNDI provider since version 1.3. You can use it as a convenience as it sometimes facilitates integration with some frameworks in non-application server environments.
+
+Using the JNDI provider is obviously not mandatory. As long as you do not use it, it won't conflict with any other JNDI provider nor consume any resource.
+
+== Contents
+
+* <<accessingVaiJNDI,Accessing resources and transaction manager via JNDI>>
+* <<changing,Changing the default transaction manager's JNDI name>>
+* <<configing,Configuring BTM's JNDI provider as the default one>>
+
+[[accessingVaiJNDI]]
+== Accessing resources and transaction manager via JNDI
+
+You can access configured resources (JMS and JDBC) as well as the transaction manager from the JNDI provider.
+
+Here is the quick way to lookup resources from it:
+
+    Hashtable env = new Hashtable();
+    env.put(Context.INITIAL_CONTEXT_FACTORY, "bitronix.tm.jndi.BitronixInitialContextFactory");
+    Context ctx = new InitialContext(env);
+     
+    DataSource ds = (DataSource) ctx.lookup("myDataSourceUniqueName");
+    UserTransaction ut = (UserTransaction) ctx.lookup("java:comp/UserTransaction");
+
+This expects that you configured one JDBC datasource with unique name myDataSourceUniqueName. Resources are automatically bound when created and unbound when closed.
+
+The transaction manager itself (which implements both UserTransaction and TransactionManager interfaces) is available by default under the standard `java:comp/UserTransaction` name.
+
+[[changing]]
+== Changing the default transaction manager's JNDI name
+
+Sometimes it is desirable to bind the transaction manager under a different name than the standard `java:comp/UserTransaction` one, for instance when there already is a JNDI URL handler configured for `java:`, like in most application servers.
+
+It is recommended that you bind BTM and it resources in the application server's JNDI server but in case you don't want to or can't, you can still use BTM's JNDI provider and bind the transaction under another name by setting this configuration property (link:Configuration2x.html#txEngine[here] for more details):
+
+    bitronix.tm.jndi.userTransactionName=btmTransactionManager
+
+[[configing]]
+== Configuring BTM's JNDI provider as the default one
+
+You just have to create a jndi.properties file in your classpath with this content:
+
+    java.naming.factory.initial=bitronix.tm.jndi.BitronixInitialContextFactory
+
+and then you don't have to specify an environment when creating an InitialContext:
+
+    Context ctx = new InitialContext();
+ 
+    DataSource ds = (DataSource) ctx.lookup("myDataSourceUniqueName");
+    UserTransaction ut = (UserTransaction) ctx.lookup("java:comp/UserTransaction");
+
+See https://github.com/bitronix/btm/blob/master/btm/src/main/java/bitronix/tm/jndi/BitronixInitialContextFactory.java[BitronixInitialContextFactory] for more details. 
+

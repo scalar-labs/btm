@@ -1,0 +1,15 @@
+= Release Procedure
+
+****
+**TODO** This page needs updating, because BTM no longer releases to codehaus!
+****
+
+* write release notes, save them in btm-dist/src/main/dist/release-notes
+* build the release with mvn release:prepare -Pdist, mvn release:perform -Pdist (this deploys artifacts and tags the build in GIT)
+* When being asked for a tag, replace it with btm-X.Y.Z instead of btm-parent-X.Y.Z
+* release the staged artifacts from codehaus's Nexus (https://nexus.codehaus.org/)
+* upload the javadoc via webdav (to https://dav.codehaus.org/btm/api)
+* upload the dist zip (to https://dav.codehaus.org/dist/btm/VERSION)
+* update versions on wiki (link to javadoc, builds page, downloads page, roadmap page)
+* update versions in JIRA, and close all resolved issues
+* send release email to mailing list

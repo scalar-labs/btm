@@ -1,0 +1,96 @@
+= FAQ
+
+* <<howwhy,How/why/when did the project get started?>>
+* <<whywould,Why would I need a transaction manager ?>>
+* <<whyusing,Why using BTM and not insert another TM here?>>
+* <<whyis,Why is BTM 1.2 refusing to start when configured with Oracle while 1.1 works fine?>>
+* <<whyoracle,Why is Oracle throwing a XAException during initialization of my datasource?>>
+* <<isthere,Is there a way to avoid granting execute privilege on sys.dbms_system to be able to use Oracle?>>
+* <<cluster,Can BTM run in a cluster?>>
+
+[[howwhy]]
+== How/why/when did the project get started?
+
+The BTM project started early 2005. Back in time I needed a XA capable transaction manager at many different occasions but couldn't find any satisfying all my needs: standalone, stable, actively maintained, production usable, open source. Unfortunately there were only two choices: JOTM and Tyrex which both were unusable for production as they lacked recovery (and more).
+
+So I started working on BTM in my spare time until JBoss acquired Arjuna's product and released it as open source at the end of 2005. I thought that would be the end of my project but their product's usability was far from satisfying at the time so I just went on coding BTM.
+
+By mid-2006, I finally had something usable that I thought was worth showing the world. It took another six month and eleven releases (archived here: http://www.bitronix.be/Btm/Download) before I considered BTM was up to my needs. During that period, a small but faithful community of users appeared and encouraged me to continue working on BTM. Thanks for that, guys !
+
+About the same story as for Arjuna repeated at the end of 2006 when Atomikos released their impressive product as open source. But BTM already had a community and some users were already planning to go to production with BTM and waited for version 1.0 to be released.
+
+Just before version 1.0, BTM migrated from a all-on-my-own-pc-and-my-website development environment to CodeHaus. This helped a lot making the project way more open to the community as well as providing me with free access to very much needed tools. Thanks for that, guys !
+
+[[whywould]]
+== Why would I need a transaction manager?
+
+=== To use JDBC and JMS together
+
+If you either use two databases (or more) in your application or you use both a database and JMS then you need a transaction manager. Some people will argue that you can do without one even if you fall in on of those two cases. They are true: it is possible to have a transaction span two resources (like JMS and JDBC) by writing so-called *idempotent* methods manipulating these resources and some simple error recovery logic.
+
+.Idempotent methods
+****
+The Wikipedia definition of idempotent is: A unary operation is idempotent if, whenever it is applied twice to any element, it gives the same result as if it were applied once.
+Idempotent methods can be called as many times as you want without doing anything different than if they were only called once.
+****
+
+The fact is that it is harder to write idempotent methods (when it is possible at all) and you also have to write some recovery logic to handle crash cases. It is more or less easy to write code that makes sure the information gets registered at least once. Idempotent methods make sure that in case they got called twice (because of a retrial after a crash) data will be safe anyway.
+
+Why would you have to accept those constraints when you can get free of them ? And why would you have to be careful about low-level logic in your code when you can delegate it to an component specialized in this task ?
+
+Would you write your own web framework or your own ORM nowadays ? Neither would I. It is the transaction manager's job to make sure atomicity is kept across multiple resources, not yours.
+
+=== To use database shards
+
+Shards is a new database design that started making noise recently. The basic idea is to divide your data between multiple cheap servers, each one handling a small fraction of your data. If you want to know more about shards, read this article.
+
+There are at least two implementations of JPA that support shards: http://people.apache.org/~ppoddar/slice/site/index.html[OpenJPA using Slice] and http://www.hibernate.org/414.html[Hibernate using Hibernate Shards].
+
+The first one explicitly states that XA is required to maintain atomicity between all nodes while Hibernate does not explicitly document this but the developers openly agreed that XA also is a prerequisite to atomicity, see http://groups.google.com/group/hibernate-shards-dev/browse_thread/thread/a1bf86180f6ecf63 and http://opensource.atlassian.com/projects/hibernate/browse/HSHARDS-49.
+
+[[whyusing]]
+== Why using BTM and not insert another TM here?
+
+In short: because it is complete and easy to use.
+BTM has been tailored to support only the most common scenarios: XA with JDBC and / or JMS. It's internal logic is kept as simple as possible to only support them. On the other hand, great care has been taken to make those scenarios working as best and as easily as possible. BTM also fully supports crash recovery thanks to its disk logger.
+You might need more than what BTM proposes, like JCA Connectors support or JTS. In that case you should look at other available products.
+
+[[whyis]]
+== Why is BTM 1.2 refusing to start when configured with Oracle while 1.1 works fine?
+
+See next question. You should also know that there was a bug in version 1.1 that allowed BTM to start up even when a resource could not be recovered (http://web.archive.org/web/20150520175153/http://jira.codehaus.org/browse/BTM-2[BTM-2]). This bug has been fixed in version 1.2.
+
+[[whyoracle]]
+== Why is Oracle throwing a XAException during initialization of my datasource?
+
+BTM tries to recover all resources during startup. If it fails on one of them, it will refuse to start and throw this exception:
+
+    Caused by: bitronix.tm.recovery.RecoveryException: error running recovery on resource myResourceUniqueName (XAER_RMERR)
+        at bitronix.tm.recovery.Recoverer.recoverAllResources(Recoverer.java:168)
+        at bitronix.tm.recovery.Recoverer.run(Recoverer.java:106)
+        at bitronix.tm.BitronixTransactionManager.<init>(BitronixTransactionManager.java:47)
+        ... 28 more
+    Caused by: javax.transaction.xa.XAException
+        at oracle.jdbc.xa.OracleXAResource.recover(OracleXAResource.java:715)
+        at bitronix.tm.recovery.Recoverer.recover(Recoverer.java:231)
+        at bitronix.tm.recovery.Recoverer.recover(Recoverer.java:194)
+        at bitronix.tm.recovery.Recoverer.recoverAllResources(Recoverer.java:164)
+
+Oracle resources can only be recovered when the configured user has these privileges:
+    grant select on sys.dba_pending_transactions to myUser;
+    grant select on sys.pending_trans$ to myUser;
+    grant select on sys.dba_2pc_pending to myUser;
+   grant execute on sys.dbms_system to myUser;
+
+[[isthere]]
+== Is there a way to avoid granting execute privilege on sys.dbms_system to be able to use Oracle ?
+
+Yes. Oracle 11g release 1 does not require this privilege anymore. It seems that Oracle also has a patch to backport this functionality to previous versions of the database (bug 5945463). Details about which versions can be fixed by this patch hasn't been disclosed and it is also not possible to freely download it, you have to contact Oracle support to get your hands on it.
+
+See: http://docs.oracle.com/cd/B28359_01/java.111/b31224/xadistra.htm#sthref1311
+
+[[cluster]]
+== Can BTM run in a cluster ?
+
+BTM can run in multiple virtual machines working on the same resources in parallel but you must remember to enable `currentNodeOnlyRecovery` in the configuration when doing so. link:ImplementationDetails.html#e1[See here to know why].
+ 

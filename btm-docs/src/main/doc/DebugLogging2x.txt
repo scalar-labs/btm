@@ -1,0 +1,30 @@
+= Debug logging
+
+BTM ships with http://www.slf4j.org/[SLF4J] which is a logging facade much like Apache Commons Logging but it's safe to use in application servers unlike Commons Logging which suffers from complex classloader issues.
+
+Much like Commons Logging, SLF4J can route the log requests to many different implementations including the two most common ones: http://java.sun.com/j2se/1.4.2/docs/api/java/util/logging/package-summary.html[JDK 1.4] and http://logging.apache.org/log4j/[Log4J].
+
+By default, BTM is shipped with slf4j-jdk14-1.6.0.jar which is the the http://jcp.org/aboutJava/communityprocess/review/jsr047/[JSR 047 logging API (aka JDK 1.4 logging)] wrapper. If you want to use another logger, simply delete the slf4j-jdk14-1.6.0.jar file and replace it with any one from this list:
+
+* http://repo2.maven.org/maven2/org/slf4j/slf4j-jdk14/1.6.0/slf4j-jdk14-1.6.0.jar[slf4j-jdk14-1.6.0.jar] for JSR 047 logging.
+* http://repo2.maven.org/maven2/org/slf4j/slf4j-jdk14/1.6.0/slf4j-log4j12-1.6.0.jar[slf4j-log4j12-1.6.0.jar] for Apache Log4J 1.2.x.
+* http://repo2.maven.org/maven2/org/slf4j/slf4j-jdk14/1.6.0/slf4j-nop-1.6.0.jar[slf4j-nop-1.6.0.jar] for no logging (logs are silently dropped).
+* http://repo2.maven.org/maven2/org/slf4j/slf4j-jdk14/1.6.0/slf4j-simple-1.6.0.jar[slf4j-simple-1.6.0.jar] for simple System.out output.
+
+You will also need to put the http://repo2.maven.org/maven2/org/slf4j/slf4j-api/1.6.0/slf4j-api-1.6.0.jar[slf4j-api-1.6.0.jar] file in your classpath as well, no matter which one of the above jars you choose.
+
+Those jars come from the 1.6.0 distribution of SLF4J.
+
+== Mapped Diagnostic Context
+If your logging implementation supports MDC (http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/MDC.html[like Log4J does] for instance) BTM will push the transaction's GTRID in the logger's MDC when a transaction is created.
+
+The GTRID is pushed under the *`btm-gtrid`* name. You can make it appear in your Log4J logs by adding it to the `ConversionPattern`:
+
+    <appender name="FileAppender" class="org.apache.log4j.FileAppender">
+        <param name="File" value="SomeLogFile.txt"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%X{btm-gtrid} - %m%n"/>
+        </layout>
+    </appender>
+
+When using a different implementation than Log4J, please refer to your logger's documentation to understand how to make use of this feature. 

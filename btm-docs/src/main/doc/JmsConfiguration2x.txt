@@ -1,0 +1,12 @@
+= JMS pools configuration
+
+BTM XA connection factories can be created - like their JDBC counterparts - via some java code or via a BTM-specific tool called the Resource Loader. You are free to choose the method you prefer, there is absolutely no difference between them.
+
+== Todo
+This document has not been updated for version 2.x.x yet but you can still link:JmsConfiguration12.html[read the 1.2 version] as most of its content is relevant for both versions. 
+
+.No XAConnectionFactory implementation ?
+****
+If your message server vendor does not provide a XAConnectionFactory implementation, you should have a look at the link:LastResourceCommitJms2x.html[Last Resource Commit optimization].
+****
+

@@ -1,0 +1,73 @@
+= Using BTM with Maven 2
+
+BTM artifacts and POM are published in the Maven 2 central repository since version 1.2.
+
+== Contents
+
+* <<prerequisites,Prerequisites>>
+* <<officialVersions,Officially released versions>>
+* <<earlyVersions,Early versions>>
+
+[[prerequisites]]
+== Prerequisites
+
+You obviously need to have Maven 2 installed. It is also recommended that you to know about it before trying to use these instructions. Please refer to the Maven documentation for any question you may have on the subject.
+
+[[officialVersions]]
+== Officially released versions
+
+They are published in the central Maven 2 repository at this standard location: http://repo1.maven.org/maven2/org/codehaus/btm/
+
+You just have to add a dependency to your own project's POM to use it:
+
+    <dependency>
+      <groupId>org.codehaus.btm</groupId>
+      <artifactId>btm</artifactId>
+      <version>2.1.4</version>
+    </dependency>
+
+You also need to choose which logging framework BTM should send its logs to. This is done by adding another dependency in your POM. For instance, if you want to use JDK 1.4 logging, you should include this:
+
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-jdk14</artifactId>
+        <version>1.7.12</version>
+        <scope>runtime</scope>
+    </dependency>
+
+If you prefer Log4J 1.2, add this instead:
+
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-log4j12</artifactId>
+        <version>1.7.12</version>
+        <scope>runtime</scope>
+    </dependency>
+
+There are other supported logging frameworks, see DebugLogging2x.
+
+[[earlyVersions]]
+== Early versions
+
+*TODO This section needs updating!?!*
+
+Beta-quality or snapshot versions are published in the Codehaus Snapshot Maven 2 repository at this non-standard location: https://nexus.codehaus.org/content/repositories/snapshots/org/codehaus/btm/
+
+You just have to add a dependency to your own project's POM to use it:
+
+    <dependency>
+      <groupId>org.codehaus.btm</groupId>
+      <artifactId>btm</artifactId>
+      <version>3.0.0-SNAPSHOT</version>
+    </dependency>
+
+You will have to configure a remote repository entry to be able to download artifacts from this location:
+
+    <repository>
+        <id>codehaus-snapshots</id>
+        <url>https://nexus.codehaus.org/content/repositories/snapshots</url>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+

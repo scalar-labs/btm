@@ -1,0 +1,134 @@
+= JMS servers XA support evaluation
+
+Those are the information collected while testing BTM against some JMS servers. Also included:
+
+* An overall evaluation of the database's XA support
+* Special features and/or limitations
+
+.XA only
+****
+JMS servers not providing an implementation of `javax.jms.XAConnectionFactory` have not been included.
+****
+
+If you find mistakes, inconsistencies or simply want some other database to be tested (as long as there is at least a free trial version available) just let us know via an issue in Github and we'll consider your request.
+
+== Contents
+
+* <<activemq,ActiveMQ>>
+* <<swiftmq,SwiftMQ>>
+* <<hornetq,HornetQ>>
+* <<sonicmq,SonicMQ (Progress Software)>>
+* <<comments,Comments>>
+
+[[activemq]]
+== ActiveMQ
+
+=== Supported version(s)
+Tested against versions 4.2 and 5.1. All 4.x version prior to 4.1.1 are broken regarding recovery and cannot be used.
+
+=== Settings
+
+Local transactions cannot be mixed well with global transactions thus you should not enable `allowLocalTransactions` or ActiveMQ will throw an exception.
+
+=== Heuristics
+
+I could not find how to list in-doubt transactions nor how to manually terminate them.
+
+=== Example ResourceLoader configuration
+
+    resource.ds.className=org.apache.activemq.ActiveMQXAConnectionFactory
+    resource.ds.uniqueName=amq
+    resource.ds.maxPoolSize=5
+    resource.ds.driverProperties.brokerURL=tcp://localhost:61616
+
+[[swiftmq]]
+== SwiftMQ
+
+=== Supported version(s)
+Tested against versions 6.2 but works fine with more recent versions too. You need the JMS XA/ASF Swiftlet extension to be able to use XA transactions.
+
+=== Settings
+
+All default settings are fine.
+
+=== Heuristics
+
+The console can be used to list in-doubt transactions and to heuristically terminate and forget them.
+
+=== Example ResourceLoader configuration
+
+    resource.ds.className=bitronix.tm.resource.jms.JndiXAConnectionFactory
+    resource.ds.uniqueName=smq
+    resource.ds.maxPoolSize=5
+    resource.ds.driverProperties.initialContextFactory=com.swiftmq.jndi.InitialContextFactoryImpl
+    resource.ds.driverProperties.providerUrl=smqp://localhost:4001/timeout=10000
+    resource.ds.driverProperties.name=QueueConnectionFactory
+
+[[hornetq]]
+== HornetQ
+
+=== Supported version(s)
+
+Tested against versions 2.0.0.BETA5. The `JndiXAConnectionFactory` included in BTM 1.3.2 and lower is too limited, you need BTM 1.3.3 or higher to use HornetQ.
+
+=== Settings
+
+All default settings are fine.
+
+=== Heuristics
+
+A JMX console (like the JDK jconsole tool) can be used to list in-doubt transactions and to heuristically terminate them. Just have a look at the org.hornetq/Server/Core JMX object which contains 3 interesting operations: listPreparedTransactions, commitPreparedTransaction, rollbackPreparedTransaction.
+
+Still under investigation.
+
+=== Example ResourceLoader configuration
+
+    resource.ds.className=bitronix.tm.resource.jms.JndiXAConnectionFactory
+    resource.ds.uniqueName=hornet
+    resource.ds.maxPoolSize=5
+    resource.ds.driverProperties.initialContextFactory=org.jnp.interfaces.NamingContextFactory
+    resource.ds.driverProperties.providerUrl=jnp://localhost:1099
+    resource.ds.driverProperties.extraJndiProperties.java.naming.factory.url.pkgs=org.jboss.naming:org.jnp.interfaces
+    resource.ds.driverProperties.name=XAConnectionFactory
+
+[[sonicmq]]
+== SonicMQ (Progress Software)
+
+=== Supported version(s)
+Tested against versions 7.6. The `JndiXAConnectionFactory` included in BTM 1.3.2 and lower is too limited (extraJndiProperties), you need BTM 1.3.3 or higher to use SonicMQ. Seems to support local transactions.
+
+=== Settings
+
+All default settings are fine.
+
+=== Heuristics
+
+Still under investigation.
+
+=== Example ResourceLoader configuration
+
+    resource.cf.className=bitronix.tm.resource.jms.JndiXAConnectionFactory
+    resource.cf.uniqueName=sonicmq
+    resource.cf.maxPoolSize=5
+    resource.cf.driverProperties.initialContextFactory=com.sonicsw.jndi.mfcontext.MFContextFactory
+    resource.cf.driverProperties.providerUrl=tcp://localhost:2506
+    resource.cf.driverProperties.securityPrincipal=username
+    resource.cf.driverProperties.securityCredentials=password
+    resource.cf.driverProperties.name=xaConnectionFactory
+    resource.cf.driverProperties.extraJndiProperties.com.sonicsw.jndi.mfcontext.domain=domain
+
+=== Required Jars
+
+mfcontext-7.6.jar, sonic_Client-7.6.jar (warning JMS API is included in the Jar), sonic_Crypto-7.6.jar, sonic_XA-7.6.jar, sonic_XMessage-7.6.jar
+
+[[comments]]
+== Comments 
+
+=== seshagiri.sriram_rsys Seshagiri Sriram 7 11, 2012
+
+These documents are very useful. Could some one take up the task of updating it rather than a one-time static document? For example, RabbitMQ might be considered also
+
+=== lorban Ludovic Orban
+
+RabbitMQ does not support XA AFAIK. If you'd like to evaluate a few other servers, feel free to do so and post your findings to the mailing list.
+

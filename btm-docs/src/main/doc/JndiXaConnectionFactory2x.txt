@@ -1,0 +1,58 @@
+= XA Connection factories only available from JNDI
+
+The JMS specification does not specify that `XAConnectionFactory` implementations should be javabeans. Because of this, it is not always possible to build a `PoolingConnectionFactory` directly.
+
+== Contents
+
+* <<jndiXaCF,The JndiXAConnectionFactory>>
+* <<jndiCreds,JNDI credentials>>
+* <<other,Other JNDI properties>>
+
+[[jndiXaCF]]
+== The JndiXAConnectionFactory
+
+When you have no way to create a XAConnectionFactory in a javabean way, you can specify the className argument of `PoolingConnectionFactory` to be https://github.com/bitronix/btm/blob/master/btm/src/main/java/bitronix/tm/resource/jms/JndiXAConnectionFactory.java[`bitronix.tm.resource.jms.JndiXAConnectionFactory`]. This class is an implementation of `XAConnectionFactory` that will wrap another implementation fetched from JNDI.
+
+Set the `name`, `initialContextFactory` and `providerUrl` properties respectively to the JNDI name of the `XAConnectionFactory` implementation, the initial context factory and provider URL used to access the JNDI server. The last two parameters can be omitted if the `XAConnectionFactory` implementation is available in the default JNDI context (inside an application server for instance).
+
+Here is what your code would look like for creating a SwiftMQ `PoolingConnectionFactory`:
+
+    PoolingConnectionFactory myConnectionFactory = new PoolingConnectionFactory ();
+    myConnectionFactory.setClassName("bitronix.tm.resource.jms.JndiXAConnectionFactory");
+    myConnectionFactory.setUniqueName("swiftmq");
+    myConnectionFactory.setMaxPoolSize(5);
+    myConnectionFactory.getDriverProperties().setProperty("name", "QueueConnectionFactory@router1");
+    myConnectionFactory.getDriverProperties().setProperty("initialContextFactory", "com.swiftmq.jndi.InitialContextFactoryImpl");
+    myConnectionFactory.getDriverProperties().setProperty("providerUrl", "smqp://localhost:4001/timeout=10000");
+     
+    Connection c = myConnectionFactory.createConnection();
+    // create some session then send or receive some message
+    c.close();
+ 
+    myConnectionFactory.close();
+
+[[jndiCreds]]
+== JNDI credentials
+
+It is often required to use credentials to be able to connect to a JNDI repository. The https://github.com/bitronix/btm/blob/master/btm/src/main/java/bitronix/tm/resource/jms/JndiXAConnectionFactory.java[`bitronix.tm.resource.jms.JndiXAConnectionFactory`] class fully supports this via its `securityPrincipal` and `securityCredentials` properties as illustrated bellow:
+
+    PoolingConnectionFactory myConnectionFactory = new PoolingConnectionFactory ();
+    ...
+    myConnectionFactory.getDriverProperties().setProperty("name", "QueueConnectionFactory@router1");
+    myConnectionFactory.getDriverProperties().setProperty("initialContextFactory", "com.swiftmq.jndi.InitialContextFactoryImpl");
+    myConnectionFactory.getDriverProperties().setProperty("providerUrl", "smqp://localhost:4001/timeout=10000");
+     
+    // set JNDI username / password
+    myConnectionFactory.getDriverProperties().setProperty("securityPrincipal", "jndiUser");
+    myConnectionFactory.getDriverProperties().setProperty("securityCredentials", "jndiPassword");
+    ...
+
+[[other]]
+== Other JNDI properties
+
+There are some other properties to make the `JndiXAConnectionFactory` more flexible:
+
+* `urlPkgPrefixes` Use it to set the http://java.sun.com/j2se/1.4.2/docs/api/javax/naming/Context.html#URL_PKG_PREFIXES[Context#URL_PKG_PREFIXES].
+* `narrowJndiObject` Use it to indicate if http://java.sun.com/j2se/1.4.2/docs/api/javax/rmi/PortableRemoteObject.html#narrow%28java.lang.Object,%20java.lang.Class%29[`PortableRemoteObject.narow()`] should be applied on the object fetched from JNDI.
+* `extraJndiProperties` Extra JNDI environment properties added the the http://java.sun.com/j2se/1.4.2/docs/api/javax/naming/InitialContext.html[`InitialContext`].
+

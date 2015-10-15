@@ -1,0 +1,111 @@
+= Home
+
+.BTM 2.1.x approaching End Of Life
+****
+Here is the home of the 2.1.x and earlier version of BTM. If you're looking for the latest version, you should go have a look on https://github.com/bitronix/btm[GitHub].
+
+BTM 2.1.x is now in maintenance mode and only critical bug fixes are considered. Any new development is now happening in the 3.0.x version.
+****
+
+== Home of BTM, the Bitronix JTA Transaction Manager
+
+The Bitronix Transaction Manager (BTM) is a simple but complete implementation of the JTA 1.1 API. It is a fully working XA transaction manager that provides all services required by the JTA API while trying to keep the code as simple as possible for easier understanding of the XA semantics.
+ 	
+**THE PRIMARY GOAL OF THE BTM PROJECT IS TO MAKE JTA A COMMODITY**
+
+This is BTM's strongest point compared to its competitors: it is trivial to configure and when something goes wrong it is much easier to figure out what to do thanks to the great care placed in useful error reporting and logging.
+
+****
+Don't know how to get started? Read the link:NewUserGuide.html[new user's guide].
+****
+
+****
+Looking for help? Check how to link:Support.html[get support].
+****
+
+== Using BTM
+
+link:Overview.html[Overview]
+
+link:FAQ.html[FAQ]
+
+link:Download.html[Download]
+
+Roadmap - see https://github.com/bitronix/btm/wiki[GitHub] (or link:Roadmap.html[this old page])
+
+link:RecommendedReadings.html[Recommended Readings]
+
+link:GettingSupport.html[Getting support]
+
+link:WhoUsesBTM.html[Who uses BTM]
+ 	
+== Architecture
+
+link:JtaBestPractices.html[JTA Best Practices]
+
+link:Build.html[Building from source]
+
+link:ImplementationDetails.html[Internal implementation details]
+
+link:Maven2.html[Using BTM with Maven 2]
+
+link:JdbcXaSupportEvaluation.html[Databases XA support evaluation]
+
+link:JmsXaSupportEvaluation.html[JMS servers XA support evaluation]
+ 
+== Version 2.x.x
+
+link:WhatsNew2x.html[What's new in version 2.x.x]
+
+API javadoc - TODO - where will this be deployed?
+
+== Configuration
+
+=== Transaction manager
+
+link:Configuration2x.html[Transaction manager configuration]
+
+link:ResourceLoader2x.html[Resource loader configuration]
+
+link:DebugLogging2x.html[Debug logging configuration]
+
+=== Jdbc
+
+link:JdbcConfiguration2x.html[JDBC pools configuration]
+
+link:LastResourceCommit2x.html[Using non-XA databases]
+
+link:CryptResourcePassword2x.html[Password encryption]
+
+=== Jms
+
+link:JmsConfiguration2x.html[JMS pools configuration]
+
+link:JndiXaConnectionFactory2x.html[XA Connection factories only available from JNDI]
+
+link:LastResourceCommitJms2x.html[Using non-XA servers]
+
+link:CryptResourcePassword2x.html[Password encryption]
+	
+== Integration
+
+=== ORM integration
+
+link:Hibernate2x.html[Hibernate]
+
+link:IBatis2x.html[iBATIS Data Mapper]
+
+=== Container integration
+
+link:Jetty2x.html[Jetty]
+
+link:TomcatWithBtm2x.html[Tomcat]
+
+link:SpringFramework2x.html[Spring Framework]
+
+=== JNDI
+
+link:Jndi2x.html[Embedded JNDI Provider]
+
+(Archived documentation can be found at: http://web.archive.org/web/20150520175151/https://docs.codehaus.org/display/BTM/Home)
+
