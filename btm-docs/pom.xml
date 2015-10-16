@@ -16,7 +16,6 @@
             <plugin>
                 <groupId>org.asciidoctor</groupId>
                 <artifactId>asciidoctor-maven-plugin</artifactId>
-                <version>1.5.2.1</version> 
                 <executions>
                     <execution>
                         <id>output-html</id> 
@@ -27,10 +26,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <sourceDirectory>src/main/doc</sourceDirectory>
-                    <outputDirectory>target/docs</outputDirectory>
                     <backend>html</backend>
-                    <doctype>book</doctype>
                 </configuration>
             </plugin>
         </plugins>

@@ -16,7 +16,7 @@ This page contains descriptions of those components and how they work internally
 * <<e,Recovery engine>>
 ** <<e1,currentNodeOnlyRecovery>>
 
-* [[a]]
+[[a]]
 == Bitronix implementation specifics
 
 [[a1]]

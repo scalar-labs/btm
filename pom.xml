@@ -275,6 +275,11 @@
                         <arguments>-Pdist</arguments>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.asciidoctor</groupId>
+                    <artifactId>asciidoctor-maven-plugin</artifactId>
+                    <version>1.5.2.1</version> 
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
