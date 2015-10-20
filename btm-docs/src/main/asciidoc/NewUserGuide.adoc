@@ -1,0 +1,109 @@
+= New user's guide to BTM and JTA
+
+JTA has the reputation of being hard to use and understand. This isn't true. There are a few new things you need to know but in general this information adds on top of your current JDBC or JMS experience.
+
+Let's see what JTA hello, world! using BTM looks like. Here is a complete application's code that inserts a row in a Derby database using a JTA transaction and reads it back in another transaction:
+
+    package jtatest;
+    import bitronix.tm.BitronixTransactionManager;
+    import bitronix.tm.TransactionManagerServices;
+    import bitronix.tm.resource.jdbc.PoolingDataSource;
+    import java.sql.Connection;
+    import java.sql.PreparedStatement;
+    import java.sql.SQLException;
+    import java.sql.ResultSet;
+    public class Test {
+        public static void main(String[] args) throws Exception {
+            String who = "world";
+            if (args.length > 0)
+                who = args[0];
+            PoolingDataSource derby1Ds = new PoolingDataSource();
+            derby1Ds.setClassName("org.apache.derby.jdbc.EmbeddedXADataSource");
+            derby1Ds.setUniqueName("derby1");
+            derby1Ds.setMaxPoolSize(3);
+            derby1Ds.getDriverProperties().setProperty("databaseName", "db1");
+            derby1Ds.init();
+            BitronixTransactionManager btm = TransactionManagerServices.getTransactionManager();
+            btm.begin();
+            try {
+                Connection c = derby1Ds.getConnection();
+                PreparedStatement stmt = c.prepareStatement("insert into messages(content) values (?)");
+                stmt.setString(1, "hello, " + who + "!");
+                stmt.executeUpdate();
+                stmt.close();
+                c.close();
+                btm.commit();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                btm.rollback();
+            }
+            btm.begin();
+            try {
+                Connection c = derby1Ds.getConnection();
+                PreparedStatement stmt = c.prepareStatement("select content from messages");
+                ResultSet rs = stmt.executeQuery();
+                while(rs.next())
+                    System.out.println(rs.getString(1));
+                rs.close();
+                stmt.close();
+                c.close();
+                btm.commit();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                btm.rollback();
+            }
+            derby1Ds.close();
+            btm.shutdown();
+        }
+    }
+
+This code expects a Derby database named `db1` to be already created in the current folder with this table:
+
+    create table messages (
+        content varchar(50)
+    );
+
+And this is what the application outputs when you run it:
+
+    Feb 15, 2009 1:37:01 PM bitronix.tm.BitronixTransactionManager logVersion
+    INFO: Bitronix Transaction Manager version 1.3.2
+    Feb 15, 2009 1:37:01 PM bitronix.tm.Configuration buildServerIdArray
+    WARNING: cannot get this JVM unique ID. Make sure it is configured and you only use ASCII characters. Will use IP address instead (unsafe for production usage!).
+    Feb 15, 2009 1:37:01 PM bitronix.tm.Configuration buildServerIdArray
+    INFO: JVM unique ID: <x.x.x.x>
+    Feb 15, 2009 1:37:02 PM bitronix.tm.recovery.Recoverer run
+    INFO: recovery committed 0 dangling transaction(s) and rolled back 0 aborted transaction(s) on 1 resource(s) [derby1]
+ 
+    hello, world!
+ 
+    Feb 15, 2009 1:37:03 PM bitronix.tm.BitronixTransactionManager shutdown
+    INFO: shutting down Bitronix Transaction Manager
+
+Neat, huh? Who said using JTA is complex?
+
+== Download
+
+You can download this demo here: TODO where is it today? http://www.bitronix.be/examples/newUserDemo.zip[newUserDemo.zip].
+
+There is an ant `build.xml` file included as well as a the necessary batch and shell scripts required to run the application from Windows or Unix.
+Before you run the application, you have to create the Derby database. Just run the included `derby-create.sh` or `derby-create.bat` script to do so, it will create a directory called `db1`. Then you can start the demo by either running `run.sh` or `run.bat`.
+
+Here is the list of JAR files with version required to run this demo. They're all included in the downloadable ZIP file.
+
+[options="header", cols="2*"]
+|====
+|JAR name|Version
+|btm-1.3.2.jar
+|BTM 1.3.2
+|geronimo-jta_1.0.1B_spec-1.0.1.jar
+|BTM 1.3.2
+|slf4j-api-1.5.2.jar
+|SLF4J 1.5.2
+|slf4j-jdk14-1.5.2.jar
+|SLF4J 1.5.2
+|derby-10.2.2.0.jar
+|Derby 10.2.2.0
+|derbytools-10.2.2.0.jar
+|Derby 10.2.2.0
+|====
+

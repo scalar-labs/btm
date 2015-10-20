@@ -1,0 +1,77 @@
+= Resource Loader
+
+The Resource Loader is a facility that allows easy configuration and management of resources. Pools configured via the Resource Loader will be created automatically during the transaction manager's startup and will be closed during its shutdown.
+
+It consists of an extra layer above the JDBC and JMS pools which configures them via a properties file. It is not mandatory to use it but sometimes it is better than manually creating resource pools. Another good example of Resource Loader usage is when BTM is embedded in a servlet container which configuration file cannot easily be extended, like link:TomcatWithBtm2x.html[Tomcat for instance].
+
+== Contents
+
+* <<enabling,Enabling the Resource Loader>>
+* <<configJDBC,Configuring a JDBC pool>>
+* <<configJMS,Configuring a JMS pool>>
+* <<antRefs,Ant-like references>>
+* <<jndi,JNDI binding>>
+
+[[enabling]]
+== Enabling the Resource Loader
+
+You can enable it by setting the `bitronix.tm.resource.configuration` property in the link:Configuration2x.html[configuration file] or by calling `setResourceConfigurationFilename()` on the https://github.com/bitronix/btm/blob/master/btm/src/main/java/bitronix/tm/Configuration.java[`Configuration`] object.
+
+This property must contain a path to a properties file that will be loaded by the Resource Loader to create pools. Its default value is `null` which means the Resource Loader is disabled and resources should be manually created via the API.
+
+[[configJDBC]]
+== Configuring a JDBC pool
+
+You can configure a JDBC connection pool that wraps the driver's `javax.sql.XADataSource` implementation and presents it to the user as a `javax.sql.DataSource`, much like with the API.
+
+To configure a JDBC pool, create a set of properties:
+
+    #(A) .(B). (C)
+    resource.ds1.className=oracle.jdbc.xa.client.OracleXADataSource
+    resource.ds1.uniqueName=oracle
+    resource.ds1.maxPoolSize=5
+    resource.ds1.driverProperties.user=users1
+    resource.ds1.driverProperties.password=users1
+    resource.ds1.driverProperties.URL=jdbc:oracle:thin:@localhost:1521:XE
+
+A) is constant and never changes.
+
+B) is an arbitrary name used to group a set of properties together.
+
+C) is a javabean property of https://github.com/bitronix/btm/blob/master/btm/src/main/java/bitronix/tm/resource/jdbc/PoolingDataSource.java[`bitronix.tm.resource.jdbc.PoolingDataSource`].
+
+Refer to the `PoolingDataSource` javadoc or to the link:JdbcConfiguration2xJDBC.html[JDBC configuration] page to know what properties can be set.
+
+[[configJMS]]
+== Configuring a JMS pool
+
+You can configure a JMS connection pool that wraps JMS server's `javax.jms.XAConnectionFactory` implementation and presents it to the user as a `javax.jms.ConnectionFactory`, much like with the API or for JDBC.
+
+To configure a JMS pool, create a set of properties:
+
+    #(A) .(B). (C)
+    resource.mq1.className=org.activemq.ActiveMQXAConnectionFactory
+    resource.mq1.uniqueName=activemq                              
+    resource.mq1.maxPoolSize=2                                       
+    resource.mq1.driverProperties.userName=defaultUser            
+    resource.mq1.driverProperties.password=defaultPassword
+    resource.mq1.driverProperties.brokerURL=tcp://localhost:61616
+
+A) is constant and never changes.
+
+B) is an arbitrary name used to group a set of properties together.
+
+C ) is a javabean property of https://github.com/bitronix/btm/blob/master/btm/src/main/java/bitronix/tm/resource/jms/PoolingConnectionFactory.java[`bitronix.tm.resource.jms.PoolingConnectionFactory`].
+
+Refer to the `PoolingConnectionFactory` javadoc or to the link:JmsConfiguration2x.html[JMS configuration] page to know what properties can be set.
+
+[[antRefs]]
+== Ant-like references
+
+Unlike the transaction manager, the Resource Loader does not support ant-like references (${...}) in its configuration file.
+
+[[jndi]]
+== JNDI binding
+
+All resources created by the Resource Loader are bound to BTM's JNDI provider, just like the ones created by direct use of the API. Have a look at the Jndi2x.html[Embedded JNDI provider] page for more details. 
+

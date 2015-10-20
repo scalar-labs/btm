@@ -1,0 +1,3 @@
+The files contained in `src/main/asciidoc` are [asciidoc](http://asciidoctor.org/) files. HTML / PDF can be generated out of them using the `asciidoc` tool, or by running `mvn generate-resources`. After Maven runs, you can read the HTML documentation by starting at `target/generated-docs/index.html`.
+
+The original content was lost when the code was moved from codehaus.org over to GitHib.  Thanks to web archive, it was possible to get the original content from e.g. [http://web.archive.org/web/20150520175151/https://docs.codehaus.org/display/BTM/Home](http://web.archive.org/web/20150520175151/https://docs.codehaus.org/display/BTM/Home).

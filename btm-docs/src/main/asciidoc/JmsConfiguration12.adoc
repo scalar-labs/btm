@@ -1,0 +1,105 @@
+= JMS pools configuration
+
+BTM XA connection factories can be created - like their JDBC counterparts - via some java code or via a BTM-specific tool called the Resource Loader. You are free to choose the method you prefer, there is absolutely no difference between them.
+
+.Supported JMS versions
+****
+BTM only supports the JMS 1.1 API. Only servers supporting it can be used with BTM. There is currently no way to make BTM work with JMS 1.0.2 API.
+****
+
+== Contents
+
+* <<usingAPI,Using the BTM API>>
+** <<eager,Eager initialization>>
+* <<usingRL,Using the Resource Loader>>
+
+[[usingAPI]]
+== Using the BTM API
+
+BTM comes bundled with a JMS XA connection pool which is very easy to configure. You basically have to create an instance of https://github.com/bitronix/btm/blob/master/btm/src/main/java/bitronix/tm/resource/jms/PoolingConnectionFactory.java[bitronix.tm.resource.jms.PoolingConnectionFactory] set some properties and you're done.
+
+Here is an example of datasource creation that connects to an ActiveMQ JMS server:
+
+    PoolingConnectionFactory myConnectionFactory = new PoolingConnectionFactory ();                   (1)
+    myConnectionFactory.setClassName("org.apache.activemq.ActiveMQXAConnectionFactory");              (2)
+    myConnectionFactory.setUniqueName("activemq");                                                    (3)
+    myConnectionFactory.setMinPoolSize(1);                                                            (4)
+    myConnectionFactory.setMaxPoolSize(5);                                                            (5)
+    myConnectionFactory.setAllowLocalTransactions(true);                                              (6)
+    myConnectionFactory.setUser("user");                                                              (7)
+    myConnectionFactory.setPassword("password");                                                      (8)
+    myConnectionFactory.getDriverProperties().setProperty("brokerURL", "tcp://localhost:61616");      (9)
+    Connection c = myConnectionFactory.createConnection();                                            (10)
+    // create some session then send or receive some message
+    c.close();                                                                                        (11)
+
+    myConnectionFactory.close();                                                                      (12)
+
+1. The Bitronix PoolingConnectionFactory is a javabean that implements `javax.jms.ConnectionFactory`.
+2. You have to specify the JMS server's `XAConnectionFactory` implementation here.
+3. Each connection factory must be assigned a unique name. This is required for distributed crash recovery.
+4. This connection factory can contain at least 1 connection. 0 is the default value when unspecified.
+5. This connection factory can contain at most 5 connections.
+6. You have to set allowLocalTransactions to true if you want to be able to send or receive messages outside of XA transactions scope.
+7,8. When both are set, the pooled connections will be created using the provided user and password instead of without credentials. This works like if you called `ConnectionFactory.createConnection(user, password)` instead of `ConnectionFactory.createConnection()`.
+9. The `driverProperties` is a `java.util.Properties` object. You have to add into it a set of property name / property value of the http://activemq.apache.org/maven/activemq-core/apidocs/org/apache/activemq/ActiveMQXAConnectionFactory.html[`ActiveMQXAConnectionFactory`] class. You have to refer to the JMS server's documentation to know what can / has to be set. The `ActiveMQXAConnectionFactory` javadoc contains this list for the ActiveMQ case. BTM will perform conversion from `String` to `boolean` or to `int` when necessary.
+10,11. You can now use the `PoolingConnectionFactory` like any other `javax.jms.ConnectionFactory`.
+12. Remember to close the `PoolingConnectionFactory` after you're done with it to release the connections.
+
+.No class implemeting XAConnectionFactory ?
+****
+It might be that the `XAConnectionFactory` class cannot be directly instantiated because the JMS specification only specifies that implementations of this class should only be available from JNDI.
+
+If your vendor only allows `XAConnectionFactory` implementations to be acquired from JNDI, you should have a look at link:JndiXaConnectionFactory2x.html[XA Connection factories only available from JNDI].
+
+If your vendor does not provide a `XAConnectionFactory` implementation, you should have a look at the link:LastResourceCommitJms2x.html[Last Resource Commit optimization].
+****
+
+[[eager]]
+=== Eager initialization
+
+Like for JDBC, the connection pool will be initialized during the first call to `createConnection()`. It might be desirable to initialize the pool eagerly, like during application startup rather than having to wait for the first request. This can be done by calling `init()`:
+
+    PoolingConnectionFactory myConnectionFactory = new PoolingConnectionFactory ();                   (1)
+    myConnectionFactory.setClassName("org.apache.activemq.ActiveMQXAConnectionFactory");              (2)
+    myConnectionFactory.setUniqueName("activemq");                                                    (3)
+    myConnectionFactory.setMaxPoolSize(5);                                                            (4)
+    myConnectionFactory.setAllowLocalTransactions(true);                                              (5)
+    myConnectionFactory.getDriverProperties().setProperty("brokerURL", "tcp://localhost:61616");      (6)
+    myConnectionFactory.init();                                                                       (7)
+     
+    Connection c = myConnectionFactory.createConnection();                                            (8)
+    // create some session then send or receive some message
+    c.close();                                                                                        (9)
+ 
+    myConnectionFactory.close();                                                                      (10)
+
+Now line 7 will initialize the pool and create the 5 connections to the JMS server instead of line 8.
+
+[[usingRL]]
+== Using the Resource Loader
+
+A connection factory configuration utility is also bundled with BTM. It is convenient to use it rather than create your connection factory in code. Refer to the link:ResourceLoader2x.html[Resource Loader] page for more details.
+
+Here is the equivalent Resource Loader configuration of the previous code example:
+
+    resource.cf.className=org.apache.activemq.ActiveMQXAConnectionFactory
+    resource.cf.uniqueName=activemq
+    resource.cf.maxPoolSize=5
+    resource.cf.allowLocalTransactions=true
+    resource.cf.driverProperties.user=users1
+    resource.cf.driverProperties.password=users1
+    resource.cf.driverProperties.URL=jdbc:oracle:thin:@localhost:1521:XE
+
+You just have to write those properties in a simple text file and tell BTM where to load it by setting the `resourceConfigurationFilename` property of the link:Configuration2x.html[`Configuration`] object.
+
+.Eager initialization
+****
+The Resource Loader will always eager initialize the created connection factories.
+****
+
+Now you also have to know how to get the connection factory created by the Resource Loader. There are multiple ways:
+
+* Add `bitronix.tm.resource.bind=true` to your resource loader properties file. The connection factories will then be bound to the default JNDI server using their uniqueName as their JNDI name.
+* Another way (in case the JNDI context is read only, like in Tomcat) is to bind a https://github.com/bitronix/btm/blob/master/btm/src/main/java/bitronix/tm/resource/ResourceObjectFactory.java[`bitronix.tm.resource.ResourceObjectFactory`] object, passing it a http://java.sun.com/j2se/1.4.2/docs/api/javax/naming/Reference.html[`javax.naming.Reference`] containing a http://java.sun.com/j2se/1.4.2/docs/api/javax/naming/StringRefAddr.html[`javax.naming.StringRefAddr`] containing the connection factory's `uniqueName` as `addrType` somewhere in your JNDI tree. The `bitronix.tm.resource.ResourceObjectFactory` class will just return the connection factory with the specified `uniqueName`. This is explained more in-depth in the link:TomcatWithBtm2x.html[Tomcat] integration page.
+* The last way is to call https://github.com/bitronix/btm/blob/master/btm/src/main/java/bitronix/tm/resource/ResourceRegistrar.java#get(java.lang.String)[`bitronix.tm.resource.ResourceRegistrar.get(String uniqueName)`]. This is the least preferred method as this ties your code to BTM which you probably want to avoid. 

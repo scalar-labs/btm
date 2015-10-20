@@ -1,0 +1,199 @@
+= JTA Best Practices
+
+Why is the JTA API your friend ? How does it help you write better code ? Those are questions that we will try to answer here. These best practices are not limited to BTM but are valid for all JTA implementations. The more you use JTA, the better the world will be.
+
+== Contents
+
+* <<why,Why using the JTA API>>
+* <<jdbcExample,Straight JDBC Example>>
+* <<bestOfBothWorlds,Best of both worlds>>
+* <<benefits,Extra benefits>>
+* <<refs,Other references>>
+
+[[why]]
+== Why using the JTA API
+
+Even if you're only planning to use a single database in your application (ie: if you don't plan to make use of 2 Phase Commit) using the JTA API is still a good idea as it helps separating concerns in your application.
+The biggest benefit is the separation of the transaction management concern from the connection management concern. What does that mean ?
+When using 'good old' JDBC, you work with a single object type: the Connection but this object is used twofolds: for data manipulation (ie: SELECT, INSERT, UPDATE, DELETE) and for transaction management (ie: COMMIT and ROLLBACK).
+This is awkward as you often end up using an object for a concern (data manipulation) then keep it aside for later usage for another concern (committing or rolling back your changes).
+
+[[jdbcExample]]
+== Straight JDBC Example
+
+Take this simple example to illustrate our concern:
+
+*Example 1*
+
+    public void executeA_B_C() {
+        executeBusinessLogicA();
+        executeBusinessLogicB();
+        executeBusinessLogicC();
+    }
+ 
+    public void executeBusinessLogicA() {
+        DataSource ds = (DataSource) ctx.lookup("jdbc/myds");
+        Connection c = myDataSource.getConnection();
+        try {
+            // SELECT, INSERT, UPDATE or DELETE here
+            c.commit();
+        }
+        catch(Exception ex) {
+            c.rollback();
+            // exception handling
+        } finally {
+            c.close();
+        }
+    }
+ 
+    public void executeBusinessLogicB() {
+        DataSource ds = (DataSource) ctx.lookup("jdbc/myds");
+        Connection c = myDataSource.getConnection();
+        try {
+            // SELECT, INSERT, UPDATE or DELETE here
+            c.commit();
+        }
+        catch(Exception ex) {
+            c.rollback();
+            // exception handling
+        } finally {
+            c.close();
+        }
+    }
+ 
+    public void executeBusinessLogicC() {
+        DataSource ds = (DataSource) ctx.lookup("jdbc/myds");
+        Connection c = myDataSource.getConnection();
+        try {
+            // SELECT, INSERT, UPDATE or DELETE here
+            c.commit();
+        }
+        catch(Exception ex) {
+            c.rollback();
+            // exception handling
+        } finally {
+            c.close();
+        }
+    }
+
+This code is reasonably clean as the calling business method (`executeA_B_C()`) does no know that the underlying logic is using JDBC which is good 
+Object Oriented design. It is also possible to encapsulate the JDBC boilerplate code in some helper class, DAO or even delegate that to a more 
+powerful solution like Spring's JdbcTemplate. Data access code will change in that case but the idea stays the same.
+Unfortunately the data manipulation is not atomic: if an error happen in `executeBusinessLogicB` then all modifications made by `executeBusinessLogicA` cannot be rolled back.
+
+A commonly found way to fix this problem is by sharing the Connection object between all 3 business methods:
+
+*Example 2*
+
+    public void executeA_B_C() {
+        DataSource ds = (DataSource) ctx.lookup("jdbc/myds");
+        Connection c = myDataSource.getConnection();
+        try {
+            executeBusinessLogicA(c);
+            executeBusinessLogicB(c);
+            executeBusinessLogicC(c);
+            c.commit();
+        }
+        catch(Exception ex) {
+            c.rollback();
+            // exception handling
+        }
+        finally {
+            c.close();
+        }
+    }
+ 
+    public void executeBusinessLogicA(Connection c) throws SQLException {
+        // SELECT, INSERT, UPDATE or DELETE here
+    }
+     
+    public void executeBusinessLogicB(Connection c) throws SQLException {
+        // SELECT, INSERT, UPDATE or DELETE here
+    }
+     
+    public void executeBusinessLogicC(Connection c) throws SQLException {
+        // SELECT, INSERT, UPDATE or DELETE here
+    }
+
+The code is now much less clean as to ensure all 3 business methods will execute in the same transaction, we pass them a Connection object which is not of any business value.
+
+[[bestOfBothWorlds]]
+== Best of both worlds
+
+How to get the clean data access encapsulation of Example 1 together with correct transaction handling of the Example 2? A straightforward continuation of the same logic could lead us to some kind of `ConnectionHolder` singleton that would store the connection in a `ThreadLocal` variable. The different business methods would then get their `Connection` from the `ConnectionHolder` object.
+
+While this would work, this is not as trivial as it sounds. You would have to initialize the `ConnectionHolder` (or make it initialize lazily) then clean up all resources it holds together with exception handling. This also makes the code less reusable as you always need to ensure you have access to a ConnectionHolder from within your business methods.
+
+A better solution is to separate the transaction management logic from the data access logic, and this is exactly what JTA is for.
+
+    public void executeA_B_C() {
+        UserTransaction ut = (UserTransaction) ctx.lookup("java:comp/UserTransaction");
+        try {
+            ut.begin();
+            executeBusinessLogicA();
+            executeBusinessLogicB();
+            executeBusinessLogicC();
+            ut.commit();
+        }
+        catch(Exception ex) {
+            ut.rollback();
+            // exception handling
+        }
+    }
+     
+    public void executeBusinessLogicA() throws SQLException {
+        DataSource ds = (DataSource) ctx.lookup("jdbc/myds");
+        Connection c = myDataSource.getConnection();
+        try {
+     
+            // SELECT, INSERT, UPDATE or DELETE here
+     
+        } finally {
+            c.close();
+        }
+    }
+     
+    public void executeBusinessLogicB() throws SQLException {
+        DataSource ds = (DataSource) ctx.lookup("jdbc/myds");
+        Connection c = myDataSource.getConnection();
+        try {
+     
+            // SELECT, INSERT, UPDATE or DELETE here
+     
+        } finally {
+            c.close();
+        }
+    }
+     
+    public void executeBusinessLogicC() throws SQLException {
+        DataSource ds = (DataSource) ctx.lookup("jdbc/myds");
+        Connection c = myDataSource.getConnection();
+        try {
+     
+            // SELECT, INSERT, UPDATE or DELETE here
+     
+        } finally {
+            c.close();
+        }
+    }
+
+Not only is this code more maintainable than the previous example 2 but it also improves example one in two areas: not only is it now fully transactional but the error handling is now centralized.
+
+You don't have to care about connections, just get them from the pool when needed and release them as soon as you're done with it. The transaction manager and the connection pool will ensure the transaction will be committed at the right time.
+
+As long as you're sticking with a single database, you won't pay the extra 2PC costs as the 1PC optimization will kick in. You don't even need a database implementing `XADataSource` thanks to the Last Resource Commit implementation.
+
+[[benefits]]
+== Extra benefits
+
+JTA not only allows you to cleanly separate our concerns, it also comes with extra benefits:
+
+- 2PC is right at the corner. In case you need to access two distinct databases later on or send/receive JMS messages atomically, you just have to add the extra logic you need without touching your transaction code as you've already taken care of it.
+- Resources hog can be avoided. A timeout can be set on the transaction so that you're guaranteed your database connections can't be held more than a specified amount of time. Some transaction managers even offer a configurable default timeout value so you don't even have to change your code. BTM obviously offers that.
+- Transactional safeguard. Some transaction managers can be configured so that usage of the pooled connections can only be done while a transaction is running. This allows you to guarantee that all your code is transactional. Once again, BTM implements such a feature via its `allowLocalTransactions` datasource property.
+
+[[refs]]
+== Other references
+
+The Hibernate team also recommend to follow the pattern described above here: http://www.hibernate.org/42.html#A5 and here: http://docs.jboss.org/hibernate/stable/core/reference/en/html/architecture.html#architecture-current-session
+
