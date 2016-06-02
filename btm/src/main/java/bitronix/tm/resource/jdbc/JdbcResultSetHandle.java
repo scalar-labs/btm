@@ -28,10 +28,10 @@ import java.sql.Statement;
 import bitronix.tm.utils.ClassLoaderUtils;
 
 /**
- * Statement {@link Statement} wrapper.
+ * ResultSet {@link ResultSet} wrapper.
  * <p/>
- * This class is a proxy handler for a Statement.  It does not
- * implement the Statement interface or extend a class directly,
+ * This class is a proxy handler for a ResultSet.  It does not
+ * implement the ResultSet interface or extend a class directly,
  * but you methods implemented here will override those of the
  * underlying delegate.  Simply implement a method with the same
  * signature, and the local method will be called rather than the delegate.
@@ -39,17 +39,14 @@ import bitronix.tm.utils.ClassLoaderUtils;
  *
  * @author brettw
  */
-public class JdbcStatementHandle extends BaseProxyHandlerClass { // implements Statement
+public class JdbcResultSetHandle extends BaseProxyHandlerClass { // implements ResultSet
 
-    // The 'parent' connection. Used to remove this statement delegate
-    // from the un-closed statements list when close() is called.
-    private final JdbcPooledConnection parentConnection;
+    private final ResultSet delegate;
+    private final BaseProxyHandlerClass statementHandle;
 
-    private final Statement delegate;
-
-    public JdbcStatementHandle(Statement delegate, JdbcPooledConnection pooledConnection) {
+    public JdbcResultSetHandle(ResultSet delegate, BaseProxyHandlerClass statementHandle) {
         this.delegate = delegate;
-        this.parentConnection = pooledConnection;
+        this.statementHandle = statementHandle;
     }
 
     /* java.sql.Wrapper implementation */
@@ -72,28 +69,15 @@ public class JdbcStatementHandle extends BaseProxyHandlerClass { // implements S
         return delegate;
     }
 
-    /* Overridden methods of java.sql.PreparedStatement */
+    /* Overridden methods of java.sql.ResultSet */
 
     public void close() throws SQLException {
-        parentConnection.unregisterUncachedStatement(delegate);
         delegate.close();
     }
 
-    public ResultSet executeQuery(String sql) throws SQLException {
-        return (ResultSet) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[]{ResultSet.class}, new JdbcResultSetHandle(delegate.executeQuery(sql), this));
-    }
 
-    public ResultSet getGeneratedKeys() throws SQLException {
-        return (ResultSet) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[]{ResultSet.class}, new JdbcResultSetHandle(delegate.getGeneratedKeys(), this));
-    }
-
-    public ResultSet getResultSet() throws SQLException {
-        return (ResultSet) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[]{ResultSet.class}, new JdbcResultSetHandle(delegate.getResultSet(), this));
-    }
-
-    public boolean equals(Object object) {
-        Object handler = Proxy.getInvocationHandler(object);
-        return super.equals(handler);
+    public Statement getStatement() throws SQLException {
+        return (Statement) Proxy.newProxyInstance(ClassLoaderUtils.getClassLoader(), new Class[]{Statement.class}, statementHandle);
     }
 
 }

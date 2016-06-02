@@ -20,17 +20,23 @@
  */
 package bitronix.tm.utils;
 
-import bitronix.tm.Version;
-import bitronix.tm.internal.BitronixRuntimeException;
-
-import javax.crypto.*;
-import javax.crypto.spec.DESKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
+
+import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+
+import bitronix.tm.Version;
+import bitronix.tm.internal.BitronixRuntimeException;
 
 /**
  * <p>Simple crypto helper that uses symetric keys to crypt and decrypt resources passwords.</p>
@@ -40,7 +46,7 @@ import java.security.spec.InvalidKeySpecException;
 public class CryptoEngine {
 
     private static final int LONG_SIZE_IN_BYTES = 8;
-    private static final String CRYPTO_PASSWORD = "B1tr0n!+";
+    private static final String CRYPTO_PASSWORD = "B1tr0n!+B1tr0n!+B1tr0n!+";
 
     /**
      * Crypt the given data using the given cipher.
@@ -65,9 +71,9 @@ public class CryptoEngine {
         System.arraycopy(dataBytes, 0, toCrypt, LONG_SIZE_IN_BYTES, dataBytes.length);
 
 
-        DESKeySpec desKeySpec = new DESKeySpec(CRYPTO_PASSWORD.getBytes());
+        KeySpec keySpec = loadKeySpec(CRYPTO_PASSWORD.getBytes(), cipher);
         SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(cipher);
-        SecretKey secretKey = keyFactory.generateSecret(desKeySpec);
+        SecretKey secretKey = keyFactory.generateSecret(keySpec);
 
         Cipher desCipher = Cipher.getInstance(cipher);
         desCipher.init(Cipher.ENCRYPT_MODE, secretKey);
@@ -82,7 +88,16 @@ public class CryptoEngine {
         return Base64.encodeBytes(cypherBytes);
     }
 
-    /**
+    private static KeySpec loadKeySpec(byte[] bytes, String cipher) throws NoSuchAlgorithmException {
+        try {
+            Class<?> aClass = ClassLoaderUtils.loadClass("javax.crypto.spec." + cipher + "KeySpec");
+            return (KeySpec) aClass.getConstructor(byte[].class).newInstance(bytes);
+        } catch (Exception e) {
+            throw new NoSuchAlgorithmException("No such KeySpec: " + cipher, e);
+        }
+    }
+
+  /**
      * Decrypt using the given cipher the given base64-encoded, crypted data.
      * @param cipher the cypther to use.
      * @param data the base64-encoded data to decrypt.
@@ -96,9 +111,9 @@ public class CryptoEngine {
      * @throws IOException if an I/O error occurs.
      */
     public static String decrypt(String cipher, String data) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeySpecException, IOException {
-        DESKeySpec desKeySpec = new DESKeySpec(CRYPTO_PASSWORD.getBytes());
+        KeySpec keySpec = loadKeySpec(CRYPTO_PASSWORD.getBytes(), cipher);
         SecretKeyFactory keyFactory = SecretKeyFactory.getInstance(cipher);
-        SecretKey secretKey = keyFactory.generateSecret(desKeySpec);
+        SecretKey secretKey = keyFactory.generateSecret(keySpec);
 
         Cipher desCipher = Cipher.getInstance(cipher);
         desCipher.init(Cipher.DECRYPT_MODE, secretKey);
