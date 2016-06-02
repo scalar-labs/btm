@@ -20,9 +20,9 @@
  */
 package bitronix.tm.timer;
 
-import bitronix.tm.resource.common.XAPool;
-
 import java.util.Date;
+
+import bitronix.tm.resource.common.XAPool;
 
 /**
  * This task is used to notify a XA pool to close idle connections.
@@ -32,23 +32,40 @@ import java.util.Date;
 public class PoolShrinkingTask extends Task {
 
     private final XAPool xaPool;
+    private final ClassLoader classLoader;
 
     public PoolShrinkingTask(XAPool xaPool, Date executionTime, TaskScheduler scheduler) {
         super(executionTime, scheduler);
         this.xaPool = xaPool;
+        this.classLoader = Thread.currentThread().getContextClassLoader();
     }
 
     public Object getObject() {
         return xaPool;
     }
 
-    public void execute() throws TaskException {
-        try {
-            xaPool.shrink();
-        } catch (Exception ex) {
-            throw new TaskException("error while trying to shrink " + xaPool, ex);
-        } finally {
-            getTaskScheduler().schedulePoolShrinking(xaPool);
+    public void execute() throws TaskException
+    {
+        final ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+        try
+        {
+            try
+            {
+                Thread.currentThread().setContextClassLoader(classLoader);
+                xaPool.shrink();
+            }
+            catch (Exception ex)
+            {
+                throw new TaskException("error while trying to shrink " + xaPool, ex);
+            }
+            finally
+            {
+                getTaskScheduler().schedulePoolShrinking(xaPool);
+            }
+        }
+        finally
+        {
+            Thread.currentThread().setContextClassLoader(originalContextClassLoader);
         }
     }
 
