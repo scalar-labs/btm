@@ -27,14 +27,11 @@
         </license>
     </licenses>
 
+
     <scm>
-        <url>http://github.com/gitweb.cgi?p=btm.git</url>
-        <connection>
-            scm:git:git://github.com/btm.git
-        </connection>
-        <developerConnection>
-            scm:git:ssh://git@github.com/btm.git
-        </developerConnection>
+        <connection>scm:git:git@github.com:mulesoft/btm.git</connection>
+        <url>scm:git:git@github.com:mulesoft/btm.git</url>
+        <developerConnection>scm:git:git@github.com:mulesoft/btm.git</developerConnection>
     </scm>
 
     <properties>
