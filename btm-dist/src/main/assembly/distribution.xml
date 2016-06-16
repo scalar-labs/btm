@@ -13,12 +13,12 @@
         <dependencySet>
             <outputDirectory/>
             <includes>
-                <include>org.codehaus.btm:btm:jar</include>
+                <include>org.mule.btm:btm:jar</include>
             </includes>
             <excludes>
-                <exclude>org.codehaus.btm:btm:jar:sources</exclude>
-                <exclude>org.codehaus.btm:btm:jar:test-sources</exclude>
-                <exclude>org.codehaus.btm:btm:jar:javadoc</exclude>
+                <exclude>org.mule.btm:btm:jar:sources</exclude>
+                <exclude>org.mule.btm:btm:jar:test-sources</exclude>
+                <exclude>org.mule.btm:btm:jar:javadoc</exclude>
             </excludes>
             <useProjectArtifact>false</useProjectArtifact>
         </dependencySet>
@@ -26,9 +26,9 @@
         <dependencySet>
             <outputDirectory>integration</outputDirectory>
             <includes>
-                <include>org.codehaus.btm:btm-jetty6-lifecycle:jar</include>
-                <include>org.codehaus.btm:btm-jetty7-lifecycle:jar</include>
-                <include>org.codehaus.btm:btm-tomcat55-lifecycle:jar</include>
+                <include>org.mule.btm:btm-jetty6-lifecycle:jar</include>
+                <include>org.mule.btm:btm-jetty7-lifecycle:jar</include>
+                <include>org.mule.btm:btm-tomcat55-lifecycle:jar</include>
             </includes>
             <useProjectArtifact>false</useProjectArtifact>
         </dependencySet>
@@ -42,7 +42,7 @@
                 </excludes>
             </unpackOptions>
             <includes>
-                <include>org.codehaus.btm:btm:jar:sources</include>
+                <include>org.mule.btm:btm:jar:sources</include>
             </includes>
             <useProjectArtifact>false</useProjectArtifact>
         </dependencySet>
@@ -56,7 +56,7 @@
                 </excludes>
             </unpackOptions>
             <includes>
-                <include>org.codehaus.btm:btm:jar:test-sources</include>
+                <include>org.mule.btm:btm:jar:test-sources</include>
             </includes>
             <useProjectArtifact>false</useProjectArtifact>
         </dependencySet>
@@ -70,7 +70,7 @@
                 </excludes>
             </unpackOptions>
             <includes>
-                <include>org.codehaus.btm:btm:jar:javadoc</include>
+                <include>org.mule.btm:btm:jar:javadoc</include>
             </includes>
             <useProjectArtifact>false</useProjectArtifact>
         </dependencySet>
@@ -80,7 +80,7 @@
             <scope>runtime</scope>
             <excludes>
                 <exclude>javax.transaction:*</exclude>
-                <exclude>org.codehaus.btm:*</exclude>
+                <exclude>org.mule.btm:*</exclude>
             </excludes>
             <useProjectArtifact>false</useProjectArtifact>
         </dependencySet>

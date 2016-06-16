@@ -220,7 +220,7 @@
                     <version>2.1</version>
                     <configuration>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
-                        <arguments>-Pcodehaus-release,dist</arguments>
+                        <arguments>-Pdist</arguments>
                     </configuration>
                 </plugin>
             </plugins>
@@ -233,12 +233,6 @@
             <modules>
                 <module>btm-dist</module>
             </modules>
-        </profile>
-        <profile>
-            <id>codehaus-ci</id>
-            <properties>
-                <codehausDistMgmtSnapshotsUrl>file:///opt/ci.repository.codehaus.org/</codehausDistMgmtSnapshotsUrl>
-            </properties>
         </profile>
     </profiles>
 
