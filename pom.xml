@@ -28,12 +28,12 @@
     </licenses>
 
     <scm>
-        <url>http://git.codehaus.org/gitweb.cgi?p=btm-git.git</url>
+        <url>http://github.com/gitweb.cgi?p=btm.git</url>
         <connection>
-            scm:git:git://git.codehaus.org/btm-git.git
+            scm:git:git://github.com/btm.git
         </connection>
         <developerConnection>
-            scm:git:ssh://git@git.codehaus.org/btm-git.git
+            scm:git:ssh://git@github.com/btm.git
         </developerConnection>
     </scm>
 
