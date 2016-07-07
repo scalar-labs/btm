@@ -58,6 +58,7 @@ public class ActivatorTest {
 	@After
 	public void tearDown() {
 		tm.shutdown();
+		System.getProperties().remove("bitronix.tm.osgi.disableActivator");
 	}
 	
 	@Test
