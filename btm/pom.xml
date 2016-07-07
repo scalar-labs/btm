@@ -13,8 +13,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>javax.transaction</groupId>
-            <artifactId>jta</artifactId>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-jta_1.1_spec</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -182,7 +182,6 @@ public final class Version {
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Bundle-Activator>bitronix.tm.osgi.Activator</Bundle-Activator>
                         <Bundle-SymbolicName>bitronix.tm</Bundle-SymbolicName>
                         <Export-Package>bitronix.tm,bitronix.tm.utils,bitronix.tm.resource.jdbc</Export-Package>
                         <Import-Package>
@@ -192,7 +191,8 @@ public final class Version {
                             org.slf4j,
                             javax.crypto,javax.crypto.spec,
                             javax.jms,javax.management,javax.naming,javax.naming.spi,javax.rmi,javax.sql,
-                            javax.transaction,javax.transaction.xa,
+                            javax.transaction,
+                            javax.transaction.xa,
                             javax.swing;resolution:=optional,
                             javax.swing.border;resolution:=optional,
                             javax.swing.event;resolution:=optional,

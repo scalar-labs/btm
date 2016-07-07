@@ -58,8 +58,8 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>javax.transaction</groupId>
-            <artifactId>jta</artifactId>
+            <groupId>org.apache.geronimo.specs</groupId>
+            <artifactId>geronimo-jta_1.1_spec</artifactId>
             <scope>runtime</scope>
         </dependency>
         <dependency>
