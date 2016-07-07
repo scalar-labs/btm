@@ -24,6 +24,7 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 
 /**
@@ -130,4 +131,8 @@ public class LrcXADataSource implements XADataSource {
     public String toString() {
         return "a JDBC LrcXADataSource on " + driverClassName + " with URL " + url;
     }
+    
+	public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
+		throw new SQLFeatureNotSupportedException();
+	}
 }
