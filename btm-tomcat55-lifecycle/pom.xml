@@ -14,7 +14,11 @@
             <groupId>org.codehaus.btm</groupId>
             <artifactId>btm</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>javax.transaction</groupId>
+            <artifactId>jta</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.apache.tomcat</groupId>
             <artifactId>catalina</artifactId>

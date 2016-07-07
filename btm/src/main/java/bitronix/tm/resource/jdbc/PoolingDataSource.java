@@ -37,6 +37,7 @@ import javax.transaction.xa.XAResource;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -504,4 +505,8 @@ public class PoolingDataSource extends ResourceBean implements DataSource, XARes
         xaResourceHolderMap.remove(xaResourceHolder.getXAResource());
 
     }
+
+	public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
+		throw new SQLFeatureNotSupportedException();
+	}
 }
