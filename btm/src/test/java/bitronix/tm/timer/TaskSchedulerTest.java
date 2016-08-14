@@ -73,6 +73,23 @@ public class TaskSchedulerTest extends TestCase {
         assertEquals(2, result.get(2).getObject());
     }
 
+    public void testIdenticalScheduleTimestamp() throws Exception {
+        List<SimpleTask> result = Collections.synchronizedList(new ArrayList<SimpleTask>());
+
+        long firstTimestamp = MonotonicClock.currentTimeMillis();
+        long secondTimestamp = MonotonicClock.currentTimeMillis() + 200;
+
+        ts.addTask(new SimpleTask(new Date(firstTimestamp), ts, 0, result));
+
+        ts.addTask(new SimpleTask(new Date(secondTimestamp), ts, 1, result));
+        ts.addTask(new SimpleTask(new Date(secondTimestamp), ts, 2, result));
+
+        assertEquals("Three tasks were created.  All 3 (even identical timestamps) should be queued",
+                3, ts.countTasksQueued());
+
+        ts.join(1000);
+    }
+
     private static class SimpleTask extends Task {
 
         private final Object obj;
