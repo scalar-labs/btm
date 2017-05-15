@@ -90,7 +90,7 @@ public class MessageConsumerWrapper implements MessageConsumer {
     }
 
     public void close() throws JMSException {
-        // do nothing as the close is handled by the session handle
+        getMessageConsumer().close();
     }
 
     /* dumb wrapping of MessageProducer methods */

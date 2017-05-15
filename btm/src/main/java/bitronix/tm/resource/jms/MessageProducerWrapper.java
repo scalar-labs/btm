@@ -95,7 +95,7 @@ public class MessageProducerWrapper implements MessageProducer {
     }
 
     public void close() throws JMSException {
-        // do nothing as the close is handled by the session handle
+        getMessageProducer().close();
     }
 
     /* dumb wrapping of MessageProducer methods */
