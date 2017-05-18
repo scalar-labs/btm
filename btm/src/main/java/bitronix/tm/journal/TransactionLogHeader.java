@@ -69,7 +69,7 @@ public class TransactionLogHeader {
      */
     public final static byte UNCLEAN_LOG_STATE = -1;
 
-    private final FileChannel fc;
+    private final InterruptibleLockedRandomAccessFile file;
     private final long maxFileLength;
 
     private volatile int formatId;
@@ -79,25 +79,25 @@ public class TransactionLogHeader {
 
     /**
      * TransactionLogHeader are used to control headers of the specified RandomAccessFile.
-     * @param fc the file channel to read from.
+     * @param randomAccessFile the file to read from.
      * @param maxFileLength the max file length.
      * @throws IOException if an I/O error occurs.
      */
-    public TransactionLogHeader(FileChannel fc, long maxFileLength) throws IOException {
-        this.fc = fc;
+    public TransactionLogHeader(InterruptibleLockedRandomAccessFile randomAccessFile, long maxFileLength) throws IOException {
+        this.file = randomAccessFile;
         this.maxFileLength = maxFileLength;
 
-        fc.position(FORMAT_ID_HEADER);
+        randomAccessFile.position(FORMAT_ID_HEADER);
         ByteBuffer buf = ByteBuffer.allocate(4 + 8 + 1 + 8);
         while (buf.hasRemaining()) {
-            this.fc.read(buf);
+            this.file.read(buf);
         }
         buf.flip();
         formatId = buf.getInt();
         timestamp = buf.getLong();
         state = buf.get();
         position = buf.getLong();
-        fc.position(position);
+        randomAccessFile.position(position);
 
         if (log.isDebugEnabled()) { log.debug("read header " + this); }
     }
@@ -149,7 +149,7 @@ public class TransactionLogHeader {
         buf.putInt(formatId);
         buf.flip();
         while (buf.hasRemaining()) {
-        	fc.write(buf, FORMAT_ID_HEADER + buf.position());
+        	file.write(buf, FORMAT_ID_HEADER + buf.position());
         }
         this.formatId = formatId;
     }
@@ -165,7 +165,7 @@ public class TransactionLogHeader {
         buf.putLong(timestamp);
         buf.flip();
         while (buf.hasRemaining()) {
-        	fc.write(buf, TIMESTAMP_HEADER + buf.position());
+        	file.write(buf, TIMESTAMP_HEADER + buf.position());
         }
         this.timestamp = timestamp;
     }
@@ -181,7 +181,7 @@ public class TransactionLogHeader {
         buf.put(state);
         buf.flip();
         while (buf.hasRemaining()) {
-        	fc.write(buf, STATE_HEADER + buf.position());
+        	file.write(buf, STATE_HEADER + buf.position());
         }
         this.state = state;
     }
@@ -202,11 +202,11 @@ public class TransactionLogHeader {
         buf.putLong(position);
         buf.flip();
         while (buf.hasRemaining()) {
-        	fc.write(buf, CURRENT_POSITION_HEADER + buf.position());
+        	file.write(buf, CURRENT_POSITION_HEADER + buf.position());
         }
 
         this.position = position;
-        fc.position(position);
+        file.position(position);
     }
 
     /**
