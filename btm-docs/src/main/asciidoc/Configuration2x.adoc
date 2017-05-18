@@ -185,4 +185,21 @@ See also https://github.com/bitronix/btm/blob/master/btm/src/main/java/bitronix/
 [[pools]]
 == Connection pools settings
 
-JDBC and JMS connection pools configuration are discussed in details in the JDBC pools configuration and the JMS pools configuration pages. Alternatively you can use the Resource Loader instead. 
+JDBC and JMS connection pools configuration are discussed in details in the JDBC pools configuration and the JMS pools configuration pages. Alternatively you can use the Resource Loader instead.
+
+[[osgi]]
+== OSGi settings
+
+When deployed to an OSGi container, the transaction manager will be started automatically (default). You can use following interfaces to get a service reference to the running transaction manager:
+
+    javax.transaction.TransactionManager
+    javax.transaction.UserTransaction
+
+During startup, the bundle activator will look for a configuration file in the configuration area of the bundle. If `bitronix.tm.configuration` has not been specified, the activator will search for a file named `bitronix-default-config.properties`. If the bundles configuration area does not contain such a file, the activator tries to load the configuration directly from the path specified. If the file does not exist, an InitializationException will be caused to be thrown.
+
+If `bitronix.tm.resource.configuration` is specified, the activator will lookup the resource configuration in the same manner; it firstly checks the bundles configuration area. If the file could not be found, the activator tries to load it directly from the file system. If the file does not exist, an InitializationException will be caused to be thrown.
+
+Sometimes it's not desirable to initialize the transaction manager automatically. For instance, you cannot use the `Configuration` object for configuration when automatic startup is enabled (default). You can disable this behavior with specifying the system property `bitronix.tm.osgi.disableActivator`. If set, the bundle activator will do nothing and you are responsible to initialize the transaction manager, and, to export it to the OSGi service registry.
+
+
+
