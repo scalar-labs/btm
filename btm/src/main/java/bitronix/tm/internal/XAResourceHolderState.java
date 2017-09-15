@@ -173,12 +173,24 @@ public class XAResourceHolderState {
             if (log.isDebugEnabled()) log.debug("ended " + this + " with " + Decoder.decodeXAResourceFlag(flags));
         } catch(XAException ex) {
             // could mean failed or unilaterally rolled back
-            failed = true;
+            failed = true;            
+            forgetXAResourceIfRollbacked(ex);
             throw ex;
         } finally {
             this.suspended = suspended;
             this.ended = ended;
             this.started = false;
+        }
+    }
+
+    private void forgetXAResourceIfRollbacked(XAException ex) throws XAException
+    {
+        if (ex.getCause() != null && ex.getCause() instanceof javax.jms.TransactionRolledBackException)
+        {
+            // The transaction should be forgot to avoid memory leaks if it was rollbacked
+            // post failover recovery.
+            // For example, in ActiveMQ, this should be forgot from ENDED_XA_TRANSACTION_CONTEXTS.  
+            getXAResource().forget(xid);
         }
     }
 

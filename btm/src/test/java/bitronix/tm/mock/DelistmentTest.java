@@ -27,6 +27,7 @@ import bitronix.tm.journal.Journal;
 import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.events.JournalLogEvent;
 import bitronix.tm.mock.events.XAResourceEndEvent;
+import bitronix.tm.mock.events.XAResourceForgetEvent;
 import bitronix.tm.mock.events.XAResourceRollbackEvent;
 import bitronix.tm.mock.events.XAResourceStartEvent;
 import bitronix.tm.mock.resource.MockJournal;
@@ -38,6 +39,7 @@ import junit.framework.TestCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.jms.TransactionRolledBackException;
 import javax.sql.XAConnection;
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
@@ -56,7 +58,30 @@ public class DelistmentTest extends TestCase {
     private PoolingDataSource poolingDataSource1;
     private PoolingDataSource poolingDataSource2;
     private BitronixTransactionManager btm;
+    
+    public void testForgetOnTransactionRolledbackOnDelist() throws Exception
+    {
+        btm.begin();
 
+        Connection connection = poolingDataSource1.getConnection();
+        JdbcConnectionHandle handle = (JdbcConnectionHandle) Proxy.getInvocationHandler(connection);
+        XAConnection xaConnection = (XAConnection) AbstractMockJdbcTest.getWrappedXAConnectionOf(handle.getPooledConnection());
+        MockXAResource xaResource = (MockXAResource) xaConnection.getXAResource();
+        XAException exception = new XAException();
+        exception.initCause(new TransactionRolledBackException("Transaction Rolledback Error"));
+        xaResource.setEndException(exception);
+        connection.createStatement();
+        try
+        {
+            btm.commit();
+            fail("Expected Transaction rollback");
+        }
+        catch (Exception e)
+        {
+            
+        }
+        assertTrue(EventRecorder.getOrderedEvents().get(3) instanceof XAResourceForgetEvent);
+    }
 
     protected void setUp() throws Exception {
         EventRecorder.clear();
