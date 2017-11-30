@@ -125,26 +125,35 @@ public class H2TransactionalTest {
         tm.begin();
         transactionalJPABean.insertTestEntityInRequired();
         transactionalJPABean.insertTestEntityInNewTra();
-        transactionalJPABean.insertTestEntityInNewTraAndSetRollbackOnly();
+        insertTestEntityInNewTraAndSetRollbackOnly();
         tm.commit();
         Assert.assertEquals(9L,transactionalJPABean.countTestEntity());
         tm.begin();
         transactionalJPABean.insertTestEntityInRequired();
-        transactionalJPABean.insertTestEntityInNewTraAndSetRollbackOnly();
+        insertTestEntityInNewTraAndSetRollbackOnly();
         tm.commit();
         Assert.assertEquals(10L,transactionalJPABean.countTestEntity());
         tm.begin();
-        transactionalJPABean.insertTestEntityInNewTraAndSetRollbackOnly();
+        insertTestEntityInNewTraAndSetRollbackOnly();
         transactionalJPABean.insertTestEntityInRequired();
         tm.commit();
         Assert.assertEquals(11L,transactionalJPABean.countTestEntity());
         tm.begin();
-        transactionalJPABean.insertTestEntityInNewTraAndSetRollbackOnly();
+        insertTestEntityInNewTraAndSetRollbackOnly();
         transactionalJPABean.insertTestEntityInRequired();
         transactionalJPABean.insertTestEntityInNewTra();
         tm.rollback();
         Assert.assertEquals(12L,transactionalJPABean.countTestEntity());
 
+    }
+
+    private void insertTestEntityInNewTraAndSetRollbackOnly() throws Exception {
+        try {
+            transactionalJPABean.insertTestEntityInNewTraAndSetRollbackOnly();
+            Assert.fail("Expected Rollbackexception during commit of new tra");
+        } catch (RollbackException ex){
+
+        }
     }
 
     private void insertTestEntityInNewTraAndRollback() throws Exception {

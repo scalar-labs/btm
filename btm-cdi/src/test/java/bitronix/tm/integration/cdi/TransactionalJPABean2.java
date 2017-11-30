@@ -35,7 +35,7 @@ public class TransactionalJPABean2 {
     private DataSource dataSource;
 
     @Inject
-    UserTransaction tm;
+    TransactionManager tm;
 
     @Inject
     EntityManager em;
