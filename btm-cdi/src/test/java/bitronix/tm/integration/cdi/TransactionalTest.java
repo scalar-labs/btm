@@ -11,8 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.persistence.EntityManagerFactory;
-import javax.sql.DataSource;
 import javax.transaction.TransactionManager;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -22,7 +20,7 @@ import java.sql.Statement;
  * @author aschoerk
  */
 @RunWith(EjbUnitRunner.class)
-@AdditionalClasses({PlatformTransactionManager.class, Resources.class, TInterceptor.class})
+@AdditionalClasses({PlatformTransactionManager.class, Resources.class, EjbTInterceptor.class, TransactionalCdiExtension.class})
 public class TransactionalTest {
 
     static Logger log = LoggerFactory.getLogger("testlogger");

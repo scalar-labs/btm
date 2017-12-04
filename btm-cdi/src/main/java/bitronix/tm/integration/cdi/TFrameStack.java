@@ -5,14 +5,7 @@ import bitronix.tm.TransactionManagerServices;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.TransactionRequiredException;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.InvalidTransactionException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
+import javax.transaction.*;
 
 /**
  * The logic necessary to handle stacking of transactions according ejb-transactionattributetypes.
@@ -38,6 +31,11 @@ public class TFrameStack {
     public TransactionAttributeType currentType() {
         TransactionInfo tt = topTransaction();
         return tt == null ? null : tt.currentTransactionAttributeType;
+    }
+
+    public Transactional.TxType currentTxType() {
+        TransactionInfo tt = topTransaction();
+        return tt == null ? null : tt.currentTxType;
     }
 
     public void commitTransaction() throws HeuristicRollbackException, RollbackException, InvalidTransactionException, HeuristicMixedException, SystemException {
@@ -92,6 +90,43 @@ public class TFrameStack {
         transactionInfo.setUserTransaction();
         transactionInfoThreadLocal.set(transactionInfo);
 
+    }
+
+    public void pushTransaction(Transactional.TxType attributeType) throws SystemException, NotSupportedException {
+        final TransactionInfo previousTransactionInfo = topTransaction();
+        TransactionInfo transactionInfo = new TransactionInfo(previousTransactionInfo);
+        transactionInfo.currentTxType = attributeType;
+        switch (attributeType) {
+            case MANDATORY:
+                if (!traActive())
+                    throw new TransactionRequiredException("Mandatory Transaction");
+                break;
+            case REQUIRED:
+                if (!traActive()) {
+                    tm.begin();
+                    transactionInfo.newTra = true;
+                }
+                break;
+            case REQUIRES_NEW:
+                if (traActive()) {
+                    transactionInfo.suspended = tm.suspend();
+                }
+                tm.begin();
+                transactionInfo.newTra = true;
+                break;
+            case SUPPORTS:
+                break;
+            case NOT_SUPPORTED:
+                if (traActive()) {
+                    transactionInfo.suspended = tm.suspend();
+                }
+                break;
+            case NEVER:
+                if (traActive())
+                    throw new TransactionRequiredException("Transaction is not allowed");
+                break;
+        }
+        transactionInfoThreadLocal.set(transactionInfo);
     }
 
     public void pushTransaction(TransactionAttributeType attributeType) throws SystemException, NotSupportedException {

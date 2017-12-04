@@ -11,6 +11,8 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.sql.DataSource;
 import javax.transaction.TransactionManager;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashSet;
 
 /**
@@ -82,6 +84,18 @@ public abstract class SqlPersistenceFactory {
                 PERSISTENCE_UNIT_NAMES.remove(getPersistenceUnitName());
             }
             clearPersistenceUnitNames();
+        }
+        if (ds != null) {
+            try {
+                Method closeMethod = ds.getClass().getMethod("close");
+                closeMethod.invoke(ds);
+            } catch (NoSuchMethodException e) {
+
+            } catch (IllegalAccessException e) {
+
+            } catch (InvocationTargetException e) {
+
+            }
         }
     }
 

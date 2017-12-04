@@ -9,24 +9,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
+import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
 import javax.transaction.xa.XAResource;
 import java.util.Iterator;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 
-@CdiTransactional
+@Stateless
 public class TransactionalJPABean2 {
     
     private static final Logger log = LoggerFactory.getLogger(TransactionalJPABean2.class);

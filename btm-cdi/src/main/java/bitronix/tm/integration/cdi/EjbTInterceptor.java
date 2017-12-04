@@ -24,11 +24,11 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
 @Interceptor
-@CdiTransactional
-public class TInterceptor {
+@EjbTransactional
+public class EjbTInterceptor {
 
     private final Logger logger =
-            LoggerFactory.getLogger(TInterceptor.class);
+            LoggerFactory.getLogger(EjbTInterceptor.class);
 
     @Inject
     TransactionManager tm;

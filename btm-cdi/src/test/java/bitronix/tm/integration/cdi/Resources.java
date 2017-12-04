@@ -4,6 +4,7 @@ import bitronix.tm.resource.jdbc.PoolingDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
@@ -24,11 +25,15 @@ public class Resources {
     public Resources() {
     }
 
+    @PreDestroy
+    public void preDestroyResources() {
+        ds.close();
+    }
+
     @Inject
     TransactionManager tm;
 
-    @Inject
-    DataSource ds;
+    PoolingDataSource ds;
 
     @Produces
     @ApplicationScoped
@@ -52,6 +57,7 @@ public class Resources {
         res.setMaxPoolSize(3);
         res.init();
         log.info("created  datasource");
+        ds = res;
         return res;
     }
 

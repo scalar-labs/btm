@@ -14,7 +14,7 @@
 		<property name="className" value="bitronix.tm.mock.resource.jdbc.MockitoXADataSource" />
 		<property name="uniqueName" value="btm-spring-test-ds1" />
 		<property name="minPoolSize" value="1" />
-		<property name="maxPoolSize" value="3" />
+		<property name="maxPoolSize" value="10" />
 	</bean>
 
 	<bean id="dataSource2" class="bitronix.tm.integration.cdi.PoolingDataSourceFactoryBean" primary="false">

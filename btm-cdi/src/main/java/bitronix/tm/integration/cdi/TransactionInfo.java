@@ -27,6 +27,7 @@ public class TransactionInfo {
     Transaction suspended;  // fetching of entitymanagers: only new ones
     boolean newTra = false; // if true: tra has been begin, entitymanagers joined, pop means: need to commit!
     TransactionAttributeType currentTransactionAttributeType;
+    Transactional.TxType currentTxType;
     TAttribute tAttribute;
     TransactionInfo previous;
     boolean userTransaction;

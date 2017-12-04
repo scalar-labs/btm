@@ -25,6 +25,7 @@ public class H2PersistenceFactory extends SqlPersistenceFactory {
     public H2PersistenceFactory() {
     }
 
+
     @Override
     public String getPersistenceUnitName() {
         return "btm-cdi-test-h2-pu";
@@ -50,7 +51,8 @@ public class H2PersistenceFactory extends SqlPersistenceFactory {
         driverProperties.setProperty("password","");
         res.setUniqueName("jdbc/btm-cdi-test-h2");
         res.setMinPoolSize(1);
-        res.setMaxPoolSize(3);
+        res.setMaxPoolSize(10);
+        res.setAllowLocalTransactions(true);  // to allow autocommitmode
         res.init();
         log.info("created  datasource");
         return res;

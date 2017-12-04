@@ -1,8 +1,8 @@
 package bitronix.tm.integration.cdi;
 
-import com.oneandone.ejbcdiunit.EjbUnitRunner;
-import org.jglue.cdiunit.ActivatedAlternatives;
 import org.jglue.cdiunit.AdditionalClasses;
+import org.jglue.cdiunit.AdditionalPackages;
+import org.jglue.cdiunit.CdiRunner;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -11,30 +11,22 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
 import javax.sql.DataSource;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
  * @author aschoerk
  */
-@RunWith(EjbUnitRunner.class)
-@AdditionalClasses({PlatformTransactionManager.class, H2PersistenceFactory.class, TInterceptor.class})
+@RunWith(CdiRunner.class)
+@AdditionalClasses({
+        H2PersistenceFactory.class,
+        EjbTInterceptor.class, TransactionalCdiExtension.class})
+@AdditionalPackages(PlatformTransactionManager.class)
 public class H2TransactionalTest {
 
     static Logger log = LoggerFactory.getLogger("testlogger");
@@ -44,6 +36,8 @@ public class H2TransactionalTest {
         log.info("log");
     }
 
+    @Inject
+    PlatformTransactionManager platformTransactionManager;
 
     @Inject
     UserTransaction tm;
@@ -53,6 +47,7 @@ public class H2TransactionalTest {
 
     @Before
     public void initContext() throws Exception {
+        /*
         tm.begin();
 
         Connection connection = dataSource.getConnection();
@@ -63,6 +58,7 @@ public class H2TransactionalTest {
         // stmt.execute("insert into hibernate_sequences (sequence_name, sequence_next_hi_value) values ('test_entity_1', 1)");
         stmt.execute("create table test_entity_1 (id bigint not null, intAttribute integer not null, stringAttribute varchar(255), primary key (id))");
         tm.commit();
+        */
     }
 
     @Test

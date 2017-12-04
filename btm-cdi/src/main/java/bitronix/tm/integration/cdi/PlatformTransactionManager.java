@@ -1,6 +1,7 @@
 package bitronix.tm.integration.cdi;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Alternative;
 import javax.enterprise.inject.Produces;
@@ -20,15 +21,21 @@ import org.jglue.cdiunit.ProducesAlternative;
 @ApplicationScoped
 public class PlatformTransactionManager {
 
-    private final BitronixTransactionManager transactionManager;;
+    private BitronixTransactionManager transactionManager;;
 
     public PlatformTransactionManager() {
         this.transactionManager = TransactionManagerServices.getTransactionManager();
     }
 
     @PostConstruct
-    public void postConstruct() {
+    public void postConstructPlatformTM() {
         // System.clearProperty("java.naming.factory.initial");
+    }
+
+    @PreDestroy
+    public void preDestroyPlatfromTM() {
+        transactionManager.shutdown();
+        transactionManager = null;
     }
 
     @Produces
