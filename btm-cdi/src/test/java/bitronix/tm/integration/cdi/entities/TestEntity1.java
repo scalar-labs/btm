@@ -1,4 +1,4 @@
-package bitronix.tm.integration.cdi;
+package bitronix.tm.integration.cdi.entities;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;

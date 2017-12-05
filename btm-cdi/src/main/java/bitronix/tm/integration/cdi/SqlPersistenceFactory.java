@@ -27,7 +27,7 @@ public abstract class SqlPersistenceFactory {
     private static final HashSet<String> PERSISTENCE_UNIT_NAMES = new HashSet<>();
     private EntityManagerFactory emf = null;
 
-    DataSource ds;
+    protected DataSource ds;
 
     /**
      * allow to reset between Tests.

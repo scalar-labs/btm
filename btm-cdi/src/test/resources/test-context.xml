@@ -34,6 +34,6 @@
 	<bean id="transactionManager" class="bitronix.tm.integration.cdi.PlatformTransactionManager"/>
 	<tx:annotation-driven transaction-manager="transactionManager"/>
 
-	<bean class="bitronix.tm.integration.cdi.TransactionalBean"/>
+	<bean class="bitronix.tm.integration.cdi.nonintercepted.TransactionalBean"/>
 
 </beans>

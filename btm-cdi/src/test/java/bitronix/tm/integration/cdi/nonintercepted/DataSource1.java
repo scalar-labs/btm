@@ -1,6 +1,8 @@
-package bitronix.tm.integration.cdi;
+package bitronix.tm.integration.cdi.nonintercepted;
 
 import javax.enterprise.inject.Alternative;
+
+import bitronix.tm.integration.cdi.PoolingDataSourceFactoryBean;
 
 /**
  * @author aschoerk

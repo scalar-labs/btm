@@ -24,10 +24,12 @@ public class TransactionalCdiExtension implements Extension {
 
     AnnotationLiteral<EjbTransactional> EJBTRALITERAL = new AnnotationLiteral<EjbTransactional> () {
 
+        private static final long serialVersionUID = -6529647818427562781L;
     };
 
     AnnotationLiteral<CdiTransactional> CDITRALITERAL = new AnnotationLiteral<CdiTransactional> () {
 
+        private static final long serialVersionUID = 6942136472219373737L;
     };
 
     <T> void processAnnotatedType(@Observes ProcessAnnotatedType<T> pat) {

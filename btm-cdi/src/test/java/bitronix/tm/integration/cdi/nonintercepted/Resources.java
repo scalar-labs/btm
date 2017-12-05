@@ -1,9 +1,10 @@
-package bitronix.tm.integration.cdi;
+package bitronix.tm.integration.cdi.nonintercepted;
 
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
@@ -18,28 +19,48 @@ import java.util.Properties;
  * @author aschoerk
  */
 @ApplicationScoped
-public class H2PersistenceFactory extends SqlPersistenceFactory {
+class Resources {
 
-    Logger log = LoggerFactory.getLogger("H2PersistenceFactory");
+    Logger log = LoggerFactory.getLogger("ResourcesLogger");
 
-    public H2PersistenceFactory() {
+    public Resources() {
     }
 
+    @PreDestroy
+    public void preDestroyResources() {
+        ds.close();
+    }
 
-    @Override
-    public String getPersistenceUnitName() {
-        return "btm-cdi-test-h2-pu";
+    @Inject
+    TransactionManager tm;
+
+    private PoolingDataSource ds;
+
+    private EntityManagerFactory emf = null;
+
+    protected void createEntityManagerFactory() {
+        if (emf == null) {
+            if (ds == null)
+                createDataSource();
+            emf = Persistence.createEntityManagerFactory("btm-cdi-test-h2-pu");
+        }
+    }
+
+    DataSource getDs() {
+        if (ds == null)
+            createDataSource();
+        return ds;
     }
 
     @Produces
-    public EntityManager newEm() {
-        return produceEntityManager();
+    EntityManagerFactory produceEntityManagerFactory() {
+        createEntityManagerFactory();
+        return emf;
     }
-
 
     @Produces
     @ApplicationScoped
-    protected DataSource createDataSource() {
+    DataSource createDataSource() {
         if (ds != null)
             return ds;
         log.info("creating datasource");
@@ -51,10 +72,11 @@ public class H2PersistenceFactory extends SqlPersistenceFactory {
         driverProperties.setProperty("password","");
         res.setUniqueName("jdbc/btm-cdi-test-h2");
         res.setMinPoolSize(1);
-        res.setMaxPoolSize(10);
-        res.setAllowLocalTransactions(true);  // to allow autocommitmode
+        res.setMaxPoolSize(3);
+        res.setAllowLocalTransactions(true);
         res.init();
         log.info("created  datasource");
+        ds = res;
         return res;
     }
 

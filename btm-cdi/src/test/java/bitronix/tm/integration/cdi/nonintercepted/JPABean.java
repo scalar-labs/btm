@@ -1,5 +1,6 @@
-package bitronix.tm.integration.cdi;
+package bitronix.tm.integration.cdi.nonintercepted;
 
+import bitronix.tm.integration.cdi.entities.TestEntity1;
 import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.events.XAResourceCommitEvent;
 import bitronix.tm.mock.events.XAResourceEndEvent;
@@ -8,13 +9,9 @@ import bitronix.tm.mock.events.XAResourceStartEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Resource;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.sql.DataSource;
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
 import javax.transaction.Transaction;
@@ -25,13 +22,9 @@ import java.util.Iterator;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 
-@EjbTransactional
-public class TransactionalJPABean {
+class JPABean {
     
-    private static final Logger log = LoggerFactory.getLogger(TransactionalJPABean.class);
-
-    @Resource(name = "h2DataSource")
-    private DataSource dataSource;
+    private static final Logger log = LoggerFactory.getLogger(JPABean.class);
 
     @Inject
     TransactionManager tm;
@@ -62,7 +55,6 @@ public class TransactionalJPABean {
         return new CloseableEm(result);
     }
 
-    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     public void insertTestEntityInNewTra() throws Exception {
         Transaction suspendedTransaction = tm.suspend();
 
@@ -76,7 +68,6 @@ public class TransactionalJPABean {
         }
     }
 
-    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     public void insertTestEntityInNewTraAndRollback() throws Exception {
         Transaction suspendedTransaction = tm.suspend();
 
@@ -89,7 +80,7 @@ public class TransactionalJPABean {
                 tm.resume(suspendedTransaction);
         }
     }
-    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+
     public void insertTestEntityInNewTraAndSetRollbackOnly() throws Exception {
         Transaction suspendedTransaction = tm.suspend();
 
@@ -110,7 +101,6 @@ public class TransactionalJPABean {
         }
     }
 
-    @TransactionAttribute(value = TransactionAttributeType.REQUIRED)
     public void insertTestEntityInRequired() throws Exception {
         boolean encloseInTra = tm.getStatus() == Status.STATUS_NO_TRANSACTION ? true : false;
         if (encloseInTra) {

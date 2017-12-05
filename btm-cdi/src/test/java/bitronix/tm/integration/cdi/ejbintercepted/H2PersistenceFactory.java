@@ -1,10 +1,10 @@
-package bitronix.tm.integration.cdi;
+package bitronix.tm.integration.cdi.ejbintercepted;
 
+import bitronix.tm.integration.cdi.SqlPersistenceFactory;
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
@@ -18,33 +18,31 @@ import java.util.Properties;
 /**
  * @author aschoerk
  */
-public class Resources {
+@ApplicationScoped
+public class H2PersistenceFactory extends SqlPersistenceFactory {
 
-    Logger log = LoggerFactory.getLogger("ResourcesLogger");
+    Logger log = LoggerFactory.getLogger("H2PersistenceFactory");
 
-    public Resources() {
+    public H2PersistenceFactory() {
     }
 
-    @PreDestroy
-    public void preDestroyResources() {
-        ds.close();
+
+    @Override
+    public String getPersistenceUnitName() {
+        return "btm-cdi-test-h2-pu";
     }
-
-    @Inject
-    TransactionManager tm;
-
-    PoolingDataSource ds;
 
     @Produces
-    @ApplicationScoped
-    EntityManagerFactory createEntityManagerFactory() {
-        return Persistence.createEntityManagerFactory("btm-cdi-test-h2-pu");
+    public EntityManager newEm() {
+        return produceEntityManager();
     }
 
 
     @Produces
     @ApplicationScoped
-    DataSource createDataSource() {
+    protected DataSource createDataSource() {
+        if (ds != null)
+            return ds;
         log.info("creating datasource");
         PoolingDataSource res = new PoolingDataSource();
         res.setClassName("org.h2.jdbcx.JdbcDataSource");
@@ -54,10 +52,10 @@ public class Resources {
         driverProperties.setProperty("password","");
         res.setUniqueName("jdbc/btm-cdi-test-h2");
         res.setMinPoolSize(1);
-        res.setMaxPoolSize(3);
+        res.setMaxPoolSize(10);
+        res.setAllowLocalTransactions(true);  // to allow autocommitmode
         res.init();
         log.info("created  datasource");
-        ds = res;
         return res;
     }
 

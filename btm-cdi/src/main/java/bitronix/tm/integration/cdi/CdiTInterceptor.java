@@ -16,7 +16,7 @@ import javax.transaction.TransactionManager;
 import javax.transaction.Transactional;
 
 @Interceptor
-@CdiTransactional
+@Transactional
 public class CdiTInterceptor {
 
     Logger logger = LoggerFactory.getLogger(CdiTInterceptor.class);
@@ -37,11 +37,13 @@ public class CdiTInterceptor {
 
         if (transactionMethod != null) {
             attribute = transactionMethod.value();
+            Class[] rollbackon = transactionMethod.rollbackOn();
         } else if (transaction != null) {
             attribute = transaction.value() == null ? Transactional.TxType.REQUIRED : transaction.value();
         }
         if (attribute == null) {
             logger.error("CdiTransactionalInterceptor should not be used at this class: {}", declaringClass.getName());
+            return ctx.proceed();
         } else {
             boolean passThroughRollbackException = true;
             try {
@@ -50,7 +52,7 @@ public class CdiTInterceptor {
                         ts.currentTxType(),
                         attribute, MDC.get("XID"), declaringClass.getSimpleName(), ctx.getMethod().getName());
                 ts.pushTransaction(attribute);
-            return ctx.proceed();
+                return ctx.proceed();
             } catch (Throwable ex) {
                 logger.info("Thread {} L{} Exception {} in {} xid: {} in {}.{}",
                         Thread.currentThread().getId(), ts.currentLevel(),

@@ -1,5 +1,6 @@
-package bitronix.tm.integration.cdi;
+package bitronix.tm.integration.cdi.ejbintercepted;
 
+import bitronix.tm.integration.cdi.entities.TestEntity1;
 import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.events.XAResourceCommitEvent;
 import bitronix.tm.mock.events.XAResourceEndEvent;
@@ -23,9 +24,9 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 
 @Stateless
-public class TransactionalJPABean2 {
+public class EJBTransactionalJPABean {
     
-    private static final Logger log = LoggerFactory.getLogger(TransactionalJPABean2.class);
+    private static final Logger log = LoggerFactory.getLogger(EJBTransactionalJPABean.class);
 
     @Resource(name = "h2DataSource")
     private DataSource dataSource;

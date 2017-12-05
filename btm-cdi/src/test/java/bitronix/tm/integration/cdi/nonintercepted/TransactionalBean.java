@@ -1,22 +1,19 @@
-package bitronix.tm.integration.cdi;
+package bitronix.tm.integration.cdi.nonintercepted;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Iterator;
 
 import javax.inject.Inject;
-import javax.sql.DataSource;
 import javax.transaction.TransactionManager;
-import javax.transaction.Transactional;
-import javax.transaction.UserTransaction;
 import javax.transaction.xa.XAResource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import bitronix.tm.integration.cdi.PoolingDataSourceFactoryBean;
 import bitronix.tm.mock.events.EventRecorder;
 import bitronix.tm.mock.events.XAResourceCommitEvent;
 import bitronix.tm.mock.events.XAResourceEndEvent;
