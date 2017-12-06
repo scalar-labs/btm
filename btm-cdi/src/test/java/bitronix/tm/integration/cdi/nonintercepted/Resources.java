@@ -28,7 +28,10 @@ class Resources {
 
     @PreDestroy
     public void preDestroyResources() {
-        ds.close();
+        if (ds != null) {
+            ds.close();
+            ds = null;
+        }
     }
 
     @Inject
