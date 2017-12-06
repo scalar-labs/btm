@@ -4,6 +4,7 @@ import org.apache.deltaspike.core.util.metadata.builder.AnnotatedTypeBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 import javax.ejb.MessageDriven;
 import javax.ejb.Singleton;
 import javax.ejb.Stateful;
@@ -43,6 +44,11 @@ public class TransactionalCdiExtension implements Extension {
                 ) {
             interceptForEjbTransactions = true;
         }
+        for (AnnotatedMethod m: annotatedType.getMethods()) {
+            if (m.isAnnotationPresent(Transactional.class)) {
+                interceptForCdiTransactions = true;
+            }
+        }
         if (annotatedType.isAnnotationPresent(Transactional.class)) {
             interceptForCdiTransactions = true;
         }
@@ -50,7 +56,7 @@ public class TransactionalCdiExtension implements Extension {
             log.warn("Transactional-Annotation for Ejb ignored {}", annotatedType.getJavaClass().getName());
             interceptForCdiTransactions = false;
         }
-        if (interceptForEjbTransactions) {
+        if (interceptForEjbTransactions || interceptForCdiTransactions) {
             final boolean finalInterceptForCdiTransactions = interceptForCdiTransactions;
             pat.setAnnotatedType(new AnnotatedType<T>() {
                 @Override

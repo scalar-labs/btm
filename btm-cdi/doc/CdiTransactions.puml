@@ -1,10 +1,10 @@
 @startuml
 
 actor client as c
-participant service as s
-participant tinterceptor as ti
-participant tstack as ts
-participant transactionInfo as tif
+participant TransactionalBean as s
+participant TInterceptor as ti
+participant TFrameStack as ts
+participant TransactionInfo as tif
 participant emdelegate as emd
 participant tm
 participant em
@@ -14,31 +14,33 @@ participant query2 as q2
 
 c -> s: call
 activate s
-s -> ti: intercept
+s -> ti: manageTransaction
 activate ti
-ti -> ts: new stackentry(attribute)
+ti -> ts: pushTra(attribute)
 create tif
 ts -> tif: new
-ti -> tm: begin
-tm --> ti: ok
+ts -> tm: begin
+tm --> ts: ok
+ts --> ti: ok
 ti -> s: invoke
 activate s
 s -> emd: createQuery
 activate emd
-emd -> pf: getEmTransactional
-pf -> ts: searchEm(pf)
+emd -> pf: getTransactional
+activate pf
+pf -> ts: getEntityManager(this)
 activate ts
-ts --> pf: not found
-deactivate ts
+ts -> ts: searchEmInTopTInfo
+ts -> pf: createEntityManager
 create em
 pf -> em: new
-pf -> ts: takePart(em)
-activate ts
+pf --> ts: em
+ts -> em: joinTransaction
 ts -> tif: register(em)
-tif -> em: joinTransaction
 ts --> pf: ok
 deactivate ts
 pf --> emd: em
+deactivate pf
 emd -> em: createQuery
 create q1
 em -> q1: createQuery
@@ -52,12 +54,15 @@ deactivate q1
 destroy q1
 s -> emd: createQuery
 activate emd
-emd -> pf: getEmTransactional
-pf -> ts: searchEm(pf)
+emd -> pf: getTransactional
+activate pf
+pf -> ts: getEntityManager(this)
 activate ts
+ts -> ts: searchEmInTopTInfo
 ts --> pf: em
 deactivate ts
 pf --> emd: em
+deactivate pf
 emd -> em: createQuery
 create q2
 em -> q2: createQuery
@@ -72,12 +77,12 @@ destroy q2
 s --> ti: return
 deactivate s
 activate ti
-ti -> tm: commit
+ti -> ts: popTra
+activate ts
+ts -> tm: commit
 tm -> em: flush
 em --> tm: ok
-tm --> ti: ok
-ti -> ts: close
-activate ts
+tm --> ts: ok
 ts -> em: close
 em --> ts: ok
 destroy em

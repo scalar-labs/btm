@@ -26,6 +26,7 @@ import bitronix.tm.mock.events.XAResourceEndEvent;
 import bitronix.tm.mock.events.XAResourcePrepareEvent;
 import bitronix.tm.mock.events.XAResourceStartEvent;
 
+@Transactional
 public class CDITransactionalJPABean {
     
     private static final Logger log = LoggerFactory.getLogger(CDITransactionalJPABean.class);

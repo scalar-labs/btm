@@ -16,7 +16,7 @@ import javax.transaction.TransactionManager;
 import javax.transaction.Transactional;
 
 @Interceptor
-@Transactional
+@CdiTransactional
 public class CdiTInterceptor {
 
     Logger logger = LoggerFactory.getLogger(CdiTInterceptor.class);
@@ -30,16 +30,27 @@ public class CdiTInterceptor {
         TFrameStack ts = new TFrameStack();
         TransactionInfo lastTransactionInfo = ts.topTransaction();
         Transactional.TxType attribute = null;
-        Transactional transaction =
+        Transactional classTransactional =
                 declaringClass.getAnnotation(
                         Transactional.class);
         Transactional transactionMethod = ctx.getMethod().getAnnotation(Transactional.class);
 
+        Class[] rollbackon = null;
+        Class[] dontRollBackOn = null;
+
         if (transactionMethod != null) {
             attribute = transactionMethod.value();
-            Class[] rollbackon = transactionMethod.rollbackOn();
-        } else if (transaction != null) {
-            attribute = transaction.value() == null ? Transactional.TxType.REQUIRED : transaction.value();
+            rollbackon = transactionMethod.rollbackOn();
+            dontRollBackOn = transactionMethod.dontRollbackOn();
+
+        } else if (classTransactional != null) {
+            if (classTransactional != null) {
+                attribute = classTransactional.value();
+                rollbackon = classTransactional.rollbackOn();
+                dontRollBackOn = classTransactional.dontRollbackOn();
+            } else {
+                attribute = Transactional.TxType.REQUIRED;
+            }
         }
         if (attribute == null) {
             logger.error("CdiTransactionalInterceptor should not be used at this class: {}", declaringClass.getName());
@@ -58,19 +69,14 @@ public class CdiTInterceptor {
                         Thread.currentThread().getId(), ts.currentLevel(),
                         ex.getClass().getSimpleName(), attribute, MDC.get("XID"), declaringClass.getSimpleName(),
                         ctx.getMethod().getName());
-                ApplicationException applicationException = null; // TODO
-                boolean doRollback =
-                        applicationException != null ? applicationException.rollback() : ex instanceof RuntimeException;
+                boolean doRollback = !isSubOrClassOfAny(ex.getClass(), dontRollBackOn)
+                                     && (isSubOrClassOfAny(ex.getClass(), rollbackon) || ex instanceof RuntimeException);
                 if (doRollback) {
                     passThroughRollbackException = false;
                     tm.rollback();
                 }
 
-                if (applicationException == null && ex instanceof RuntimeException) {
-                    throw new EJBException((RuntimeException) ex);
-                } else {
-                    throw ex;
-                }
+                throw ex;
             } finally {
                 logger.info("Thread {} L{} finally   in {} xid: {} in {}.{}",
                         Thread.currentThread().getId(), ts.currentLevel(), attribute, MDC.get("XID"), declaringClass.getSimpleName(),
@@ -89,6 +95,15 @@ public class CdiTInterceptor {
                 }
             }
         }
+    }
+
+    public boolean isSubOrClassOfAny(Class c, Class[] classes) {
+        for (Class clazz: classes) {
+            if (clazz.isAssignableFrom(c)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

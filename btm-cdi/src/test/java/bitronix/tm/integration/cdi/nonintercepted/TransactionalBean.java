@@ -48,7 +48,6 @@ public class TransactionalBean {
             }
         }
         transactionManager.commit();
-        // platformTransactionManager.retrieveUserTransaction().commit();
     }
 
     public void verifyEvents(int count) {

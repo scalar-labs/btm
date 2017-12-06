@@ -16,6 +16,7 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import bitronix.tm.integration.cdi.CdiTInterceptor;
 import bitronix.tm.integration.cdi.EjbTInterceptor;
 import bitronix.tm.integration.cdi.PlatformTransactionManager;
 import bitronix.tm.integration.cdi.TransactionalCdiExtension;
@@ -26,7 +27,7 @@ import bitronix.tm.integration.cdi.TransactionalCdiExtension;
 @RunWith(CdiRunner.class)
 @AdditionalClasses({
         H2PersistenceFactory.class,
-        EjbTInterceptor.class, TransactionalCdiExtension.class})
+        CdiTInterceptor.class, TransactionalCdiExtension.class})
 @AdditionalPackages(PlatformTransactionManager.class)
 public class H2CdiTransactionalTest {
 
