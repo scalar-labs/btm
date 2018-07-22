@@ -36,6 +36,7 @@ import org.slf4j.*;
 import bitronix.tm.*;
 import bitronix.tm.internal.TransactionStatusChangeListener;
 import bitronix.tm.journal.Journal;
+import bitronix.tm.journal.TransactionLogRecord;
 import bitronix.tm.mock.events.*;
 import bitronix.tm.mock.resource.*;
 import bitronix.tm.mock.resource.jdbc.MockitoXADataSource;
@@ -134,6 +135,30 @@ public class RecovererTest extends TestCase {
 
         assertEquals(0, xaResource.recover(XAResource.TMSTARTRSCAN | XAResource.TMENDRSCAN).length);
     }
+    
+    public void testIncrementalRecoverFailOnDanglingCommittingResources() throws Exception {
+        byte[] gtrid = UidGenerator.generateUid().getArray();
+        boolean exceptionRaisedDuringRecovery = false;
+        Xid xid = new MockXid(0, gtrid, BitronixXid.FORMAT_ID);
+        xaResource.addInDoubtXid(xid);
+        xaResource.setCommitException(new XAException());
+        Set names = new HashSet();
+        names.add(pds.getUniqueName());
+        journal.log(Status.STATUS_COMMITTING, new Uid(xid.getGlobalTransactionId()), names);
+        assertEquals(1, TransactionManagerServices.getJournal().collectDanglingRecords().size());
+        try {
+            IncrementalRecoverer.recover(pds);
+        } catch (RecoveryException e) {
+            exceptionRaisedDuringRecovery = true;
+        }
+
+        pds.setFailed(false);
+        assertTrue(exceptionRaisedDuringRecovery);
+        // we verify that the dangling record (COMMITTING but not COMMITED in the log)
+        // was not logged as COMMITTED in the log. As the recovery failed, it has
+        // to be attempted to be recovered again, so it must remain dangling.
+        assertEquals(1, TransactionManagerServices.getJournal().collectDanglingRecords().size());
+     }
 
     /**
      * Create 3 XIDs on the resource that are in the journal -> recoverer commits them.
