@@ -74,13 +74,17 @@ public class IncrementalRecoverer {
                 if (tlog != null) {
                     if (log.isDebugEnabled()) log.debug("committing " + xid);
                     success &= RecoveryHelper.commit(xaResourceHolderState, xid);
-                    updateJournal(xid.getGlobalTransactionIdUid(), uniqueName, Status.STATUS_COMMITTED);
-                    commitCount++;
+                    if (success) {
+                        updateJournal(xid.getGlobalTransactionIdUid(), uniqueName, Status.STATUS_COMMITTED);
+                        commitCount++;
+                    }
                 } else {
                     if (log.isDebugEnabled()) log.debug("rolling back " + xid);
                     success &= RecoveryHelper.rollback(xaResourceHolderState, xid);
-                    updateJournal(xid.getGlobalTransactionIdUid(), uniqueName, Status.STATUS_ROLLEDBACK);
-                    rollbackCount++;
+                    if (success) {
+                        updateJournal(xid.getGlobalTransactionIdUid(), uniqueName, Status.STATUS_ROLLEDBACK);
+                        rollbackCount++;
+                    }
                 }
             }
 
