@@ -161,7 +161,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             this.completionException = null;
         } catch (Exception ex) {
             this.completionException = ex;
-            logWarnOrDebug(ex, "recovery failed, registered resource(s): {}", getRegisteredResourcesUniqueNames());
+            logWarnOrDebug(ex, "recovery failed, registered resource(s): %s", getRegisteredResourcesUniqueNames());
         }
         finally {
             recoveredXidSets.clear();
@@ -238,12 +238,12 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 producer.setFailed(true);
                 registeredResources.remove(uniqueName);
                 String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
-                logWarnOrDebug(ex, "error running recovery on resource '{}', resource marked as failed (background recoverer will retry recovery) (error={}) {}",
+                logWarnOrDebug(ex, "error running recovery on resource '%s', resource marked as failed (background recoverer will retry recovery) (error=%s) %s",
                         uniqueName, Decoder.decodeXAExceptionErrorCode(ex), (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails));
             } catch (Exception ex) {
                 producer.setFailed(true);
                 registeredResources.remove(uniqueName);
-                logWarnOrDebug(ex, "error running recovery on resource '{}', resource marked as failed (background recoverer will retry recovery)", uniqueName);
+                logWarnOrDebug(ex, "error running recovery on resource '%s', resource marked as failed (background recoverer will retry recovery)", uniqueName);
             }
         }
     }
