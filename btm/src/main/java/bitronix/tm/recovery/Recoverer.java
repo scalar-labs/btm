@@ -225,7 +225,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     private void recoverAllResources() {
         // a cloned registeredResources Map must be iterated as the original one can be modified in the loop
         for (Map.Entry<String, XAResourceProducer> entry : new HashMap<String, XAResourceProducer>(registeredResources).entrySet()) {
-            final String uniqueName = entry.getKey();
+            String uniqueName = entry.getKey();
             XAResourceProducer producer = entry.getValue();
 
             try {
@@ -234,7 +234,7 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 if (log.isDebugEnabled()) log.debug("recovered " + xids.size() + " XID(s) from resource " + uniqueName);
                 recoveredXidSets.put(uniqueName, xids);
                 producer.setFailed(false);
-            } catch (final XAException ex) {
+            } catch (XAException ex) {
                 producer.setFailed(true);
                 registeredResources.remove(uniqueName);
                 String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
