@@ -251,12 +251,10 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
     private void logWarnOrDebug(Exception ex, String formatted , Object... objects) {
         if (LOG_LEVEL_BITRONIX_RECOVERY_IS_DEBUG) {
             if (log.isDebugEnabled()) {
-                String msg = format(formatted, objects);
-                log.debug(msg, ex);
+                log.debug(format(formatted, objects), ex);
             }
         } else {
-            String msg = format(formatted, objects);
-            log.warn(msg, ex);
+            log.warn(format(formatted, objects), ex);
         }
     }
 
