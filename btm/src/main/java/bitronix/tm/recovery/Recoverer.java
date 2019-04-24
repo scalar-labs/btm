@@ -42,6 +42,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static java.lang.String.format;
+
 /**
  * Recovery process implementation. Here is Mike Spille's description of XA recovery:
  * <p>
@@ -85,7 +87,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class Recoverer implements Runnable, Service, RecovererMBean {
 
+    private final static String MULE_BITRONIX_RECOVERY_LOG_DEBUG = "mule.bitronix.recovery.debug";
     private final static Logger log = LoggerFactory.getLogger(Recoverer.class);
+    private final static boolean LOG_LEVEL_BITRONIX_RECOVERY_IS_DEBUG = Boolean.getBoolean(MULE_BITRONIX_RECOVERY_LOG_DEBUG);
 
     private final Map<String, XAResourceProducer> registeredResources = new HashMap<String, XAResourceProducer>();
     private final Map<String, Set<BitronixXid>> recoveredXidSets = new HashMap<String, Set<BitronixXid>>();
@@ -149,19 +153,15 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             rolledbackCount = rollbackAbortedTransactions(oldestTransactionTimestamp, committedGtrids);
 
             if (executionsCount == 0 || committedCount > 0 || rolledbackCount > 0) {
-                log.info("recovery committed " + committedCount + " dangling transaction(s) and rolled back " + rolledbackCount +
-                        " aborted transaction(s) on " + registeredResources.size() + " resource(s) [" + getRegisteredResourcesUniqueNames() + "]" +
-                        ((TransactionManagerServices.getConfiguration().isCurrentNodeOnlyRecovery()) ? " (restricted to serverId '" + TransactionManagerServices.getConfiguration().getServerId() + "')" : ""));
+                log.info(getRecoveryLogMessage());
             }
             else if (log.isDebugEnabled()) {
-                log.debug("recovery committed " + committedCount + " dangling transaction(s) and rolled back " + rolledbackCount +
-                        " aborted transaction(s) on " + registeredResources.size() + " resource(s) [" + getRegisteredResourcesUniqueNames() + "]" +
-                        ((TransactionManagerServices.getConfiguration().isCurrentNodeOnlyRecovery()) ? " (restricted to serverId '" + TransactionManagerServices.getConfiguration().getServerId() + "')" : ""));                
+                log.debug(getRecoveryLogMessage());
             }
             this.completionException = null;
         } catch (Exception ex) {
             this.completionException = ex;
-            log.warn("recovery failed, registered resource(s): " + getRegisteredResourcesUniqueNames(), ex);
+            logWarnOrDebug(ex, "recovery failed, registered resource(s): %s", getRegisteredResourcesUniqueNames());
         }
         finally {
             recoveredXidSets.clear();
@@ -169,6 +169,13 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
             executionsCount++;
             isRunning.set(false);
         }
+    }
+
+    private String getRecoveryLogMessage() {
+        return "recovery committed " + committedCount + " dangling transaction(s) and rolled back " + rolledbackCount +
+                " aborted transaction(s) on " + registeredResources.size() + " resource(s) [" + getRegisteredResourcesUniqueNames() + "]" +
+                ((TransactionManagerServices.getConfiguration().isCurrentNodeOnlyRecovery()) ? " (restricted to serverId '" +
+                        TransactionManagerServices.getConfiguration().getServerId() + "')" : "");
     }
 
     /**
@@ -231,13 +238,23 @@ public class Recoverer implements Runnable, Service, RecovererMBean {
                 producer.setFailed(true);
                 registeredResources.remove(uniqueName);
                 String extraErrorDetails = TransactionManagerServices.getExceptionAnalyzer().extractExtraXAExceptionDetails(ex);
-                log.warn("error running recovery on resource '" + uniqueName + "', resource marked as failed (background recoverer will retry recovery)" +
-                        " (error=" + Decoder.decodeXAExceptionErrorCode(ex) + ")" + (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails), ex);
+                logWarnOrDebug(ex, "error running recovery on resource '%s', resource marked as failed (background recoverer will retry recovery) (error=%s) %s",
+                        uniqueName, Decoder.decodeXAExceptionErrorCode(ex), (extraErrorDetails == null ? "" : ", extra error=" + extraErrorDetails));
             } catch (Exception ex) {
                 producer.setFailed(true);
                 registeredResources.remove(uniqueName);
-                log.warn("error running recovery on resource '" + uniqueName + "', resource marked as failed (background recoverer will retry recovery)", ex);
+                logWarnOrDebug(ex, "error running recovery on resource '%s', resource marked as failed (background recoverer will retry recovery)", uniqueName);
             }
+        }
+    }
+
+    private void logWarnOrDebug(Exception ex, String formatted , Object... objects) {
+        if (LOG_LEVEL_BITRONIX_RECOVERY_IS_DEBUG) {
+            if (log.isDebugEnabled()) {
+                log.debug(format(formatted, objects), ex);
+            }
+        } else {
+            log.warn(format(formatted, objects), ex);
         }
     }
 
