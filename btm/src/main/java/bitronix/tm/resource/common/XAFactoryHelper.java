@@ -49,8 +49,7 @@ final class XAFactoryHelper {
             if (name.endsWith(PASSWORD_PROPERTY_NAME)) {
                 value = decrypt(value.toString());
             }
-
-            if (log.isDebugEnabled()) { log.debug("setting vendor property '" + name + "' to '" + value + "'"); }
+            log.debug ("{} set property {} = {}",className,name,"password".equals(name)?"<hidden>":value );
             PropertyUtils.setProperty(xaFactory, name, value);
         }
         return xaFactory;
