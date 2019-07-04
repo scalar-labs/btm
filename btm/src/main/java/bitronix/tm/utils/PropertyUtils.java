@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Smart reflection helper.
@@ -29,6 +31,7 @@ import java.util.TreeMap;
  * @author Ludovic Orban
  */
 public final class PropertyUtils {
+  static final Logger log = LoggerFactory.getLogger(PropertyUtils.class);
 
     private PropertyUtils() {
     }
@@ -37,60 +40,132 @@ public final class PropertyUtils {
      * Set a direct or indirect property (dotted property: prop1.prop2.prop3) on the target object. This method tries
      * to be smart in the way that intermediate properties currently set to null are set if it is possible to create
      * and set an object. Conversions from propertyValue to the proper destination type are performed when possible.
+
+     * There are nasty marginal case (see get/set ClonedProps in PropertyUtilsTest.java ), where parent getter do not
+     * return an own object (but its clone) and a change on obtained the property object needs to be followed by call of
+     * parent setter. This case leads to unsolvable cases in code.
+
+     * First, read only properties are perfectly legal construction, and setters for them must not be called (raises an
+     * exception) or not exists. ( Which is oposite scenario to ClonedProps )
+
+     * There is the wanted feature that missing classes along property path are subject of creation if they are null and
+     * set. Taking in account this feature and cases above we have a contradictory situation. Either we call setter to
+     * assure to handle clonedProps case, but break read only properties. Or do not call parent setter after get and break
+     * clonedProps. In other words we cannot safely say if the setter has to be called for clonedProps or not.
+
+     * A configuation language ( OGNL, JavaScript, BeanShell ) is a solution of the problem. The frontier between
+     * programming and configuration can be very thin.
+
+     * @author Tomas Jura
      * @param target the target object on which to set the property.
      * @param propertyName the name of the property to set.
      * @param propertyValue the value of the property to set.
      * @throws PropertyException if an error happened while trying to set the property.
      */
     public static void setProperty(Object target, String propertyName, Object propertyValue) throws PropertyException {
-        String[] propertyNames = propertyName.split("\\.");
-
-        StringBuilder visitedPropertyName = new StringBuilder();
-        Object currentTarget = target;
-        Object parentTarget = target;
-        String parentName = null;
-        int i = 0;
-        while (i < propertyNames.length -1) {
-            String name = propertyNames[i];
-            Object result = callGetter(currentTarget, name);
-            if (result == null) {
-                // try to instantiate the object & set it in place
-                Class<?> propertyType = getPropertyType(target, name);
-                try {
-                    result = propertyType.newInstance();
-                } catch (InstantiationException ex) {
-                    throw new PropertyException("cannot set property '" + propertyName + "' - '" + name + "' is null and cannot be auto-filled", ex);
-                } catch (IllegalAccessException ex) {
-                    throw new PropertyException("cannot set property '" + propertyName + "' - '" + name + "' is null and cannot be auto-filled", ex);
-                }
-                callSetter(currentTarget, name, result);
-            }
-
-            parentTarget = currentTarget;
-            currentTarget = result;
-            visitedPropertyName.append(name);
-            visitedPropertyName.append('.');
-            i++;
-
-            // if it's a Map object -> the non-visited part of the key should be used
-            // as this Map's object key so stop iterating over the dotted properties.
-            if (currentTarget instanceof Map) {
-                parentName = name;
-                break;
-            }
+      if (target == null) { throw new PropertyException("target is null"); }
+      if (propertyName == null) { throw new PropertyException("propertyName is null"); }
+      int dot = propertyName.indexOf('.');
+      String prop = (dot==-1)? propertyName : propertyName.substring(0, dot);
+      if (dot == -1) { // direct set property
+        Method setter = null;
+        String setterName = "set"+ prop.substring(0, 1).toUpperCase() + prop.substring(1);
+        for (Method m : target.getClass().getMethods()) {
+          if (m.getName().equals(setterName) && m.getReturnType().equals(void.class) && m.getParameterTypes().length == 1) {
+            setter=m;
+            break;
+          }
+        }
+        if (setter == null) {
+          if ( target instanceof Map ) {
+            log.debug("cannot find property '{}' on {} and using it as a map with key {}",prop,target.getClass().getCanonicalName(),propertyName);
+            @SuppressWarnings("unchecked") Map<String,Object> map=(Map<String,Object>) target;
+            map.put(prop,propertyValue);
+            return;
+          }
+          else throw new PropertyException("cannot set property '" + prop +"' for class " + target.getClass().getCanonicalName());
         }
 
-        String lastPropertyName = propertyName.substring(visitedPropertyName.length(), propertyName.length());
-        if (currentTarget instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> p = (Map<String, Object>) currentTarget;
-            p.put(lastPropertyName, propertyValue.toString());
-            if (parentName != null) {
-                callSetter(parentTarget, parentName, p);
-            }
-        } else {
-            setDirectProperty(currentTarget, lastPropertyName, propertyValue);
+        Class<?> parameterType = setter.getParameterTypes()[0];
+        try {
+          if (propertyValue != null) {
+            Object transformedPropertyValue = transform(propertyValue, parameterType);
+            setter.invoke(target, transformedPropertyValue);
+          } else {
+            setter.invoke(target);
+          }
+        } catch (IllegalAccessException ex) {
+          throw new PropertyException("property '" + propertyName + "' is not accessible", ex);
+        } catch (InvocationTargetException ex) {
+          throw new PropertyException("property '" + propertyName + "' access threw an exception", ex);
         }
+      }
+      else { // sub property
+        Method getter = null;
+        String getterName = "get"+ prop.substring(0, 1).toUpperCase() + prop.substring(1);
+        try {
+          getter = target.getClass().getMethod(getterName);
+          if ( getter.getReturnType().equals(void.class) ) { getter = null; }
+        }
+        catch (NoSuchMethodException ex) { }
+        catch (SecurityException ex) { log.warn( "getter for {} found, but is not accesible. Ignoring it.",prop); }
+        if (getter == null) {
+          if ( target instanceof Map ) {
+            log.warn("cannot find property '{}' on {} and using it as a map with key {}",prop,target.getClass().getCanonicalName(),propertyName);
+            @SuppressWarnings("unchecked") Map<String,Object> map=(Map<String,Object>)target;
+            map.put(propertyName,propertyValue);
+            return;
+          }
+          else throw new PropertyException("cannot get property '" + prop +"' for class " + target.getClass().getCanonicalName());
+        }
+
+        Object newTarget;
+        Boolean setterNeeded = false;
+        try {
+          newTarget = getter.invoke(target);
+        } catch ( IllegalAccessException ex) {
+          throw new PropertyException("cannot set property '" + propertyName + "' - '" + prop + "' is not accesible", ex);
+        } catch ( InvocationTargetException ex) {
+          throw new PropertyException("cannot set property '" + propertyName + "' - '" + prop + "'", ex);
+        }
+        Class<?> propertyType = getter.getReturnType();
+        if (newTarget == null) { // then try to instantiate the object & set it in place
+          setterNeeded = true;
+          try {
+            newTarget = propertyType.newInstance();
+          } catch (InstantiationException ex) {
+            throw new PropertyException("cannot set property '" + propertyName + "' - '" + prop + "' is null and cannot be auto-filled", ex);
+          } catch (IllegalAccessException ex) {
+            throw new PropertyException("cannot set property '" + propertyName + "' - '" + prop + "' is null and cannot be auto-filled", ex);
+          }
+        }
+        setProperty( newTarget, propertyName.substring(dot+1), propertyValue );
+        try {
+          String setterName = "set"+ prop.substring(0, 1).toUpperCase() + prop.substring(1);
+          Method setter = target.getClass().getMethod(setterName,propertyType);
+          setter.invoke(target,newTarget);
+        } catch (NoSuchMethodException ex )  {
+          if (setterNeeded) {
+            throw new PropertyException("cannot set property '" + propertyName + "' - '" + prop + "' is null and setter call failed.", ex);
+          }
+        } catch (SecurityException ex )  {
+          if (setterNeeded) {
+            throw new PropertyException("cannot set property '" + propertyName + "' - '" + prop + "' is null and setter call failed.", ex);
+          }
+        } catch (IllegalAccessException ex )  {
+          if (setterNeeded) {
+            throw new PropertyException("cannot set property '" + propertyName + "' - '" + prop + "' is null and setter call failed.", ex);
+          }
+        } catch (IllegalArgumentException ex )  {
+          if (setterNeeded) {
+            throw new PropertyException("cannot set property '" + propertyName + "' - '" + prop + "' is null and setter call failed.", ex);
+          }
+        } catch (InvocationTargetException ex )  {
+          if (setterNeeded) {
+            throw new PropertyException("cannot set property '" + propertyName + "' - '" + prop + "' is null and setter call failed.", ex);
+          }
+        }
+      }
     }
 
     /**
