@@ -157,7 +157,7 @@ public class LrcXAResource implements XAResource {
             }
             this.state = STARTED;
         } catch (SQLException ex) {
-            throw new BitronixXAException("cannot disable autocommit on non-XA connection", XAException.XAER_RMERR);
+            throw new BitronixXAException("cannot disable autocommit on non-XA connection", XAException.XAER_RMERR, ex);
         }
     }
 
@@ -274,7 +274,7 @@ public class LrcXAResource implements XAResource {
                 connection.setAutoCommit(true);
             }
         } catch (SQLException ex) {
-            throw new BitronixXAException("cannot reset autocommit on non-XA connection", XAException.XAER_RMERR);
+            throw new BitronixXAException("cannot reset autocommit on non-XA connection", XAException.XAER_RMERR, ex);
         }
     }
 
@@ -316,7 +316,7 @@ public class LrcXAResource implements XAResource {
                 connection.setAutoCommit(true);
             }
         } catch (SQLException ex) {
-            throw new BitronixXAException("cannot reset autocommit on non-XA connection", XAException.XAER_RMERR);
+            throw new BitronixXAException("cannot reset autocommit on non-XA connection", XAException.XAER_RMERR, ex);
         }
     }
 
