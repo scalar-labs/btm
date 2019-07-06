@@ -52,6 +52,9 @@ public abstract class AbstractMockJdbcTest extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
+        // clear event recorder list
+        EventRecorder.clear();
+       
         Iterator<String> it = ResourceRegistrar.getResourcesUniqueNames().iterator();
         while (it.hasNext()) {
             String name = it.next();
@@ -92,12 +95,6 @@ public abstract class AbstractMockJdbcTest extends TestCase {
         registerPoolEventListener(p2);
 
         TransactionManagerServices.getConfiguration().setGracefulShutdownInterval(2);
-
-        // start TM
-        TransactionManagerServices.getTransactionManager();
-
-        // clear event recorder list
-        EventRecorder.clear();
     }
 
     @SuppressWarnings("unchecked")

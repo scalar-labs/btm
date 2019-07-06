@@ -29,7 +29,6 @@ import bitronix.tm.mock.events.XAResourceRollbackEvent;
 import bitronix.tm.mock.events.XAResourceStartEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import javax.transaction.InvalidTransactionException;
 import javax.transaction.Status;
 import javax.transaction.Transaction;
@@ -42,9 +41,16 @@ import java.util.List;
  *
  * @author Ludovic Orban
  */
-public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
+public class NewJdbcQuickSuspendResumeMockTest extends AbstractMockJdbcTest {
 
-    private final static Logger log = LoggerFactory.getLogger(NewJdbcSuspendResumeMockTest.class);
+    private final static Logger log = LoggerFactory.getLogger(NewJdbcQuickSuspendResumeMockTest.class);
+
+    @Override
+    protected void setUp() throws Exception {
+       super.setUp();
+       //always use quick suspend/resume in this test
+       TransactionManagerServices.getConfiguration().setQuickSuspend(true);
+    }
 
     public void testSimpleAssertions() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
@@ -107,14 +113,11 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         List orderedEvents = EventRecorder.getOrderedEvents();
         log.info(EventRecorder.dumpToString());
 
-        assertEquals(13, orderedEvents.size());
+        assertEquals(10, orderedEvents.size());
         int i=0;
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
-        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
-        assertEquals(true, ((XAResourceIsSameRmEvent) orderedEvents.get(i++)).isSameRm());
-        assertEquals(XAResource.TMJOIN, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
@@ -158,21 +161,17 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         List orderedEvents = EventRecorder.getOrderedEvents();
         log.info(EventRecorder.dumpToString());
 
-        assertEquals(15, orderedEvents.size());
+        assertEquals(10, orderedEvents.size());
         int i=0;
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
-        assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
-        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
-        assertEquals(XAResource.XA_OK, ((XAResourcePrepareEvent) orderedEvents.get(i++)).getReturnCode());
-        assertEquals(XAResource.XA_OK, ((XAResourcePrepareEvent) orderedEvents.get(i++)).getReturnCode());
         assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(Status.STATUS_COMMITTING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
-        assertEquals(false, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
-        assertEquals(false, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
+        //this behavior is very different from non-quick-suspend. with quick suspend, the original connection is still the only one, and we remain one-phase
+        assertEquals(true, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
         assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
     }
@@ -218,12 +217,11 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         List orderedEvents = EventRecorder.getOrderedEvents();
         log.info(EventRecorder.dumpToString());
 
-        assertEquals(20, orderedEvents.size());
+        assertEquals(17, orderedEvents.size());
         int i=0;
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
-        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
 
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
@@ -233,8 +231,6 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         assertEquals(XAResourceRollbackEvent.class, orderedEvents.get(i++).getClass());
         assertEquals(Status.STATUS_ROLLEDBACK, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
 
-        assertEquals(true, ((XAResourceIsSameRmEvent) orderedEvents.get(i++)).isSameRm());
-        assertEquals(XAResource.TMJOIN, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
 
         assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
@@ -298,14 +294,11 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         List orderedEvents = EventRecorder.getOrderedEvents();
         log.info(EventRecorder.dumpToString());
 
-        assertEquals(13, orderedEvents.size());
+        assertEquals(10, orderedEvents.size());
         int i=0;
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
-        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
-        assertEquals(true, ((XAResourceIsSameRmEvent) orderedEvents.get(i++)).isSameRm());
-        assertEquals(XAResource.TMJOIN, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
@@ -350,16 +343,13 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         List orderedEvents = EventRecorder.getOrderedEvents();
         log.info(EventRecorder.dumpToString());
 
-        assertEquals(15, orderedEvents.size());
+        assertEquals(12, orderedEvents.size());
         int i=0;
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
-        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
-        assertEquals(true, ((XAResourceIsSameRmEvent) orderedEvents.get(i++)).isSameRm());
-        assertEquals(XAResource.TMJOIN, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
@@ -409,12 +399,11 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         List orderedEvents = EventRecorder.getOrderedEvents();
         log.info(EventRecorder.dumpToString());
 
-        assertEquals(23, orderedEvents.size());
+        assertEquals(20, orderedEvents.size());
         int i=0;
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
-        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
 
         // interleaved transaction
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
@@ -428,8 +417,6 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
 
-        assertEquals(true, ((XAResourceIsSameRmEvent) orderedEvents.get(i++)).isSameRm());
-        assertEquals(XAResource.TMJOIN, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
@@ -482,12 +469,11 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         List orderedEvents = EventRecorder.getOrderedEvents();
         log.info(EventRecorder.dumpToString());
 
-        assertEquals(23, orderedEvents.size());
+        assertEquals(20, orderedEvents.size());
         int i=0;
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
-        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
 
         // interleaved transaction
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
@@ -501,8 +487,6 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
 
-        assertEquals(true, ((XAResourceIsSameRmEvent) orderedEvents.get(i++)).isSameRm());
-        assertEquals(XAResource.TMJOIN, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
@@ -548,28 +532,13 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
         List orderedEvents = EventRecorder.getOrderedEvents();
         log.info(EventRecorder.dumpToString());
 
-        assertEquals(25, orderedEvents.size());
+        assertEquals(19, orderedEvents.size());
         int i=0;
         assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
         assertEquals(DATASOURCE2_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
-
-        // suspend happens here
-        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
-        assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
-        // resume happens here
-        assertEquals(true, ((XAResourceIsSameRmEvent) orderedEvents.get(i++)).isSameRm());
-        assertEquals(XAResource.TMJOIN, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
-
-        XAResourceIsSameRmEvent evt = (XAResourceIsSameRmEvent) orderedEvents.get(i++);
-        XAResource src = (XAResource) evt.getSource();
-        XAResource comp = evt.getXAResource();
-        assertTrue(poolingDataSource2.findXAResourceHolder(src) != null);
-        assertTrue(poolingDataSource2.findXAResourceHolder(comp) != null);
-
-        assertEquals(XAResource.TMJOIN, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
 
         assertEquals(DATASOURCE2_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
         assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
