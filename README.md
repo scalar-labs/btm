@@ -2,7 +2,7 @@
 
 Bitronix Transaction Manager (BTM) is a simple but complete implementation of the Java Transaction API (JTA) 1.1. This eXtended Architecture (XA) transaction manager provides all services required by the JTA while keeping the code as simple as possible for easier understanding of XA semantics.
 
-The master version of the current source was built and published on the [Maven central repository](https://mvnrepository.com/artifact/com.github.marcus-nl.btm).
+The master version of the current source was built and published on the [Maven Central repository](https://mvnrepository.com/artifact/com.github.marcus-nl.btm).
 
 ## What's new
 
