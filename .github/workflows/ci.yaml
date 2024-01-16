@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    # For testing
+    #  branches:
+    #  - main
+  workflow_dispatch:
+  pull_request:
+
+env:
+  TERM: dumb
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java_version: [8]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK ${{ matrix.java_version }}
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.java_version }}
+          distribution: 'temurin'
+
+      - name: Setup and execute Gradle 'check' task
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: check
+
+      - name: Save Gradle test reports
+        if: always()
+        run: |
+          mkdir -p /tmp/gradle_test_reports/btm
+          cp -a btm/build/reports/tests/test /tmp/gradle_test_reports/btm/
+
+      - name: Upload Gradle test reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: gradle_test_reports
+          path: /tmp/gradle_test_reports
+
