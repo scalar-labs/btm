@@ -25,21 +25,20 @@ jobs:
           java-version: ${{ matrix.java_version }}
           distribution: 'temurin'
 
-      - name: Setup and execute Gradle 'check' task
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: check
+      - name: Setup and execute Maven 'verify' task
+        run: |
+          ./mvnw --batch-mode --update-snapshots verify
 
-      - name: Save Gradle test reports
+      - name: Save test reports
         if: always()
         run: |
-          mkdir -p /tmp/gradle_test_reports/btm
-          cp -a btm/build/reports/tests/test /tmp/gradle_test_reports/btm/
+          mkdir -p /tmp/test_reports/btm
+          cp -a btm/target/surefire-reports /tmp/test_reports/btm/
 
-      - name: Upload Gradle test reports
+      - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: gradle_test_reports
-          path: /tmp/gradle_test_reports
+          name: test_reports
+          path: /tmp/test_reports
 
