@@ -2,9 +2,8 @@ name: CI
 
 on:
   push:
-    # For testing
-    #  branches:
-    #  - main
+    branches:
+      - master
   workflow_dispatch:
   pull_request:
 
