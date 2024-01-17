@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+  pull_request:
+
+env:
+  TERM: dumb
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java_version: [8]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK ${{ matrix.java_version }}
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.java_version }}
+          distribution: 'temurin'
+
+      - name: Setup and execute Maven 'verify' task
+        run: |
+          ./mvnw --batch-mode --update-snapshots verify
+
+      - name: Save test reports
+        if: always()
+        run: |
+          mkdir -p /tmp/test_reports/btm
+          cp -a btm/target/surefire-reports /tmp/test_reports/btm/
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test_reports
+          path: /tmp/test_reports
+
