@@ -24,6 +24,10 @@
             <artifactId>catalina</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>javax.transaction</groupId>
+            <artifactId>jta</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
