@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Iterator;
 
+import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import javax.transaction.xa.XAResource;
@@ -25,7 +26,7 @@ public class TransactionalBean {
     
     private static final Logger log = LoggerFactory.getLogger(TransactionalBean.class);
     
-    @Inject
+    @Resource(name = "dataSource1")
     private DataSource dataSource;
 
     @Transactional
