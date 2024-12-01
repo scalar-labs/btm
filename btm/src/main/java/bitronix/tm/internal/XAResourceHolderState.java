@@ -139,7 +139,35 @@ public class XAResourceHolderState {
     public boolean isFailed() {
         return failed;
     }
+    
+    public void quickSuspend() throws XAException {
+        if (!this.started) {
+            throw new BitronixXAException("resource hasn't been started, cannot suspend it: " + this, XAException.XAER_PROTO);
+        }
+        if (this.suspended) {
+            throw new BitronixXAException("resource already suspended: " + this, XAException.XAER_PROTO);
+        }
 
+        if (log.isDebugEnabled()) { log.debug("quick suspending " + this); }
+
+        //take effect
+        this.suspended = true;
+    }
+
+    public void quickResume() throws XAException {
+       if (!this.started) {
+          throw new BitronixXAException("resource hasn't been started, cannot quick-resume it: " + this, XAException.XAER_PROTO);
+       }
+       if (!this.suspended) {
+           throw new BitronixXAException("resource hasn't been suspended, cannot quick resume it: " + this, XAException.XAER_PROTO);
+       }
+
+       if (log.isDebugEnabled()) { log.debug("quick resuming " + this); }
+
+       //take effect
+       this.suspended = false;
+   }
+    
     public void end(int flags) throws XAException {
         boolean ended = this.ended;
         boolean suspended = this.suspended;

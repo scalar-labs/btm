@@ -50,7 +50,8 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
     public void testDeferredReuse() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
-
+        EventRecorder.clear();
+        
         XAPool pool1 = getPool(poolingDataSource1);
 
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
@@ -112,6 +113,7 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
     public void testDeferredCannotReuse() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        EventRecorder.clear();
 
         // Use DataSource2 because it does not have shared accessible connections
         XAPool pool2 = getPool(poolingDataSource2);
@@ -178,6 +180,8 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
     public void testConnectionCloseInDifferentContext() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         if (log.isDebugEnabled()) { log.debug("*** beginning"); }
         tm.begin();
 
@@ -247,6 +251,8 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
     public void testClosingSuspendedConnectionsInDifferentContext() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
 
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.begin();
@@ -329,5 +335,92 @@ public class NewJdbcStrangeUsageMockTest extends AbstractMockJdbcTest {
         assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
         assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
     }
+
+    public void testClosingQuickSuspendedConnectionsInDifferentContext() throws Exception {
+       if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
+       TransactionManagerServices.getConfiguration().setQuickSuspend(true);
+       BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+       if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+       EventRecorder.clear();
+
+       if (log.isDebugEnabled()) { log.debug("*** before begin"); }
+       tm.begin();
+
+       XAPool pool1 = getPool(poolingDataSource1);
+
+       assertEquals(POOL_SIZE, pool1.inPoolSize());
+
+       if (log.isDebugEnabled()) { log.debug("*** getting connection from DS1"); }
+       Connection connection1 = poolingDataSource1.getConnection();
+       connection1.createStatement();
+
+       assertEquals(POOL_SIZE -1, pool1.inPoolSize());
+
+       if (log.isDebugEnabled()) { log.debug("*** suspending"); }
+       Transaction t1 = tm.suspend();
+
+       assertEquals(POOL_SIZE -1, pool1.inPoolSize());
+
+       if (log.isDebugEnabled()) { log.debug("*** starting 2nd tx"); }
+       tm.begin();
+
+       assertEquals(POOL_SIZE -1, pool1.inPoolSize());
+
+       if (log.isDebugEnabled()) { log.debug("*** closing connection 1 too eagerly within another context"); }
+       try {
+           // TODO: the ConnectionHandler tries to 'veto' the connection close here like the old pool did.
+           // Instead, close the resource immediately or defer its release.
+           connection1.close();
+           fail("successfully closed a connection participating in a global transaction, this should never be allowed");
+       } catch (SQLException ex) {
+           assertEquals("cannot close a resource when its XAResource is taking part in an unfinished global transaction", ex.getCause().getMessage());
+       }
+       assertEquals(POOL_SIZE -1, pool1.inPoolSize());
+
+       if (log.isDebugEnabled()) { log.debug("*** committing 2nd tx"); }
+       tm.commit();
+
+       assertEquals(POOL_SIZE -1, pool1.inPoolSize());
+
+       if (log.isDebugEnabled()) { log.debug("*** resuming"); }
+       tm.resume(t1);
+
+       assertEquals(POOL_SIZE -1, pool1.inPoolSize());
+
+       if (log.isDebugEnabled()) { log.debug("*** committing"); }
+       tm.commit();
+       if (log.isDebugEnabled()) { log.debug("*** TX is done"); }
+
+       if (log.isDebugEnabled()) { log.debug("*** closing connection 1"); }
+       connection1.close();
+
+       assertEquals(POOL_SIZE, pool1.inPoolSize());
+
+       // check flow
+       List<? extends Event> orderedEvents = EventRecorder.getOrderedEvents();
+       log.info(EventRecorder.dumpToString());
+
+       assertEquals(15, orderedEvents.size());
+       int i=0;
+       assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+       assertEquals(DATASOURCE1_NAME, ((ConnectionDequeuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+       assertEquals(XAResource.TMNOFLAGS, ((XAResourceStartEvent) orderedEvents.get(i++)).getFlag());
+
+       assertEquals(Status.STATUS_ACTIVE, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+       assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+       assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+       assertEquals(Status.STATUS_COMMITTING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+       assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+
+       assertEquals(XAResource.TMSUCCESS, ((XAResourceEndEvent) orderedEvents.get(i++)).getFlag());
+
+       assertEquals(Status.STATUS_PREPARING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+       assertEquals(Status.STATUS_PREPARED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+       assertEquals(Status.STATUS_COMMITTING, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+       assertEquals(true, ((XAResourceCommitEvent) orderedEvents.get(i++)).isOnePhase());
+       assertEquals(Status.STATUS_COMMITTED, ((JournalLogEvent) orderedEvents.get(i++)).getStatus());
+       assertEquals(DATASOURCE1_NAME, ((ConnectionQueuedEvent) orderedEvents.get(i++)).getPooledConnectionImpl().getPoolingDataSource().getUniqueName());
+   }
+
 
 }

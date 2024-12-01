@@ -30,7 +30,7 @@ import java.util.ArrayList;
  * @author Ludovic Orban
  */
 public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
-    private final static Logger log = LoggerFactory.getLogger(NewJdbcProperUsageMockTest.class);
+    private final static Logger log = LoggerFactory.getLogger(JdbcSharedConnectionTest.class);
 
     public void testSharedConnectionMultithreaded() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** Starting testSharedConnectionMultithreaded: getting TM"); }
@@ -87,6 +87,63 @@ public class JdbcSharedConnectionTest extends AbstractMockJdbcTest {
 
     }
 
+    public void testSharedConnectionQuickSuspendEnabledResumeOnAnotherThread() throws Exception {
+       if (log.isDebugEnabled()) { log.debug("*** Starting testSharedConnectionQuickSuspendEnabledResumeOnAnotherThread: getting TM"); }
+       TransactionManagerServices.getConfiguration().setQuickSuspend(true); 
+       final BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+       tm.setTransactionTimeout(120);
+
+       if (log.isDebugEnabled()) { log.debug("*** before begin"); }
+       tm.begin();
+       if (log.isDebugEnabled()) { log.debug("*** after begin"); }
+
+       final Transaction suspended = tm.suspend();
+
+       final ArrayList<Connection> twoConnections = new ArrayList<Connection>();
+       Thread thread1 = new Thread() {
+           @Override
+       	public void run() {
+       		try {
+					tm.resume(suspended);
+			        if (log.isDebugEnabled()) { log.debug("*** getting connection from DS1"); }
+			        Connection connection = poolingDataSource1.getConnection();
+			        connection.createStatement();
+			        twoConnections.add(connection);
+			        tm.suspend();
+				} catch (Exception e) {
+					e.printStackTrace();
+					fail(e.getMessage());
+				}
+       	}
+       };
+       thread1.start();
+       thread1.join();
+
+       Thread thread2 = new Thread() {
+           @Override
+       	public void run() {
+       		try {
+					tm.resume(suspended);
+			        if (log.isDebugEnabled()) { log.debug("*** getting connection from DS1"); }
+			        Connection connection = poolingDataSource1.getConnection();
+			        connection.createStatement();
+			        twoConnections.add(connection);
+			        tm.commit();
+				} catch (Exception e) {
+					e.printStackTrace();
+					fail(e.getMessage());
+				}
+       	}
+       };
+       thread2.start();
+       thread2.join();
+       
+       PooledConnectionProxy handle1 = (PooledConnectionProxy) twoConnections.get(0);
+       PooledConnectionProxy handle2 = (PooledConnectionProxy) twoConnections.get(1);
+       assertNotSame(handle1.getProxiedDelegate(), handle2.getProxiedDelegate());
+
+   }
+    
     public void testUnSharedConnection() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** Starting testUnSharedConnection: getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();

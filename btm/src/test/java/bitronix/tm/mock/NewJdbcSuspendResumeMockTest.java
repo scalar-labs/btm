@@ -78,6 +78,8 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
     public void testSimpleWorkingCase() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.begin();
         if (log.isDebugEnabled()) { log.debug("*** after begin"); }
@@ -127,6 +129,8 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
 
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();        
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.begin();
         if (log.isDebugEnabled()) { log.debug("*** after begin"); }
@@ -176,6 +180,8 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
     public void testReEnlistmentAfterSuspend() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.begin();
         if (log.isDebugEnabled()) { log.debug("*** after begin"); }
@@ -242,6 +248,8 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
     public void testClosingSuspendedConnections() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
 
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.begin();
@@ -310,6 +318,8 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
     public void testInterleavedLocalGlobalTransactions() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.begin();
         if (log.isDebugEnabled()) { log.debug("*** after begin"); }
@@ -363,6 +373,8 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
     public void testInterleavedGlobalGlobalTransactionsWithDifferentConnections() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.begin();
         if (log.isDebugEnabled()) { log.debug("*** after begin"); }
@@ -431,6 +443,8 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
     public void testInterleavedGlobalGlobalTransactionsWithDifferentConnectionsLateSuspend() throws Exception {
         if (log.isDebugEnabled()) { log.debug("*** getting TM"); }
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         if (log.isDebugEnabled()) { log.debug("*** before begin"); }
         tm.begin();
         if (log.isDebugEnabled()) { log.debug("*** after begin"); }
@@ -501,6 +515,8 @@ public class NewJdbcSuspendResumeMockTest extends AbstractMockJdbcTest {
 
     public void testJoinAfterSuspend() throws Exception {
         BitronixTransactionManager tm = TransactionManagerServices.getTransactionManager();
+        if (log.isDebugEnabled()) { log.debug("*** clearing EventRecorder"); }
+        EventRecorder.clear();
         tm.begin();
 
         if (log.isDebugEnabled()) { log.debug("*** get C1"); }
