@@ -57,7 +57,7 @@
     </developers>
 
     <properties>
-        <java.version>1.6</java.version>
+        <java.version>1.8</java.version>
         <spring.version>3.2.4.RELEASE</spring.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -196,6 +196,11 @@
                 <artifactId>junit</artifactId>
                 <version>4.8.2</version>
             </dependency>
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>1.4.200</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -276,9 +281,25 @@
                     </configuration>
                 </plugin>
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>2.12.4</version>
+                    <configuration>
+                        <argLine>${surefire.jvm.settings}</argLine>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
                     <groupId>org.asciidoctor</groupId>
                     <artifactId>asciidoctor-maven-plugin</artifactId>
-                    <version>1.5.2.1</version> 
+                    <version>1.5.2.1</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -290,18 +311,6 @@
             <modules>
                 <module>btm-dist</module>
             </modules>
-        </profile>
-        <profile>
-            <id>java6</id>
-            <properties>
-                <java.version>1.6</java.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>java7</id>
-            <properties>
-                <java.version>1.7</java.version>
-            </properties>
         </profile>
     </profiles>
 

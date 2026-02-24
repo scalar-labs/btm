@@ -21,7 +21,7 @@ import javax.jms.XAConnectionFactory;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import javax.rmi.PortableRemoteObject;
+import java.lang.reflect.Method;
 import java.util.Hashtable;
 import java.util.Properties;
 
@@ -164,7 +164,7 @@ public class JndiXAConnectionFactory implements XAConnectionFactory {
     }
 
     /**
-     * Should {@link PortableRemoteObject#narrow(Object, Class)} be applied on the object looked up from
+     * Should {@code PortableRemoteObject.narrow(Object, Class)} be applied on the object looked up from
      * JNDI before trying to cast it to {@link XAConnectionFactory} ?
      * @return true if the object should be narrowed, false otherwise.
      */
@@ -173,7 +173,7 @@ public class JndiXAConnectionFactory implements XAConnectionFactory {
     }
 
     /**
-     * Set if {@link PortableRemoteObject#narrow(Object, Class)} should be applied on the object looked up from
+     * Set if {@code PortableRemoteObject.narrow(Object, Class)} should be applied on the object looked up from
      * JNDI before trying to cast it to {@link XAConnectionFactory} ?
      * @param narrowJndiObject true if the object should be narrowed, false otherwise.
      */
@@ -208,7 +208,7 @@ public class JndiXAConnectionFactory implements XAConnectionFactory {
         try {
             Object lookedUpObject = ctx.lookup(name);
             if (narrowJndiObject) {
-                wrappedFactory = (XAConnectionFactory) PortableRemoteObject.narrow(lookedUpObject, XAConnectionFactory.class);
+                wrappedFactory = (XAConnectionFactory) portableRemoteObjectNarrow(lookedUpObject, XAConnectionFactory.class);
             }
             else {
                 wrappedFactory = (XAConnectionFactory) lookedUpObject;
@@ -236,6 +236,21 @@ public class JndiXAConnectionFactory implements XAConnectionFactory {
             return wrappedFactory.createXAConnection(userName, password);
         } catch (NamingException ex) {
             throw (JMSException) new JMSException("error looking up wrapped XAConnectionFactory at " + name).initCause(ex);
+        }
+    }
+
+    /**
+     * Reflectively calls javax.rmi.PortableRemoteObject.narrow() to avoid a compile-time
+     * dependency on the CORBA module, which was removed in JDK 11.
+     */
+    private static Object portableRemoteObjectNarrow(Object narrowFrom, Class<?> narrowTo) throws NamingException {
+        try {
+            Class<?> proClass = Class.forName("javax.rmi.PortableRemoteObject");
+            Method narrowMethod = proClass.getMethod("narrow", Object.class, Class.class);
+            return narrowMethod.invoke(null, narrowFrom, narrowTo);
+        } catch (Exception ex) {
+            throw new NamingException("javax.rmi.PortableRemoteObject.narrow() is not available. " +
+                    "Set narrowJndiObject=false or add a CORBA library to the classpath. Cause: " + ex);
         }
     }
 
