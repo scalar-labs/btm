@@ -17,6 +17,28 @@ For general information, see the following:
 * [Overview](https://github.com/scalar-labs/btm/wiki/Overview)
 * [FAQ](https://github.com/scalar-labs/btm/wiki/FAQ)
 
+## Development
+
+### Prerequisites
+
+* Java 8 or later
+
+### Running tests
+
+```bash
+# Unit tests only
+./mvnw test -pl btm
+
+# Integration tests only
+./mvnw verify -pl btm -DskipTests
+
+# Unit tests + integration tests
+./mvnw verify -pl btm
+
+# All modules
+./mvnw verify
+```
+
 ## Configuration
 
 For details about configuring BTM, see the following:
